@@ -1,0 +1,10 @@
+import { Decoder } from "./tlsDecoder.js";
+import { Encoder } from "./tlsEncoder.js";
+export declare const uint8Encoder: Encoder<number>;
+export declare const uint8Decoder: Decoder<number>;
+export declare const uint16Encoder: Encoder<number>;
+export declare const uint16Decoder: Decoder<number>;
+export declare const uint32Encoder: Encoder<number>;
+export declare const uint32Decoder: Decoder<number>;
+export declare const uint64Encoder: Encoder<bigint>;
+export declare const uint64Decoder: Decoder<bigint>;
