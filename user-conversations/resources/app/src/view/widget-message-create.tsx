@@ -18,13 +18,13 @@ export class WidgetMessageCreate {
 
 	view(vnode: WidgetMessageCreateVnode) {
 		return (
-			<div class="input flex-row" style="height:200px;">
+			<div role="input" class="flex-row">
 				<textarea
 					value={vnode.state.message}
-					style="border:none; height:100%; resize:none;"
+					style="border:none; min-height:3em; field-sizing:content; resize:none;"
 					oninput={(e: Event) => this.oninput(vnode, e)}></textarea>
-				<button onclick={() => this.sendMessage(vnode)} disabled={vnode.state.message.trim() === ""}>
-					Send
+				<button tabIndex="0" onclick={() => this.sendMessage(vnode)} disabled={vnode.state.message.trim() === ""}>
+					<i class="bi bi-arrow-up-circle-fill" style="color:var(--blue50); font-size:24px;"></i>
 				</button>
 			</div>
 		)

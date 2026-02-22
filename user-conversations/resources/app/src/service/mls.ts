@@ -134,6 +134,7 @@ export class MLS {
 			id: groupID,
 			members: [],
 			name: "New Group",
+			lastMessage: "",
 			clientState: clientState,
 			createDate: Date.now(),
 			updateDate: Date.now(),
@@ -214,13 +215,13 @@ export class MLS {
 		return members
 	}
 
-	async sendGroupMessage(group: string, plaintext: string): Promise<void> {
+	async sendGroupMessage(groupId: string, plaintext: string): Promise<void> {
 		//
 		const context = this.#context()
 
 		// Encrypt the message using the current group state
 		// (This is a placeholder - the actual encryption logic will depend on the ts-mls API)
-		const mlsGroup = await this.#database.loadGroup(group)
+		const group = await this.#database.loadGroup(groupId)
 
 		const messageId = "uri:uuid:" + crypto.randomUUID()
 
@@ -237,7 +238,7 @@ export class MLS {
 		const messageBytes = new TextEncoder().encode(messageText)
 		const applicationMessage = await createApplicationMessage({
 			context: context,
-			state: mlsGroup.clientState,
+			state: group.clientState,
 			message: messageBytes,
 		})
 
@@ -245,20 +246,21 @@ export class MLS {
 		applicationMessage.consumed.forEach(zeroOutUint8Array)
 
 		// Filter out "me" from the recipients list (we don't need to send the message to ourselves)
-		const recipients = mlsGroup.members.filter((member) => member !== this.#actor.id)
+		const recipients = group.members.filter((member) => member !== this.#actor.id)
 
 		// Send the message via the Delivery service
 		this.#delivery.sendFramedMessage(recipients, applicationMessage.message)
 
 		// update the Group with the new group state
-		mlsGroup.clientState = applicationMessage.newState
-		mlsGroup.updateDate = Date.now()
-		await this.#database.saveGroup(mlsGroup)
+		group.clientState = applicationMessage.newState
+		group.updateDate = Date.now()
+		group.lastMessage = plaintext.slice(0, 100)
+		await this.#database.saveGroup(group)
 
 		// Create a new Message object
 		const dbMessage: Message = {
 			id: messageId,
-			group: group,
+			group: groupId,
 			sender: this.#actor.id,
 			plaintext: plaintext,
 			createDate: Date.now(),
@@ -332,6 +334,7 @@ export class MLS {
 			id: groupId,
 			members: [],
 			name: "Received Group.",
+			lastMessage: "",
 			clientState: clientState,
 			createDate: Date.now(),
 			updateDate: Date.now(),
@@ -351,6 +354,7 @@ export class MLS {
 	async #onMessage_PrivateMessage(mlsMessage: MlsPrivateMessage & MlsMessageProtocol) {
 		console.log("Received PrivateMessage:", mlsMessage)
 
+		// Load the group from the database so we can get the current client state for decryption
 		const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId)
 		const group = await this.#database.loadGroup(groupId)
 
@@ -391,6 +395,10 @@ export class MLS {
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
+
+		// Update the group with the most recent message
+		group.lastMessage = activity.content.slice(0, 100)
+		await this.#database.saveGroup(group)
 	}
 
 	/// Helper methods

@@ -15699,6 +15699,7 @@
         id: groupID,
         members: [],
         name: "New Group",
+        lastMessage: "",
         clientState,
         createDate: Date.now(),
         updateDate: Date.now(),
@@ -15750,9 +15751,9 @@
       }).filter((identity) => identity != "");
       return members;
     }
-    async sendGroupMessage(group, plaintext) {
+    async sendGroupMessage(groupId, plaintext) {
       const context = this.#context();
-      const mlsGroup = await this.#database.loadGroup(group);
+      const group = await this.#database.loadGroup(groupId);
       const messageId = "uri:uuid:" + crypto.randomUUID();
       const messageObject = {
         "@context": "https://www.w3.org/ns/activitystreams",
@@ -15764,18 +15765,19 @@
       const messageBytes = new TextEncoder().encode(messageText);
       const applicationMessage = await createApplicationMessage({
         context,
-        state: mlsGroup.clientState,
+        state: group.clientState,
         message: messageBytes
       });
       applicationMessage.consumed.forEach(zeroOutUint8Array);
-      const recipients = mlsGroup.members.filter((member) => member !== this.#actor.id);
+      const recipients = group.members.filter((member) => member !== this.#actor.id);
       this.#delivery.sendFramedMessage(recipients, applicationMessage.message);
-      mlsGroup.clientState = applicationMessage.newState;
-      mlsGroup.updateDate = Date.now();
-      await this.#database.saveGroup(mlsGroup);
+      group.clientState = applicationMessage.newState;
+      group.updateDate = Date.now();
+      group.lastMessage = plaintext.slice(0, 100);
+      await this.#database.saveGroup(group);
       const dbMessage = {
         id: messageId,
-        group,
+        group: groupId,
         sender: this.#actor.id,
         plaintext,
         createDate: Date.now()
@@ -15796,6 +15798,7 @@
         id: groupId,
         members: [],
         name: "Received Group.",
+        lastMessage: "",
         clientState,
         createDate: Date.now(),
         updateDate: Date.now(),
@@ -15838,6 +15841,8 @@
       };
       console.log("Saving message to database: ", message);
       await this.#database.saveMessage(message);
+      group.lastMessage = activity.content.slice(0, 100);
+      await this.#database.saveGroup(group);
     }
     #context;
   };
@@ -16589,14 +16594,14 @@
       vnode.state.message = "";
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "input flex-row", style: "height:200px;" }, /* @__PURE__ */ (0, import_mithril12.default)(
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { role: "input", class: "flex-row" }, /* @__PURE__ */ (0, import_mithril12.default)(
         "textarea",
         {
           value: vnode.state.message,
-          style: "border:none; height:100%; resize:none;",
+          style: "border:none; min-height:3em; field-sizing:content; resize:none;",
           oninput: (e) => this.oninput(vnode, e)
         }
-      ), /* @__PURE__ */ (0, import_mithril12.default)("button", { onclick: () => this.sendMessage(vnode), disabled: vnode.state.message.trim() === "" }, "Send"));
+      ), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => this.sendMessage(vnode), disabled: vnode.state.message.trim() === "" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-arrow-up-circle-fill", style: "color:var(--blue50); font-size:24px;" })));
     }
     oninput(vnode, event) {
       const target = event.target;
@@ -16705,7 +16710,7 @@
         if (group.id == selectedGroupId) {
           cssClass += " selected";
         }
-        return /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray" }, group.id)), /* @__PURE__ */ (0, import_mithril15.default)("button", { onclick: () => this.editGroup(vnode, group), class: "hover-show" }, "\u22EF"));
+        return /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)), /* @__PURE__ */ (0, import_mithril15.default)("button", { onclick: () => this.editGroup(vnode, group), class: "hover-show" }, "\u22EF"));
       });
     }
     // viewMessages returns the JSX for the messages within the selectedGroup.
@@ -16719,9 +16724,9 @@
       const messages = vnode.attrs.controller.messages();
       return [
         /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow padding-lg" }, messages.map((message) => {
-          return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "card padding margin-bottom" }, message.plaintext, /* @__PURE__ */ (0, import_mithril15.default)("br", null), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray" }, message.sender));
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "card padding margin-bottom" }, message.plaintext, /* @__PURE__ */ (0, import_mithril15.default)("br", null), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray" }, message.sender), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()));
         })),
-        /* @__PURE__ */ (0, import_mithril15.default)(WidgetMessageCreate, { controller: vnode.attrs.controller })
+        /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril15.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))
       ];
     }
     newConversation(vnode) {
@@ -16736,13 +16741,7 @@
     viewModals(vnode) {
       switch (vnode.state.modal) {
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril15.default)(
-            NewConversation,
-            {
-              controller: vnode.attrs.controller,
-              close: () => this.closeModal(vnode)
-            }
-          );
+          return /* @__PURE__ */ (0, import_mithril15.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
         case "EDIT-GROUP":
           return /* @__PURE__ */ (0, import_mithril15.default)(
             EditGroup,

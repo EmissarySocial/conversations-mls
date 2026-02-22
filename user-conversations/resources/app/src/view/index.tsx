@@ -68,13 +68,13 @@ export class Index {
 
 			return (
 				<div role="button" class={cssClass} onclick={() => controller.selectGroup(group.id)}>
-					<span class="width-32 circle flex-center">
+					<div class="width-32 circle flex-center">
 						<i class="bi bi-lock-fill"></i>
-					</span>
-					<span class="flex-grow nowrap ellipsis">
+					</div>
+					<div class="flex-grow nowrap ellipsis">
 						<div>{group.name}</div>
-						<div class="text-xs text-light-gray">{group.id}</div>
-					</span>
+						<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
+					</div>
 					<button onclick={() => this.editGroup(vnode, group)} class="hover-show">
 						&#8943;
 					</button>
@@ -114,11 +114,14 @@ export class Index {
 							{message.plaintext}
 							<br />
 							<div class="text-xs text-light-gray">{message.sender}</div>
+							<div class="text-xs text-light-gray">{new Date(message.createDate).toLocaleString()}</div>
 						</div>
 					)
 				})}
 			</div>,
-			<WidgetMessageCreate controller={vnode.attrs.controller}></WidgetMessageCreate>,
+			<div class="padding-sm">
+				<WidgetMessageCreate controller={vnode.attrs.controller}></WidgetMessageCreate>
+			</div>,
 		]
 	}
 
@@ -137,9 +140,7 @@ export class Index {
 		switch (vnode.state.modal) {
 			case "NEW-CONVERSATION":
 				return (
-					<NewConversation
-						controller={vnode.attrs.controller}
-						close={() => this.closeModal(vnode)}></NewConversation>
+					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)}></NewConversation>
 				)
 
 			case "EDIT-GROUP":

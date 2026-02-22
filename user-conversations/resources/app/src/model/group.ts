@@ -4,6 +4,7 @@ import {type ClientState} from "ts-mls"
 export type Group = {
 	id: string
 	name: string
+	lastMessage: string
 	members: string[]
 	clientState: ClientState
 	createDate: number
