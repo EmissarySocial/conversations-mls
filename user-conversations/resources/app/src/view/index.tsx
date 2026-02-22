@@ -24,11 +24,16 @@ export class Index {
 	}
 
 	public view(vnode: IndexVnode) {
+		//
+		const group = vnode.attrs.controller.groups().find((g) => g.id === vnode.attrs.controller.selectedGroupId)
+
+		if (group == undefined) {
+			return undefined
+		}
+
 		return (
 			<div id="conversations">
-				<div
-					id="conversation-list"
-					class="table no-top-border width-50% md:width-40% lg:width-30% flex-shrink-0 scroll-vertical">
+				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
 					<div
 						role="button"
 						class="link conversation-selector padding flex-row flex-align-center"
@@ -39,14 +44,32 @@ export class Index {
 							<i class="bi bi-plus"></i>
 						</div>
 						<div class="ellipsis-block" style="max-height:3em;">
-							Start a Conversation
+							Conversation
 						</div>
 					</div>
 
 					{this.viewGroups(vnode)}
 				</div>
-				<div id="conversation-details" class="width-75%">
-					{this.viewMessages(vnode)}
+				<div id="conversation-details">
+					<div id="conversation-header">
+						<div class="flex-row flex-align-center">
+							<div class="flex-grow">
+								<span class="bold">{group.name} </span>
+								<span>(Person 1, Person 2, Person 3)</span>
+							</div>
+							<div>
+								<button class="text-sm" onclick={() => this.editGroup(vnode, group)}>
+									Group Info
+								</button>
+							</div>
+						</div>
+					</div>
+					<div id="conversation-messages">{this.viewMessages(vnode)}</div>
+					<div id="conversation-create-widget">
+						<div class="padding-sm">
+							<WidgetMessageCreate controller={vnode.attrs.controller}></WidgetMessageCreate>
+						</div>
+					</div>
 				</div>
 
 				{this.viewModals(vnode)}
@@ -75,9 +98,6 @@ export class Index {
 						<div>{group.name}</div>
 						<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
 					</div>
-					<button onclick={() => this.editGroup(vnode, group)} class="hover-show">
-						&#8943;
-					</button>
 				</div>
 			)
 		})
@@ -107,7 +127,7 @@ export class Index {
 
 		// Display messages
 		return [
-			<div class="flex-grow padding-lg">
+			<div class="flex-grow padding-sm padding-bottom-lg">
 				{messages.map((message) => {
 					return (
 						<div class="card padding margin-bottom">
@@ -118,9 +138,6 @@ export class Index {
 						</div>
 					)
 				})}
-			</div>,
-			<div class="padding-sm">
-				<WidgetMessageCreate controller={vnode.attrs.controller}></WidgetMessageCreate>
 			</div>,
 		]
 	}

@@ -29,8 +29,26 @@
 			
 			#conversation-details {
 				display:flex;
+				flex-grow:1;
 				flex-direction:column;
 				height:100%;
+
+				#conversation-header {
+					padding: calc(var(--rhythm) * 2);
+					border-bottom: 1px solid var(--gray20);
+					background-color: var(--white);
+				}
+
+				#conversation-messages {
+					flex-grow:1;
+					width:100%;
+					max-width:640px;
+					overflow-y:scroll;
+				}
+
+				#conversation-create-widget {
+					
+				}
 			}
 		}
 

@@ -17,14 +17,23 @@ export class WidgetMessageCreate {
 	}
 
 	view(vnode: WidgetMessageCreateVnode) {
+		const enabled = vnode.state.message.trim() !== ""
+		const disabled = !enabled
+
+		const color = enabled ? "var(--blue50)" : "var(--gray30)"
+
 		return (
 			<div role="input" class="flex-row">
 				<textarea
 					value={vnode.state.message}
 					style="border:none; min-height:3em; field-sizing:content; resize:none;"
 					oninput={(e: Event) => this.oninput(vnode, e)}></textarea>
-				<button tabIndex="0" onclick={() => this.sendMessage(vnode)} disabled={vnode.state.message.trim() === ""}>
-					<i class="bi bi-arrow-up-circle-fill" style="color:var(--blue50); font-size:24px;"></i>
+				<button
+					tabIndex="0"
+					onclick={() => this.sendMessage(vnode)}
+					disabled={disabled}
+					style={`background-color:${color}; color:white; font-size:24px;`}>
+					<i class="bi bi-arrow-up-circle-fill"></i>
 				</button>
 			</div>
 		)
