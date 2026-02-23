@@ -26,6 +26,10 @@ export function Summary(value: apObject): string {
 	return string(value, "summary", "ap:summary", "https://www.w3.org/ns/activitystreams#summary")
 }
 
+export function Icon(value: apObject): string {
+	return string(value, "icon", "ap:icon", "https://www.w3.org/ns/activitystreams#icon")
+}
+
 export function Content(value: apObject): string {
 	return string(value, "content", "ap:content", "https://www.w3.org/ns/activitystreams#content")
 }
@@ -40,6 +44,15 @@ export function MlsKeyPackages(value: apObject): string {
 
 export function EventStream(value: apObject): string {
 	return string(value, "eventStream", "sse:eventStream", "https://purl.archive.org/socialweb/sse#eventStream")
+}
+
+export function PreferredUsername(value: apObject): string {
+	return string(
+		value,
+		"preferredUsername",
+		"ap:preferredUsername",
+		"https://www.w3.org/ns/activitypub#preferredUsername",
+	)
 }
 
 function string(value: apObject, ...names: string[]): string {

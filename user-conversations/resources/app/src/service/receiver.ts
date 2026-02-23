@@ -17,12 +17,14 @@ export class Receiver {
 
 	#actorId: string // ID of the user receiving messages
 	#messagesUrl: string // endpoint for the actor's mls:messages collection
+	#lastUrl: string // URL of the last message received (used for polling)
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#handler: MessageHandler // list of registered message handlers
 
 	constructor(actorId: string, messagesUrl: string) {
 		this.#actorId = actorId
 		this.#messagesUrl = messagesUrl
+		this.#lastUrl = "" // TODO: This should persist to the database so we don't lose our place if the app restarts
 		this.#handler = async function (message: string) {
 			console.log("Received message:", message)
 		}
@@ -58,14 +60,13 @@ export class Receiver {
 	// poll retrieves new messages from the mls:messages collection and calls the
 	// onMessage callback for each new message
 	async poll() {
-		var lastUrl = ""
-		const generator = rangeCollection<APMLSMessage>(this.#messagesUrl)
+		const generator = rangeCollection<APMLSMessage>(this.#messagesUrl, this.#lastUrl)
 		for await (const message of generator) {
 			const document = new Document(message)
 			console.log("Receiver: Received message:", message)
 			const content = ap.Content(message)
 			await this.#handler(content)
-			// lastUrl = message.id()
+			this.#lastUrl = document.id()
 		}
 	}
 }

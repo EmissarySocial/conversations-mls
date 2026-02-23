@@ -346,6 +346,9 @@ export class MLS {
 
 		// Save the group to the database
 		await this.#database.saveGroup(group)
+
+		// Check for any additional message in the queue (that might have arrived while we were processing the Welcome)
+		window.setTimeout(() => this.#receiver.poll, 100)
 	}
 
 	// onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
@@ -384,6 +387,7 @@ export class MLS {
 		const activity = JSON.parse(plaintext)
 		console.log("Parsed activity:", activity)
 
+		// Create a new message record in the database for this incoming message
 		const message = {
 			id: activity.id,
 			group: groupId,

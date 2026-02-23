@@ -1,11 +1,14 @@
 import m from "mithril"
+import stream from "mithril/stream"
 import {type Vnode} from "mithril"
 import {type Group} from "../model/group"
+import {type Contact} from "../model/contact"
 import {Controller} from "../controller"
 import {NewConversation} from "./modal-newConversation"
-import {EditGroup} from "./modal-editGroup"
-import {WidgetMessageCreate} from "./widget-message-create"
 import {Debug} from "./modal-debug"
+import {Messages} from "./messages"
+import {Groups} from "./groups"
+import {Settings} from "./settings"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -24,54 +27,28 @@ export class Index {
 	}
 
 	public view(vnode: IndexVnode) {
-		//
-		const group = vnode.attrs.controller.groups().find((g) => g.id === vnode.attrs.controller.selectedGroupId)
+		var page: JSX.Element
 
-		if (group == undefined) {
-			return undefined
+		switch (vnode.attrs.controller.pageView) {
+			case "MESSAGES":
+				page = <Messages controller={vnode.attrs.controller} />
+				break
+
+			case "SETTINGS":
+				page = <Settings controller={vnode.attrs.controller} group={vnode.attrs.controller.group()} />
+				break
+
+			default:
+				page = <Messages controller={vnode.attrs.controller} />
 		}
 
+		//
 		return (
 			<div id="conversations">
 				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
-					<div
-						role="button"
-						class="link conversation-selector padding flex-row flex-align-center"
-						onclick={() => this.newConversation(vnode)}>
-						<div
-							class="circle width-32 flex-shrink-0 flex-center margin-none"
-							style="font-size:24px;background-color:var(--blue50);color:var(--white);">
-							<i class="bi bi-plus"></i>
-						</div>
-						<div class="ellipsis-block" style="max-height:3em;">
-							Conversation
-						</div>
-					</div>
-
-					{this.viewGroups(vnode)}
+					<Groups controller={vnode.attrs.controller}></Groups>
 				</div>
-				<div id="conversation-details">
-					<div id="conversation-header">
-						<div class="flex-row flex-align-center">
-							<div class="flex-grow">
-								<span class="bold">{group.name} </span>
-								<span>(Person 1, Person 2, Person 3)</span>
-							</div>
-							<div>
-								<button class="text-sm" onclick={() => this.editGroup(vnode, group)}>
-									Group Info
-								</button>
-							</div>
-						</div>
-					</div>
-					<div id="conversation-messages">{this.viewMessages(vnode)}</div>
-					<div id="conversation-create-widget">
-						<div class="padding-sm">
-							<WidgetMessageCreate controller={vnode.attrs.controller}></WidgetMessageCreate>
-						</div>
-					</div>
-				</div>
-
+				{page}
 				{this.viewModals(vnode)}
 			</div>
 		)
@@ -103,69 +80,14 @@ export class Index {
 		})
 	}
 
-	// viewMessages returns the JSX for the messages within the selectedGroup.
-	// If there is no selected group, then a welcome message is shown instead.
-	private viewMessages(vnode: IndexVnode): JSX.Element[] {
-		//
-		// If there's no selected group, then show a welcome message
-		if (vnode.attrs.controller.selectedGroupId == "") {
-			return [
-				<div class="flex-center height-100% align-center">
-					<div>
-						<div class="margin-vertical bold">Welcome to Conversations!</div>
-						<div class="margin-vertical">Messages will appear here once you get started.</div>
-						<div class="margin-vertical link" onclick={() => this.newConversation(vnode)}>
-							Start a conversation
-						</div>
-					</div>
-				</div>,
-			]
-		}
-
-		// Otherwise, list messages for the selected group
-		const messages = vnode.attrs.controller.messages()
-
-		// Display messages
-		return [
-			<div class="flex-grow padding-sm padding-bottom-lg">
-				{messages.map((message) => {
-					return (
-						<div class="card padding margin-bottom">
-							{message.plaintext}
-							<br />
-							<div class="text-xs text-light-gray">{message.sender}</div>
-							<div class="text-xs text-light-gray">{new Date(message.createDate).toLocaleString()}</div>
-						</div>
-					)
-				})}
-			</div>,
-		]
-	}
-
-	private newConversation(vnode: IndexVnode) {
-		vnode.state.modal = "NEW-CONVERSATION"
-	}
-
-	// editGroup opens the "Edit Group" modal for the specified group
-	private editGroup(vnode: IndexVnode, group: Group) {
-		vnode.state.modal = "EDIT-GROUP"
-		vnode.state.modalGroup = group
-	}
-
 	// viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
 	private viewModals(vnode: IndexVnode): JSX.Element | undefined {
-		switch (vnode.state.modal) {
+		const modalView = vnode.attrs.controller.modalView
+
+		switch (modalView) {
 			case "NEW-CONVERSATION":
 				return (
 					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)}></NewConversation>
-				)
-
-			case "EDIT-GROUP":
-				return (
-					<EditGroup
-						controller={vnode.attrs.controller}
-						group={vnode.state.modalGroup}
-						close={() => this.closeModal(vnode)}></EditGroup>
 				)
 
 			case "DEBUG":
@@ -180,7 +102,7 @@ export class Index {
 		document.getElementById("modal")?.classList.remove("ready")
 
 		window.setTimeout(() => {
-			vnode.state.modal = ""
+			vnode.attrs.controller.modal_close()
 			m.redraw()
 		}, 240)
 	}

@@ -4,9 +4,11 @@ import {mlsMessageDecoder} from "ts-mls"
 import {wireformats} from "ts-mls"
 import {type APActor} from "../model/ap-actor"
 import {type APKeyPackage} from "../model/ap-keypackage"
+import {ContactFromDocument, type Contact} from "../model/contact"
 import {loadActivityStream} from "./network"
 import {rangeCollection} from "./network"
 import {base64ToUint8Array} from "./utils"
+import {Document} from "../ap/document"
 
 export class Directory {
 	#actorID: string // ID of the local actor
@@ -82,5 +84,10 @@ export class Directory {
 		}
 
 		return response.headers.get("Location") || ""
+	}
+
+	async getContact(id: string): Promise<Contact> {
+		const response = await new Document().fromURL(id)
+		return ContactFromDocument(response)
 	}
 }

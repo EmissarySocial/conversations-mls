@@ -25,12 +25,16 @@ export async function loadActivityStream(url: string): Promise<any> {
 
 // Async generator that fetches an ActivityPub collection and yields each item one by one.
 // Automatically handles pagination by following 'first' and 'next' links.
-export async function* rangeCollection<T>(url: string): AsyncGenerator<T> {
+export async function* rangeCollection<T>(url: string, after?: string): AsyncGenerator<T> {
 	//
 	console.log("rangeCollection: fetching collection from URL:", url)
 	// Exit if if the URL is empty
 	if (url == "") {
 		return
+	}
+
+	if (after != undefined) {
+		url = url + "?after=" + encodeURIComponent(after)
 	}
 
 	// Fetch the collection object

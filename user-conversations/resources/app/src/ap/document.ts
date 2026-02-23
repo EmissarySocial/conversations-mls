@@ -15,7 +15,9 @@ export class Document {
 
 	// fromURL retrieves a JSON document from the specified URL and parses it into the Document struct
 	async fromURL(url: string): Promise<Document> {
-		const response = await fetch(url)
+		const response = await fetch(url, {
+			headers: {Accept: "application/activity+json"},
+		})
 		this.fromJSON(await response.text())
 		return this
 	}
@@ -52,6 +54,10 @@ export class Document {
 		return property.Name(this.#value)
 	}
 
+	icon(): string {
+		return property.Icon(this.#value)
+	}
+
 	summary(): string {
 		return property.Summary(this.#value)
 	}
@@ -70,5 +76,9 @@ export class Document {
 
 	mlsKeyPackages(): string {
 		return property.MlsKeyPackages(this.#value)
+	}
+
+	preferredUsername(): string {
+		return property.PreferredUsername(this.#value)
 	}
 }

@@ -3,16 +3,17 @@ import m from "mithril"
 import stream from "mithril/stream"
 import {type ClientConfig, type KeyPackage, type Welcome} from "ts-mls"
 import {MLS} from "./service/mls"
-import type {Config} from "./model/config"
-import {MLSFactory} from "./service/mls-factory"
+import {type Config, NewConfig} from "./model/config"
 import {type APActor} from "./model/ap-actor"
-import {NewConfig} from "./model/config"
+import {type Contact, NewContact} from "./model/contact"
+import {type Message} from "./model/message"
+import {type Group} from "./model/group"
+
+import {MLSFactory} from "./service/mls-factory"
 import type {Delivery} from "./service/delivery"
 import type {Directory} from "./service/directory"
 import type {Database} from "./service/database"
 import type {Receiver} from "./service/receiver"
-import type {Message} from "./model/message"
-import {type Group} from "./model/group"
 
 export class Controller {
 	#actor: APActor
@@ -25,7 +26,11 @@ export class Controller {
 	clientConfig: ClientConfig
 	selectedGroupId: string
 	groups: stream<Group[]>
+	group: stream<Group>
 	messages: stream<Message[]>
+	contacts: stream<Map<string, Contact>>
+	pageView: string
+	modalView: string
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
@@ -44,7 +49,12 @@ export class Controller {
 		this.clientConfig = clientConfig
 		this.selectedGroupId = ""
 		this.groups = stream([] as Group[])
+		this.group = stream({} as Group)
 		this.messages = stream([] as Message[])
+		this.contacts = stream(new Map<string, Contact>())
+
+		this.pageView = ""
+		this.modalView = ""
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
@@ -87,10 +97,11 @@ export class Controller {
 		)
 
 		// Wire UX redraws into database updates
-		this.#database.onchange(() => {
+		this.#database.onchange(async () => {
 			console.log("got onchange callback")
-			this.loadGroups()
-			this.loadMessages()
+			await this.loadGroups()
+			await this.loadMessages()
+			await this.loadContacts()
 		})
 	}
 
@@ -129,6 +140,14 @@ export class Controller {
 	}
 
 	//////////////////////////////////////////
+	// Getters
+	//////////////////////////////////////////
+
+	actorId() {
+		return this.#actor.id
+	}
+
+	//////////////////////////////////////////
 	// Conversations (Plaintext)
 	//////////////////////////////////////////
 
@@ -154,6 +173,43 @@ export class Controller {
 			headers: {"Content-Type": "application/activity+json"},
 			body: JSON.stringify(activity),
 		})
+	}
+
+	//////////////////////////////////////////
+	// Contacts
+	//////////////////////////////////////////
+
+	async loadContacts() {
+		//
+
+		// Retrieve each contact in the selected group.
+		console.log(`getContacts: Loading contacts for IDs:`, this.group())
+		const promises = this.group().members.map(async (id) => this.loadContact(id))
+		const contacts = await Promise.all(promises)
+
+		// Return contacs in a Map, not an array
+		const result = new Map<string, Contact>()
+		for (const contact of contacts) {
+			if (contact == undefined) {
+				continue
+			}
+			result.set(contact.id, contact)
+		}
+
+		this.contacts = stream(result)
+		m.redraw()
+	}
+
+	async loadContact(id: string): Promise<Contact | undefined> {
+		// Try to get the contact from the database first
+		var result = await this.#database.getContact(id)
+		if (result !== undefined) {
+			console.log("found in database", id, result)
+			return result
+		}
+
+		// Otherwise, load from the directory
+		return await this.#directory.getContact(id)
 	}
 
 	//////////////////////////////////////////
@@ -200,16 +256,17 @@ export class Controller {
 		}
 
 		// Fall through means we have 1+ groups
-		// If we don't have a group selected already, then "select" the first group
-		if (this.selectedGroupId == "") {
-			this.selectedGroupId = groups[0]!.id
-		}
-
 		// Set the groups and messages streams accordingly
 		this.groups(groups)
-		this.loadMessages()
 
-		console.log(groups)
+		// If we don't have a group selected already, then "select" the first group
+		if (this.selectedGroupId == "") {
+			this.selectGroup(groups[0]!.id)
+		}
+	}
+
+	async loadGroup(groupId: string): Promise<Group> {
+		return await this.#database.loadGroup(groupId)
 	}
 
 	// selectGroup updates the "selectedGroupId" and reloads messages for that group
@@ -217,12 +274,28 @@ export class Controller {
 		//
 		// If this group is already selected, then do nothing
 		if (groupId == this.selectedGroupId) {
+			this.page_messages()
 			return
 		}
 
-		// Update the selected group and reload messages
+		// Clear current controller data
+		this.group({} as Group)
+		this.contacts = stream(new Map<string, Contact>())
+		this.messages = stream([] as Message[])
+
+		// Find the group with the specified ID
+		const group = this.groups().find((group) => group.id == groupId)
+
+		if (group == undefined) {
+			return
+		}
+
+		// Update the selected group, and reload related records
 		this.selectedGroupId = groupId
+		this.group(group)
 		this.loadMessages()
+		this.loadContacts()
+		this.page_messages()
 	}
 
 	// saveGroup saves the specified group to the database and reloads groups
@@ -272,5 +345,36 @@ export class Controller {
 
 		// Reload messages to refresh the UX
 		this.loadMessages()
+	}
+
+	//////////////////////////////////////////
+	// Pages
+	//////////////////////////////////////////
+
+	page_groups() {
+		this.pageView = "GROUPS"
+		m.redraw()
+	}
+
+	page_messages() {
+		this.pageView = "MESSAGES"
+		m.redraw()
+	}
+
+	page_settings() {
+		this.pageView = "SETTINGS"
+		m.redraw()
+	}
+
+	//////////////////////////////////////////
+	// Modal Dialogs
+	//////////////////////////////////////////
+
+	modal_close() {
+		this.modalView = ""
+	}
+
+	modal_newConversation() {
+		this.modalView = "NEW-CONVERSATION"
 	}
 }

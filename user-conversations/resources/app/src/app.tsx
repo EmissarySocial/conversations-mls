@@ -28,7 +28,7 @@ async function startup() {
 	const actor = (await loadActivityStream(actorID)) as APActor
 
 	// Build dependencies
-	const indexedDB = await NewIndexedDB()
+	const indexedDB = await NewIndexedDB(actorID)
 	const database = new Database(indexedDB, defaultClientConfig)
 	const delivery = new Delivery(actor.id, ap.Outbox(actor))
 	const directory = new Directory(actor.id, ap.Outbox(actor))

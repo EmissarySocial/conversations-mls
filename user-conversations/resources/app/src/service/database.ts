@@ -2,10 +2,10 @@ import type {DBSchema, IDBPDatabase} from "idb/build/entry.js"
 import {openDB} from "idb"
 import {ConfigID, NewConfig, type Config} from "../model/config"
 import {type Group} from "../model/group"
+import {type Contact} from "../model/contact"
 import {type Message} from "../model/message"
 import type {DBKeyPackage} from "../model/db-keypackage"
 import {type ClientConfig} from "ts-mls/clientConfig.js"
-import {type ClientState} from "ts-mls"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
@@ -16,6 +16,15 @@ interface Schema extends DBSchema {
 			id: string
 		}
 	}
+
+	contact: {
+		key: string
+		value: Contact
+		indexes: {
+			id: string
+		}
+	}
+
 	group: {
 		key: string
 		value: Group
@@ -42,16 +51,25 @@ interface Schema extends DBSchema {
 	}
 }
 
-export async function NewIndexedDB(): Promise<IDBPDatabase<Schema>> {
-	return await openDB<Schema>("mls-database", undefined, {
+export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
+	return await openDB<Schema>("mls-" + actorId, 2, {
 		upgrade(db, oldVersion, newVersion) {
-			console.log("Upgrading database from version", oldVersion, "to:", newVersion)
-			db.createObjectStore("config", {keyPath: "id"})
-			db.createObjectStore("group", {keyPath: "id"})
-			db.createObjectStore("keyPackage", {keyPath: "id"})
+			// Version 1
+			if (oldVersion < 1) {
+				console.log("Upgrading database from version", oldVersion, "to:", newVersion)
+				db.createObjectStore("config", {keyPath: "id"})
+				db.createObjectStore("group", {keyPath: "id"})
+				db.createObjectStore("keyPackage", {keyPath: "id"})
 
-			const messages = db.createObjectStore("message", {keyPath: "id"})
-			messages.createIndex("group", "group", {unique: false})
+				const messages = db.createObjectStore("message", {keyPath: "id"})
+				messages.createIndex("group", "group", {unique: false})
+			}
+
+			// Version 2 - Add "contact" store
+			if (oldVersion < 2) {
+				console.log("Upgrading database from version", oldVersion, "to:", newVersion)
+				db.createObjectStore("contact", {keyPath: "id"})
+			}
 		},
 	})
 }
@@ -93,6 +111,25 @@ export class Database {
 		config.id = ConfigID
 		config.ready = true
 		await this.#db.put("config", config)
+	}
+
+	/////////////////////////////////////////////
+	// Contacts
+	/////////////////////////////////////////////
+
+	// allContacts returns all contacts from the database
+	async allContacts(): Promise<Contact[]> {
+		return await this.#db.getAll("contact")
+	}
+
+	// getContact retrieves a single contact from the database by ID
+	async getContact(id: string): Promise<Contact | undefined> {
+		return this.#db.get("contact", id)
+	}
+
+	// saveContact saves a single contact to the database
+	async saveContact(contact: Contact) {
+		await this.#db.put("contact", contact)
 	}
 
 	/////////////////////////////////////////////
