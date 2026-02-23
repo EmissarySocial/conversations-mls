@@ -27,7 +27,6 @@ export class Messages {
 		const messages = controller.messages()
 		const contacts = controller.contacts()
 		const contactsList = Array.from(contacts.values())
-		console.log(contacts)
 
 		// Display messages
 		return (
@@ -55,7 +54,6 @@ export class Messages {
 						{messages.map((message) => {
 							const contact = contacts.get(message.sender) || NewContact()
 							const isMe = message.sender == controller.actorId()
-							console.log(message, contact)
 							return (
 								<div class={`message ${isMe ? " me" : ""}`}>
 									<div class="bold">{isMe ? "" : contact.name}</div>

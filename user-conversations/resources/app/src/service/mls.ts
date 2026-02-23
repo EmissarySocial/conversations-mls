@@ -142,7 +142,6 @@ export class MLS {
 		}
 
 		// Save the Group
-		console.log("Saving group to database:", group)
 		await this.#database.saveGroup(group)
 
 		// Success
@@ -275,7 +274,6 @@ export class MLS {
 	onMessage = async (message: string) => {
 		const context = this.#context()
 
-		console.log("MLS service: received message: ", message)
 		const uintArray = base64ToUint8Array(message)
 		const content = decode(mlsMessageDecoder, uintArray)!
 
@@ -285,27 +283,22 @@ export class MLS {
 			return
 		}
 
-		console.log("Decoded message content:", content)
-
 		switch (content.wireformat) {
 			case wireformats.mls_group_info:
-				console.log("Received GroupInfo message")
 				return
 
 			case wireformats.mls_key_package:
-				console.log("Received KeyPackage message")
 				return
 
 			case wireformats.mls_private_message:
-				this.#onMessage_PrivateMessage(content)
+				await this.#onMessage_PrivateMessage(content)
 				return
 
 			case wireformats.mls_public_message:
-				console.log("Received PublicMessage")
 				return
 
 			case wireformats.mls_welcome:
-				this.#onMessage_Welcome(content)
+				await this.#onMessage_Welcome(content)
 				return
 
 			default:
@@ -316,7 +309,6 @@ export class MLS {
 
 	// onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
 	async #onMessage_Welcome(message: MlsWelcomeMessage) {
-		console.log("Received Welcome message")
 		//
 
 		// Join the new group
@@ -346,17 +338,12 @@ export class MLS {
 
 		// Save the group to the database
 		await this.#database.saveGroup(group)
-
-		// Check for any additional message in the queue (that might have arrived while we were processing the Welcome)
-		window.setTimeout(() => this.#receiver.poll, 100)
 	}
 
 	// onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
 	async #onMessage_PrivateMessage(mlsMessage: MlsPrivateMessage & MlsMessageProtocol) {
-		console.log("Received PrivateMessage:", mlsMessage)
-
 		// Load the group from the database so we can get the current client state for decryption
 		const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId)
 		const group = await this.#database.loadGroup(groupId)
@@ -367,8 +354,6 @@ export class MLS {
 			message: mlsMessage,
 		})
 
-		console.log("Processed result: ", decodedMessage)
-
 		// Update the group state in the database
 		decodedMessage.consumed.forEach(zeroOutUint8Array)
 		group.clientState = decodedMessage.newState
@@ -376,16 +361,13 @@ export class MLS {
 		await this.#database.saveGroup(group)
 
 		if (decodedMessage.kind != "applicationMessage") {
-			console.log("Received non-application message.  Not sure what to do with these yet.")
 			return
 		}
 
 		// Parse the plaintext message
 		const plaintext = new TextDecoder().decode(decodedMessage.message)
-		console.log("Decrypted message plaintext:", plaintext)
 
 		const activity = JSON.parse(plaintext)
-		console.log("Parsed activity:", activity)
 
 		// Create a new message record in the database for this incoming message
 		const message = {
@@ -395,7 +377,6 @@ export class MLS {
 			plaintext: activity.content,
 			createDate: Date.now(),
 		}
-		console.log("Saving message to database: ", message)
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)

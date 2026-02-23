@@ -27,11 +27,8 @@ export class Directory {
 			const actor = (await loadActivityStream(actorID)) as APActor
 			const rangeKeyPackages = rangeCollection<APKeyPackage>(actor["mls:keyPackages"])
 
-			console.log(`getKeyPackages: Loading KeyPackages for actor: ${actorID}`)
-
 			for await (const item of rangeKeyPackages) {
 				const contentBytes = base64ToUint8Array(item.content)
-				console.log("getKeyPackages: Parsed KeyPackage:", item.content, contentBytes)
 
 				const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
 
@@ -49,7 +46,6 @@ export class Directory {
 			}
 		}
 
-		console.log("getKeyPackages: Available KeyPackages:", result)
 		return result
 	}
 

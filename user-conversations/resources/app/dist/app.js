@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m15, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m16, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m15;
+          if (params[key] == null) return m16;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m15, key, extra) {
-            if (key == null) return "\\" + m15;
+          function(m16, key, extra) {
+            if (key == null) return "\\" + m16;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request2 = require_request2();
       var router = require_route();
-      var m15 = function m16() {
+      var m16 = function m17() {
         return hyperscript.apply(this, arguments);
       };
-      m15.m = hyperscript;
-      m15.trust = hyperscript.trust;
-      m15.fragment = hyperscript.fragment;
-      m15.Fragment = "[";
-      m15.mount = mountRedraw.mount;
-      m15.route = router;
-      m15.render = require_render2();
-      m15.redraw = mountRedraw.redraw;
-      m15.request = request2.request;
-      m15.parseQueryString = require_parse();
-      m15.buildQueryString = require_build();
-      m15.parsePathname = require_parse2();
-      m15.buildPathname = require_build2();
-      m15.vnode = require_vnode();
-      m15.censor = require_censor();
-      m15.domFor = require_domFor();
-      module.exports = m15;
+      m16.m = hyperscript;
+      m16.trust = hyperscript.trust;
+      m16.fragment = hyperscript.fragment;
+      m16.Fragment = "[";
+      m16.mount = mountRedraw.mount;
+      m16.route = router;
+      m16.render = require_render2();
+      m16.redraw = mountRedraw.redraw;
+      m16.request = request2.request;
+      m16.parseQueryString = require_parse();
+      m16.buildQueryString = require_build();
+      m16.parsePathname = require_parse2();
+      m16.buildPathname = require_build2();
+      m16.vnode = require_vnode();
+      m16.censor = require_censor();
+      m16.domFor = require_domFor();
+      module.exports = m16;
     }
   });
 
@@ -2556,9 +2556,9 @@
     while (a !== _0n3) {
       const q = b / a;
       const r = b % a;
-      const m15 = x - u * q;
+      const m16 = x - u * q;
       const n = y - v * q;
-      b = a, a = r, x = u, y = v, u = m15, v = n;
+      b = a, a = r, x = u, y = v, u = m16, v = n;
     }
     const gcd = b;
     if (gcd !== _1n3)
@@ -3789,13 +3789,13 @@
       k: "number",
       hash: "function"
     });
-    const { p, k, m: m15, hash, expand, DST } = options;
+    const { p, k, m: m16, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes2(msg);
     asafenumber(count);
     const log2p = p.toString(2).length;
     const L = Math.ceil((log2p + k) / 8);
-    const len_in_bytes = count * m15 * L;
+    const len_in_bytes = count * m16 * L;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -3808,9 +3808,9 @@
     }
     const u = new Array(count);
     for (let i = 0; i < count; i++) {
-      const e = new Array(m15);
-      for (let j = 0; j < m15; j++) {
-        const elm_offset = L * (j + i * m15);
+      const e = new Array(m16);
+      for (let j = 0; j < m16; j++) {
+        const elm_offset = L * (j + i * m16);
         const tv = prb.subarray(elm_offset, elm_offset + L);
         e[j] = mod2(os2ip(tv), p);
       }
@@ -4172,8 +4172,8 @@
       evaluate: (secretKey, input) => evaluate(ctxVOPRF, secretKey, input)
     };
     const poprf = (info) => {
-      const m15 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T = Point.BASE.multiply(m15);
+      const m16 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T = Point.BASE.multiply(m16);
       return {
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -4197,7 +4197,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn3.fromBytes(secretKey);
-          const t = Fn3.add(skS, m15);
+          const t = Fn3.add(skS, m16);
           const invT = Fn3.inv(t);
           const blindedPoints = blinded.map(Point.fromBytes);
           const evalPoints = blindedPoints.map((i) => i.multiply(invT));
@@ -4228,7 +4228,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t = Fn3.add(skS, m15);
+          const t = Fn3.add(skS, m16);
           const invT = Fn3.inv(t);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -4475,8 +4475,8 @@
         constructor(ep) {
           super(ep);
         }
-        static fromAffine(ap) {
-          return new __RistrettoPoint(ed25519_Point.fromAffine(ap));
+        static fromAffine(ap2) {
+          return new __RistrettoPoint(ed25519_Point.fromAffine(ap2));
         }
         assertSame(other) {
           if (!(other instanceof __RistrettoPoint))
@@ -5054,8 +5054,8 @@
         constructor(ep) {
           super(ep);
         }
-        static fromAffine(ap) {
-          return new __DecafPoint(ed448_Point.fromAffine(ap));
+        static fromAffine(ap2) {
+          return new __DecafPoint(ed448_Point.fromAffine(ap2));
         }
         assertSame(other) {
           if (!(other instanceof __DecafPoint))
@@ -6039,7 +6039,7 @@
         seedArgs.push(abytes2(e, void 0, "extraEntropy"));
       }
       const seed = concatBytes(...seedArgs);
-      const m15 = h1int;
+      const m16 = h1int;
       function k2sig(kBytes) {
         const k = bits2int(kBytes);
         if (!Fn3.isValidNot0(k))
@@ -6049,7 +6049,7 @@
         const r = Fn3.create(q.x);
         if (r === _0n9)
           return;
-        const s = Fn3.create(ik * Fn3.create(m15 + r * d));
+        const s = Fn3.create(ik * Fn3.create(m16 + r * d));
         if (s === _0n9)
           return;
         let recovery = (q.x === r ? 0 : 2) | Number(q.y & _1n10);
@@ -6125,8 +6125,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m15 = "") {
-          super(m15);
+        constructor(m16 = "") {
+          super(m16);
         }
       };
       DER = {
@@ -7421,7 +7421,7 @@
   });
 
   // src/app.tsx
-  var import_mithril23 = __toESM(require_mithril(), 1);
+  var import_mithril24 = __toESM(require_mithril(), 1);
 
   // node_modules/ts-mls/dist/src/util/constantTimeCompare.js
   function constantTimeEqual(a, b) {
@@ -11187,11 +11187,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m15) => [m15.applicationData, m15.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m16) => [m16.applicationData, m16.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m15) => [m15.proposal, m15.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m16) => [m16.proposal, m16.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m15) => [m15.commit, m15.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m16) => [m16.commit, m16.auth]), config)(msg);
       }
     };
   }
@@ -15153,7 +15153,6 @@
     return await openDB("mls-" + actorId, 2, {
       upgrade(db, oldVersion, newVersion) {
         if (oldVersion < 1) {
-          console.log("Upgrading database from version", oldVersion, "to:", newVersion);
           db.createObjectStore("config", { keyPath: "id" });
           db.createObjectStore("group", { keyPath: "id" });
           db.createObjectStore("keyPackage", { keyPath: "id" });
@@ -15161,7 +15160,6 @@
           messages.createIndex("group", "group", { unique: false });
         }
         if (oldVersion < 2) {
-          console.log("Upgrading database from version", oldVersion, "to:", newVersion);
           db.createObjectStore("contact", { keyPath: "id" });
         }
       }
@@ -15341,7 +15339,6 @@
       const contentBytes = encode(encoder, message);
       const contentBase64 = bytesToBase64(contentBytes);
       const decodedMessage = decode(mlsMessageDecoder, contentBytes);
-      console.log("Decoded message:", decodedMessage);
       const activity = {
         "@context": this.#context,
         type: "Create",
@@ -15374,9 +15371,7 @@
       version: protocolVersions.mls10
     });
     const keyPackageAsBase64 = bytesToBase64(keyPackageMessage);
-    console.log("Created KeyPackage message as base64:", keyPackageAsBase64);
     const decodedMessage = decode(mlsMessageDecoder, base64ToBytes(keyPackageAsBase64));
-    console.log("Decoded KeyPackage message:", decodedMessage);
     return {
       id: "",
       // This will be appened by the server
@@ -15391,25 +15386,24 @@
   }
 
   // src/service/network.ts
-  async function loadActivityStream(url) {
-    const headers = {
+  async function loadActivityStream(url, options = {}) {
+    options["headers"] = {
       Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     };
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, options);
     if (!response.ok) {
       throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
     }
     return await response.json();
   }
-  async function* rangeCollection(url, after) {
-    console.log("rangeCollection: fetching collection from URL:", url);
+  async function* rangeCollection(url, after = "", options = {}) {
     if (url == "") {
       return;
     }
-    if (after != void 0) {
+    if (after != "") {
       url = url + "?after=" + encodeURIComponent(after);
     }
-    const collection = await loadActivityStream(url);
+    const collection = await loadActivityStream(url, options);
     if (collection.items || collection.orderedItems) {
       for await (const item of rangeCollectionPage(collection)) {
         yield item;
@@ -15418,7 +15412,7 @@
     }
     var pageUrl = collection.first || collection.next;
     while (pageUrl) {
-      const page = await loadActivityStream(pageUrl);
+      const page = await loadActivityStream(pageUrl, options);
       for await (const item of rangeCollectionPage(page)) {
         yield item;
       }
@@ -15581,10 +15575,8 @@
       for (const actorID of actorIDs) {
         const actor = await loadActivityStream(actorID);
         const rangeKeyPackages = rangeCollection(actor["mls:keyPackages"]);
-        console.log(`getKeyPackages: Loading KeyPackages for actor: ${actorID}`);
         for await (const item of rangeKeyPackages) {
           const contentBytes = base64ToUint8Array(item.content);
-          console.log("getKeyPackages: Parsed KeyPackage:", item.content, contentBytes);
           const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
           if (decodedKeyPackage == void 0) {
             console.warn("getKeyPackages: Failed to decode KeyPackage for item:", item);
@@ -15597,7 +15589,6 @@
           result.push(decodedKeyPackage.keyPackage);
         }
       }
-      console.log("getKeyPackages: Available KeyPackages:", result);
       return result;
     }
     // createKeyPackage publishes a new KeyPackage to the User's outbox.
@@ -15646,44 +15637,59 @@
     // EventSource for listening to server-sent events (SSE)
     #handler;
     // list of registered message handlers
+    #polling;
+    // Pseudo-lock to prevent simultaneous polls
+    #pollAgain;
+    // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+    // constructor initializes the Receiver with the actor's ID and messages URL
     constructor(actorId, messagesUrl) {
       this.#actorId = actorId;
       this.#messagesUrl = messagesUrl;
       this.#lastUrl = "";
       this.#handler = async function(message) {
-        console.log("Received message:", message);
       };
+      this.#polling = false;
+      this.#pollAgain = false;
     }
     // registerHandler adds a new MessageHandler to the list of handlers that will be called
     registerHandler(handler) {
       this.#handler = handler;
     }
     // start begins polling for new messages and processing them with the registered handlers
-    // TODO: If the collection contains an SSE channel, then also start an SSE listener
     async start() {
-      console.log("starting receiver for actor:", this.#actorId);
+      this.poll();
       const document2 = await new Document().fromURL(this.#messagesUrl);
       const sseEndpoint = document2.eventStream();
       if (sseEndpoint != "") {
         this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
         this.#eventSource.onmessage = (event) => {
-          console.log("GOT IT!!", event);
           this.poll();
         };
-        return;
       }
-      this.poll();
     }
     // poll retrieves new messages from the mls:messages collection and calls the
     // onMessage callback for each new message
     async poll() {
-      const generator = rangeCollection(this.#messagesUrl, this.#lastUrl);
+      if (this.#polling) {
+        this.#pollAgain = true;
+        return;
+      }
+      this.#polling = true;
+      const lastUrl = localStorage.getItem("lastUrl") || "";
+      const generator = rangeCollection(this.#messagesUrl, lastUrl, { credentials: "include" });
       for await (const message of generator) {
-        const document2 = new Document(message);
-        console.log("Receiver: Received message:", message);
-        const content = Content(message);
-        await this.#handler(content);
-        this.#lastUrl = document2.id();
+        try {
+          const document2 = new Document(message);
+          localStorage.setItem("lastUrl", document2.id());
+          await this.#handler(document2.content());
+        } catch (error) {
+          console.error("Receiver.poll: Error processing message:", error);
+        }
+      }
+      this.#polling = false;
+      if (this.#pollAgain) {
+        this.#pollAgain = false;
+        this.poll();
       }
     }
   };
@@ -15699,29 +15705,24 @@
       // use arrow function to preserve "this" context when passing as a callback
       this.onMessage = async (message) => {
         const context = this.#context();
-        console.log("MLS service: received message: ", message);
         const uintArray = base64ToUint8Array(message);
         const content = decode(mlsMessageDecoder, uintArray);
         if (content == void 0) {
           console.error("Unable to decode MLS message", message);
           return;
         }
-        console.log("Decoded message content:", content);
         switch (content.wireformat) {
           case wireformats.mls_group_info:
-            console.log("Received GroupInfo message");
             return;
           case wireformats.mls_key_package:
-            console.log("Received KeyPackage message");
             return;
           case wireformats.mls_private_message:
-            this.#onMessage_PrivateMessage(content);
+            await this.#onMessage_PrivateMessage(content);
             return;
           case wireformats.mls_public_message:
-            console.log("Received PublicMessage");
             return;
           case wireformats.mls_welcome:
-            this.#onMessage_Welcome(content);
+            await this.#onMessage_Welcome(content);
             return;
           default:
             console.error("Unknown MLS message type:");
@@ -15777,7 +15778,6 @@
         updateDate: Date.now(),
         readDate: Date.now()
       };
-      console.log("Saving group to database:", group);
       await this.#database.saveGroup(group);
       return group;
     }
@@ -15858,7 +15858,6 @@
     }
     // onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
     async #onMessage_Welcome(message) {
-      console.log("Received Welcome message");
       const clientState = await joinGroup({
         context: this.#context(),
         welcome: message.welcome,
@@ -15878,13 +15877,11 @@
       };
       group.members = await this.getGroupMembers(group);
       await this.#database.saveGroup(group);
-      window.setTimeout(() => this.#receiver.poll, 100);
     }
     // onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
     // ActivityStreams messages.
     async #onMessage_PrivateMessage(mlsMessage) {
-      console.log("Received PrivateMessage:", mlsMessage);
       const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId);
       const group = await this.#database.loadGroup(groupId);
       const decodedMessage = await processMessage({
@@ -15892,19 +15889,15 @@
         state: group.clientState,
         message: mlsMessage
       });
-      console.log("Processed result: ", decodedMessage);
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
       group.updateDate = Date.now();
       await this.#database.saveGroup(group);
       if (decodedMessage.kind != "applicationMessage") {
-        console.log("Received non-application message.  Not sure what to do with these yet.");
         return;
       }
       const plaintext = new TextDecoder().decode(decodedMessage.message);
-      console.log("Decrypted message plaintext:", plaintext);
       const activity = JSON.parse(plaintext);
-      console.log("Parsed activity:", activity);
       const message = {
         id: activity.id,
         group: groupId,
@@ -15912,7 +15905,6 @@
         plaintext: activity.content,
         createDate: Date.now()
       };
-      console.log("Saving message to database: ", message);
       await this.#database.saveMessage(message);
       group.lastMessage = activity.content.slice(0, 100);
       await this.#database.saveGroup(group);
@@ -16019,7 +16011,6 @@
         this.config.clientName
       );
       this.#database.onchange(async () => {
-        console.log("got onchange callback");
         await this.loadGroups();
         await this.loadMessages();
         await this.loadContacts();
@@ -16077,7 +16068,6 @@
     // Contacts
     //////////////////////////////////////////
     async loadContacts() {
-      console.log(`getContacts: Loading contacts for IDs:`, this.group());
       const promises = this.group().members.map(async (id) => this.loadContact(id));
       const contacts = await Promise.all(promises);
       const result = /* @__PURE__ */ new Map();
@@ -16093,7 +16083,6 @@
     async loadContact(id) {
       var result = await this.#database.getContact(id);
       if (result !== void 0) {
-        console.log("found in database", id, result);
         return result;
       }
       return await this.#directory.getContact(id);
@@ -16124,7 +16113,7 @@
         return;
       }
       this.groups(groups);
-      if (this.selectedGroupId == "") {
+      if (groups.find((group) => group.id == this.selectedGroupId) == void 0) {
         this.selectGroup(groups[0].id);
       }
     }
@@ -16210,9 +16199,9 @@
   };
 
   // src/view/main.tsx
-  var import_mithril21 = __toESM(require_mithril(), 1);
-  var import_stream4 = __toESM(require_stream2(), 1);
   var import_mithril22 = __toESM(require_mithril(), 1);
+  var import_stream4 = __toESM(require_stream2(), 1);
+  var import_mithril23 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
   var import_mithril5 = __toESM(require_mithril(), 1);
@@ -16430,9 +16419,9 @@
   };
 
   // src/view/index.tsx
-  var import_mithril19 = __toESM(require_mithril(), 1);
-  var import_stream3 = __toESM(require_stream2(), 1);
   var import_mithril20 = __toESM(require_mithril(), 1);
+  var import_stream3 = __toESM(require_stream2(), 1);
+  var import_mithril21 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
   var import_mithril8 = __toESM(require_mithril(), 1);
@@ -16791,11 +16780,9 @@
       const messages = controller2.messages();
       const contacts = controller2.contacts();
       const contactsList = Array.from(contacts.values());
-      console.log(contacts);
       return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, messages.map((message) => {
         const contact = contacts.get(message.sender) || NewContact();
         const isMe = message.sender == controller2.actorId();
-        console.log(message, contact);
         return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: `message ${isMe ? " me" : ""}` }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril13.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()));
       }))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril13.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))));
     }
@@ -16884,6 +16871,14 @@
     }
   };
 
+  // src/view/empty.tsx
+  var import_mithril19 = __toESM(require_mithril(), 1);
+  var Empty = class {
+    view(vnode) {
+      return /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, "Messages will appear here when you"), /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "Start a Conversation")));
+    }
+  };
+
   // src/view/index.tsx
   var Index = class {
     oninit(vnode) {
@@ -16892,16 +16887,18 @@
     view(vnode) {
       var page;
       switch (vnode.attrs.controller.pageView) {
-        case "MESSAGES":
-          page = /* @__PURE__ */ (0, import_mithril19.default)(Messages, { controller: vnode.attrs.controller });
-          break;
         case "SETTINGS":
-          page = /* @__PURE__ */ (0, import_mithril19.default)(Settings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group() });
+          page = /* @__PURE__ */ (0, import_mithril20.default)(Settings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group() });
           break;
         default:
-          page = /* @__PURE__ */ (0, import_mithril19.default)(Messages, { controller: vnode.attrs.controller });
+          const groups = vnode.attrs.controller.groups();
+          if (groups.length == 0) {
+            page = /* @__PURE__ */ (0, import_mithril20.default)(Empty, { controller: vnode.attrs.controller });
+          } else {
+            page = /* @__PURE__ */ (0, import_mithril20.default)(Messages, { controller: vnode.attrs.controller });
+          }
       }
-      return /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril19.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
+      return /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril20.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
     }
     viewGroups(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -16912,7 +16909,7 @@
         if (group.id == selectedGroupId) {
           cssClass += " selected";
         }
-        return /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
+        return /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril20.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
       });
     }
     // viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
@@ -16920,9 +16917,9 @@
       const modalView = vnode.attrs.controller.modalView;
       switch (modalView) {
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril19.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril20.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
         case "DEBUG":
-          return /* @__PURE__ */ (0, import_mithril19.default)(Debug, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril20.default)(Debug, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -16931,7 +16928,7 @@
       document.getElementById("modal")?.classList.remove("ready");
       window.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril19.default.redraw();
+        import_mithril20.default.redraw();
       }, 240);
     }
   };
@@ -16944,12 +16941,12 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       if (!controller2.config.ready) {
-        return /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "app-content" }, "Loading...");
+        return /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "app-content" }, "Loading...");
       }
       if (!controller2.config.welcome) {
-        return /* @__PURE__ */ (0, import_mithril21.default)(Welcome, { controller: controller2 });
+        return /* @__PURE__ */ (0, import_mithril22.default)(Welcome, { controller: controller2 });
       }
-      return /* @__PURE__ */ (0, import_mithril21.default)(Index, { controller: controller2 });
+      return /* @__PURE__ */ (0, import_mithril22.default)(Index, { controller: controller2 });
     }
   };
 
@@ -16968,7 +16965,7 @@
     const directory = new Directory(actor.id, Outbox(actor));
     const receiver = new Receiver(actor.id, MlsMessage(actor));
     controller = new Controller(actor, database, delivery, directory, receiver, defaultClientConfig);
-    import_mithril23.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril23.default)(Main, { controller }) });
+    import_mithril24.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril24.default)(Main, { controller }) });
   }
   startup();
 })();

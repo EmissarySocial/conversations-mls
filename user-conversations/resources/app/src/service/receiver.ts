@@ -21,13 +21,17 @@ export class Receiver {
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#handler: MessageHandler // list of registered message handlers
 
+	#polling: boolean // Pseudo-lock to prevent simultaneous polls
+	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+
+	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor(actorId: string, messagesUrl: string) {
 		this.#actorId = actorId
 		this.#messagesUrl = messagesUrl
 		this.#lastUrl = "" // TODO: This should persist to the database so we don't lose our place if the app restarts
-		this.#handler = async function (message: string) {
-			console.log("Received message:", message)
-		}
+		this.#handler = async function (message: string) {}
+		this.#polling = false
+		this.#pollAgain = false
 	}
 
 	// registerHandler adds a new MessageHandler to the list of handlers that will be called
@@ -36,9 +40,9 @@ export class Receiver {
 	}
 
 	// start begins polling for new messages and processing them with the registered handlers
-	// TODO: If the collection contains an SSE channel, then also start an SSE listener
 	async start() {
-		console.log("starting receiver for actor:", this.#actorId)
+		// Poll the server on start
+		this.poll()
 
 		// If possible, listen for server-sent-events (SSE) from the server
 		const document = await new Document().fromURL(this.#messagesUrl)
@@ -47,26 +51,47 @@ export class Receiver {
 		if (sseEndpoint != "") {
 			this.#eventSource = new EventSource(sseEndpoint, {withCredentials: true})
 			this.#eventSource.onmessage = (event) => {
-				console.log("GOT IT!!", event)
 				this.poll()
 			}
-			return
 		}
-
-		// Otherwise, fall back to polling
-		this.poll()
 	}
 
 	// poll retrieves new messages from the mls:messages collection and calls the
 	// onMessage callback for each new message
 	async poll() {
-		const generator = rangeCollection<APMLSMessage>(this.#messagesUrl, this.#lastUrl)
+		//
+		// If already polling, set #pollAgain flag and exit.
+		if (this.#polling) {
+			this.#pollAgain = true
+			return
+		}
+
+		// Set the "lock" to prevent simultaneous polls
+		this.#polling = true
+
+		const lastUrl = localStorage.getItem("lastUrl") || ""
+
+		// Fetch NEW messages from the server
+		const generator = rangeCollection<APMLSMessage>(this.#messagesUrl, lastUrl, {credentials: "include"})
+
+		// Process each message sequentially
 		for await (const message of generator) {
-			const document = new Document(message)
-			console.log("Receiver: Received message:", message)
-			const content = ap.Content(message)
-			await this.#handler(content)
-			this.#lastUrl = document.id()
+			try {
+				const document = new Document(message)
+				localStorage.setItem("lastUrl", document.id())
+				await this.#handler(document.content())
+			} catch (error) {
+				console.error("Receiver.poll: Error processing message:", error)
+			}
+		}
+
+		// Release the "lock"
+		this.#polling = false
+
+		// Re-run poll if we received any messages while we were polling
+		if (this.#pollAgain) {
+			this.#pollAgain = false
+			this.poll()
 		}
 	}
 }

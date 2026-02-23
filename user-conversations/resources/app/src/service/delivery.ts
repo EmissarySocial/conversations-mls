@@ -94,7 +94,6 @@ export class Delivery {
 		const contentBase64 = bytesToBase64(contentBytes)
 
 		const decodedMessage = decode(mlsMessageDecoder, contentBytes)
-		console.log("Decoded message:", decodedMessage)
 
 		// Create an ActivityPub activity for the private message
 		const activity = {

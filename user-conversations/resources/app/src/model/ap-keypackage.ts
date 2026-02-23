@@ -35,9 +35,7 @@ export function NewAPKeyPackage(generator: string, actorID: string, publicPackag
 
 	// TEST: Verify that we can decode the message we just encoded
 	const keyPackageAsBase64 = bytesToBase64(keyPackageMessage)
-	console.log("Created KeyPackage message as base64:", keyPackageAsBase64)
 	const decodedMessage = decode(mlsMessageDecoder, base64ToBytes(keyPackageAsBase64))
-	console.log("Decoded KeyPackage message:", decodedMessage)
 
 	return {
 		id: "", // This will be appened by the server

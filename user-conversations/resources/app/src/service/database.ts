@@ -54,9 +54,9 @@ interface Schema extends DBSchema {
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
 	return await openDB<Schema>("mls-" + actorId, 2, {
 		upgrade(db, oldVersion, newVersion) {
+			//
 			// Version 1
 			if (oldVersion < 1) {
-				console.log("Upgrading database from version", oldVersion, "to:", newVersion)
 				db.createObjectStore("config", {keyPath: "id"})
 				db.createObjectStore("group", {keyPath: "id"})
 				db.createObjectStore("keyPackage", {keyPath: "id"})
@@ -67,7 +67,6 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 
 			// Version 2 - Add "contact" store
 			if (oldVersion < 2) {
-				console.log("Upgrading database from version", oldVersion, "to:", newVersion)
 				db.createObjectStore("contact", {keyPath: "id"})
 			}
 		},

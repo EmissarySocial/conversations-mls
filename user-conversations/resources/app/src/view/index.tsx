@@ -9,6 +9,7 @@ import {Debug} from "./modal-debug"
 import {Messages} from "./messages"
 import {Groups} from "./groups"
 import {Settings} from "./settings"
+import {Empty} from "./empty"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -30,16 +31,17 @@ export class Index {
 		var page: JSX.Element
 
 		switch (vnode.attrs.controller.pageView) {
-			case "MESSAGES":
-				page = <Messages controller={vnode.attrs.controller} />
-				break
-
 			case "SETTINGS":
 				page = <Settings controller={vnode.attrs.controller} group={vnode.attrs.controller.group()} />
 				break
 
 			default:
-				page = <Messages controller={vnode.attrs.controller} />
+				const groups = vnode.attrs.controller.groups()
+				if (groups.length == 0) {
+					page = <Empty controller={vnode.attrs.controller} />
+				} else {
+					page = <Messages controller={vnode.attrs.controller} />
+				}
 		}
 
 		//

@@ -98,7 +98,6 @@ export class Controller {
 
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {
-			console.log("got onchange callback")
 			await this.loadGroups()
 			await this.loadMessages()
 			await this.loadContacts()
@@ -183,7 +182,6 @@ export class Controller {
 		//
 
 		// Retrieve each contact in the selected group.
-		console.log(`getContacts: Loading contacts for IDs:`, this.group())
 		const promises = this.group().members.map(async (id) => this.loadContact(id))
 		const contacts = await Promise.all(promises)
 
@@ -204,7 +202,6 @@ export class Controller {
 		// Try to get the contact from the database first
 		var result = await this.#database.getContact(id)
 		if (result !== undefined) {
-			console.log("found in database", id, result)
 			return result
 		}
 
@@ -259,8 +256,8 @@ export class Controller {
 		// Set the groups and messages streams accordingly
 		this.groups(groups)
 
-		// If we don't have a group selected already, then "select" the first group
-		if (this.selectedGroupId == "") {
+		// If the selected group ID doesn't exist in the new list of groups, then select the first group in the list.
+		if (groups.find((group) => group.id == this.selectedGroupId) == undefined) {
 			this.selectGroup(groups[0]!.id)
 		}
 	}

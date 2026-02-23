@@ -3,16 +3,16 @@ import {type APCollection} from "../model/ap-collection"
 // This file provides tools for retrieving documents from the network
 
 // loadActivityStream fetches a single ActivityStream/JSON-LD document from the network.
-export async function loadActivityStream(url: string): Promise<any> {
+export async function loadActivityStream(url: string, options: RequestInit = {}): Promise<any> {
 	//
 
 	// Standard request headers for ActivityPub
-	const headers = {
+	options["headers"] = {
 		Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"',
 	}
 
 	// Load the document from the network
-	const response = await fetch(url, {headers: headers})
+	const response = await fetch(url, options)
 
 	// Annotate errors
 	if (!response.ok) {
@@ -25,20 +25,23 @@ export async function loadActivityStream(url: string): Promise<any> {
 
 // Async generator that fetches an ActivityPub collection and yields each item one by one.
 // Automatically handles pagination by following 'first' and 'next' links.
-export async function* rangeCollection<T>(url: string, after?: string): AsyncGenerator<T> {
+export async function* rangeCollection<T>(
+	url: string,
+	after: string = "",
+	options: RequestInit = {},
+): AsyncGenerator<T> {
 	//
-	console.log("rangeCollection: fetching collection from URL:", url)
 	// Exit if if the URL is empty
 	if (url == "") {
 		return
 	}
 
-	if (after != undefined) {
+	if (after != "") {
 		url = url + "?after=" + encodeURIComponent(after)
 	}
 
 	// Fetch the collection object
-	const collection = (await loadActivityStream(url)) as APCollection<T>
+	const collection = (await loadActivityStream(url, options)) as APCollection<T>
 
 	// If items are embedded directly in the page, then just return those
 	if (collection.items || collection.orderedItems) {
@@ -52,7 +55,7 @@ export async function* rangeCollection<T>(url: string, after?: string): AsyncGen
 	var pageUrl = collection.first || collection.next
 
 	while (pageUrl) {
-		const page = (await loadActivityStream(pageUrl)) as APCollection<T>
+		const page = (await loadActivityStream(pageUrl, options)) as APCollection<T>
 		for await (const item of rangeCollectionPage<T>(page)) {
 			yield item
 		}
