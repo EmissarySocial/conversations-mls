@@ -1,10 +1,14 @@
 import {type APCollection} from "../model/ap-collection"
+import {Document} from "../ap/document"
 
 // This file provides tools for retrieving documents from the network
 
 // loadActivityStream fetches a single ActivityStream/JSON-LD document from the network.
 export async function loadActivityStream(url: string, options: RequestInit = {}): Promise<any> {
 	//
+
+	// Load the document from the network
+	const result = await new Document().fromURL(url)
 
 	// Standard request headers for ActivityPub
 	options["headers"] = {

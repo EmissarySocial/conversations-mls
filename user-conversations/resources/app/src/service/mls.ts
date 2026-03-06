@@ -30,7 +30,7 @@ import {type ClientConfig} from "ts-mls"
 import {type MlsFramedMessage} from "ts-mls"
 
 // Application Types
-import {type APActor} from "../model/ap-actor"
+import {type Document} from "../ap/document"
 import {type Group} from "../model/group"
 import {type APKeyPackage} from "../model/ap-keypackage"
 import {type Message} from "../model/message"
@@ -81,30 +81,24 @@ export class MLS {
 	#database: IDatabase
 	#delivery: IDelivery
 	#directory: IDirectory
-	#receiver: IReceiver
-	#clientConfig: ClientConfig
 	#cipherSuite: CiphersuiteImpl
 	#publicKeyPackage: KeyPackage
 	#privateKeyPackage: PrivateKeyPackage
-	#actor: APActor
+	#actor: Document
 
 	constructor(
 		database: IDatabase,
 		delivery: IDelivery,
 		directory: IDirectory,
-		receiver: IReceiver,
-		clientConfig: ClientConfig,
 
 		cipherSuite: CiphersuiteImpl,
 		publicKeyPackage: KeyPackage,
 		privateKeyPackage: PrivateKeyPackage,
-		actor: APActor,
+		actor: Document,
 	) {
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
-		this.#receiver = receiver
-		this.#clientConfig = clientConfig
 
 		this.#actor = actor
 		this.#cipherSuite = cipherSuite
@@ -245,7 +239,7 @@ export class MLS {
 		applicationMessage.consumed.forEach(zeroOutUint8Array)
 
 		// Filter out "me" from the recipients list (we don't need to send the message to ourselves)
-		const recipients = group.members.filter((member) => member !== this.#actor.id)
+		const recipients = group.members.filter((member) => member !== this.#actor.id())
 
 		// Send the message via the Delivery service
 		this.#delivery.sendFramedMessage(recipients, applicationMessage.message)
@@ -260,7 +254,7 @@ export class MLS {
 		const dbMessage: Message = {
 			id: messageId,
 			group: groupId,
-			sender: this.#actor.id,
+			sender: this.#actor.id(),
 			plaintext: plaintext,
 			createDate: Date.now(),
 		}

@@ -11,6 +11,7 @@ import type {Database} from "./database"
 import type {Delivery} from "./delivery"
 import type {Directory} from "./directory"
 import type {Receiver} from "./receiver"
+import {Document} from "../ap/document"
 import {MLS} from "./mls"
 import {NewAPKeyPackage} from "../model/ap-keypackage"
 
@@ -21,8 +22,7 @@ export async function MLSFactory(
 	delivery: Delivery,
 	directory: Directory,
 	receiver: Receiver,
-	actor: APActor,
-	clientConfig: ClientConfig,
+	actor: Document,
 	clientName: string,
 ): Promise<MLS> {
 	//
@@ -40,7 +40,7 @@ export async function MLSFactory(
 		// Create a credential for this User
 		const credential: Credential = {
 			credentialType: defaultCredentialTypes.basic,
-			identity: new TextEncoder().encode(actor.id),
+			identity: new TextEncoder().encode(actor.id()),
 		}
 
 		// Generate initial key package for this user
@@ -50,7 +50,7 @@ export async function MLSFactory(
 		})
 
 		// Publish the KeyPackage to the server
-		const apKeyPackage = NewAPKeyPackage(clientName, actor.id, keyPackageResult.publicPackage)
+		const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage)
 		const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage)
 
 		if (apKeyPackageURL == "") {
@@ -75,8 +75,6 @@ export async function MLSFactory(
 		database,
 		delivery,
 		directory,
-		receiver,
-		clientConfig,
 		cipherSuite,
 		dbKeyPackage.publicKeyPackage,
 		dbKeyPackage.privateKeyPackage,

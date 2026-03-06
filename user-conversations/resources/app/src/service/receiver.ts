@@ -1,9 +1,6 @@
-import type {MlsPrivateMessage} from "ts-mls"
 import {rangeCollection} from "./network"
 import type {APMLSMessage} from "../model/ap-mlsmessage"
-import * as ap from "../ap/properties"
 import {Document} from "../ap/document"
-import type {Config} from "../model/config"
 
 // MessageHandler is a function that takes an MlsPrivateMessage and returns void.
 // The Receiver service will call all registered MessageHandlers when a new message
@@ -77,7 +74,8 @@ export class Receiver {
 		// Process each message sequentially
 		for await (const message of generator) {
 			try {
-				const document = new Document(message)
+				const activity = new Document(message)
+				const document = await activity.object()
 				localStorage.setItem("lastUrl", document.id())
 				await this.#handler(document.content())
 			} catch (error) {

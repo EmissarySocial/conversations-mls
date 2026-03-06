@@ -1268,10 +1268,10 @@
     "node_modules/mithril/querystring/parse.js"(exports, module) {
       "use strict";
       var decodeURIComponentSafe = require_decodeURIComponentSafe();
-      module.exports = function(string2) {
-        if (string2 === "" || string2 == null) return {};
-        if (string2.charAt(0) === "?") string2 = string2.slice(1);
-        var entries = string2.split("&"), counters = {}, data = {};
+      module.exports = function(string) {
+        if (string === "" || string == null) return {};
+        if (string.charAt(0) === "?") string = string.slice(1);
+        var entries = string.split("&"), counters = {}, data = {};
         for (var i = 0; i < entries.length; i++) {
           var entry = entries[i].split("=");
           var key = decodeURIComponentSafe(entry[0]);
@@ -7422,6 +7422,138 @@
 
   // src/app.tsx
   var import_mithril24 = __toESM(require_mithril(), 1);
+
+  // src/ap/document.ts
+  var Document = class _Document {
+    #value;
+    constructor(value) {
+      this.#value = {};
+      if (value != void 0) {
+        this.#value = value;
+      }
+    }
+    ///////////////////////////////////
+    // Conversion methods
+    // fromURL retrieves a JSON document from the specified URL and parses it into the Document struct
+    async fromURL(url, options = {}) {
+      options["headers"] = {
+        Accept: "application/activity+json"
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+      }
+      this.fromJSON(await response.text());
+      return this;
+    }
+    // fromJSON parses a JSON string into the Document struct
+    fromJSON(json) {
+      this.#value = JSON.parse(json);
+      return this;
+    }
+    toObject() {
+      return this.#value;
+    }
+    ///////////////////////////////////
+    // Property accessors
+    actor() {
+      return this.asString(this.#value, "actor", "ap:actor", "https://www.w3.org/ns/activitystreams#actor");
+    }
+    content() {
+      return this.asString(this.#value, "content", "ap:content", "https://www.w3.org/ns/activitystreams#content");
+    }
+    eventStream() {
+      return this.asString(
+        this.#value,
+        "eventStream",
+        "sse:eventStream",
+        "https://purl.archive.org/socialweb/sse#eventStream"
+      );
+    }
+    icon() {
+      return this.asString(this.#value, "icon", "ap:icon", "https://www.w3.org/ns/activitystreams#icon");
+    }
+    id() {
+      return this.asString(this.#value, "id", "ap:id", "https://www.w3.org/ns/activitystreams#id");
+    }
+    name() {
+      return this.asString(this.#value, "name", "ap:name", "https://www.w3.org/ns/activitystreams#name");
+    }
+    async object() {
+      return await this.asObject(this.#value, "object", "ap:object", "https://www.w3.org/ns/activitystreams#object");
+    }
+    outbox() {
+      return this.asString(this.#value, "outbox", "ap:outbox", "https://www.w3.org/ns/activitystreams#outbox");
+    }
+    preferredUsername() {
+      return this.asString(
+        this.#value,
+        "preferredUsername",
+        "as:preferredUsername",
+        "https://www.w3.org/ns/activitypub#preferredUsername"
+      );
+    }
+    summary() {
+      return this.asString(this.#value, "summary", "ap:summary", "https://www.w3.org/ns/activitystreams#summary");
+    }
+    type() {
+      return this.asString(this.#value, "type", "ap:type", "https://www.w3.org/ns/activitystreams#type");
+    }
+    ///////////////////////////////////
+    // MLS-specific properties
+    mlsMessages() {
+      return this.asString(this.#value, "messages", "mls:messages", "https://purl.archive.org/socialweb/mls#messages");
+    }
+    mlsKeyPackages() {
+      return this.asString(
+        this.#value,
+        "keyPackages",
+        "mls:keyPackages",
+        "https://purl.archive.org/socialweb/mls#keyPackages"
+      );
+    }
+    ///////////////////////////////////
+    // Emissary-specific properties
+    emissaryMessages() {
+      return this.asString(this.#value, "emissary:messages");
+    }
+    ///////////////////////////////////
+    // Property conversion methods
+    asString(value, ...names) {
+      for (const name of names) {
+        if (value[name] != void 0) {
+          const result = value[name];
+          switch (typeof result) {
+            case "string":
+              return result;
+            case "object":
+              if (typeof result.id === "string") {
+                return result.id;
+              }
+              if (typeof result.href === "string") {
+                return result.href;
+              }
+              break;
+          }
+        }
+      }
+      return "";
+    }
+    async asObject(value, ...names) {
+      for (const name of names) {
+        if (value[name] != void 0) {
+          const result = value[name];
+          switch (typeof result) {
+            case "object":
+              return new _Document(result);
+            case "string":
+              return await new _Document().fromURL(result);
+          }
+        }
+      }
+      return new _Document();
+    }
+  };
 
   // node_modules/ts-mls/dist/src/util/constantTimeCompare.js
   function constantTimeEqual(a, b) {
@@ -15387,6 +15519,7 @@
 
   // src/service/network.ts
   async function loadActivityStream(url, options = {}) {
+    const result = await new Document().fromURL(url);
     options["headers"] = {
       Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
     };
@@ -15439,125 +15572,6 @@
     }
     return bytes;
   }
-
-  // src/ap/properties.ts
-  function Id(value) {
-    return string(value, "id", "ap:id", "https://www.w3.org/ns/activitystreams#id");
-  }
-  function Actor(value) {
-    return string(value, "actor", "ap:actor", "https://www.w3.org/ns/activitystreams#actor");
-  }
-  function Outbox(value) {
-    return string(value, "outbox", "ap:outbox", "https://www.w3.org/ns/activitystreams#outbox");
-  }
-  function Type(value) {
-    return string(value, "type", "ap:type", "https://www.w3.org/ns/activitystreams#type");
-  }
-  function Name(value) {
-    return string(value, "name", "ap:name", "https://www.w3.org/ns/activitystreams#name");
-  }
-  function Summary(value) {
-    return string(value, "summary", "ap:summary", "https://www.w3.org/ns/activitystreams#summary");
-  }
-  function Icon(value) {
-    return string(value, "icon", "ap:icon", "https://www.w3.org/ns/activitystreams#icon");
-  }
-  function Content(value) {
-    return string(value, "content", "ap:content", "https://www.w3.org/ns/activitystreams#content");
-  }
-  function MlsMessage(value) {
-    return string(value, "messages", "mls:messages", "https://purl.archive.org/socialweb/mls#messages");
-  }
-  function MlsKeyPackages(value) {
-    return string(value, "keyPackages", "mls:keyPackages", "https://purl.archive.org/socialweb/mls#keyPackages");
-  }
-  function EventStream(value) {
-    return string(value, "eventStream", "sse:eventStream", "https://purl.archive.org/socialweb/sse#eventStream");
-  }
-  function PreferredUsername(value) {
-    return string(
-      value,
-      "preferredUsername",
-      "ap:preferredUsername",
-      "https://www.w3.org/ns/activitypub#preferredUsername"
-    );
-  }
-  function string(value, ...names) {
-    for (const name of names) {
-      if (value[name] != void 0) {
-        const result = value[name];
-        if (typeof result === "string") {
-          return result;
-        }
-      }
-    }
-    return "";
-  }
-
-  // src/ap/document.ts
-  var Document = class {
-    #value;
-    constructor(value) {
-      this.#value = {};
-      if (value != void 0) {
-        this.#value = value;
-      }
-    }
-    //// Conversion methods
-    // fromURL retrieves a JSON document from the specified URL and parses it into the Document struct
-    async fromURL(url) {
-      const response = await fetch(url, {
-        headers: { Accept: "application/activity+json" }
-      });
-      this.fromJSON(await response.text());
-      return this;
-    }
-    // fromJSON parses a JSON string into the Document struct
-    fromJSON(json) {
-      this.#value = JSON.parse(json);
-      return this;
-    }
-    toObject() {
-      return this.#value;
-    }
-    //// Property accessors
-    id() {
-      return Id(this.#value);
-    }
-    actor() {
-      return Actor(this.#value);
-    }
-    outbox() {
-      return Outbox(this.#value);
-    }
-    type() {
-      return Type(this.#value);
-    }
-    name() {
-      return Name(this.#value);
-    }
-    icon() {
-      return Icon(this.#value);
-    }
-    summary() {
-      return Summary(this.#value);
-    }
-    content() {
-      return Content(this.#value);
-    }
-    eventStream() {
-      return EventStream(this.#value);
-    }
-    mlsMessage() {
-      return MlsMessage(this.#value);
-    }
-    mlsKeyPackages() {
-      return MlsKeyPackages(this.#value);
-    }
-    preferredUsername() {
-      return PreferredUsername(this.#value);
-    }
-  };
 
   // src/service/directory.ts
   var Directory = class {
@@ -15679,7 +15693,8 @@
       const generator = rangeCollection(this.#messagesUrl, lastUrl, { credentials: "include" });
       for await (const message of generator) {
         try {
-          const document2 = new Document(message);
+          const activity = new Document(message);
+          const document2 = await activity.object();
           localStorage.setItem("lastUrl", document2.id());
           await this.#handler(document2.content());
         } catch (error) {
@@ -15700,7 +15715,7 @@
 
   // src/service/mls.ts
   var MLS = class {
-    constructor(database, delivery, directory, receiver, clientConfig, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
+    constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
       /// Receiving Messages
       // use arrow function to preserve "this" context when passing as a callback
       this.onMessage = async (message) => {
@@ -15740,8 +15755,6 @@
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
-      this.#receiver = receiver;
-      this.#clientConfig = clientConfig;
       this.#actor = actor;
       this.#cipherSuite = cipherSuite;
       this.#publicKeyPackage = publicKeyPackage;
@@ -15750,8 +15763,6 @@
     #database;
     #delivery;
     #directory;
-    #receiver;
-    #clientConfig;
     #cipherSuite;
     #publicKeyPackage;
     #privateKeyPackage;
@@ -15841,7 +15852,7 @@
         message: messageBytes
       });
       applicationMessage.consumed.forEach(zeroOutUint8Array);
-      const recipients = group.members.filter((member) => member !== this.#actor.id);
+      const recipients = group.members.filter((member) => member !== this.#actor.id());
       this.#delivery.sendFramedMessage(recipients, applicationMessage.message);
       group.clientState = applicationMessage.newState;
       group.updateDate = Date.now();
@@ -15850,7 +15861,7 @@
       const dbMessage = {
         id: messageId,
         group: groupId,
-        sender: this.#actor.id,
+        sender: this.#actor.id(),
         plaintext,
         createDate: Date.now()
       };
@@ -15913,20 +15924,20 @@
   };
 
   // src/service/mls-factory.ts
-  async function MLSFactory(database, delivery, directory, receiver, actor, clientConfig, clientName) {
+  async function MLSFactory(database, delivery, directory, receiver, actor, clientName) {
     const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
     const cipherSuite = await nobleCryptoProvider.getCiphersuiteImpl(getCiphersuiteFromName(cipherSuiteName));
     var dbKeyPackage = await database.loadKeyPackage();
     if (dbKeyPackage == void 0) {
       const credential = {
         credentialType: defaultCredentialTypes.basic,
-        identity: new TextEncoder().encode(actor.id)
+        identity: new TextEncoder().encode(actor.id())
       };
       var keyPackageResult = await generateKeyPackage({
         credential,
         cipherSuite
       });
-      const apKeyPackage = NewAPKeyPackage(clientName, actor.id, keyPackageResult.publicPackage);
+      const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage);
       const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage);
       if (apKeyPackageURL == "") {
         throw new Error("Failed to create KeyPackage on server");
@@ -15945,8 +15956,6 @@
       database,
       delivery,
       directory,
-      receiver,
-      clientConfig,
       cipherSuite,
       dbKeyPackage.publicKeyPackage,
       dbKeyPackage.privateKeyPackage,
@@ -15965,13 +15974,15 @@
     #directory;
     #receiver;
     #mls;
+    #allowPlaintextMessages;
     // constructor initializes the Controller with its dependencies
-    constructor(actor, database, delivery, directory, receiver, clientConfig) {
+    constructor(actor, database, delivery, directory, receiver, allowPlaintextMessages, clientConfig) {
       this.#actor = actor;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
       this.#receiver = receiver;
+      this.#allowPlaintextMessages = allowPlaintextMessages;
       this.clientConfig = clientConfig;
       this.selectedGroupId = "";
       this.groups = (0, import_stream.default)([]);
@@ -16007,7 +16018,6 @@
         this.#directory,
         this.#receiver,
         this.#actor,
-        this.clientConfig,
         this.config.clientName
       );
       this.#database.onchange(async () => {
@@ -16038,27 +16048,25 @@
     }
     //////////////////////////////////////////
     // Getters
-    //////////////////////////////////////////
     actorId() {
-      return this.#actor.id;
+      return this.#actor.id();
     }
     //////////////////////////////////////////
     // Conversations (Plaintext)
-    //////////////////////////////////////////
     // newConversation creates a new plaintext ActivityPub conversation
     // with the specified recipients
     async newConversation(to, message) {
       const activity = {
         "@context": "https://www.w3.org/ns/activitystreams",
         type: "Create",
-        actor: this.#actor.id,
+        actor: this.#actor.id(),
         to,
         object: {
           type: "Note",
           content: message
         }
       };
-      const response = await fetch(this.#actor.outbox, {
+      const response = await fetch(this.#actor.outbox(), {
         method: "POST",
         headers: { "Content-Type": "application/activity+json" },
         body: JSON.stringify(activity)
@@ -16395,14 +16403,14 @@
   // src/view/welcome.tsx
   var Welcome = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center width-100%" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "text-xl bold flex-grow" }, /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-chat-fill" }), " Conversations"), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "nowrap" })), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "card padding max-width-640 margin-top" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-bottom-lg" }, "Conversations collect all of your personal messages into a single place, including", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "direct messages"), " (which can be read by server admins) and", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "private messages"), ". (which are encrypted and cannot be read by others).", " ", /* @__PURE__ */ (0, import_mithril5.default)("a", { href: "https://emissary.dev/conversations", target: "_blank", class: "nowrap" }, "Learn More About Conversations ", /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-box-arrow-up-right" }))), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { class: "primary", onclick: () => vnode.state.modal = "SETUP-KEYS" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to participate in encrypted conversations.")), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { onclick: () => this.skipEncryptionKeys(vnode) }, "Continue Without Keys\xA0"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to send/receive unencrypted messages only."))), /* @__PURE__ */ (0, import_mithril5.default)(
+      return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center width-100%" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "text-xl bold flex-grow" }, /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-chat-fill" }), " Conversations"), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "nowrap" })), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "card padding max-width-640 margin-top" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-bottom-lg" }, "Conversations collect all of your personal messages into a single place, including", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "direct messages"), " (which can be read by server admins) and", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "private messages"), ". (which are encrypted and cannot be read by others).", " ", /* @__PURE__ */ (0, import_mithril5.default)("a", { href: "https://emissary.dev/conversations", target: "_blank", class: "nowrap" }, "Learn More About Conversations ", /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-box-arrow-up-right" }))), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { class: "primary", onclick: () => vnode.state.modal = "SETUP-KEYS" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to participate in encrypted conversations.")), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { onclick: () => this.skipEncryptionKeys(vnode) }, "Continue Without Keys\xA0"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to send/receive unencrypted messages only."))), /* @__PURE__ */ (0, import_mithril5.default)(
         CreateKeys,
         {
           controller: vnode.attrs.controller,
           modal: vnode.state.modal,
           close: () => this.closeModal(vnode)
         }
-      ));
+      )));
     }
     async skipEncryptionKeys(vnode) {
       await vnode.attrs.controller.skipEncryptionKeys();
@@ -16958,14 +16966,37 @@
     if (root2 == void 0) {
       throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`);
     }
-    const actor = await loadActivityStream(actorID);
+    const actor = await new Document().fromURL(actorID);
+    const [messagesCollection, allowPlaintextMessages] = findMessagesCollection(actor);
+    if (messagesCollection == "") {
+      throw new Error(`Actor does not support MLS API.`);
+    }
     const indexedDB2 = await NewIndexedDB(actorID);
     const database = new Database(indexedDB2, defaultClientConfig);
-    const delivery = new Delivery(actor.id, Outbox(actor));
-    const directory = new Directory(actor.id, Outbox(actor));
-    const receiver = new Receiver(actor.id, MlsMessage(actor));
-    controller = new Controller(actor, database, delivery, directory, receiver, defaultClientConfig);
+    const delivery = new Delivery(actor.id(), actor.outbox());
+    const directory = new Directory(actor.id(), actor.outbox());
+    const receiver = new Receiver(actor.id(), messagesCollection);
+    controller = new Controller(
+      actor,
+      database,
+      delivery,
+      directory,
+      receiver,
+      allowPlaintextMessages,
+      defaultClientConfig
+    );
     import_mithril24.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril24.default)(Main, { controller }) });
+  }
+  function findMessagesCollection(actor) {
+    const emissaryMessages = actor.emissaryMessages();
+    if (emissaryMessages != "") {
+      return [emissaryMessages, true];
+    }
+    const mlsMessages = actor.mlsMessages();
+    if (mlsMessages != "") {
+      return [mlsMessages, true];
+    }
+    return ["", false];
   }
   startup();
 })();

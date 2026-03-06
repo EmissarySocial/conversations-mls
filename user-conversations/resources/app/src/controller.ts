@@ -3,6 +3,7 @@ import m from "mithril"
 import stream from "mithril/stream"
 import {type ClientConfig, type KeyPackage, type Welcome} from "ts-mls"
 import {MLS} from "./service/mls"
+import {Document} from "./ap/document"
 import {type Config, NewConfig} from "./model/config"
 import {type APActor} from "./model/ap-actor"
 import {type Contact, NewContact} from "./model/contact"
@@ -16,12 +17,14 @@ import type {Database} from "./service/database"
 import type {Receiver} from "./service/receiver"
 
 export class Controller {
-	#actor: APActor
+	#actor: Document
 	#database: Database
 	#delivery: Delivery
 	#directory: Directory
 	#receiver: Receiver
 	#mls?: MLS
+	#allowPlaintextMessages: boolean
+
 	config: Config
 	clientConfig: ClientConfig
 	selectedGroupId: string
@@ -34,11 +37,12 @@ export class Controller {
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
-		actor: APActor,
+		actor: Document,
 		database: Database,
 		delivery: Delivery,
 		directory: Directory,
 		receiver: Receiver,
+		allowPlaintextMessages: boolean,
 		clientConfig: ClientConfig,
 	) {
 		this.#actor = actor
@@ -46,6 +50,8 @@ export class Controller {
 		this.#delivery = delivery
 		this.#directory = directory
 		this.#receiver = receiver
+		this.#allowPlaintextMessages = allowPlaintextMessages
+
 		this.clientConfig = clientConfig
 		this.selectedGroupId = ""
 		this.groups = stream([] as Group[])
@@ -92,7 +98,6 @@ export class Controller {
 			this.#directory,
 			this.#receiver,
 			this.#actor,
-			this.clientConfig,
 			this.config.clientName,
 		)
 
@@ -140,15 +145,13 @@ export class Controller {
 
 	//////////////////////////////////////////
 	// Getters
-	//////////////////////////////////////////
 
-	actorId() {
-		return this.#actor.id
+	actorId(): string {
+		return this.#actor.id()
 	}
 
 	//////////////////////////////////////////
 	// Conversations (Plaintext)
-	//////////////////////////////////////////
 
 	// newConversation creates a new plaintext ActivityPub conversation
 	// with the specified recipients
@@ -158,7 +161,7 @@ export class Controller {
 		const activity = {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: "Create",
-			actor: this.#actor.id,
+			actor: this.#actor.id(),
 			to: to,
 			object: {
 				type: "Note",
@@ -167,7 +170,7 @@ export class Controller {
 		}
 
 		// POST to the actor's outbox
-		const response = await fetch(this.#actor.outbox, {
+		const response = await fetch(this.#actor.outbox(), {
 			method: "POST",
 			headers: {"Content-Type": "application/activity+json"},
 			body: JSON.stringify(activity),
