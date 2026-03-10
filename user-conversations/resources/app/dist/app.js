@@ -15371,6 +15371,7 @@
     return {
       id: "",
       name: "",
+      tags: [],
       lastMessage: "",
       members: [],
       createDate: 0,
@@ -16073,6 +16074,7 @@
           id: groupID,
           members: [],
           name: "New Group",
+          tags: [],
           lastMessage: "",
           clientState,
           createDate: Date.now(),
@@ -16217,6 +16219,7 @@
         id: groupId,
         members: [],
         name: "Received Group.",
+        tags: [],
         lastMessage: "",
         clientState,
         createDate: Date.now(),
@@ -17237,6 +17240,12 @@
     //
     oninit(vnode) {
       vnode.state.name = vnode.attrs.group.name;
+      if (vnode.attrs.group.tags == void 0) {
+        vnode.attrs.group.tags = [];
+      }
+      vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ");
+      console.log(vnode.state.tags);
+      console.log(vnode.attrs.group.tags);
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -17248,7 +17257,15 @@
           value: vnode.state.name,
           oninput: (event) => this.setName(vnode, event)
         }
-      )))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")), /* @__PURE__ */ (0, import_mithril17.default)("div", null, /* @__PURE__ */ (0, import_mithril17.default)(
+      ))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupTags" }, "Tags"), /* @__PURE__ */ (0, import_mithril17.default)(
+        "input",
+        {
+          id: "idGroupTags",
+          type: "text",
+          value: vnode.state.tags,
+          oninput: (event) => this.setTags(vnode, event)
+        }
+      ), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-xs text-gray" }, "#hashtags (separated by spaces) help you organize conversations.")))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")), /* @__PURE__ */ (0, import_mithril17.default)("div", null, /* @__PURE__ */ (0, import_mithril17.default)(
         "span",
         {
           onclick: () => {
@@ -17263,10 +17280,21 @@
       const target = event.target;
       vnode.state.name = target.value;
     }
+    setTags(vnode, event) {
+      const target = event.target;
+      vnode.state.tags = target.value;
+    }
     async onsubmit(event, vnode) {
       event.preventDefault();
       event.stopPropagation();
       vnode.attrs.group.name = vnode.state.name;
+      vnode.state.tags = vnode.state.tags.replaceAll("#", "");
+      vnode.state.tags = vnode.state.tags.trim();
+      if (vnode.state.tags.trim() == "") {
+        vnode.attrs.group.tags = [];
+      } else {
+        vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim());
+      }
       await vnode.attrs.controller.saveGroup(vnode.attrs.group);
       return this.close(vnode);
     }

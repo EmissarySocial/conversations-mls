@@ -4,6 +4,7 @@ import {type ClientState} from "ts-mls"
 export type Group = {
 	id: string
 	name: string
+	tags: string[]
 	lastMessage: string
 	members: string[]
 	createDate: number
@@ -20,6 +21,7 @@ export function NewGroup(): Group {
 	return {
 		id: "",
 		name: "",
+		tags: [],
 		lastMessage: "",
 		members: [],
 		createDate: 0,

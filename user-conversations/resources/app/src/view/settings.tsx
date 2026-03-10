@@ -12,6 +12,7 @@ interface SettingsArgs {
 
 interface SettingsState {
 	name: string
+	tags: string
 }
 
 export class Settings {
@@ -19,6 +20,13 @@ export class Settings {
 
 	oninit(vnode: SettingsVnode) {
 		vnode.state.name = vnode.attrs.group.name
+
+		if (vnode.attrs.group.tags == undefined) {
+			vnode.attrs.group.tags = []
+		}
+		vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ")
+		console.log(vnode.state.tags)
+		console.log(vnode.attrs.group.tags)
 	}
 
 	view(vnode: SettingsVnode) {
@@ -46,6 +54,18 @@ export class Settings {
 										value={vnode.state.name}
 										oninput={(event: Event) => this.setName(vnode, event)}
 									/>
+								</div>
+							</div>
+							<div class="layout-elements">
+								<div class="layout-element">
+									<label for="idGroupTags">Tags</label>
+									<input
+										id="idGroupTags"
+										type="text"
+										value={vnode.state.tags}
+										oninput={(event: Event) => this.setTags(vnode, event)}
+									/>
+									<div class="text-xs text-gray">#hashtags (separated by spaces) help you organize conversations.</div>
 								</div>
 							</div>
 						</div>
@@ -76,6 +96,11 @@ export class Settings {
 		vnode.state.name = target.value
 	}
 
+	setTags(vnode: SettingsVnode, event: Event) {
+		const target = event.target as HTMLInputElement
+		vnode.state.tags = target.value
+	}
+
 	async onsubmit(event: SubmitEvent, vnode: SettingsVnode) {
 		//
 		// Halt the form submission to prevent a page reload
@@ -84,6 +109,16 @@ export class Settings {
 
 		// Copy values from the form into the Group object
 		vnode.attrs.group.name = vnode.state.name
+
+		// Clean up tags input
+		vnode.state.tags = vnode.state.tags.replaceAll("#", "")
+		vnode.state.tags = vnode.state.tags.trim()
+
+		if (vnode.state.tags.trim() == "") {
+			vnode.attrs.group.tags = []
+		} else {
+			vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim())
+		}
 
 		// Save the Group to the database
 		await vnode.attrs.controller.saveGroup(vnode.attrs.group)
