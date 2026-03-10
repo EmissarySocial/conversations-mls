@@ -87,9 +87,7 @@ export class ActorSearch {
 										<div>
 											<div>
 												{actor.name} &nbsp;
-												{isSecure ? (
-													<i class="text-xs text-light-gray bi bi-lock-fill"></i>
-												) : null}
+												{isSecure ? <i class="text-xs text-light-gray bi bi-lock-fill"></i> : null}
 											</div>
 											<div class="text-xs text-light-gray">{actor.username}</div>
 										</div>
@@ -115,10 +113,7 @@ export class ActorSearch {
 				return
 
 			case "ArrowDown":
-				vnode.state.highlightedOption = Math.min(
-					vnode.state.highlightedOption + 1,
-					vnode.state.actors.length - 1,
-				)
+				vnode.state.highlightedOption = Math.min(vnode.state.highlightedOption + 1, vnode.state.actors.length - 1)
 				return
 
 			case "ArrowUp":

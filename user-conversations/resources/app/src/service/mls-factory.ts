@@ -3,15 +3,12 @@ import {getCiphersuiteFromName} from "ts-mls"
 import {generateKeyPackage} from "ts-mls"
 import {nobleCryptoProvider} from "ts-mls"
 import {type Credential} from "ts-mls"
-import {type CiphersuiteImpl} from "ts-mls"
-import {type ClientConfig} from "ts-mls"
 
-import type {APActor} from "../model/ap-actor"
 import type {Database} from "./database"
 import type {Delivery} from "./delivery"
 import type {Directory} from "./directory"
 import type {Receiver} from "./receiver"
-import {Document} from "../ap/document"
+import {Actor} from "../ap/actor"
 import {MLS} from "./mls"
 import {NewAPKeyPackage} from "../model/ap-keypackage"
 
@@ -22,7 +19,7 @@ export async function MLSFactory(
 	delivery: Delivery,
 	directory: Directory,
 	receiver: Receiver,
-	actor: Document,
+	actor: Actor,
 	clientName: string,
 ): Promise<MLS> {
 	//
@@ -80,9 +77,6 @@ export async function MLSFactory(
 		dbKeyPackage.privateKeyPackage,
 		actor,
 	)
-
-	// Wire the receiver into the MLS service so that incoming messages are processed
-	receiver.registerHandler(result.onMessage)
 
 	// Start the receiver
 	receiver.start()

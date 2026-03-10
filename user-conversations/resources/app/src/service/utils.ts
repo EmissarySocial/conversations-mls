@@ -27,6 +27,7 @@ export function stripTrailingNulls(tree: any[]): any[] {
 
 // base64ToUint8Array converts a base64-encoded string to a Uint8Array
 export function base64ToUint8Array(base64: string): Uint8Array {
+	console.log("base64ToUint8Array: Converting base64 string to Uint8Array", base64)
 	const binary_string = window.atob(base64)
 	const len = binary_string.length
 	const bytes = new Uint8Array(len)
@@ -34,4 +35,8 @@ export function base64ToUint8Array(base64: string): Uint8Array {
 		bytes[i] = binary_string.charCodeAt(i)
 	}
 	return bytes
+}
+
+export function newId(): string {
+	return "uri:uuid:" + crypto.randomUUID()
 }

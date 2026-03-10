@@ -41,13 +41,13 @@ export class CreateKeys {
 						</h1>
 
 						<div class="margin-vertical">
-							Private Keys are stored only on this device and never shared with anyone. Choose a password
-							to lock your private keys on this device.
+							Private Keys are stored only on this device and never shared with anyone. Choose a password to lock your
+							private keys on this device.
 						</div>
 
 						<div class="margin-vertical">
-							<b>BE CAREFUL!</b> If you lose this password, you will not be able to recover your private
-							message history, so please store your password in a safe place, such as a password manager.
+							<b>BE CAREFUL!</b> If you lose this password, you will not be able to recover your private message
+							history, so please store your password in a safe place, such as a password manager.
 						</div>
 
 						<div class="layout-elements">
@@ -62,8 +62,8 @@ export class CreateKeys {
 									value={vnode.state.password}
 									oninput={(event: Event) => this.setPassword(vnode, event)}></input>
 								<div class="text-sm text-gray">
-									Should be different from your account password (which is stored on your server). If
-									you lose this password, you will lose your encrypted message history.
+									Should be different from your account password (which is stored on your server). If you lose this
+									password, you will lose your encrypted message history.
 								</div>
 							</div>
 							<div class="layout-element">
@@ -74,9 +74,7 @@ export class CreateKeys {
 									name="passwordHint"
 									value={vnode.state.passwordHint}
 									oninput={(event: Event) => this.setPasswordHint(vnode, event)}></input>
-								<div class="text-sm text-gray">
-									(Optional) Helps you remember your password in case your forget it.
-								</div>
+								<div class="text-sm text-gray">(Optional) Helps you remember your password in case your forget it.</div>
 							</div>
 							<div class="layout-element">
 								<label for="clientName">Device Name</label>
@@ -130,7 +128,7 @@ export class CreateKeys {
 		await vnode.attrs.controller.createEncryptionKeys(
 			vnode.state.clientName,
 			vnode.state.password,
-			vnode.state.passwordHint
+			vnode.state.passwordHint,
 		)
 		vnode.attrs.close()
 	}

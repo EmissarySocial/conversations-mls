@@ -1,23 +1,25 @@
 // old imports
 import m from "mithril"
-import stream from "mithril/stream"
+
 import {type ClientConfig, type KeyPackage, type Welcome} from "ts-mls"
 import {MLS} from "./service/mls"
-import {Document} from "./ap/document"
+import {Actor} from "./ap/actor"
+import {Activity} from "./ap/activity"
 import {type Config, NewConfig} from "./model/config"
-import {type APActor} from "./model/ap-actor"
-import {type Contact, NewContact} from "./model/contact"
-import {type Message} from "./model/message"
-import {type Group} from "./model/group"
+import {type Contact} from "./model/contact"
+import {type Message, NewMessage} from "./model/message"
+import {type Group, groupIsEncrypted, NewGroup} from "./model/group"
 
 import {MLSFactory} from "./service/mls-factory"
 import type {Delivery} from "./service/delivery"
 import type {Directory} from "./service/directory"
 import type {Database} from "./service/database"
 import type {Receiver} from "./service/receiver"
+import * as vocab from "./ap/vocab"
+import {newId} from "./service/utils"
 
 export class Controller {
-	#actor: Document
+	#actor: Actor
 	#database: Database
 	#delivery: Delivery
 	#directory: Directory
@@ -27,17 +29,16 @@ export class Controller {
 
 	config: Config
 	clientConfig: ClientConfig
-	selectedGroupId: string
-	groups: stream<Group[]>
-	group: stream<Group>
-	messages: stream<Message[]>
-	contacts: stream<Map<string, Contact>>
+	groups: Group[]
+	group: Group
+	messages: Message[]
+	contacts: Map<string, Contact>
 	pageView: string
 	modalView: string
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
-		actor: Document,
+		actor: Actor,
 		database: Database,
 		delivery: Delivery,
 		directory: Directory,
@@ -45,25 +46,28 @@ export class Controller {
 		allowPlaintextMessages: boolean,
 		clientConfig: ClientConfig,
 	) {
+		// Dependencies
 		this.#actor = actor
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
 		this.#receiver = receiver
 		this.#allowPlaintextMessages = allowPlaintextMessages
-
 		this.clientConfig = clientConfig
-		this.selectedGroupId = ""
-		this.groups = stream([] as Group[])
-		this.group = stream({} as Group)
-		this.messages = stream([] as Message[])
-		this.contacts = stream(new Map<string, Contact>())
 
+		// Application State
+		this.groups = []
+		this.group = NewGroup()
+		this.messages = []
+		this.contacts = new Map<string, Contact>()
+
+		// UX state
 		this.pageView = ""
 		this.modalView = ""
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
+		this.#receiver.registerHandler(this.receiveActivity) // Connect onActivity handler
 		this.loadConfig()
 		this.loadGroups()
 	}
@@ -74,17 +78,17 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	async loadConfig() {
+	loadConfig = async () => {
 		this.config = await this.#database.loadConfig()
 
 		if (this.config.hasEncryptionKeys) {
-			this.startMLS()
+			this.#startMLS()
 		}
 		m.redraw()
 	}
 
 	// startMLS initializes the MLS service IF the configuration includes encryption keys
-	private async startMLS() {
+	#startMLS = async () => {
 		//
 		// Guarantee dependency
 		if (this.config.hasEncryptionKeys == false) {
@@ -111,7 +115,7 @@ export class Controller {
 
 	// createEncryptionKeys creates a new set of encryption keys
 	// for this user on this device
-	async createEncryptionKeys(clientName: string, password: string, passwordHint: string) {
+	createEncryptionKeys = async (clientName: string, password: string, passwordHint: string) => {
 		//
 		// Initialize the config
 		this.config.ready = true
@@ -125,7 +129,7 @@ export class Controller {
 		await this.#database.saveConfig(this.config)
 
 		// Start the MLS service
-		this.startMLS()
+		this.#startMLS()
 
 		// Redraw the UX
 		m.redraw()
@@ -133,7 +137,7 @@ export class Controller {
 
 	// skipEncryptionKeys is called when the user just wants to
 	// use "direct messages" and does not want to create encryption keys (yet)
-	async skipEncryptionKeys() {
+	skipEncryptionKeys = async () => {
 		//
 		// Initialize the config
 		this.config.welcome = true
@@ -145,17 +149,19 @@ export class Controller {
 
 	//////////////////////////////////////////
 	// Getters
+	//////////////////////////////////////////
 
-	actorId(): string {
+	actorId = (): string => {
 		return this.#actor.id()
 	}
 
 	//////////////////////////////////////////
 	// Conversations (Plaintext)
+	//////////////////////////////////////////
 
 	// newConversation creates a new plaintext ActivityPub conversation
 	// with the specified recipients
-	async newConversation(to: string[], message: string) {
+	newConversation = async (to: string[], message: string) => {
 		//
 		// Create an ActivityPub activity
 		const activity = {
@@ -181,11 +187,10 @@ export class Controller {
 	// Contacts
 	//////////////////////////////////////////
 
-	async loadContacts() {
+	loadContacts = async () => {
 		//
-
 		// Retrieve each contact in the selected group.
-		const promises = this.group().members.map(async (id) => this.loadContact(id))
+		const promises = this.group.members.map(async (actorId) => this.loadContact(actorId))
 		const contacts = await Promise.all(promises)
 
 		// Return contacs in a Map, not an array
@@ -197,19 +202,21 @@ export class Controller {
 			result.set(contact.id, contact)
 		}
 
-		this.contacts = stream(result)
+		this.contacts = result
 		m.redraw()
 	}
 
-	async loadContact(id: string): Promise<Contact | undefined> {
+	loadContact = async (actorId: string) => {
+		//
 		// Try to get the contact from the database first
-		var result = await this.#database.getContact(id)
+		var result = await this.#database.getContact(actorId)
+
 		if (result !== undefined) {
 			return result
 		}
 
 		// Otherwise, load from the directory
-		return await this.#directory.getContact(id)
+		return await this.#directory.getContact(actorId)
 	}
 
 	//////////////////////////////////////////
@@ -218,7 +225,7 @@ export class Controller {
 
 	// createGroup creates a new MLS-encrypted
 	// group message with the specified recipients
-	async createGroup(recipients: string[]): Promise<Group> {
+	createGroup = async (recipients: string[]) => {
 		//
 		// Guarantee dependency
 		if (this.#mls == undefined) {
@@ -226,86 +233,85 @@ export class Controller {
 		}
 
 		// Create a new group
-		const group = await this.#mls.createGroup()
+		var group = await this.#mls.createGroup()
 
 		// Add initial members to the group
-		await this.#mls.addGroupMembers(group.id, recipients)
+		this.group = await this.#mls.addGroupMembers(group, recipients)
 
-		// Update the selected group
-		this.selectedGroupId = group.id
+		// Save the group to the database
+		await this.#database.saveGroup(this.group)
 
 		// Reload groups and messages to refresh the UX
 		await this.loadGroups()
-
-		return group
 	}
 
 	// loadGroups retrieves all groups from the database and
 	// updates the "groups" and "messages" streams.
-	async loadGroups() {
+	loadGroups = async () => {
 		//
 		// load groups from the database
-		const groups = await this.#database.allGroups()
+		this.groups = await this.#database.allGroups()
 
-		// If there are no groups, then set all values to "empty" state
-		if (groups.length == 0) {
-			this.groups([])
-			this.messages([])
-			this.selectedGroupId = ""
-			return
-		}
-
-		// Fall through means we have 1+ groups
-		// Set the groups and messages streams accordingly
-		this.groups(groups)
-
-		// If the selected group ID doesn't exist in the new list of groups, then select the first group in the list.
-		if (groups.find((group) => group.id == this.selectedGroupId) == undefined) {
-			this.selectGroup(groups[0]!.id)
-		}
-	}
-
-	async loadGroup(groupId: string): Promise<Group> {
-		return await this.#database.loadGroup(groupId)
+		this.selectGroup(this.selectedGroupId())
 	}
 
 	// selectGroup updates the "selectedGroupId" and reloads messages for that group
-	selectGroup(groupId: string) {
+	selectGroup = (groupId: string) => {
 		//
-		// If this group is already selected, then do nothing
-		if (groupId == this.selectedGroupId) {
+
+		// If there are no groups, then clear values and exit.
+		if (this.groups.length == 0) {
+			this.group = NewGroup()
+			this.messages = []
+			this.contacts = new Map<string, Contact>()
+			return
+		}
+
+		// Find the group with the specified ID
+		const group = this.groups.find((group) => group.id == groupId)
+
+		// If the group can't be found, then clear values
+		if (group != undefined) {
+			// Update the selected group, and reload related records
+			this.group = group
+			this.loadMessages()
+			this.loadContacts()
 			this.page_messages()
 			return
 		}
 
-		// Clear current controller data
-		this.group({} as Group)
-		this.contacts = stream(new Map<string, Contact>())
-		this.messages = stream([] as Message[])
-
-		// Find the group with the specified ID
-		const group = this.groups().find((group) => group.id == groupId)
-
-		if (group == undefined) {
-			return
-		}
-
-		// Update the selected group, and reload related records
-		this.selectedGroupId = groupId
-		this.group(group)
+		// Fall through means we have at least one group, but
+		// the specified groupId wasn't found, so just select the first one.
+		this.group = this.groups[0]!
 		this.loadMessages()
 		this.loadContacts()
 		this.page_messages()
 	}
 
+	selectedGroupId = () => {
+		if (this.group != undefined) {
+			return this.group.id
+		}
+
+		return ""
+	}
+
 	// saveGroup saves the specified group to the database and reloads groups
-	async saveGroup(group: Group) {
+	saveGroup = async (group: Group) => {
+		//
+
+		// RULE: Truncate lastMessage to 100 characters for display purposes
+		group.lastMessage = group.lastMessage.slice(0, 100)
+
+		// Save the group to the database
 		await this.#database.saveGroup(group)
+
+		// Reload the group to refresh the UX
 		await this.loadGroups()
 	}
 
 	// deleteGroup deletes the specified group from the database
-	async deleteGroup(group: string) {
+	deleteGroup = async (group: string) => {
 		//
 		// Guarantee dependency
 		if (this.#database == undefined) {
@@ -322,59 +328,187 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
-	async loadMessages() {
-		const messages = await this.#database.allMessages(this.selectedGroupId)
-		this.messages(messages)
+	loadMessages = async () => {
+		this.messages = await this.#database.allMessages(this.selectedGroupId())
 		m.redraw()
 	}
 
 	// sendMessage sends a message to the specified group
-	async sendMessage(message: string) {
+	sendMessage = async (content: string) => {
 		//
 		// Guarantee dependencies
 		if (this.#mls == undefined) {
 			throw new Error("MLS service is not initialized")
 		}
 
-		if (this.selectedGroupId == "") {
+		if (this.group == undefined) {
 			throw new Error("No group selected")
 		}
 
-		// Send the message to the group
-		await this.#mls.sendGroupMessage(this.selectedGroupId, message)
+		// Update the group with the message content
+		this.group.lastMessage = content
+		await this.saveGroup(this.group)
 
-		// Reload messages to refresh the UX
-		this.loadMessages()
+		var activity = new Activity({
+			"@context": vocab.ContextActivityStreams,
+			id: newId(),
+			actor: this.actorId(),
+			type: vocab.ActivityTypeCreate,
+			to: this.group.members,
+			object: {
+				id: newId(),
+				attributedTo: this.actorId(),
+				type: vocab.ObjectTypeNote,
+				to: this.group.members,
+				context: this.selectedGroupId,
+				content: content,
+				published: new Date().toISOString(),
+			},
+		})
+
+		console.log("Created activity:", activity)
+
+		// Encrypt this message (if the group is encrypted)
+		if (groupIsEncrypted(this.group)) {
+			activity = await this.#mls.encodeActivity(this.group, activity)
+		}
+
+		// (asynchronously) Send the activity through the delivery service
+		this.#delivery.sendActivity(activity)
+
+		// Create a new Message record for the database
+		var message = NewMessage()
+		message.group = this.group.id
+		message.sender = this.#actor.id()
+		message.plaintext = content
+
+		// Save the message to the database, and reload to refresh the UX
+		await this.#database.saveMessage(message)
+		await this.loadMessages()
 	}
 
 	//////////////////////////////////////////
 	// Pages
 	//////////////////////////////////////////
 
-	page_groups() {
+	page_groups = () => {
 		this.pageView = "GROUPS"
 		m.redraw()
 	}
 
-	page_messages() {
+	page_messages = () => {
 		this.pageView = "MESSAGES"
 		m.redraw()
 	}
 
-	page_settings() {
+	page_settings = () => {
 		this.pageView = "SETTINGS"
 		m.redraw()
+	}
+
+	//////////////////////////////////////////
+	// Receiving Activities
+	//////////////////////////////////////////
+
+	receiveActivity = async (activity: Activity) => {
+		//
+
+		console.log("Received activity:", activity.toJSON())
+
+		// Retrieve the object from the activity. This should be embedded,
+		// but we can load from the network if needed.
+		var object = await activity.object()
+
+		// RULE: Activities must match the object that they contain
+		if (activity.actorId() != object.attributedToId()) {
+			console.log("Error processing activity:", activity)
+			throw new Error("Activity actor must match object actor")
+		}
+
+		// Decode MLS-encrypted messages
+		if (object.isMLSMessage()) {
+			//
+			// Guarantee dependency
+			if (this.#mls == undefined) {
+				throw new Error("MLS service is not initialized")
+			}
+
+			// Decode the message embedded in the object.content.
+			const decodedActivity = await this.#mls.decodeMessage(object.content())
+
+			// If the activity is null, then there's nothing more to do. Exit.
+			if (decodedActivity == null) {
+				console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)")
+				return
+			}
+
+			// RULE: guarantee that the actorIds match the encrypted content
+			if (decodedActivity.actorId() != activity.actorId()) {
+				throw new Error("Decrypted activity actor must match outer activity actor")
+			}
+
+			// Decode the object embedded in the activity.
+			const decodedObject = await decodedActivity.object()
+
+			if (decodedObject.attributedToId() != activity.actorId()) {
+				throw new Error("Decrypted activity actor must match object's attributedTo")
+			}
+
+			// Update activity and object to continue processing using the decoded values.
+			activity = decodedActivity
+			object = decodedObject
+
+			console.log("successfully decoded object:", object.toJSON())
+		}
+
+		switch (activity.type()) {
+			//
+			case vocab.ActivityTypeCreate:
+			// Update the group with the most recent message
+			// group.lastMessage = activity.content.slice(0, 100)
+			// await this.#database.saveGroup(group)
+			// intentional fall through (I know, but blame Javascript)
+
+			case vocab.ActivityTypeUpdate:
+				// Create a new message record in the database for this incoming message
+				const message = {
+					id: activity.id(),
+					group: object.context(),
+					sender: activity.actorId(),
+					plaintext: object.content(),
+					inReplyTo: object.inReplyToId(),
+					createDate: Date.now(),
+				}
+
+				// Save the message to the database
+				await this.#database.saveMessage(message)
+				return
+
+			case vocab.ActivityTypeDelete:
+				await this.#database.deleteMessage(object.id())
+				return
+
+			case vocab.ActivityTypeLike:
+				return
+
+			case vocab.ActivityTypeUndo:
+				return
+
+			default:
+				console.log("Received unrecognized activity:", activity)
+				return
+		}
 	}
 
 	//////////////////////////////////////////
 	// Modal Dialogs
 	//////////////////////////////////////////
 
-	modal_close() {
+	modal_close = () => {
 		this.modalView = ""
 	}
 
-	modal_newConversation() {
+	modal_newConversation = () => {
 		this.modalView = "NEW-CONVERSATION"
 	}
 }

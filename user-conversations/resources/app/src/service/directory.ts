@@ -2,13 +2,11 @@ import {type KeyPackage} from "ts-mls"
 import {decode} from "ts-mls"
 import {mlsMessageDecoder} from "ts-mls"
 import {wireformats} from "ts-mls"
-import {type APActor} from "../model/ap-actor"
 import {type APKeyPackage} from "../model/ap-keypackage"
-import {ContactFromDocument, type Contact} from "../model/contact"
-import {loadActivityStream} from "./network"
-import {rangeCollection} from "./network"
+import {ContactFromActor, type Contact} from "../model/contact"
+import {Collection, rangeDocuments} from "../ap/collection"
 import {base64ToUint8Array} from "./utils"
-import {Document} from "../ap/document"
+import {Actor} from "../ap/actor"
 
 export class Directory {
 	#actorID: string // ID of the local actor
@@ -20,20 +18,20 @@ export class Directory {
 	}
 
 	// getKeyPackage loads the KeyPackages published by a single actor
-	async getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]> {
+	getKeyPackages = async (actorIDs: string[]): Promise<KeyPackage[]> => {
 		var result: KeyPackage[] = []
 
 		for (const actorID of actorIDs) {
-			const actor = (await loadActivityStream(actorID)) as APActor
-			const rangeKeyPackages = rangeCollection<APKeyPackage>(actor["mls:keyPackages"])
+			const actor = await new Actor().fromURL(actorID)
+			const keyPackages = rangeDocuments(actor.mlsKeyPackages())
 
-			for await (const item of rangeKeyPackages) {
-				const contentBytes = base64ToUint8Array(item.content)
-
+			for await (const keyPackage of keyPackages) {
+				//
+				const contentBytes = base64ToUint8Array(keyPackage.content())
 				const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
 
 				if (decodedKeyPackage == undefined) {
-					console.warn("getKeyPackages: Failed to decode KeyPackage for item:", item)
+					console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject())
 					continue
 				}
 
@@ -50,13 +48,13 @@ export class Directory {
 	}
 
 	// createKeyPackage publishes a new KeyPackage to the User's outbox.
-	async createKeyPackage(keyPackage: APKeyPackage): Promise<string> {
+	createKeyPackage = async (keyPackage: APKeyPackage) => {
 		return await this.#createObject<APKeyPackage>(keyPackage)
 	}
 
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	async #createObject<T>(object: T): Promise<string> {
+	#createObject = async <T>(object: T) => {
 		return await this.#send(this.#outboxURL, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: "Create",
@@ -67,7 +65,7 @@ export class Directory {
 
 	// send POSTs an ActivityPub activity to the specified outbox
 	// and returns the Location header from the response
-	async #send<T>(outbox: string, activity: T): Promise<string> {
+	#send = async <T>(outbox: string, activity: T) => {
 		// Send the Activity to the server
 		const response = await fetch(outbox, {
 			method: "POST",
@@ -82,8 +80,8 @@ export class Directory {
 		return response.headers.get("Location") || ""
 	}
 
-	async getContact(id: string): Promise<Contact> {
-		const response = await new Document().fromURL(id)
-		return ContactFromDocument(response)
+	getContact = async (id: string): Promise<Contact> => {
+		const response = await new Actor().fromURL(id)
+		return ContactFromActor(response)
 	}
 }

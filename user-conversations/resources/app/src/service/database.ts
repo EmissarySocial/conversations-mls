@@ -51,6 +51,8 @@ interface Schema extends DBSchema {
 	}
 }
 
+type callbackFunction = () => void
+
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
 	return await openDB<Schema>("mls-" + actorId, 2, {
 		upgrade(db, oldVersion, newVersion) {
@@ -76,7 +78,7 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 export class Database {
 	#db: IDBPDatabase<Schema>
 	#clientConfig: ClientConfig
-	#onchange: () => void
+	#onchange: callbackFunction
 
 	constructor(db: IDBPDatabase<Schema>, clientConfig: ClientConfig) {
 		this.#db = db
@@ -85,7 +87,7 @@ export class Database {
 	}
 
 	// setChange allows the caller to provide a redraw function that will be called after database operations
-	onchange(callback: () => void) {
+	onchange = (callback: callbackFunction) => {
 		this.#onchange = callback
 	}
 
@@ -94,7 +96,7 @@ export class Database {
 	/////////////////////////////////////////////
 
 	// loadConfig retrieves the config record from the database
-	async loadConfig(): Promise<Config> {
+	loadConfig = async () => {
 		var result = await this.#db.get("config", ConfigID)
 		if (result == undefined) {
 			result = NewConfig()
@@ -106,7 +108,7 @@ export class Database {
 	}
 
 	// saveConfig saves the config record to the database
-	async saveConfig(config: Config) {
+	saveConfig = async (config: Config) => {
 		config.id = ConfigID
 		config.ready = true
 		await this.#db.put("config", config)
@@ -117,17 +119,17 @@ export class Database {
 	/////////////////////////////////////////////
 
 	// allContacts returns all contacts from the database
-	async allContacts(): Promise<Contact[]> {
+	allContacts = async () => {
 		return await this.#db.getAll("contact")
 	}
 
 	// getContact retrieves a single contact from the database by ID
-	async getContact(id: string): Promise<Contact | undefined> {
+	getContact = async (id: string) => {
 		return this.#db.get("contact", id)
 	}
 
 	// saveContact saves a single contact to the database
-	async saveContact(contact: Contact) {
+	saveContact = async (contact: Contact) => {
 		await this.#db.put("contact", contact)
 	}
 
@@ -145,13 +147,13 @@ export class Database {
 	}
 
 	// saveGroup saves a group to the database
-	async saveGroup(group: Group) {
+	saveGroup = async (group: Group) => {
 		await this.#db.put("group", group)
 		this.#onchange()
 	}
 
 	// loadGroup retrieves a group from the database
-	async loadGroup(groupID: string): Promise<Group> {
+	loadGroup = async (groupID: string) => {
 		//
 
 		// Load the group record
@@ -165,7 +167,7 @@ export class Database {
 	}
 
 	// deleteGroup removes a group from the database
-	async deleteGroup(group: string) {
+	deleteGroup = async (group: string) => {
 		//
 		// List all messages in the group
 		const messages = await this.#db.getAllKeysFromIndex("message", "group", group)
@@ -184,12 +186,12 @@ export class Database {
 	// Private KeyPackage
 	/////////////////////////////////////////////
 
-	async loadKeyPackage() {
+	loadKeyPackage = async () => {
 		const keyPackage = await this.#db.get("keyPackage", "self")
 		return keyPackage
 	}
 
-	async saveKeyPackage(keyPackage: DBKeyPackage) {
+	saveKeyPackage = async (keyPackage: DBKeyPackage) => {
 		await this.#db.put("keyPackage", keyPackage)
 	}
 
@@ -199,24 +201,30 @@ export class Database {
 
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
 	// TODO: This will need to be limited or pagincated for long discussions.
-	async allMessages(group: string): Promise<Message[]> {
+	allMessages = async (group: string) => {
 		var messages = await this.#db.getAllFromIndex("message", "group", group)
 		messages.sort((a, b) => a.createDate - b.createDate)
 		return messages
 	}
 
-	// saveMessage saves a message to the database
-	async saveMessage(message: Message) {
-		await this.#db.put("message", message)
-		this.#onchange()
-	}
-
 	// loadMessage retrieves a message from the database
-	async loadMessage(messageID: string): Promise<Message> {
+	loadMessage = async (messageID: string) => {
 		const message = await this.#db.get("message", messageID)
 		if (message == undefined) {
 			throw new Error("Message not found: " + messageID)
 		}
 		return message
+	}
+
+	// saveMessage saves a message to the database
+	saveMessage = async (message: Message) => {
+		await this.#db.put("message", message)
+		this.#onchange()
+	}
+
+	// deleteMessage removes a message from the database
+	deleteMessage = async (messageId: string) => {
+		await this.#db.delete("message", messageId)
+		this.#onchange()
 	}
 }

@@ -1,84 +1,146 @@
-//// Activities
+import {toString} from "./utils"
 
-type Activity = {
-	type: string
-	actor: string
-}
+type map = {[key: string]: any}
 
-type Accept = Activity & {
-	type: "Accept"
-	object: Activity
-}
+// JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
+export class Object {
+	#value: map
 
-type Create = Activity & {
-	type: "Create"
-	object: Object
-}
+	constructor(value?: map) {
+		if (value != undefined) {
+			this.#value = value
+		} else {
+			this.#value = {}
+		}
+	}
 
-type Delete = Activity & {
-	type: "Delete"
-	object: string
-}
+	///////////////////////////////////
+	// Conversion methods
 
-type Like = Activity & {
-	type: "Like"
-	object: string
-}
+	// fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
+	fromURL = async (url: string, options: RequestInit = {}) => {
+		//
 
-type Undo = Activity & {
-	type: "Undo"
-	object: Activity
-}
+		// Require Accept: header for ActivityPub
+		options["headers"] = {
+			Accept: "application/activity+json",
+		}
 
-type Update = Activity & {
-	type: "Update"
-	object: Object
-}
+		const response = await fetch(url, options)
 
-//// Objects
+		// Report errors
+		if (!response.ok) {
+			throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
+		}
 
-type Object = {
-	type: string
-	id: string
-}
+		// Parse the JSON response into a JSONLD
+		const body = await response.text()
+		this.fromJSON(body)
+		return this
+	}
 
-type Note = Object & {
-	type: "Note"
-	content: string
-}
+	// fromJSON parses a JSON string into the JSONLD struct
+	fromJSON = (json: string) => {
+		this.#value = JSON.parse(json)
+		return this
+	}
 
-type Article = Object & {
-	type: "Article"
-	content: string
-}
+	// toObject returns the raw JSON object represented by this JSONLD struct
+	toObject = () => {
+		return this.#value
+	}
 
-type Image = Object & {
-	type: "Image"
-	url: string
-}
+	// toJSON returns a JSON string representation of the JSONLD struct
+	toJSON = () => {
+		return JSON.stringify(this.#value)
+	}
 
-//// Complete Actions
+	///////////////////////////////////
+	// Setters
 
-type CreateNote = Create & {
-	object: Note
-}
+	// set sets a property on the JSONLD struct with the given name and value
+	set = (name: string, value: any) => {
+		this.#value[name] = value
+	}
 
-type CreateArticle = Create & {
-	object: Article
-}
+	///////////////////////////////////
+	// Property conversion methods
 
-type UpdateNote = Update & {
-	object: Note
-}
+	get(namespace: string, property: string): any {
+		var result = this.#value[property]
+		if (result != undefined) {
+			return result
+		}
 
-type UpdateArticle = Update & {
-	object: Article
-}
+		result = this.#value[namespace + ":" + property]
+		if (result != undefined) {
+			return result
+		}
 
-type DeleteNote = Delete & {
-	object: string
-}
+		switch (namespace) {
+			case "as":
+				return this.#value["https://www.w3.org/ns/activitystreams#" + property]
 
-type DeleteArticle = Delete & {
-	object: string
+			case "emissary":
+				return this.#value["https://emissary.dev/ns#" + property]
+
+			case "mls":
+				return this.#value["https://purl.archive.org/socialweb/mls#" + property]
+
+			case "sse":
+				return this.#value["https://purl.archive.org/socialweb/sse#" + property]
+		}
+
+		return undefined
+	}
+
+	getString = (namespace: string, property: string) => {
+		return toString(this.get(namespace, property))
+	}
+
+	getInteger = (namespace: string, property: string) => {
+		const result = this.get(namespace, property)
+
+		if (result == undefined) {
+			return 0
+		}
+
+		switch (typeof result) {
+			case "number":
+				return Math.floor(result)
+
+			case "string":
+				const parsed = parseInt(result)
+				if (!isNaN(parsed)) {
+					return parsed
+				}
+		}
+
+		return 0
+	}
+
+	getArray = (namespace: string, property: string) => {
+		const result = this.get(namespace, property)
+
+		if (result == undefined) {
+			return []
+		}
+
+		if (Array.isArray(result)) {
+			return result
+		}
+
+		return [result]
+	}
+
+	///////////////////////////////////
+	// Properties
+
+	type = () => {
+		return this.getString("as", "type")
+	}
+
+	id = () => {
+		return this.getString("as", "id")
+	}
 }

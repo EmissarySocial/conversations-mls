@@ -13,8 +13,6 @@ type GroupsState = {}
 export class Groups {
 	view(vnode: GroupsVnode) {
 		const controller = vnode.attrs.controller
-		const groups = controller.groups()
-		const selectedGroupId = controller.selectedGroupId
 
 		return (
 			<div>
@@ -43,10 +41,10 @@ export class Groups {
 
 				<hr class="margin-vertical-sm" />
 
-				{groups.map((group) => {
+				{controller.groups.map((group) => {
 					var cssClass = "flex-row flex-align-center padding hover-trigger"
 
-					if (group.id == selectedGroupId) {
+					if (group.id == controller.selectedGroupId()) {
 						cssClass += " highlight"
 					}
 

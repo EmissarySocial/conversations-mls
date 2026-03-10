@@ -44,9 +44,7 @@ export class NewConversation {
 							</div>
 							<div class="layout-element">
 								<label>Message</label>
-								<textarea
-									rows="8"
-									onchange={(event: Event) => this.setMessage(vnode, event)}></textarea>
+								<textarea rows="8" onchange={(event: Event) => this.setMessage(vnode, event)}></textarea>
 								<div class="text-sm text-gray">{this.description(vnode)}</div>
 							</div>
 						</div>
@@ -94,8 +92,8 @@ export class NewConversation {
 		if (vnode.state.encrypted) {
 			return (
 				<div>
-					This will be encrypted before it leaves this device, and will not be readable by anyone other than
-					the recipients.
+					This will be encrypted before it leaves this device, and will not be readable by anyone other than the
+					recipients.
 				</div>
 			)
 		}

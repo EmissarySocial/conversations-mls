@@ -1,16 +1,14 @@
 import m from "mithril"
 import {Controller} from "../controller"
-import {type APActor} from "../model/ap-actor"
 import {type Vnode, type VnodeDOM, type Component} from "mithril"
 import {Modal} from "./modal"
-import {ActorSearch} from "./actorSearch"
-import type {DBGroup} from "../model/db-group"
+import {type Group} from "../model/group"
 
 type DebugVnode = Vnode<DebugArgs, DebugState>
 
 interface DebugArgs {
 	controller: Controller
-	group: DBGroup
+	group: Group
 	close: () => void
 }
 

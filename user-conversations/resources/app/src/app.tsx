@@ -1,20 +1,18 @@
 import m from "mithril"
 
-import {Document} from "./ap/document"
+import {Actor} from "./ap/actor"
 import {defaultClientConfig} from "ts-mls/clientConfig.js"
-import {type APActor} from "./model/ap-actor"
 import {Database, NewIndexedDB} from "./service/database"
 import {Delivery} from "./service/delivery"
 import {Directory} from "./service/directory"
 import {Receiver} from "./service/receiver"
-import {loadActivityStream} from "./service/network"
 import {Controller} from "./controller"
 import {Main} from "./view/main"
-import * as ap from "./ap/properties"
 
 // Global controller instance
 var controller: Controller
 
+// startup initializes the application and mounts the Mithril components.
 async function startup() {
 	// Collect arguments from the DOM
 	const root = document.getElementById("mls")!
@@ -25,12 +23,11 @@ async function startup() {
 		throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`)
 	}
 
-	// Load the actor object from the network
-	const actor = await new Document().fromURL(actorID)
+	// Load the actor object from the network and locate their messages collection
+	const actor = await new Actor().fromURL(actorID)
+	const {url, plaintext} = actor.messages()
 
-	const [messagesCollection, allowPlaintextMessages] = findMessagesCollection(actor)
-
-	if (messagesCollection == "") {
+	if (url == "") {
 		throw new Error(`Actor does not support MLS API.`)
 	}
 
@@ -39,43 +36,13 @@ async function startup() {
 	const database = new Database(indexedDB, defaultClientConfig)
 	const delivery = new Delivery(actor.id(), actor.outbox())
 	const directory = new Directory(actor.id(), actor.outbox())
-	const receiver = new Receiver(actor.id(), messagesCollection)
+	const receiver = new Receiver(actor.id(), url)
 
 	// Build the controller
-	controller = new Controller(
-		actor,
-		database,
-		delivery,
-		directory,
-		receiver,
-		allowPlaintextMessages,
-		defaultClientConfig,
-	)
+	controller = new Controller(actor, database, delivery, directory, receiver, plaintext, defaultClientConfig)
 
 	// Pass the controller to the Main component and mount the main application
 	m.mount(root, {view: () => <Main controller={controller} />})
-}
-
-function findMessagesCollection(actor: Document): [string, boolean] {
-	//
-	// First, try using the custom emissary:messages property
-	// because it will also give us unencrypted direct messages
-	const emissaryMessages = actor.emissaryMessages()
-
-	if (emissaryMessages != "") {
-		return [emissaryMessages, true]
-	}
-
-	// Otherwise, fall back to the standard mls:messages property,
-	// but this only supports encrypted group messages
-	const mlsMessages = actor.mlsMessages()
-
-	if (mlsMessages != "") {
-		return [mlsMessages, true]
-	}
-
-	// Fail by returning "" for the collection URL
-	return ["", false]
 }
 
 // 3..2..1.. Go!

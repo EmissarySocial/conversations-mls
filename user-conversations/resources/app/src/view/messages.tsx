@@ -23,10 +23,7 @@ export class Messages {
 		//
 		// List the messages in the selected group
 		const controller = vnode.attrs.controller
-		const group = controller.group()
-		const messages = controller.messages()
-		const contacts = controller.contacts()
-		const contactsList = Array.from(contacts.values())
+		const contactsList = Array.from(controller.contacts.values())
 
 		// Display messages
 		return (
@@ -34,7 +31,7 @@ export class Messages {
 				<div id="conversation-header">
 					<div class="flex-row flex-align-center">
 						<div class="flex-grow">
-							<span class="bold">{group.name}</span>
+							<span class="bold">{controller.group.name}</span>
 							&nbsp;
 							<div class="text-xs text-gray">
 								{contactsList.slice(0, 6).map((contact, index) => (
@@ -51,8 +48,8 @@ export class Messages {
 				</div>
 				<div id="conversation-messages">
 					<div class="flex-grow padding-sm padding-bottom-lg">
-						{messages.map((message) => {
-							const contact = contacts.get(message.sender) || NewContact()
+						{controller.messages.map((message) => {
+							const contact = controller.contacts.get(message.sender) || NewContact()
 							const isMe = message.sender == controller.actorId()
 							return (
 								<div class={`message ${isMe ? " me" : ""}`}>

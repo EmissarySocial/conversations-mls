@@ -1,3 +1,5 @@
+import type {Actor} from "../ap/actor"
+
 // Contact represents an ActivityPub actor that the user has interacted with.
 export type Contact = {
 	id: string // Activity Vocabulary property: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-id
@@ -19,12 +21,12 @@ export function NewContact() {
 	}
 }
 
-export function ContactFromDocument(document: any): Contact {
+export function ContactFromActor(actor: Actor): Contact {
 	return {
-		id: document.id(),
-		name: document.name(),
-		icon: document.icon(),
-		preferredUsername: document.preferredUsername(),
+		id: actor.id(),
+		name: actor.name(),
+		icon: actor.icon(),
+		preferredUsername: actor.preferredUsername(),
 		known: false,
 		updated: Math.floor(Date.now() / 1000),
 	}

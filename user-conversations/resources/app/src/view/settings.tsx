@@ -25,16 +25,13 @@ export class Settings {
 		//
 		// List the settings
 		const controller = vnode.attrs.controller
-		const group = controller.group()
-		const contacts = controller.contacts()
-		const contactsList = Array.from(contacts.values())
 
 		return (
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div class="flex-row flex-align-center">
 						<button onclick={() => vnode.attrs.controller.page_messages()}>&larr;</button>
-						<span class="bold text-lg">Settings for {group.name}</span>
+						<span class="bold text-lg">Settings for {controller.group.name}</span>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
@@ -46,7 +43,6 @@ export class Settings {
 									<input
 										id="idGroupName"
 										type="text"
-										name="actorIds"
 										value={vnode.state.name}
 										oninput={(event: Event) => this.setName(vnode, event)}
 									/>
@@ -76,7 +72,7 @@ export class Settings {
 	}
 
 	setName(vnode: SettingsVnode, event: Event) {
-		const target = event.target as HTMLTextAreaElement
+		const target = event.target as HTMLInputElement
 		vnode.state.name = target.value
 	}
 

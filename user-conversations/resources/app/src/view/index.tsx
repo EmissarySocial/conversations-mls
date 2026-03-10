@@ -32,11 +32,11 @@ export class Index {
 
 		switch (vnode.attrs.controller.pageView) {
 			case "SETTINGS":
-				page = <Settings controller={vnode.attrs.controller} group={vnode.attrs.controller.group()} />
+				page = <Settings controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
 				break
 
 			default:
-				const groups = vnode.attrs.controller.groups()
+				const groups = vnode.attrs.controller.groups
 				if (groups.length == 0) {
 					page = <Empty controller={vnode.attrs.controller} />
 				} else {
@@ -58,13 +58,11 @@ export class Index {
 
 	private viewGroups(vnode: IndexVnode): JSX.Element[] {
 		const controller = vnode.attrs.controller
-		const groups = controller.groups()
-		const selectedGroupId = controller.selectedGroupId
 
-		return groups.map((group) => {
+		return controller.groups.map((group) => {
 			var cssClass = "flex-row flex-align-center padding hover-trigger"
 
-			if (group.id == selectedGroupId) {
+			if (group.id == controller.selectedGroupId()) {
 				cssClass += " selected"
 			}
 

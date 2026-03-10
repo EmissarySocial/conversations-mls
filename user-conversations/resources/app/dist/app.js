@@ -4475,8 +4475,8 @@
         constructor(ep) {
           super(ep);
         }
-        static fromAffine(ap2) {
-          return new __RistrettoPoint(ed25519_Point.fromAffine(ap2));
+        static fromAffine(ap) {
+          return new __RistrettoPoint(ed25519_Point.fromAffine(ap));
         }
         assertSame(other) {
           if (!(other instanceof __RistrettoPoint))
@@ -5054,8 +5054,8 @@
         constructor(ep) {
           super(ep);
         }
-        static fromAffine(ap2) {
-          return new __DecafPoint(ed448_Point.fromAffine(ap2));
+        static fromAffine(ap) {
+          return new __DecafPoint(ed448_Point.fromAffine(ap));
         }
         assertSame(other) {
           if (!(other instanceof __DecafPoint))
@@ -7262,12 +7262,12 @@
         function Stream(value) {
           var dependentStreams = [];
           var dependentFns = [];
-          function stream5(v) {
+          function stream4(v) {
             if (arguments.length && v !== Stream.SKIP) {
               value = v;
-              if (open(stream5)) {
-                stream5._changing();
-                stream5._state = "active";
+              if (open(stream4)) {
+                stream4._changing();
+                stream4._state = "active";
                 dependentStreams.slice().forEach(function(s, i) {
                   if (open(s)) s(this[i](value));
                 }, dependentFns.slice());
@@ -7275,62 +7275,62 @@
             }
             return value;
           }
-          stream5.constructor = Stream;
-          stream5._state = arguments.length && value !== Stream.SKIP ? "active" : "pending";
-          stream5._parents = [];
-          stream5._changing = function() {
-            if (open(stream5)) stream5._state = "changing";
+          stream4.constructor = Stream;
+          stream4._state = arguments.length && value !== Stream.SKIP ? "active" : "pending";
+          stream4._parents = [];
+          stream4._changing = function() {
+            if (open(stream4)) stream4._state = "changing";
             dependentStreams.forEach(function(s) {
               s._changing();
             });
           };
-          stream5._map = function(fn, ignoreInitial) {
+          stream4._map = function(fn, ignoreInitial) {
             var target = ignoreInitial ? Stream() : Stream(fn(value));
-            target._parents.push(stream5);
+            target._parents.push(stream4);
             dependentStreams.push(target);
             dependentFns.push(fn);
             return target;
           };
-          stream5.map = function(fn) {
-            return stream5._map(fn, stream5._state !== "active");
+          stream4.map = function(fn) {
+            return stream4._map(fn, stream4._state !== "active");
           };
           var end;
           function createEnd() {
             end = Stream();
             end.map(function(value2) {
               if (value2 === true) {
-                stream5._parents.forEach(function(p) {
-                  p._unregisterChild(stream5);
+                stream4._parents.forEach(function(p) {
+                  p._unregisterChild(stream4);
                 });
-                stream5._state = "ended";
-                stream5._parents.length = dependentStreams.length = dependentFns.length = 0;
+                stream4._state = "ended";
+                stream4._parents.length = dependentStreams.length = dependentFns.length = 0;
               }
               return value2;
             });
             return end;
           }
-          stream5.toJSON = function() {
+          stream4.toJSON = function() {
             return value != null && typeof value.toJSON === "function" ? value.toJSON() : value;
           };
-          stream5["fantasy-land/map"] = stream5.map;
-          stream5["fantasy-land/ap"] = function(x) {
+          stream4["fantasy-land/map"] = stream4.map;
+          stream4["fantasy-land/ap"] = function(x) {
             return combine(function(s1, s2) {
               return s1()(s2());
-            }, [x, stream5]);
+            }, [x, stream4]);
           };
-          stream5._unregisterChild = function(child) {
+          stream4._unregisterChild = function(child) {
             var childIndex = dependentStreams.indexOf(child);
             if (childIndex !== -1) {
               dependentStreams.splice(childIndex, 1);
               dependentFns.splice(childIndex, 1);
             }
           };
-          Object.defineProperty(stream5, "end", {
+          Object.defineProperty(stream4, "end", {
             get: function() {
               return end || createEnd();
             }
           });
-          return stream5;
+          return stream4;
         }
         function combine(fn, streams) {
           var ready = streams.every(function(s) {
@@ -7338,7 +7338,7 @@
               throw new Error("Ensure that each item passed to stream.combine/stream.merge/lift is a stream.");
             return s._state === "active";
           });
-          var stream5 = ready ? Stream(fn.apply(null, streams.concat([streams]))) : Stream();
+          var stream4 = ready ? Stream(fn.apply(null, streams.concat([streams]))) : Stream();
           var changed = [];
           var mappers = streams.map(function(s) {
             return s._map(function(value) {
@@ -7347,13 +7347,13 @@
                 return s2._state !== "pending";
               })) {
                 ready = true;
-                stream5(fn.apply(null, streams.concat([changed])));
+                stream4(fn.apply(null, streams.concat([changed])));
                 changed = [];
               }
               return value;
             }, true);
           });
-          var endStream = stream5.end.map(function(value) {
+          var endStream = stream4.end.map(function(value) {
             if (value === true) {
               mappers.forEach(function(mapper) {
                 mapper.end(true);
@@ -7362,7 +7362,7 @@
             }
             return void 0;
           });
-          return stream5;
+          return stream4;
         }
         function merge(streams) {
           return combine(function() {
@@ -7372,28 +7372,28 @@
           }, streams);
         }
         function scan(fn, acc, origin) {
-          var stream5 = origin.map(function(v) {
+          var stream4 = origin.map(function(v) {
             var next = fn(acc, v);
             if (next !== Stream.SKIP) acc = next;
             return next;
           });
-          stream5(acc);
-          return stream5;
+          stream4(acc);
+          return stream4;
         }
         function scanMerge(tuples, seed) {
           var streams = tuples.map(function(tuple) {
             return tuple[0];
           });
-          var stream5 = combine(function() {
+          var stream4 = combine(function() {
             var changed = arguments[arguments.length - 1];
-            streams.forEach(function(stream6, i) {
-              if (changed.indexOf(stream6) > -1)
-                seed = tuples[i][1](seed, stream6());
+            streams.forEach(function(stream5, i) {
+              if (changed.indexOf(stream5) > -1)
+                seed = tuples[i][1](seed, stream5());
             });
             return seed;
           }, streams);
-          stream5(seed);
-          return stream5;
+          stream4(seed);
+          return stream4;
         }
         function lift() {
           var fn = arguments[0];
@@ -7423,137 +7423,245 @@
   // src/app.tsx
   var import_mithril24 = __toESM(require_mithril(), 1);
 
-  // src/ap/document.ts
-  var Document = class _Document {
-    #value;
-    constructor(value) {
-      this.#value = {};
-      if (value != void 0) {
-        this.#value = value;
-      }
-    }
-    ///////////////////////////////////
-    // Conversion methods
-    // fromURL retrieves a JSON document from the specified URL and parses it into the Document struct
-    async fromURL(url, options = {}) {
-      options["headers"] = {
-        Accept: "application/activity+json"
-      };
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
-      }
-      this.fromJSON(await response.text());
-      return this;
-    }
-    // fromJSON parses a JSON string into the Document struct
-    fromJSON(json) {
-      this.#value = JSON.parse(json);
-      return this;
-    }
-    toObject() {
-      return this.#value;
-    }
-    ///////////////////////////////////
-    // Property accessors
-    actor() {
-      return this.asString(this.#value, "actor", "ap:actor", "https://www.w3.org/ns/activitystreams#actor");
-    }
-    content() {
-      return this.asString(this.#value, "content", "ap:content", "https://www.w3.org/ns/activitystreams#content");
-    }
-    eventStream() {
-      return this.asString(
-        this.#value,
-        "eventStream",
-        "sse:eventStream",
-        "https://purl.archive.org/socialweb/sse#eventStream"
-      );
-    }
-    icon() {
-      return this.asString(this.#value, "icon", "ap:icon", "https://www.w3.org/ns/activitystreams#icon");
-    }
-    id() {
-      return this.asString(this.#value, "id", "ap:id", "https://www.w3.org/ns/activitystreams#id");
-    }
-    name() {
-      return this.asString(this.#value, "name", "ap:name", "https://www.w3.org/ns/activitystreams#name");
-    }
-    async object() {
-      return await this.asObject(this.#value, "object", "ap:object", "https://www.w3.org/ns/activitystreams#object");
-    }
-    outbox() {
-      return this.asString(this.#value, "outbox", "ap:outbox", "https://www.w3.org/ns/activitystreams#outbox");
-    }
-    preferredUsername() {
-      return this.asString(
-        this.#value,
-        "preferredUsername",
-        "as:preferredUsername",
-        "https://www.w3.org/ns/activitypub#preferredUsername"
-      );
-    }
-    summary() {
-      return this.asString(this.#value, "summary", "ap:summary", "https://www.w3.org/ns/activitystreams#summary");
-    }
-    type() {
-      return this.asString(this.#value, "type", "ap:type", "https://www.w3.org/ns/activitystreams#type");
-    }
-    ///////////////////////////////////
-    // MLS-specific properties
-    mlsMessages() {
-      return this.asString(this.#value, "messages", "mls:messages", "https://purl.archive.org/socialweb/mls#messages");
-    }
-    mlsKeyPackages() {
-      return this.asString(
-        this.#value,
-        "keyPackages",
-        "mls:keyPackages",
-        "https://purl.archive.org/socialweb/mls#keyPackages"
-      );
-    }
-    ///////////////////////////////////
-    // Emissary-specific properties
-    emissaryMessages() {
-      return this.asString(this.#value, "emissary:messages");
-    }
-    ///////////////////////////////////
-    // Property conversion methods
-    asString(value, ...names) {
-      for (const name of names) {
-        if (value[name] != void 0) {
-          const result = value[name];
-          switch (typeof result) {
-            case "string":
-              return result;
-            case "object":
-              if (typeof result.id === "string") {
-                return result.id;
-              }
-              if (typeof result.href === "string") {
-                return result.href;
-              }
-              break;
-          }
-        }
-      }
+  // src/ap/utils.ts
+  function toString(value) {
+    if (value == void 0) {
       return "";
     }
-    async asObject(value, ...names) {
-      for (const name of names) {
-        if (value[name] != void 0) {
-          const result = value[name];
-          switch (typeof result) {
-            case "object":
-              return new _Document(result);
-            case "string":
-              return await new _Document().fromURL(result);
+    switch (typeof value) {
+      //
+      case "bigint":
+        return value.toString();
+      case "boolean":
+        return value ? "true" : "false";
+      case "number":
+        return value.toString();
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length == 0) {
+            return "";
+          }
+          return toString(value[0]);
+        }
+        if (value instanceof Object) {
+          if (typeof value.id === "string") {
+            return value.id;
+          }
+          if (typeof value.href === "string") {
+            return value.href;
           }
         }
+      case "string":
+        return value;
+      case "symbol":
+        return value.toString();
+    }
+    return "";
+  }
+
+  // src/ap/object.ts
+  var Object2 = class {
+    constructor(value) {
+      ///////////////////////////////////
+      // Conversion methods
+      // fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
+      this.fromURL = async (url, options = {}) => {
+        options["headers"] = {
+          Accept: "application/activity+json"
+        };
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+        }
+        const body = await response.text();
+        this.fromJSON(body);
+        return this;
+      };
+      // fromJSON parses a JSON string into the JSONLD struct
+      this.fromJSON = (json) => {
+        this.#value = JSON.parse(json);
+        return this;
+      };
+      // toObject returns the raw JSON object represented by this JSONLD struct
+      this.toObject = () => {
+        return this.#value;
+      };
+      // toJSON returns a JSON string representation of the JSONLD struct
+      this.toJSON = () => {
+        return JSON.stringify(this.#value);
+      };
+      ///////////////////////////////////
+      // Setters
+      // set sets a property on the JSONLD struct with the given name and value
+      this.set = (name, value) => {
+        this.#value[name] = value;
+      };
+      this.getString = (namespace, property) => {
+        return toString(this.get(namespace, property));
+      };
+      this.getInteger = (namespace, property) => {
+        const result = this.get(namespace, property);
+        if (result == void 0) {
+          return 0;
+        }
+        switch (typeof result) {
+          case "number":
+            return Math.floor(result);
+          case "string":
+            const parsed = parseInt(result);
+            if (!isNaN(parsed)) {
+              return parsed;
+            }
+        }
+        return 0;
+      };
+      this.getArray = (namespace, property) => {
+        const result = this.get(namespace, property);
+        if (result == void 0) {
+          return [];
+        }
+        if (Array.isArray(result)) {
+          return result;
+        }
+        return [result];
+      };
+      ///////////////////////////////////
+      // Properties
+      this.type = () => {
+        return this.getString("as", "type");
+      };
+      this.id = () => {
+        return this.getString("as", "id");
+      };
+      if (value != void 0) {
+        this.#value = value;
+      } else {
+        this.#value = {};
       }
-      return new _Document();
+    }
+    #value;
+    ///////////////////////////////////
+    // Property conversion methods
+    get(namespace, property) {
+      var result = this.#value[property];
+      if (result != void 0) {
+        return result;
+      }
+      result = this.#value[namespace + ":" + property];
+      if (result != void 0) {
+        return result;
+      }
+      switch (namespace) {
+        case "as":
+          return this.#value["https://www.w3.org/ns/activitystreams#" + property];
+        case "emissary":
+          return this.#value["https://emissary.dev/ns#" + property];
+        case "mls":
+          return this.#value["https://purl.archive.org/socialweb/mls#" + property];
+        case "sse":
+          return this.#value["https://purl.archive.org/socialweb/sse#" + property];
+      }
+      return void 0;
     }
   };
+
+  // src/ap/vocab.ts
+  var ActivityTypeCreate = "Create";
+  var ActivityTypeDelete = "Delete";
+  var ActivityTypeLike = "Like";
+  var ActivityTypeUndo = "Undo";
+  var ActivityTypeUpdate = "Update";
+  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
+  var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var EncodingTypeBase64 = "base64";
+  var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeNote = "Note";
+  var ObjectTypeMLSPrivateMessage = "mls:PrivateMessage";
+  var PropertyActor = "actor";
+  var PropertyContext = "context";
+  var PropertyObject = "object";
+  var PropertyTarget = "target";
+  var PropertyTo = "to";
+
+  // src/ap/actor.ts
+  var Actor = class extends Object2 {
+    constructor() {
+      super(...arguments);
+      //
+      ///////////////////////////////////
+      // Property accessors
+      // icon returns the value of the "icon" property
+      this.icon = () => {
+        return this.getString("as", "icon");
+      };
+      // id returns the value of the "id" property
+      this.id = () => {
+        return this.getString("as", "id");
+      };
+      // name returns the value of the "name" property
+      this.name = () => {
+        return this.getString("as", "name");
+      };
+      this.outbox = () => {
+        return this.getString("as", "outbox");
+      };
+      this.preferredUsername = () => {
+        return this.getString("as", "preferredUsername");
+      };
+      this.summary = () => {
+        return this.getString("as", "summary");
+      };
+      this.type = () => {
+        return this.getString("as", "type");
+      };
+      ///////////////////////////////////
+      // MLS-specific properties
+      this.mlsMessages = () => {
+        return this.getString("mls", "messages");
+      };
+      this.mlsKeyPackages = () => {
+        return this.getString("mls", "keyPackages");
+      };
+      ///////////////////////////////////
+      // Emissary-specific properties
+      // emissaryMessages returns the URL for the Emissary-specific messages collection
+      // that returns BOTH encrypted and unencrypted messages. This is preferred over mls:messages because it allows the client to receive direct messages that are not encrypted with MLS.
+      this.emissaryMessages = () => {
+        return this.getString("emissary", "messages");
+      };
+      // messages returns the URL for the preferred messages collection,
+      // which may be either the Emissary-specific collection (if supported) or
+      // the standard mls:messages collection (if Emissary-specific collection is not supported).
+      // The boolean return value indicates whether the returned URL is for the
+      // Emissary-specific collection (true) or the standard mls:messages collection (false).
+      this.messages = () => {
+        const emissaryMessages = this.emissaryMessages();
+        if (emissaryMessages != "") {
+          return { url: emissaryMessages, plaintext: true };
+        }
+        const mlsMessages = this.mlsMessages();
+        if (mlsMessages != "") {
+          return { url: mlsMessages, plaintext: false };
+        }
+        return { url: "", plaintext: false };
+      };
+    }
+  };
+  async function loadActor(value) {
+    switch (typeof value) {
+      case "string":
+        return await new Actor().fromURL(value);
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            return loadActor(value[0]);
+          }
+          return new Actor();
+        }
+        return new Actor(value);
+    }
+    return new Actor();
+  }
 
   // node_modules/ts-mls/dist/src/util/constantTimeCompare.js
   function constantTimeEqual(a, b) {
@@ -15258,6 +15366,22 @@
     }
   };
 
+  // src/model/group.ts
+  function NewGroup() {
+    return {
+      id: "",
+      name: "",
+      lastMessage: "",
+      members: [],
+      createDate: 0,
+      updateDate: 0,
+      readDate: 0
+    };
+  }
+  function groupIsEncrypted(group) {
+    return group.clientState !== void 0;
+  }
+
   // src/model/contact.ts
   function NewContact() {
     return {
@@ -15269,14 +15393,30 @@
       updated: 0
     };
   }
-  function ContactFromDocument(document2) {
+  function ContactFromActor(actor) {
     return {
-      id: document2.id(),
-      name: document2.name(),
-      icon: document2.icon(),
-      preferredUsername: document2.preferredUsername(),
+      id: actor.id(),
+      name: actor.name(),
+      icon: actor.icon(),
+      preferredUsername: actor.preferredUsername(),
       known: false,
       updated: Math.floor(Date.now() / 1e3)
+    };
+  }
+
+  // src/model/utils.ts
+  function newId() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
+
+  // src/model/message.ts
+  function NewMessage() {
+    return {
+      id: newId(),
+      group: "",
+      sender: "",
+      plaintext: "",
+      createDate: Date.now()
     };
   }
 
@@ -15298,52 +15438,112 @@
     });
   }
   var Database = class {
-    #db;
-    #clientConfig;
-    #onchange;
     constructor(db, clientConfig) {
+      // setChange allows the caller to provide a redraw function that will be called after database operations
+      this.onchange = (callback) => {
+        this.#onchange = callback;
+      };
+      /////////////////////////////////////////////
+      // Config
+      /////////////////////////////////////////////
+      // loadConfig retrieves the config record from the database
+      this.loadConfig = async () => {
+        var result = await this.#db.get("config", ConfigID);
+        if (result == void 0) {
+          result = NewConfig();
+        }
+        result.ready = true;
+        return result;
+      };
+      // saveConfig saves the config record to the database
+      this.saveConfig = async (config) => {
+        config.id = ConfigID;
+        config.ready = true;
+        await this.#db.put("config", config);
+      };
+      /////////////////////////////////////////////
+      // Contacts
+      /////////////////////////////////////////////
+      // allContacts returns all contacts from the database
+      this.allContacts = async () => {
+        return await this.#db.getAll("contact");
+      };
+      // getContact retrieves a single contact from the database by ID
+      this.getContact = async (id) => {
+        return this.#db.get("contact", id);
+      };
+      // saveContact saves a single contact to the database
+      this.saveContact = async (contact) => {
+        await this.#db.put("contact", contact);
+      };
+      // saveGroup saves a group to the database
+      this.saveGroup = async (group) => {
+        await this.#db.put("group", group);
+        this.#onchange();
+      };
+      // loadGroup retrieves a group from the database
+      this.loadGroup = async (groupID) => {
+        const group = await this.#db.get("group", groupID);
+        if (group == void 0) {
+          throw new Error("Group not found: " + groupID);
+        }
+        return group;
+      };
+      // deleteGroup removes a group from the database
+      this.deleteGroup = async (group) => {
+        const messages = await this.#db.getAllKeysFromIndex("message", "group", group);
+        for (const message of messages) {
+          await this.#db.delete("message", message);
+        }
+        await this.#db.delete("group", group);
+        this.#onchange();
+      };
+      /////////////////////////////////////////////
+      // Private KeyPackage
+      /////////////////////////////////////////////
+      this.loadKeyPackage = async () => {
+        const keyPackage = await this.#db.get("keyPackage", "self");
+        return keyPackage;
+      };
+      this.saveKeyPackage = async (keyPackage) => {
+        await this.#db.put("keyPackage", keyPackage);
+      };
+      /////////////////////////////////////////////
+      // Messages
+      /////////////////////////////////////////////
+      // allMessages returns all messages in the specified group, sorted by createDate ascending
+      // TODO: This will need to be limited or pagincated for long discussions.
+      this.allMessages = async (group) => {
+        var messages = await this.#db.getAllFromIndex("message", "group", group);
+        messages.sort((a, b) => a.createDate - b.createDate);
+        return messages;
+      };
+      // loadMessage retrieves a message from the database
+      this.loadMessage = async (messageID) => {
+        const message = await this.#db.get("message", messageID);
+        if (message == void 0) {
+          throw new Error("Message not found: " + messageID);
+        }
+        return message;
+      };
+      // saveMessage saves a message to the database
+      this.saveMessage = async (message) => {
+        await this.#db.put("message", message);
+        this.#onchange();
+      };
+      // deleteMessage removes a message from the database
+      this.deleteMessage = async (messageId) => {
+        await this.#db.delete("message", messageId);
+        this.#onchange();
+      };
       this.#db = db;
       this.#clientConfig = clientConfig;
       this.#onchange = () => {
       };
     }
-    // setChange allows the caller to provide a redraw function that will be called after database operations
-    onchange(callback) {
-      this.#onchange = callback;
-    }
-    /////////////////////////////////////////////
-    // Config
-    /////////////////////////////////////////////
-    // loadConfig retrieves the config record from the database
-    async loadConfig() {
-      var result = await this.#db.get("config", ConfigID);
-      if (result == void 0) {
-        result = NewConfig();
-      }
-      result.ready = true;
-      return result;
-    }
-    // saveConfig saves the config record to the database
-    async saveConfig(config) {
-      config.id = ConfigID;
-      config.ready = true;
-      await this.#db.put("config", config);
-    }
-    /////////////////////////////////////////////
-    // Contacts
-    /////////////////////////////////////////////
-    // allContacts returns all contacts from the database
-    async allContacts() {
-      return await this.#db.getAll("contact");
-    }
-    // getContact retrieves a single contact from the database by ID
-    async getContact(id) {
-      return this.#db.get("contact", id);
-    }
-    // saveContact saves a single contact to the database
-    async saveContact(contact) {
-      await this.#db.put("contact", contact);
-    }
+    #db;
+    #clientConfig;
+    #onchange;
     /////////////////////////////////////////////
     // Groups
     /////////////////////////////////////////////
@@ -15353,146 +15553,247 @@
       groups.sort((a, b) => b.updateDate - a.updateDate);
       return groups;
     }
-    // saveGroup saves a group to the database
-    async saveGroup(group) {
-      await this.#db.put("group", group);
-      this.#onchange();
-    }
-    // loadGroup retrieves a group from the database
-    async loadGroup(groupID) {
-      const group = await this.#db.get("group", groupID);
-      if (group == void 0) {
-        throw new Error("Group not found: " + groupID);
-      }
-      return group;
-    }
-    // deleteGroup removes a group from the database
-    async deleteGroup(group) {
-      const messages = await this.#db.getAllKeysFromIndex("message", "group", group);
-      for (const message of messages) {
-        await this.#db.delete("message", message);
-      }
-      await this.#db.delete("group", group);
-      this.#onchange();
-    }
-    /////////////////////////////////////////////
-    // Private KeyPackage
-    /////////////////////////////////////////////
-    async loadKeyPackage() {
-      const keyPackage = await this.#db.get("keyPackage", "self");
-      return keyPackage;
-    }
-    async saveKeyPackage(keyPackage) {
-      await this.#db.put("keyPackage", keyPackage);
-    }
-    /////////////////////////////////////////////
-    // Messages
-    /////////////////////////////////////////////
-    // allMessages returns all messages in the specified group, sorted by createDate ascending
-    // TODO: This will need to be limited or pagincated for long discussions.
-    async allMessages(group) {
-      var messages = await this.#db.getAllFromIndex("message", "group", group);
-      messages.sort((a, b) => a.createDate - b.createDate);
-      return messages;
-    }
-    // saveMessage saves a message to the database
-    async saveMessage(message) {
-      await this.#db.put("message", message);
-      this.#onchange();
-    }
-    // loadMessage retrieves a message from the database
-    async loadMessage(messageID) {
-      const message = await this.#db.get("message", messageID);
-      if (message == void 0) {
-        throw new Error("Message not found: " + messageID);
-      }
-      return message;
+  };
+
+  // src/ap/document.ts
+  var Document = class extends Object2 {
+    constructor() {
+      super(...arguments);
+      //
+      ///////////////////////////////////
+      // Setters
+      // setContext sets the context property (NOT @context) on the Document struct
+      this.setContext = (context) => {
+        this.set(PropertyContext, context);
+      };
+      ///////////////////////////////////
+      // Property accessors
+      // attributedTo returns the value of the "attributedTo" property
+      this.attributedTo = async () => {
+        const attributedTo = this.get("as", "attributedTo");
+        return await loadActor(attributedTo);
+      };
+      // attributedToId returns the string/id value of the "attributedTo" property
+      this.attributedToId = () => {
+        return this.getString("as", "attributedTo");
+      };
+      // content returns the value of the "content" property
+      this.content = () => {
+        return this.getString("as", "content");
+      };
+      // context returns the value of the "context" property (NOT @context)
+      this.context = () => {
+        return this.getString("as", "context");
+      };
+      // icon returns the value of the "icon" property
+      this.icon = () => {
+        return this.getString("as", "icon");
+      };
+      // inReplyTo returns the string/id value of the "inReplyTo" property
+      this.inReplyToId = () => {
+        return this.getString("as", "inReplyTo");
+      };
+      // inReplyTo returns the value of the "inReplyTo" property
+      this.inReplyTo = () => {
+        const inReplyTo = this.get("as", "inReplyTo");
+        return loadDocument(inReplyTo);
+      };
+      // name returns the value of the "name" property
+      this.name = () => {
+        return this.getString("as", "name");
+      };
+      // summary returns the value of the "summary" property
+      this.summary = () => {
+        return this.getString("as", "summary");
+      };
+      // to returns the value of the "to" property
+      this.to = async () => {
+        const result = await this.getArray("as", "to");
+        return result.map(async (actor) => await loadActor(actor));
+      };
+      ///////////////////////////////////
+      // MLS-specific properties
+      this.encoding = () => {
+        return this.getString("mls", "encoding");
+      };
+      // isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
+      this.isMLSMessage = () => {
+        if (this.mediaType() == MediaTypeMLSMessage) {
+          if (this.encoding() == EncodingTypeBase64) {
+            if (this.content() != "") {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      this.mediaType = () => {
+        return this.getString("mls", "mediaType");
+      };
     }
   };
+  async function loadDocument(value) {
+    switch (typeof value) {
+      case "string":
+        return await new Document().fromURL(value);
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            return await loadDocument(value[0]);
+          }
+          return new Document();
+        }
+        return new Document(value);
+    }
+    return new Document();
+  }
+
+  // src/ap/activity.ts
+  var Activity = class extends Object2 {
+    constructor() {
+      super(...arguments);
+      //
+      ///////////////////////////////////
+      // Property getters
+      // actor returns the value of the "actor" property
+      this.actor = async () => {
+        const actor = this.get("as", PropertyActor);
+        return await loadActor(actor);
+      };
+      this.actorId = () => {
+        return this.getString("as", PropertyActor);
+      };
+      // object returns the value of the "object" property, which may be either a string URL or an embedded object
+      this.object = async () => {
+        const object = this.get("as", PropertyObject);
+        return await loadDocument(object);
+      };
+      this.objectId = () => {
+        return this.getString("as", PropertyObject);
+      };
+      // target returns the value of the "target" property
+      this.target = async () => {
+        const target = await this.get("as", PropertyTarget);
+        return await loadDocument(target);
+      };
+      // to returns the value of the "to" property
+      this.to = async () => {
+        const result = await this.getArray("as", PropertyTo);
+        return result.map(async (actor) => await loadActor(actor));
+      };
+      ///////////////////////////////////
+      // Property setters
+      this.setObject = (object) => {
+        this.set(PropertyObject, object.toObject());
+      };
+      this.setObjectId = (id) => {
+        this.set(PropertyObject, id);
+      };
+    }
+  };
+  async function loadActivity(value) {
+    switch (typeof value) {
+      case "string":
+        return await new Activity().fromURL(value);
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            return new Activity(value[0]);
+          }
+          break;
+        }
+        return new Activity(value);
+    }
+    return new Activity();
+  }
 
   // src/service/delivery.ts
   var Delivery = class {
+    constructor(actorId, outboxUrl) {
+      /**
+       * load GETs an ActivityPub resource with proper Accept headers.
+       * If a URL is provided, then it fetches the resource from the network.
+       * If an object is provided, it simply returns it.
+       *
+       * @param url - The URL to fetch
+       * @returns The parsed JSON response
+       * @throws Error if the fetch fails
+       */
+      this.load = async (url) => {
+        if (typeof url != "string") {
+          return url;
+        }
+        const response = await fetch(url, {
+          headers: {
+            Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+          }
+        });
+        if (!response.ok) {
+          throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      };
+      // sendFramedMessage sends an MLS FramedMessage to the specified recipients
+      this.sendFramedMessage = (recipients, message) => {
+        this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
+      };
+      // sendGroupInfo sends an MLS GroupInfo message to the specified recipients
+      this.sendGroupInfo = (recipients, message) => {
+        this.#sendMlsMessage("mls:GroupInfo", recipients, message);
+      };
+      // sendPrivateMessage sends an MLS PrivateMessage to the specified recipients
+      this.sendPrivateMessage = (recipients, message) => {
+        this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
+      };
+      // sendWelcome sends an MLS Welcome message to the specified recipients
+      this.sendWelcome = (recipients, message) => {
+        this.#sendMlsMessage("mls:Welcome", recipients, message);
+      };
+      // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+      this.#sendMlsMessage = async (type, recipients, message) => {
+        recipients = recipients.filter((recipient) => recipient !== this.#actorId);
+        if (recipients.length === 0) {
+          return;
+        }
+        const contentBytes = encode(mlsMessageEncoder, message);
+        const contentBase64 = bytesToBase64(contentBytes);
+        const activity = {
+          "@context": [ContextActivityStreams, { mls: ContextMLS }],
+          type: ActivityTypeCreate,
+          actor: this.#actorId,
+          to: recipients,
+          object: {
+            type,
+            attributedTo: this.#actorId,
+            to: recipients,
+            content: contentBase64,
+            mediaType: "message/mls",
+            "mls:encoding": "base64"
+          }
+        };
+        return this.sendActivity(new Activity(activity));
+      };
+      // sendActivity sends an activity to the Actor's outbox
+      this.sendActivity = async (activity) => {
+        console.log("Sending activity:", activity.toJSON());
+        const response = await fetch(this.#outboxUrl, {
+          method: "POST",
+          body: activity.toJSON(),
+          credentials: "include"
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
+        }
+      };
+      this.#actorId = actorId;
+      this.#outboxUrl = outboxUrl;
+    }
     //
-    // context is the default JSON-LD context for MLS messages
-    #context = ["https://www.w3.org/ns/activitystreams", "https://purl.archive.org/socialweb/mls"];
     // actorId is the ID of the user sending messages
     #actorId;
     // outboxUrl is the URL of the user's outbox
     #outboxUrl;
-    constructor(actorId, outboxUrl) {
-      this.#actorId = actorId;
-      this.#outboxUrl = outboxUrl;
-    }
-    /**
-     * load GETs an ActivityPub resource with proper Accept headers.
-     * If a URL is provided, then it fetches the resource from the network.
-     * If an object is provided, it simply returns it.
-     *
-     * @param url - The URL to fetch
-     * @returns The parsed JSON response
-     * @throws Error if the fetch fails
-     */
-    async load(url) {
-      if (typeof url != "string") {
-        return url;
-      }
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
-      }
-      return response.json();
-    }
-    // sendFramedMessage sends an MLS FramedMessage to the specified recipients
-    sendFramedMessage(recipients, message) {
-      this.#send("mls:PrivateMessage", recipients, message, mlsMessageEncoder);
-    }
-    // sendGroupInfo sends an MLS GroupInfo message to the specified recipients
-    sendGroupInfo(recipients, message) {
-      this.#send("mls:GroupInfo", recipients, message, mlsMessageEncoder);
-    }
-    // sendPrivateMessage sends an MLS PrivateMessage to the specified recipients
-    sendPrivateMessage(recipients, message) {
-      this.#send("mls:PrivateMessage", recipients, message, mlsMessageEncoder);
-    }
-    // sendWelcome sends an MLS Welcome message to the specified recipients
-    sendWelcome(recipients, message) {
-      this.#send("mls:Welcome", recipients, message, mlsMessageEncoder);
-    }
-    // #send is a private method that sends an MLS message via the user's ActivityPub outbox
-    async #send(type, recipients, message, encoder) {
-      const otherRecipients = recipients.filter((recipient) => recipient !== this.#actorId);
-      if (otherRecipients.length === 0) {
-        return;
-      }
-      const contentBytes = encode(encoder, message);
-      const contentBase64 = bytesToBase64(contentBytes);
-      const decodedMessage = decode(mlsMessageDecoder, contentBytes);
-      const activity = {
-        "@context": this.#context,
-        type: "Create",
-        actor: this.#actorId,
-        to: otherRecipients,
-        object: {
-          type,
-          to: otherRecipients,
-          mediaType: "message/mls",
-          encoding: "base64",
-          content: contentBase64
-        }
-      };
-      const response = await fetch(this.#outboxUrl, {
-        method: "POST",
-        body: JSON.stringify(activity),
-        credentials: "include"
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
-      }
-    }
+    #sendMlsMessage;
   };
 
   // src/model/ap-keypackage.ts
@@ -15517,53 +15818,97 @@
     };
   }
 
-  // src/service/network.ts
-  async function loadActivityStream(url, options = {}) {
-    const result = await new Document().fromURL(url);
-    options["headers"] = {
-      Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-    };
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+  // src/ap/collection.ts
+  var Collection = class extends Object2 {
+    constructor() {
+      super(...arguments);
+      //
+      // eventStream returns the value of the "eventStream" property
+      this.eventStream = () => {
+        return this.getString("sse", "eventStream");
+      };
+      // first returns the value of the "first" property, which is used for pagination in ActivityPub collections
+      this.first = () => {
+        return this.getString("as", "first");
+      };
+      // items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
+      this.items = () => {
+        var result = [];
+        switch (this.type()) {
+          case "Collection":
+          case "CollectionPage":
+            return this.getArray("as", "items");
+          case "OrderedCollection":
+          case "OrderedCollectionPage":
+            return this.getArray("as", "orderedItems");
+        }
+        return [];
+      };
+      // next returns the value of the "next" property, which is used for pagination in ActivityPub collections
+      this.next = () => {
+        return this.getString("as", "next");
+      };
+      this.totalItems = () => {
+        return this.getInteger("as", "totalItems");
+      };
     }
-    return await response.json();
+  };
+  async function* rangeActivities(url, after = "", options = {}) {
+    const items = range(url, after, options);
+    for await (const item of items) {
+      yield await loadActivity(item);
+    }
   }
-  async function* rangeCollection(url, after = "", options = {}) {
+  async function* rangeDocuments(url, after = "", options = {}) {
+    const items = range(url, after, options);
+    for await (const item of items) {
+      yield await loadDocument(item);
+    }
+  }
+  async function* range(url, after = "", options = {}) {
     if (url == "") {
       return;
     }
     if (after != "") {
-      url = url + "?after=" + encodeURIComponent(after);
+      if (url.includes("?")) {
+        url = url + "&after=" + encodeURIComponent(after);
+      } else {
+        url = url + "?after=" + encodeURIComponent(after);
+      }
     }
-    const collection = await loadActivityStream(url, options);
-    if (collection.items || collection.orderedItems) {
-      for await (const item of rangeCollectionPage(collection)) {
+    var collection;
+    try {
+      collection = await new Collection().fromURL(url, options);
+    } catch (error) {
+      console.error("Error fetching collection:", url, error);
+      return;
+    }
+    const items = collection.items();
+    if (items.length > 0) {
+      for await (const item of items) {
         yield item;
       }
       return;
     }
-    var pageUrl = collection.first || collection.next;
+    var pageUrl = collection.first() || collection.next();
     while (pageUrl) {
-      const page = await loadActivityStream(pageUrl, options);
-      for await (const item of rangeCollectionPage(page)) {
+      var page;
+      try {
+        page = await new Collection().fromURL(pageUrl, options);
+      } catch (error) {
+        console.log("Error fetching collection page:", pageUrl, error);
+        return;
+      }
+      for await (const item of page.items()) {
         yield item;
       }
-      pageUrl = page.next;
-    }
-  }
-  async function* rangeCollectionPage(collection) {
-    const items = collection.orderedItems || collection.items || [];
-    for (var item of items) {
-      if (typeof item === "string") {
-        item = await loadActivityStream(item);
-      }
-      yield item;
+      pageUrl = page.next();
     }
   }
 
   // src/service/utils.ts
   function base64ToUint8Array(base64) {
+    console.log("base64ToUint8Array: Converting base64 string to Uint8Array", base64);
     const binary_string = window.atob(base64);
     const len = binary_string.length;
     const bytes = new Uint8Array(len);
@@ -15572,81 +15917,131 @@
     }
     return bytes;
   }
+  function newId2() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
 
   // src/service/directory.ts
   var Directory = class {
-    #actorID;
-    // ID of the local actor
-    #outboxURL;
     // Outbox URL of the local actor
     constructor(actorID, outboxURL) {
+      // getKeyPackage loads the KeyPackages published by a single actor
+      this.getKeyPackages = async (actorIDs) => {
+        var result = [];
+        for (const actorID of actorIDs) {
+          const actor = await new Actor().fromURL(actorID);
+          const keyPackages = rangeDocuments(actor.mlsKeyPackages());
+          for await (const keyPackage of keyPackages) {
+            const contentBytes = base64ToUint8Array(keyPackage.content());
+            const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
+            if (decodedKeyPackage == void 0) {
+              console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
+              continue;
+            }
+            if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
+              console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
+              continue;
+            }
+            result.push(decodedKeyPackage.keyPackage);
+          }
+        }
+        return result;
+      };
+      // createKeyPackage publishes a new KeyPackage to the User's outbox.
+      this.createKeyPackage = async (keyPackage) => {
+        return await this.#createObject(keyPackage);
+      };
+      // createObject POSTs an ActivityPub object to the user's outbox
+      // and returns the Location header from the response
+      this.#createObject = async (object) => {
+        return await this.#send(this.#outboxURL, {
+          "@context": "https://www.w3.org/ns/activitystreams",
+          type: "Create",
+          actor: this.#actorID,
+          object
+        });
+      };
+      // send POSTs an ActivityPub activity to the specified outbox
+      // and returns the Location header from the response
+      this.#send = async (outbox, activity) => {
+        const response = await fetch(outbox, {
+          method: "POST",
+          body: JSON.stringify(activity),
+          credentials: "include"
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
+        }
+        return response.headers.get("Location") || "";
+      };
+      this.getContact = async (id) => {
+        const response = await new Actor().fromURL(id);
+        return ContactFromActor(response);
+      };
       this.#actorID = actorID;
       this.#outboxURL = outboxURL;
     }
-    // getKeyPackage loads the KeyPackages published by a single actor
-    async getKeyPackages(actorIDs) {
-      var result = [];
-      for (const actorID of actorIDs) {
-        const actor = await loadActivityStream(actorID);
-        const rangeKeyPackages = rangeCollection(actor["mls:keyPackages"]);
-        for await (const item of rangeKeyPackages) {
-          const contentBytes = base64ToUint8Array(item.content);
-          const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
-          if (decodedKeyPackage == void 0) {
-            console.warn("getKeyPackages: Failed to decode KeyPackage for item:", item);
-            continue;
-          }
-          if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-            console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
-            continue;
-          }
-          result.push(decodedKeyPackage.keyPackage);
-        }
-      }
-      return result;
-    }
-    // createKeyPackage publishes a new KeyPackage to the User's outbox.
-    async createKeyPackage(keyPackage) {
-      return await this.#createObject(keyPackage);
-    }
-    // createObject POSTs an ActivityPub object to the user's outbox
-    // and returns the Location header from the response
-    async #createObject(object) {
-      return await this.#send(this.#outboxURL, {
-        "@context": "https://www.w3.org/ns/activitystreams",
-        type: "Create",
-        actor: this.#actorID,
-        object
-      });
-    }
-    // send POSTs an ActivityPub activity to the specified outbox
-    // and returns the Location header from the response
-    async #send(outbox, activity) {
-      const response = await fetch(outbox, {
-        method: "POST",
-        body: JSON.stringify(activity),
-        credentials: "include"
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
-      }
-      return response.headers.get("Location") || "";
-    }
-    async getContact(id) {
-      const response = await new Document().fromURL(id);
-      return ContactFromDocument(response);
-    }
+    #actorID;
+    // ID of the local actor
+    #outboxURL;
+    #createObject;
+    #send;
   };
 
   // src/service/receiver.ts
   var Receiver = class {
+    // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+    // constructor initializes the Receiver with the actor's ID and messages URL
+    constructor(actorId, messagesUrl) {
+      // registerHandler adds a new MessageHandler to the list of handlers that will be called
+      this.registerHandler = (handler) => {
+        this.#handler = handler;
+      };
+      // start begins polling for new messages and processing them with the registered handlers
+      this.start = async () => {
+        this.poll();
+        const collection = await new Collection().fromURL(this.#messagesUrl);
+        const sseEndpoint = collection.eventStream();
+        if (sseEndpoint != "") {
+          this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
+          this.#eventSource.onmessage = (event) => {
+            this.poll();
+          };
+        }
+      };
+      // poll retrieves new messages from the mls:messages collection and calls the
+      // onMessage callback for each new message
+      this.poll = async () => {
+        if (this.#polling) {
+          this.#pollAgain = true;
+          return;
+        }
+        this.#polling = true;
+        const lastUrl = localStorage.getItem("lastUrl") || "";
+        const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" });
+        for await (const activity of activities) {
+          console.log("Received activity:", activity.toJSON());
+          localStorage.setItem("lastUrl", activity.id());
+          await this.#handler(activity);
+        }
+        this.#polling = false;
+        if (this.#pollAgain) {
+          this.#pollAgain = false;
+          this.poll();
+        }
+      };
+      this.#actorId = actorId;
+      this.#messagesUrl = messagesUrl;
+      this.#handler = async function(activity) {
+      };
+      this.#polling = false;
+      this.#pollAgain = false;
+    }
     //
     #actorId;
     // ID of the user receiving messages
     #messagesUrl;
     // endpoint for the actor's mls:messages collection
-    #lastUrl;
-    // URL of the last message received (used for polling)
     #eventSource;
     // EventSource for listening to server-sent events (SSE)
     #handler;
@@ -15654,95 +16049,111 @@
     #polling;
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
-    // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
-    // constructor initializes the Receiver with the actor's ID and messages URL
-    constructor(actorId, messagesUrl) {
-      this.#actorId = actorId;
-      this.#messagesUrl = messagesUrl;
-      this.#lastUrl = "";
-      this.#handler = async function(message) {
-      };
-      this.#polling = false;
-      this.#pollAgain = false;
-    }
-    // registerHandler adds a new MessageHandler to the list of handlers that will be called
-    registerHandler(handler) {
-      this.#handler = handler;
-    }
-    // start begins polling for new messages and processing them with the registered handlers
-    async start() {
-      this.poll();
-      const document2 = await new Document().fromURL(this.#messagesUrl);
-      const sseEndpoint = document2.eventStream();
-      if (sseEndpoint != "") {
-        this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
-        this.#eventSource.onmessage = (event) => {
-          this.poll();
-        };
-      }
-    }
-    // poll retrieves new messages from the mls:messages collection and calls the
-    // onMessage callback for each new message
-    async poll() {
-      if (this.#polling) {
-        this.#pollAgain = true;
-        return;
-      }
-      this.#polling = true;
-      const lastUrl = localStorage.getItem("lastUrl") || "";
-      const generator = rangeCollection(this.#messagesUrl, lastUrl, { credentials: "include" });
-      for await (const message of generator) {
-        try {
-          const activity = new Document(message);
-          const document2 = await activity.object();
-          localStorage.setItem("lastUrl", document2.id());
-          await this.#handler(document2.content());
-        } catch (error) {
-          console.error("Receiver.poll: Error processing message:", error);
-        }
-      }
-      this.#polling = false;
-      if (this.#pollAgain) {
-        this.#pollAgain = false;
-        this.poll();
-      }
-    }
   };
 
   // src/controller.ts
   var import_mithril = __toESM(require_mithril(), 1);
-  var import_stream = __toESM(require_stream2(), 1);
 
   // src/service/mls.ts
   var MLS = class {
     constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
-      /// Receiving Messages
-      // use arrow function to preserve "this" context when passing as a callback
-      this.onMessage = async (message) => {
+      /// Sending Messages
+      // createGroup creates a new MLS group and saves it to the database
+      this.createGroup = async () => {
         const context = this.#context();
-        const uintArray = base64ToUint8Array(message);
-        const content = decode(mlsMessageDecoder, uintArray);
-        if (content == void 0) {
-          console.error("Unable to decode MLS message", message);
-          return;
+        const groupID = "uri:uuid:" + crypto.randomUUID();
+        const groupIDBytes = new TextEncoder().encode(groupID);
+        const clientState = await createGroup({
+          context,
+          groupId: groupIDBytes,
+          keyPackage: this.#publicKeyPackage,
+          privateKeyPackage: this.#privateKeyPackage
+        });
+        const group = {
+          id: groupID,
+          members: [],
+          name: "New Group",
+          lastMessage: "",
+          clientState,
+          createDate: Date.now(),
+          updateDate: Date.now(),
+          readDate: Date.now()
+        };
+        await this.#database.saveGroup(group);
+        return group;
+      };
+      // addGroupMembers updates the group state.  It sends a Commit
+      // message to existing members, and a Welcome message to new members,
+      this.addGroupMembers = async (group, newMembers) => {
+        const currentMembers = group.members;
+        const keyPackages = await this.#directory.getKeyPackages(newMembers);
+        const addProposals = keyPackages.map((keyPackage) => ({
+          proposalType: defaultProposalTypes.add,
+          add: {
+            keyPackage
+          }
+        }));
+        const commitResult = await createCommit({
+          context: this.#context(),
+          state: group.clientState,
+          extraProposals: addProposals,
+          ratchetTreeExtension: true
+        });
+        commitResult.consumed.forEach(zeroOutUint8Array);
+        group.clientState = commitResult.newState;
+        group.members = currentMembers.concat(newMembers);
+        await this.#database.saveGroup(group);
+        if (commitResult.welcome != void 0) {
+          this.#delivery.sendWelcome(newMembers, commitResult.welcome);
         }
-        switch (content.wireformat) {
-          case wireformats.mls_group_info:
-            return;
-          case wireformats.mls_key_package:
-            return;
-          case wireformats.mls_private_message:
-            await this.#onMessage_PrivateMessage(content);
-            return;
-          case wireformats.mls_public_message:
-            return;
-          case wireformats.mls_welcome:
-            await this.#onMessage_Welcome(content);
-            return;
-          default:
-            console.error("Unknown MLS message type:");
-            return;
+        if (currentMembers.length > 0) {
+          this.#delivery.sendFramedMessage(currentMembers, commitResult.commit);
         }
+        return group;
+      };
+      // getGroupMembers returns the list of member IDs for a given group
+      this.getGroupMembers = async (group) => {
+        const leafNodes = await getGroupMembers(group.clientState);
+        const members = leafNodes.map((leaf) => {
+          const credential = leaf.credential;
+          if (credential.identity != void 0) {
+            return new TextDecoder().decode(credential.identity);
+          }
+          return "";
+        }).filter((identity) => identity != "");
+        return members;
+      };
+      this.encodeActivity = async (group, activity) => {
+        const messageText = activity.toJSON();
+        const messageBytes = new TextEncoder().encode(messageText);
+        const applicationMessage = await createApplicationMessage({
+          context: this.#context(),
+          state: group.clientState,
+          message: messageBytes
+        });
+        applicationMessage.consumed.forEach(zeroOutUint8Array);
+        group.clientState = applicationMessage.newState;
+        group.updateDate = Date.now();
+        await this.#database.saveGroup(group);
+        const contentBytes = encode(mlsMessageEncoder, applicationMessage.message);
+        const contentBase64 = bytesToBase64(contentBytes);
+        const recipients = group.members.filter((member) => member !== this.#actor.id());
+        const result = new Activity({
+          "@context": [ContextActivityStreams, { mls: ContextMLS }],
+          id: newId2(),
+          actor: this.#actor.id(),
+          type: ActivityTypeCreate,
+          to: recipients,
+          object: {
+            type: ObjectTypeMLSPrivateMessage,
+            attributedTo: this.#actor.id(),
+            to: recipients,
+            content: contentBase64,
+            mediaType: "message/mls",
+            "mls:encoding": "base64"
+          }
+        });
+        return result;
       };
       /// Helper methods
       // Use arrow function to preserve "this" context when passing as a callback
@@ -15767,105 +16178,31 @@
     #publicKeyPackage;
     #privateKeyPackage;
     #actor;
-    /// Sending Messages
-    // createGroup creates a new MLS group and saves it to the database
-    async createGroup() {
+    /// Receiving Activities
+    // use arrow function to preserve "this" context when passing as a callback
+    async decodeMessage(message) {
       const context = this.#context();
-      const groupID = "uri:uuid:" + crypto.randomUUID();
-      const groupIDBytes = new TextEncoder().encode(groupID);
-      const clientState = await createGroup({
-        context,
-        groupId: groupIDBytes,
-        keyPackage: this.#publicKeyPackage,
-        privateKeyPackage: this.#privateKeyPackage
-      });
-      const group = {
-        id: groupID,
-        members: [],
-        name: "New Group",
-        lastMessage: "",
-        clientState,
-        createDate: Date.now(),
-        updateDate: Date.now(),
-        readDate: Date.now()
-      };
-      await this.#database.saveGroup(group);
-      return group;
-    }
-    // addGroupMembers updates the group state.  It sends a Commit
-    // message to existing members, and a Welcome message to new members,
-    async addGroupMembers(groupID, newMembers) {
-      const context = this.#context();
-      const group = await this.#database.loadGroup(groupID);
-      const currentMembers = group.members;
-      const keyPackages = await this.#directory.getKeyPackages(newMembers);
-      const addProposals = keyPackages.map((keyPackage) => ({
-        proposalType: defaultProposalTypes.add,
-        add: {
-          keyPackage
-        }
-      }));
-      const commitResult = await createCommit({
-        context,
-        state: group.clientState,
-        extraProposals: addProposals,
-        ratchetTreeExtension: true
-      });
-      commitResult.consumed.forEach(zeroOutUint8Array);
-      group.clientState = commitResult.newState;
-      group.members = currentMembers.concat(newMembers);
-      await this.#database.saveGroup(group);
-      if (commitResult.welcome != void 0) {
-        this.#delivery.sendWelcome(newMembers, commitResult.welcome);
+      const uintArray = base64ToUint8Array(message);
+      const content = decode(mlsMessageDecoder, uintArray);
+      if (content == void 0) {
+        console.error("Unable to decode MLS message", message);
+        return null;
       }
-      if (currentMembers.length > 0) {
-        this.#delivery.sendFramedMessage(currentMembers, commitResult.commit);
+      switch (content.wireformat) {
+        case wireformats.mls_group_info:
+          return null;
+        case wireformats.mls_key_package:
+          return null;
+        case wireformats.mls_private_message:
+          return await this.#onMessage_PrivateMessage(content);
+        case wireformats.mls_public_message:
+          return null;
+        case wireformats.mls_welcome:
+          return await this.#onMessage_Welcome(content);
+        default:
+          console.error("Unknown MLS message type:");
+          return null;
       }
-    }
-    // getGroupMembers returns the list of member IDs for a given group
-    async getGroupMembers(group) {
-      const leafNodes = await getGroupMembers(group.clientState);
-      const members = leafNodes.map((leaf) => {
-        const credential = leaf.credential;
-        if (credential.identity != void 0) {
-          return new TextDecoder().decode(credential.identity);
-        }
-        return "";
-      }).filter((identity) => identity != "");
-      return members;
-    }
-    async sendGroupMessage(groupId, plaintext) {
-      const context = this.#context();
-      const group = await this.#database.loadGroup(groupId);
-      const messageId = "uri:uuid:" + crypto.randomUUID();
-      const messageObject = {
-        "@context": "https://www.w3.org/ns/activitystreams",
-        id: messageId,
-        type: "Note",
-        content: plaintext
-      };
-      const messageText = JSON.stringify(messageObject);
-      const messageBytes = new TextEncoder().encode(messageText);
-      const applicationMessage = await createApplicationMessage({
-        context,
-        state: group.clientState,
-        message: messageBytes
-      });
-      applicationMessage.consumed.forEach(zeroOutUint8Array);
-      const recipients = group.members.filter((member) => member !== this.#actor.id());
-      this.#delivery.sendFramedMessage(recipients, applicationMessage.message);
-      group.clientState = applicationMessage.newState;
-      group.updateDate = Date.now();
-      group.lastMessage = plaintext.slice(0, 100);
-      await this.#database.saveGroup(group);
-      const dbMessage = {
-        id: messageId,
-        group: groupId,
-        sender: this.#actor.id(),
-        plaintext,
-        createDate: Date.now()
-      };
-      await this.#database.saveMessage(dbMessage);
     }
     // onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
     async #onMessage_Welcome(message) {
@@ -15888,6 +16225,7 @@
       };
       group.members = await this.getGroupMembers(group);
       await this.#database.saveGroup(group);
+      return null;
     }
     // onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
@@ -15895,6 +16233,9 @@
     async #onMessage_PrivateMessage(mlsMessage) {
       const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId);
       const group = await this.#database.loadGroup(groupId);
+      if (!groupIsEncrypted(group)) {
+        throw new Error("Group client state is undefined");
+      }
       const decodedMessage = await processMessage({
         context: this.#context(),
         state: group.clientState,
@@ -15905,20 +16246,16 @@
       group.updateDate = Date.now();
       await this.#database.saveGroup(group);
       if (decodedMessage.kind != "applicationMessage") {
-        return;
+        return null;
       }
       const plaintext = new TextDecoder().decode(decodedMessage.message);
-      const activity = JSON.parse(plaintext);
-      const message = {
-        id: activity.id,
-        group: groupId,
-        sender: activity.actor,
-        plaintext: activity.content,
-        createDate: Date.now()
-      };
-      await this.#database.saveMessage(message);
-      group.lastMessage = activity.content.slice(0, 100);
-      await this.#database.saveGroup(group);
+      var result = new Activity().fromJSON(plaintext);
+      var object = await result.object();
+      if (object.context() == "") {
+        object.setContext(groupId);
+        result.setObject(object);
+      }
+      return result;
     }
     #context;
   };
@@ -15961,22 +16298,307 @@
       dbKeyPackage.privateKeyPackage,
       actor
     );
-    receiver.registerHandler(result.onMessage);
     receiver.start();
     return result;
   }
 
   // src/controller.ts
   var Controller = class {
-    #actor;
-    #database;
-    #delivery;
-    #directory;
-    #receiver;
-    #mls;
-    #allowPlaintextMessages;
     // constructor initializes the Controller with its dependencies
     constructor(actor, database, delivery, directory, receiver, allowPlaintextMessages, clientConfig) {
+      //////////////////////////////////////////
+      // Startup
+      //////////////////////////////////////////
+      // loadConfig retrieves the configuration from the
+      // database and starts the MLS service (if encryption keys are present)
+      this.loadConfig = async () => {
+        this.config = await this.#database.loadConfig();
+        if (this.config.hasEncryptionKeys) {
+          this.#startMLS();
+        }
+        import_mithril.default.redraw();
+      };
+      // startMLS initializes the MLS service IF the configuration includes encryption keys
+      this.#startMLS = async () => {
+        if (this.config.hasEncryptionKeys == false) {
+          throw new Error("Cannot start MLS without encryption keys");
+        }
+        this.#mls = await MLSFactory(
+          this.#database,
+          this.#delivery,
+          this.#directory,
+          this.#receiver,
+          this.#actor,
+          this.config.clientName
+        );
+        this.#database.onchange(async () => {
+          await this.loadGroups();
+          await this.loadMessages();
+          await this.loadContacts();
+        });
+      };
+      // createEncryptionKeys creates a new set of encryption keys
+      // for this user on this device
+      this.createEncryptionKeys = async (clientName, password, passwordHint) => {
+        this.config.ready = true;
+        this.config.welcome = true;
+        this.config.hasEncryptionKeys = true;
+        this.config.clientName = clientName;
+        this.config.password = password;
+        this.config.passwordHint = passwordHint;
+        await this.#database.saveConfig(this.config);
+        this.#startMLS();
+        import_mithril.default.redraw();
+      };
+      // skipEncryptionKeys is called when the user just wants to
+      // use "direct messages" and does not want to create encryption keys (yet)
+      this.skipEncryptionKeys = async () => {
+        this.config.welcome = true;
+        await this.#database.saveConfig(this.config);
+        import_mithril.default.redraw();
+      };
+      //////////////////////////////////////////
+      // Getters
+      //////////////////////////////////////////
+      this.actorId = () => {
+        return this.#actor.id();
+      };
+      //////////////////////////////////////////
+      // Conversations (Plaintext)
+      //////////////////////////////////////////
+      // newConversation creates a new plaintext ActivityPub conversation
+      // with the specified recipients
+      this.newConversation = async (to, message) => {
+        const activity = {
+          "@context": "https://www.w3.org/ns/activitystreams",
+          type: "Create",
+          actor: this.#actor.id(),
+          to,
+          object: {
+            type: "Note",
+            content: message
+          }
+        };
+        const response = await fetch(this.#actor.outbox(), {
+          method: "POST",
+          headers: { "Content-Type": "application/activity+json" },
+          body: JSON.stringify(activity)
+        });
+      };
+      //////////////////////////////////////////
+      // Contacts
+      //////////////////////////////////////////
+      this.loadContacts = async () => {
+        const promises = this.group.members.map(async (actorId) => this.loadContact(actorId));
+        const contacts = await Promise.all(promises);
+        const result = /* @__PURE__ */ new Map();
+        for (const contact of contacts) {
+          if (contact == void 0) {
+            continue;
+          }
+          result.set(contact.id, contact);
+        }
+        this.contacts = result;
+        import_mithril.default.redraw();
+      };
+      this.loadContact = async (actorId) => {
+        var result = await this.#database.getContact(actorId);
+        if (result !== void 0) {
+          return result;
+        }
+        return await this.#directory.getContact(actorId);
+      };
+      //////////////////////////////////////////
+      // Groups (Encrypted)
+      //////////////////////////////////////////
+      // createGroup creates a new MLS-encrypted
+      // group message with the specified recipients
+      this.createGroup = async (recipients) => {
+        if (this.#mls == void 0) {
+          throw new Error("MLS service is not initialized");
+        }
+        var group = await this.#mls.createGroup();
+        this.group = await this.#mls.addGroupMembers(group, recipients);
+        await this.#database.saveGroup(this.group);
+        await this.loadGroups();
+      };
+      // loadGroups retrieves all groups from the database and
+      // updates the "groups" and "messages" streams.
+      this.loadGroups = async () => {
+        this.groups = await this.#database.allGroups();
+        this.selectGroup(this.selectedGroupId());
+      };
+      // selectGroup updates the "selectedGroupId" and reloads messages for that group
+      this.selectGroup = (groupId) => {
+        if (this.groups.length == 0) {
+          this.group = NewGroup();
+          this.messages = [];
+          this.contacts = /* @__PURE__ */ new Map();
+          return;
+        }
+        const group = this.groups.find((group2) => group2.id == groupId);
+        if (group != void 0) {
+          this.group = group;
+          this.loadMessages();
+          this.loadContacts();
+          this.page_messages();
+          return;
+        }
+        this.group = this.groups[0];
+        this.loadMessages();
+        this.loadContacts();
+        this.page_messages();
+      };
+      this.selectedGroupId = () => {
+        if (this.group != void 0) {
+          return this.group.id;
+        }
+        return "";
+      };
+      // saveGroup saves the specified group to the database and reloads groups
+      this.saveGroup = async (group) => {
+        group.lastMessage = group.lastMessage.slice(0, 100);
+        await this.#database.saveGroup(group);
+        await this.loadGroups();
+      };
+      // deleteGroup deletes the specified group from the database
+      this.deleteGroup = async (group) => {
+        if (this.#database == void 0) {
+          throw new Error("Database service is not initialized");
+        }
+        await this.#database.deleteGroup(group);
+        await this.loadGroups();
+      };
+      //////////////////////////////////////////
+      // Messages
+      //////////////////////////////////////////
+      // loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
+      this.loadMessages = async () => {
+        this.messages = await this.#database.allMessages(this.selectedGroupId());
+        import_mithril.default.redraw();
+      };
+      // sendMessage sends a message to the specified group
+      this.sendMessage = async (content) => {
+        if (this.#mls == void 0) {
+          throw new Error("MLS service is not initialized");
+        }
+        if (this.group == void 0) {
+          throw new Error("No group selected");
+        }
+        this.group.lastMessage = content;
+        await this.saveGroup(this.group);
+        var activity = new Activity({
+          "@context": ContextActivityStreams,
+          id: newId2(),
+          actor: this.actorId(),
+          type: ActivityTypeCreate,
+          to: this.group.members,
+          object: {
+            id: newId2(),
+            attributedTo: this.actorId(),
+            type: ObjectTypeNote,
+            to: this.group.members,
+            context: this.selectedGroupId,
+            content,
+            published: (/* @__PURE__ */ new Date()).toISOString()
+          }
+        });
+        console.log("Created activity:", activity);
+        if (groupIsEncrypted(this.group)) {
+          activity = await this.#mls.encodeActivity(this.group, activity);
+        }
+        this.#delivery.sendActivity(activity);
+        var message = NewMessage();
+        message.group = this.group.id;
+        message.sender = this.#actor.id();
+        message.plaintext = content;
+        await this.#database.saveMessage(message);
+        await this.loadMessages();
+      };
+      //////////////////////////////////////////
+      // Pages
+      //////////////////////////////////////////
+      this.page_groups = () => {
+        this.pageView = "GROUPS";
+        import_mithril.default.redraw();
+      };
+      this.page_messages = () => {
+        this.pageView = "MESSAGES";
+        import_mithril.default.redraw();
+      };
+      this.page_settings = () => {
+        this.pageView = "SETTINGS";
+        import_mithril.default.redraw();
+      };
+      //////////////////////////////////////////
+      // Receiving Activities
+      //////////////////////////////////////////
+      this.receiveActivity = async (activity) => {
+        console.log("Received activity:", activity.toJSON());
+        var object = await activity.object();
+        if (activity.actorId() != object.attributedToId()) {
+          console.log("Error processing activity:", activity);
+          throw new Error("Activity actor must match object actor");
+        }
+        if (object.isMLSMessage()) {
+          if (this.#mls == void 0) {
+            throw new Error("MLS service is not initialized");
+          }
+          const decodedActivity = await this.#mls.decodeMessage(object.content());
+          if (decodedActivity == null) {
+            console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)");
+            return;
+          }
+          if (decodedActivity.actorId() != activity.actorId()) {
+            throw new Error("Decrypted activity actor must match outer activity actor");
+          }
+          const decodedObject = await decodedActivity.object();
+          if (decodedObject.attributedToId() != activity.actorId()) {
+            throw new Error("Decrypted activity actor must match object's attributedTo");
+          }
+          activity = decodedActivity;
+          object = decodedObject;
+          console.log("successfully decoded object:", object.toJSON());
+        }
+        switch (activity.type()) {
+          //
+          case ActivityTypeCreate:
+          // Update the group with the most recent message
+          // group.lastMessage = activity.content.slice(0, 100)
+          // await this.#database.saveGroup(group)
+          // intentional fall through (I know, but blame Javascript)
+          case ActivityTypeUpdate:
+            const message = {
+              id: activity.id(),
+              group: object.context(),
+              sender: activity.actorId(),
+              plaintext: object.content(),
+              inReplyTo: object.inReplyToId(),
+              createDate: Date.now()
+            };
+            await this.#database.saveMessage(message);
+            return;
+          case ActivityTypeDelete:
+            await this.#database.deleteMessage(object.id());
+            return;
+          case ActivityTypeLike:
+            return;
+          case ActivityTypeUndo:
+            return;
+          default:
+            console.log("Received unrecognized activity:", activity);
+            return;
+        }
+      };
+      //////////////////////////////////////////
+      // Modal Dialogs
+      //////////////////////////////////////////
+      this.modal_close = () => {
+        this.modalView = "";
+      };
+      this.modal_newConversation = () => {
+        this.modalView = "NEW-CONVERSATION";
+      };
       this.#actor = actor;
       this.#database = database;
       this.#delivery = delivery;
@@ -15984,231 +16606,30 @@
       this.#receiver = receiver;
       this.#allowPlaintextMessages = allowPlaintextMessages;
       this.clientConfig = clientConfig;
-      this.selectedGroupId = "";
-      this.groups = (0, import_stream.default)([]);
-      this.group = (0, import_stream.default)({});
-      this.messages = (0, import_stream.default)([]);
-      this.contacts = (0, import_stream.default)(/* @__PURE__ */ new Map());
+      this.groups = [];
+      this.group = NewGroup();
+      this.messages = [];
+      this.contacts = /* @__PURE__ */ new Map();
       this.pageView = "";
       this.modalView = "";
       this.config = NewConfig();
+      this.#receiver.registerHandler(this.receiveActivity);
       this.loadConfig();
       this.loadGroups();
     }
-    //////////////////////////////////////////
-    // Startup
-    //////////////////////////////////////////
-    // loadConfig retrieves the configuration from the
-    // database and starts the MLS service (if encryption keys are present)
-    async loadConfig() {
-      this.config = await this.#database.loadConfig();
-      if (this.config.hasEncryptionKeys) {
-        this.startMLS();
-      }
-      import_mithril.default.redraw();
-    }
-    // startMLS initializes the MLS service IF the configuration includes encryption keys
-    async startMLS() {
-      if (this.config.hasEncryptionKeys == false) {
-        throw new Error("Cannot start MLS without encryption keys");
-      }
-      this.#mls = await MLSFactory(
-        this.#database,
-        this.#delivery,
-        this.#directory,
-        this.#receiver,
-        this.#actor,
-        this.config.clientName
-      );
-      this.#database.onchange(async () => {
-        await this.loadGroups();
-        await this.loadMessages();
-        await this.loadContacts();
-      });
-    }
-    // createEncryptionKeys creates a new set of encryption keys
-    // for this user on this device
-    async createEncryptionKeys(clientName, password, passwordHint) {
-      this.config.ready = true;
-      this.config.welcome = true;
-      this.config.hasEncryptionKeys = true;
-      this.config.clientName = clientName;
-      this.config.password = password;
-      this.config.passwordHint = passwordHint;
-      await this.#database.saveConfig(this.config);
-      this.startMLS();
-      import_mithril.default.redraw();
-    }
-    // skipEncryptionKeys is called when the user just wants to
-    // use "direct messages" and does not want to create encryption keys (yet)
-    async skipEncryptionKeys() {
-      this.config.welcome = true;
-      await this.#database.saveConfig(this.config);
-      import_mithril.default.redraw();
-    }
-    //////////////////////////////////////////
-    // Getters
-    actorId() {
-      return this.#actor.id();
-    }
-    //////////////////////////////////////////
-    // Conversations (Plaintext)
-    // newConversation creates a new plaintext ActivityPub conversation
-    // with the specified recipients
-    async newConversation(to, message) {
-      const activity = {
-        "@context": "https://www.w3.org/ns/activitystreams",
-        type: "Create",
-        actor: this.#actor.id(),
-        to,
-        object: {
-          type: "Note",
-          content: message
-        }
-      };
-      const response = await fetch(this.#actor.outbox(), {
-        method: "POST",
-        headers: { "Content-Type": "application/activity+json" },
-        body: JSON.stringify(activity)
-      });
-    }
-    //////////////////////////////////////////
-    // Contacts
-    //////////////////////////////////////////
-    async loadContacts() {
-      const promises = this.group().members.map(async (id) => this.loadContact(id));
-      const contacts = await Promise.all(promises);
-      const result = /* @__PURE__ */ new Map();
-      for (const contact of contacts) {
-        if (contact == void 0) {
-          continue;
-        }
-        result.set(contact.id, contact);
-      }
-      this.contacts = (0, import_stream.default)(result);
-      import_mithril.default.redraw();
-    }
-    async loadContact(id) {
-      var result = await this.#database.getContact(id);
-      if (result !== void 0) {
-        return result;
-      }
-      return await this.#directory.getContact(id);
-    }
-    //////////////////////////////////////////
-    // Groups (Encrypted)
-    //////////////////////////////////////////
-    // createGroup creates a new MLS-encrypted
-    // group message with the specified recipients
-    async createGroup(recipients) {
-      if (this.#mls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      const group = await this.#mls.createGroup();
-      await this.#mls.addGroupMembers(group.id, recipients);
-      this.selectedGroupId = group.id;
-      await this.loadGroups();
-      return group;
-    }
-    // loadGroups retrieves all groups from the database and
-    // updates the "groups" and "messages" streams.
-    async loadGroups() {
-      const groups = await this.#database.allGroups();
-      if (groups.length == 0) {
-        this.groups([]);
-        this.messages([]);
-        this.selectedGroupId = "";
-        return;
-      }
-      this.groups(groups);
-      if (groups.find((group) => group.id == this.selectedGroupId) == void 0) {
-        this.selectGroup(groups[0].id);
-      }
-    }
-    async loadGroup(groupId) {
-      return await this.#database.loadGroup(groupId);
-    }
-    // selectGroup updates the "selectedGroupId" and reloads messages for that group
-    selectGroup(groupId) {
-      if (groupId == this.selectedGroupId) {
-        this.page_messages();
-        return;
-      }
-      this.group({});
-      this.contacts = (0, import_stream.default)(/* @__PURE__ */ new Map());
-      this.messages = (0, import_stream.default)([]);
-      const group = this.groups().find((group2) => group2.id == groupId);
-      if (group == void 0) {
-        return;
-      }
-      this.selectedGroupId = groupId;
-      this.group(group);
-      this.loadMessages();
-      this.loadContacts();
-      this.page_messages();
-    }
-    // saveGroup saves the specified group to the database and reloads groups
-    async saveGroup(group) {
-      await this.#database.saveGroup(group);
-      await this.loadGroups();
-    }
-    // deleteGroup deletes the specified group from the database
-    async deleteGroup(group) {
-      if (this.#database == void 0) {
-        throw new Error("Database service is not initialized");
-      }
-      await this.#database.deleteGroup(group);
-      await this.loadGroups();
-    }
-    //////////////////////////////////////////
-    // Messages
-    //////////////////////////////////////////
-    // loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
-    async loadMessages() {
-      const messages = await this.#database.allMessages(this.selectedGroupId);
-      this.messages(messages);
-      import_mithril.default.redraw();
-    }
-    // sendMessage sends a message to the specified group
-    async sendMessage(message) {
-      if (this.#mls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      if (this.selectedGroupId == "") {
-        throw new Error("No group selected");
-      }
-      await this.#mls.sendGroupMessage(this.selectedGroupId, message);
-      this.loadMessages();
-    }
-    //////////////////////////////////////////
-    // Pages
-    //////////////////////////////////////////
-    page_groups() {
-      this.pageView = "GROUPS";
-      import_mithril.default.redraw();
-    }
-    page_messages() {
-      this.pageView = "MESSAGES";
-      import_mithril.default.redraw();
-    }
-    page_settings() {
-      this.pageView = "SETTINGS";
-      import_mithril.default.redraw();
-    }
-    //////////////////////////////////////////
-    // Modal Dialogs
-    //////////////////////////////////////////
-    modal_close() {
-      this.modalView = "";
-    }
-    modal_newConversation() {
-      this.modalView = "NEW-CONVERSATION";
-    }
+    #actor;
+    #database;
+    #delivery;
+    #directory;
+    #receiver;
+    #mls;
+    #allowPlaintextMessages;
+    #startMLS;
   };
 
   // src/view/main.tsx
   var import_mithril22 = __toESM(require_mithril(), 1);
-  var import_stream4 = __toESM(require_stream2(), 1);
+  var import_stream3 = __toESM(require_stream2(), 1);
   var import_mithril23 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
@@ -16428,7 +16849,7 @@
 
   // src/view/index.tsx
   var import_mithril20 = __toESM(require_mithril(), 1);
-  var import_stream3 = __toESM(require_stream2(), 1);
+  var import_stream2 = __toESM(require_stream2(), 1);
   var import_mithril21 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
@@ -16498,10 +16919,7 @@
           }
           return;
         case "ArrowDown":
-          vnode.state.highlightedOption = Math.min(
-            vnode.state.highlightedOption + 1,
-            vnode.state.actors.length - 1
-          );
+          vnode.state.highlightedOption = Math.min(vnode.state.highlightedOption + 1, vnode.state.actors.length - 1);
           return;
         case "ArrowUp":
           vnode.state.highlightedOption = Math.max(vnode.state.highlightedOption - 1, 0);
@@ -16610,13 +17028,7 @@
           endpoint: "/.api/actors",
           onselect: (actors) => this.selectActors(vnode, actors)
         }
-      )), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril8.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril8.default)(
-        "textarea",
-        {
-          rows: "8",
-          onchange: (event) => this.setMessage(vnode, event)
-        }
-      ), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril8.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      )), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril8.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril8.default)("textarea", { rows: "8", onchange: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril8.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     header(vnode) {
       if (vnode.state.actors.length == 0) {
@@ -16732,7 +17144,7 @@
 
   // src/view/messages.tsx
   var import_mithril13 = __toESM(require_mithril(), 1);
-  var import_stream2 = __toESM(require_stream2(), 1);
+  var import_stream = __toESM(require_stream2(), 1);
   var import_mithril14 = __toESM(require_mithril(), 1);
 
   // src/view/widget-message-create.tsx
@@ -16784,12 +17196,9 @@
     // If there is no selected group, then a welcome message is shown instead.
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      const group = controller2.group();
-      const messages = controller2.messages();
-      const contacts = controller2.contacts();
-      const contactsList = Array.from(contacts.values());
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, messages.map((message) => {
-        const contact = contacts.get(message.sender) || NewContact();
+      const contactsList = Array.from(controller2.contacts.values());
+      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, controller2.group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+        const contact = controller2.contacts.get(message.sender) || NewContact();
         const isMe = message.sender == controller2.actorId();
         return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: `message ${isMe ? " me" : ""}` }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril13.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()));
       }))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril13.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))));
@@ -16802,8 +17211,6 @@
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      const groups = controller2.groups();
-      const selectedGroupId = controller2.selectedGroupId;
       return /* @__PURE__ */ (0, import_mithril15.default)("div", null, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bold text-lg margin-none flex-grow" }, "Conversations"), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "link text-lg margin-none", onclick: () => controller2.modal_newConversation(), tabindex: "0" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "input", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril15.default)("label", { class: "bi bi-search", for: "idSearch" }), /* @__PURE__ */ (0, import_mithril15.default)(
         "input",
         {
@@ -16813,9 +17220,9 @@
           class: "flex-grow margin-none padding-none",
           style: "border:none; outline:none;"
         }
-      )), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-lg text-gray margin-none clickable", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-filter-circle" }))), /* @__PURE__ */ (0, import_mithril15.default)("hr", { class: "margin-vertical-sm" }), groups.map((group) => {
+      )), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-lg text-gray margin-none clickable", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-filter-circle" }))), /* @__PURE__ */ (0, import_mithril15.default)("hr", { class: "margin-vertical-sm" }), controller2.groups.map((group) => {
         var cssClass = "flex-row flex-align-center padding hover-trigger";
-        if (group.id == selectedGroupId) {
+        if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
         return /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
@@ -16833,15 +17240,11 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      const group = controller2.group();
-      const contacts = controller2.contacts();
-      const contactsList = Array.from(contacts.values());
-      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { onclick: () => vnode.attrs.controller.page_messages() }, "\u2190"), /* @__PURE__ */ (0, import_mithril17.default)("span", { class: "bold text-lg" }, "Settings for ", group.name))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril17.default)(
+      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { onclick: () => vnode.attrs.controller.page_messages() }, "\u2190"), /* @__PURE__ */ (0, import_mithril17.default)("span", { class: "bold text-lg" }, "Settings for ", controller2.group.name))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril17.default)(
         "input",
         {
           id: "idGroupName",
           type: "text",
-          name: "actorIds",
           value: vnode.state.name,
           oninput: (event) => this.setName(vnode, event)
         }
@@ -16896,10 +17299,10 @@
       var page;
       switch (vnode.attrs.controller.pageView) {
         case "SETTINGS":
-          page = /* @__PURE__ */ (0, import_mithril20.default)(Settings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group() });
+          page = /* @__PURE__ */ (0, import_mithril20.default)(Settings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
           break;
         default:
-          const groups = vnode.attrs.controller.groups();
+          const groups = vnode.attrs.controller.groups;
           if (groups.length == 0) {
             page = /* @__PURE__ */ (0, import_mithril20.default)(Empty, { controller: vnode.attrs.controller });
           } else {
@@ -16910,11 +17313,9 @@
     }
     viewGroups(vnode) {
       const controller2 = vnode.attrs.controller;
-      const groups = controller2.groups();
-      const selectedGroupId = controller2.selectedGroupId;
-      return groups.map((group) => {
+      return controller2.groups.map((group) => {
         var cssClass = "flex-row flex-align-center padding hover-trigger";
-        if (group.id == selectedGroupId) {
+        if (group.id == controller2.selectedGroupId()) {
           cssClass += " selected";
         }
         return /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril20.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
@@ -16966,37 +17367,18 @@
     if (root2 == void 0) {
       throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`);
     }
-    const actor = await new Document().fromURL(actorID);
-    const [messagesCollection, allowPlaintextMessages] = findMessagesCollection(actor);
-    if (messagesCollection == "") {
+    const actor = await new Actor().fromURL(actorID);
+    const { url, plaintext } = actor.messages();
+    if (url == "") {
       throw new Error(`Actor does not support MLS API.`);
     }
     const indexedDB2 = await NewIndexedDB(actorID);
     const database = new Database(indexedDB2, defaultClientConfig);
     const delivery = new Delivery(actor.id(), actor.outbox());
     const directory = new Directory(actor.id(), actor.outbox());
-    const receiver = new Receiver(actor.id(), messagesCollection);
-    controller = new Controller(
-      actor,
-      database,
-      delivery,
-      directory,
-      receiver,
-      allowPlaintextMessages,
-      defaultClientConfig
-    );
+    const receiver = new Receiver(actor.id(), url);
+    controller = new Controller(actor, database, delivery, directory, receiver, plaintext, defaultClientConfig);
     import_mithril24.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril24.default)(Main, { controller }) });
-  }
-  function findMessagesCollection(actor) {
-    const emissaryMessages = actor.emissaryMessages();
-    if (emissaryMessages != "") {
-      return [emissaryMessages, true];
-    }
-    const mlsMessages = actor.mlsMessages();
-    if (mlsMessages != "") {
-      return [mlsMessages, true];
-    }
-    return ["", false];
   }
   startup();
 })();
