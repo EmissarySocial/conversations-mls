@@ -401,8 +401,8 @@ export class Controller {
 		m.redraw()
 	}
 
-	page_settings = () => {
-		this.pageView = "SETTINGS"
+	page_group_settings = () => {
+		this.pageView = "GROUP-SETTINGS"
 		m.redraw()
 	}
 

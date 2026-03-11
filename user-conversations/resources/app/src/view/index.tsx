@@ -8,7 +8,7 @@ import {NewConversation} from "./modal-newConversation"
 import {Debug} from "./modal-debug"
 import {Messages} from "./messages"
 import {Groups} from "./groups"
-import {Settings} from "./settings"
+import {GroupSettings} from "./group-settings"
 import {Empty} from "./empty"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
@@ -31,8 +31,8 @@ export class Index {
 		var page: JSX.Element
 
 		switch (vnode.attrs.controller.pageView) {
-			case "SETTINGS":
-				page = <Settings controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+			case "GROUP-SETTINGS":
+				page = <GroupSettings controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
 				break
 
 			default:

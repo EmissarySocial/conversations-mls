@@ -40,7 +40,7 @@ export class Messages {
 							</div>
 						</div>
 						<div>
-							<button class="text-sm" onclick={() => vnode.attrs.controller.page_settings()}>
+							<button class="text-sm" onclick={() => vnode.attrs.controller.page_group_settings()}>
 								Group Info
 							</button>
 						</div>

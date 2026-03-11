@@ -16529,8 +16529,8 @@
         this.pageView = "MESSAGES";
         import_mithril.default.redraw();
       };
-      this.page_settings = () => {
-        this.pageView = "SETTINGS";
+      this.page_group_settings = () => {
+        this.pageView = "GROUP-SETTINGS";
         import_mithril.default.redraw();
       };
       //////////////////////////////////////////
@@ -17200,7 +17200,7 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       const contactsList = Array.from(controller2.contacts.values());
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, controller2.group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, controller2.group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_group_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         const contact = controller2.contacts.get(message.sender) || NewContact();
         const isMe = message.sender == controller2.actorId();
         return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: `message ${isMe ? " me" : ""}` }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril13.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()));
@@ -17233,10 +17233,10 @@
     }
   };
 
-  // src/view/settings.tsx
+  // src/view/group-settings.tsx
   var import_mithril17 = __toESM(require_mithril(), 1);
   var import_mithril18 = __toESM(require_mithril(), 1);
-  var Settings = class {
+  var GroupSettings = class {
     //
     oninit(vnode) {
       vnode.state.name = vnode.attrs.group.name;
@@ -17249,7 +17249,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { onclick: () => vnode.attrs.controller.page_messages() }, "\u2190"), /* @__PURE__ */ (0, import_mithril17.default)("span", { class: "bold text-lg" }, "Settings for ", controller2.group.name))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril17.default)(
+      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("div", null, /* @__PURE__ */ (0, import_mithril17.default)("span", { role: "button", class: "link", onclick: () => vnode.attrs.controller.page_messages() }, "\u2190")), /* @__PURE__ */ (0, import_mithril17.default)("span", { class: "bold text-lg" }, "GroupSettings for ", controller2.group.name))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril17.default)(
         "input",
         {
           id: "idGroupName",
@@ -17265,16 +17265,7 @@
           value: vnode.state.tags,
           oninput: (event) => this.setTags(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-xs text-gray" }, "#hashtags (separated by spaces) help you organize conversations.")))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")), /* @__PURE__ */ (0, import_mithril17.default)("div", null, /* @__PURE__ */ (0, import_mithril17.default)(
-        "span",
-        {
-          onclick: () => {
-            this.delete(vnode);
-          },
-          class: "clickable text-red"
-        },
-        "Leave Group"
-      ))))));
+      ), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-xs text-gray" }, "#hashtags (separated by spaces) help you organize conversations.")))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")))), /* @__PURE__ */ (0, import_mithril17.default)("hr", { class: "margin-vertical-xl" }), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-vertical bold" }, "Danger Zone"), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { class: "text-red", onclick: () => this.delete(vnode) }, "Leave Group"), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-sm text-gray" }, "Remove yourself from this group and delete all messages from your devices.", /* @__PURE__ */ (0, import_mithril17.default)("br", null), "Other group members will still have access to the conversation and its history."))));
     }
     setName(vnode, event) {
       const target = event.target;
@@ -17326,8 +17317,8 @@
     view(vnode) {
       var page;
       switch (vnode.attrs.controller.pageView) {
-        case "SETTINGS":
-          page = /* @__PURE__ */ (0, import_mithril20.default)(Settings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+        case "GROUP-SETTINGS":
+          page = /* @__PURE__ */ (0, import_mithril20.default)(GroupSettings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
           break;
         default:
           const groups = vnode.attrs.controller.groups;

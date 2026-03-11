@@ -3,22 +3,22 @@ import {Controller} from "../controller"
 import {type Group} from "../model/group"
 import {type Vnode, type VnodeDOM, type Component} from "mithril"
 
-type SettingsVnode = Vnode<SettingsArgs, SettingsState>
+type GroupSettingsVnode = Vnode<GroupSettingsArgs, GroupSettingsState>
 
-interface SettingsArgs {
+interface GroupSettingsArgs {
 	controller: Controller
 	group: Group
 }
 
-interface SettingsState {
+interface GroupSettingsState {
 	name: string
 	tags: string
 }
 
-export class Settings {
+export class GroupSettings {
 	//
 
-	oninit(vnode: SettingsVnode) {
+	oninit(vnode: GroupSettingsVnode) {
 		vnode.state.name = vnode.attrs.group.name
 
 		if (vnode.attrs.group.tags == undefined) {
@@ -29,7 +29,7 @@ export class Settings {
 		console.log(vnode.attrs.group.tags)
 	}
 
-	view(vnode: SettingsVnode) {
+	view(vnode: GroupSettingsVnode) {
 		//
 		// List the settings
 		const controller = vnode.attrs.controller
@@ -38,8 +38,12 @@ export class Settings {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div class="flex-row flex-align-center">
-						<button onclick={() => vnode.attrs.controller.page_messages()}>&larr;</button>
-						<span class="bold text-lg">Settings for {controller.group.name}</span>
+						<div>
+							<span role="button" class="link" onclick={() => vnode.attrs.controller.page_messages()}>
+								&larr;
+							</span>
+						</div>
+						<span class="bold text-lg">GroupSettings for {controller.group.name}</span>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
@@ -75,33 +79,36 @@ export class Settings {
 									Save Changes
 								</button>
 							</div>
-							<div>
-								<span
-									onclick={() => {
-										this.delete(vnode)
-									}}
-									class="clickable text-red">
-									Leave Group
-								</span>
-							</div>
 						</div>
 					</form>
+					<hr class="margin-vertical-xl" />
+					<div class="margin-vertical bold">Danger Zone</div>
+					<div class="flex-row flex-align-center">
+						<button class="text-red" onclick={() => this.delete(vnode)}>
+							Leave Group
+						</button>
+						<div class="text-sm text-gray">
+							Remove yourself from this group and delete all messages from your devices.
+							<br />
+							Other group members will still have access to the conversation and its history.
+						</div>
+					</div>
 				</div>
 			</div>
 		)
 	}
 
-	setName(vnode: SettingsVnode, event: Event) {
+	setName(vnode: GroupSettingsVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.name = target.value
 	}
 
-	setTags(vnode: SettingsVnode, event: Event) {
+	setTags(vnode: GroupSettingsVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.tags = target.value
 	}
 
-	async onsubmit(event: SubmitEvent, vnode: SettingsVnode) {
+	async onsubmit(event: SubmitEvent, vnode: GroupSettingsVnode) {
 		//
 		// Halt the form submission to prevent a page reload
 		event.preventDefault()
@@ -127,7 +134,7 @@ export class Settings {
 		return this.close(vnode)
 	}
 
-	async delete(vnode: SettingsVnode) {
+	async delete(vnode: GroupSettingsVnode) {
 		//
 		// Confirm the user's intent
 		if (!confirm("Are you sure you want to leave this group? This action cannot be undone.")) {
@@ -141,7 +148,7 @@ export class Settings {
 		this.close(vnode)
 	}
 
-	close(vnode: SettingsVnode) {
+	close(vnode: GroupSettingsVnode) {
 		vnode.attrs.controller.page_messages()
 	}
 }
