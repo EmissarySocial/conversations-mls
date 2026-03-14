@@ -1,5 +1,4 @@
-import {Object} from "./object"
-import * as vocab from "./vocab"
+import { Object } from "./object"
 
 // Actor is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Actor extends Object {
@@ -71,7 +70,7 @@ export class Actor extends Object {
 		const emissaryMessages = this.emissaryMessages()
 
 		if (emissaryMessages != "") {
-			return {url: emissaryMessages, plaintext: true}
+			return { url: emissaryMessages, plaintext: true }
 		}
 
 		// Otherwise, fall back to the standard mls:messages property,
@@ -79,11 +78,11 @@ export class Actor extends Object {
 		const mlsMessages = this.mlsMessages()
 
 		if (mlsMessages != "") {
-			return {url: mlsMessages, plaintext: false}
+			return { url: mlsMessages, plaintext: false }
 		}
 
 		// Fail by returning "" for the collection URL
-		return {url: "", plaintext: false}
+		return { url: "", plaintext: false }
 	}
 }
 

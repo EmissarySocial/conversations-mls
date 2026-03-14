@@ -1,16 +1,15 @@
-import {defaultCredentialTypes} from "ts-mls"
-import {getCiphersuiteFromName} from "ts-mls"
-import {generateKeyPackage} from "ts-mls"
-import {nobleCryptoProvider} from "ts-mls"
-import {type Credential} from "ts-mls"
+import { defaultCredentialTypes, defaultLifetime, type CiphersuiteName } from "ts-mls"
+import { getCiphersuiteImpl } from "ts-mls"
+import { generateKeyPackage } from "ts-mls"
+import { type Credential } from "ts-mls"
 
-import type {Database} from "./database"
-import type {Delivery} from "./delivery"
-import type {Directory} from "./directory"
-import type {Receiver} from "./receiver"
-import {Actor} from "../ap/actor"
-import {MLS} from "./mls"
-import {NewAPKeyPackage} from "../model/ap-keypackage"
+import type { Database } from "./database"
+import type { Delivery } from "./delivery"
+import type { Directory } from "./directory"
+import type { Receiver } from "./receiver"
+import { Actor } from "../ap/actor"
+import { MLS } from "./mls"
+import { NewAPKeyPackage } from "../model/ap-keypackage"
 
 // makeMLS loads the required dependencies for the MLS service,
 // and returns a fully populated MLS instance once everything is ready.
@@ -25,8 +24,8 @@ export async function MLSFactory(
 	//
 	// Use MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519 (ID: 1)
 	// Using nobleCryptoProvider for compatibility (pure JS implementation)
-	const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
-	const cipherSuite = await nobleCryptoProvider.getCiphersuiteImpl(getCiphersuiteFromName(cipherSuiteName))
+	const cipherSuiteName: CiphersuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+	const cipherSuite = await getCiphersuiteImpl(cipherSuiteName)
 
 	// Try to load the KeyPackage from the IndexedDB database
 	var dbKeyPackage = await database.loadKeyPackage()
@@ -44,6 +43,7 @@ export async function MLSFactory(
 		var keyPackageResult = await generateKeyPackage({
 			credential: credential,
 			cipherSuite: cipherSuite,
+			lifetime: defaultLifetime(),
 		})
 
 		// Publish the KeyPackage to the server

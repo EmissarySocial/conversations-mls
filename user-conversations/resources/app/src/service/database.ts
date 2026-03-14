@@ -1,11 +1,22 @@
-import type {DBSchema, IDBPDatabase} from "idb/build/entry.js"
-import {openDB} from "idb"
-import {ConfigID, NewConfig, type Config} from "../model/config"
-import {type Group} from "../model/group"
-import {type Contact} from "../model/contact"
-import {type Message} from "../model/message"
-import type {DBKeyPackage} from "../model/db-keypackage"
-import {type ClientConfig} from "ts-mls/clientConfig.js"
+// MLS Types
+import { type ClientConfig } from "ts-mls"
+
+// IDB Objects
+import { type DBSchema } from "idb"
+import { type IDBPDatabase } from "idb"
+import { openDB } from "idb"
+
+// Model Types
+import { type Config } from "../model/config"
+import { type EncryptedGroup } from "../model/group"
+import { type Group } from "../model/group"
+import { type Contact } from "../model/contact"
+import { type Message } from "../model/message"
+import { type DBKeyPackage } from "../model/db-keypackage"
+
+// Model Objects
+import { ConfigID } from "../model/config"
+import { NewConfig } from "../model/config"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
@@ -27,7 +38,7 @@ interface Schema extends DBSchema {
 
 	group: {
 		key: string
-		value: Group
+		value: Group | EncryptedGroup
 		indexes: {
 			id: string
 		}
@@ -59,17 +70,17 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 			//
 			// Version 1
 			if (oldVersion < 1) {
-				db.createObjectStore("config", {keyPath: "id"})
-				db.createObjectStore("group", {keyPath: "id"})
-				db.createObjectStore("keyPackage", {keyPath: "id"})
+				db.createObjectStore("config", { keyPath: "id" })
+				db.createObjectStore("group", { keyPath: "id" })
+				db.createObjectStore("keyPackage", { keyPath: "id" })
 
-				const messages = db.createObjectStore("message", {keyPath: "id"})
-				messages.createIndex("group", "group", {unique: false})
+				const messages = db.createObjectStore("message", { keyPath: "id" })
+				messages.createIndex("group", "group", { unique: false })
 			}
 
 			// Version 2 - Add "contact" store
 			if (oldVersion < 2) {
-				db.createObjectStore("contact", {keyPath: "id"})
+				db.createObjectStore("contact", { keyPath: "id" })
 			}
 		},
 	})
@@ -77,13 +88,11 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 
 export class Database {
 	#db: IDBPDatabase<Schema>
-	#clientConfig: ClientConfig
 	#onchange: callbackFunction
 
-	constructor(db: IDBPDatabase<Schema>, clientConfig: ClientConfig) {
+	constructor(db: IDBPDatabase<Schema>) {
 		this.#db = db
-		this.#clientConfig = clientConfig
-		this.#onchange = () => {}
+		this.#onchange = () => { }
 	}
 
 	// setChange allows the caller to provide a redraw function that will be called after database operations
@@ -153,13 +162,13 @@ export class Database {
 	}
 
 	// loadGroup retrieves a group from the database
-	loadGroup = async (groupID: string) => {
+	loadGroup = async (groupID: string): Promise<Group | EncryptedGroup | undefined> => {
 		//
 
 		// Load the group record
 		const group = await this.#db.get("group", groupID)
 		if (group == undefined) {
-			throw new Error("Group not found: " + groupID)
+			return undefined
 		}
 
 		// Success?
@@ -226,5 +235,61 @@ export class Database {
 	deleteMessage = async (messageId: string) => {
 		await this.#db.delete("message", messageId)
 		this.#onchange()
+	}
+
+	// likeMessage adds a "like" from the specified actor to the specified message
+	likeMessage = async (actorId: string, messageId: string) => {
+
+		// Retrieve the message from the database
+		var message = await this.loadMessage(messageId)
+
+		// RULE: If the message doesn't exist, then exit
+		if (message == undefined) {
+			console.log("Error: cannot like message that doesn't exist")
+			return
+		}
+
+		// Guarantee that "likes" data exists
+		if (message.likes == undefined) {
+			message.likes = []
+		}
+
+		// RULE: If this actor has already liked this message, then don't like it again
+		if (message.likes.includes(actorId)) {
+			return
+		}
+
+		// Add the "like" to our local message record and save to the database.
+		message.likes.push(actorId)
+		await this.saveMessage(message)
+
+		return message
+	}
+
+	undoLikeMessage = async (actorId: string, messageId: string) => {
+
+		// Retrieve the message from the database
+		var message = await this.loadMessage(messageId)
+
+		// RULE: If the message doesn't exist, then exit
+		if (message == undefined) {
+			console.log("Error: cannot undo like on message that doesn't exist")
+			return undefined
+		}
+
+		// Guarantee that "likes" data exists
+		if (message.likes == undefined) {
+			message.likes = []
+		}
+
+		if (!message.likes.includes(actorId)) {
+			return undefined
+		}
+
+		// Remove the "like" from our local message record and save to the database.
+		message.likes = message.likes.filter((id) => id !== actorId)
+		await this.saveMessage(message)
+
+		return message
 	}
 }

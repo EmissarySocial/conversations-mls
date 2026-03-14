@@ -1,9 +1,10 @@
-import {toString} from "./utils"
+import { toString } from "./utils"
 
-type map = {[key: string]: any}
+type map = { [key: string]: any }
 
 // JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Object {
+
 	#value: map
 
 	constructor(value?: map) {
@@ -132,6 +133,7 @@ export class Object {
 
 		return [result]
 	}
+
 
 	///////////////////////////////////
 	// Properties

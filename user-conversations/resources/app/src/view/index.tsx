@@ -1,11 +1,8 @@
 import m from "mithril"
-import stream from "mithril/stream"
 import {type Vnode} from "mithril"
 import {type Group} from "../model/group"
-import {type Contact} from "../model/contact"
-import {Controller} from "../controller"
+import {Controller} from "../service/controller"
 import {NewConversation} from "./modal-newConversation"
-import {Debug} from "./modal-debug"
 import {Messages} from "./messages"
 import {Groups} from "./groups"
 import {GroupSettings} from "./group-settings"
@@ -89,9 +86,6 @@ export class Index {
 				return (
 					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)}></NewConversation>
 				)
-
-			case "DEBUG":
-				return <Debug controller={vnode.attrs.controller} close={() => this.closeModal(vnode)}></Debug>
 		}
 
 		return undefined

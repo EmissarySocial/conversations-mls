@@ -1,14 +1,14 @@
-import {Object} from "./object"
-import {loadDocument} from "./document"
-import {loadActor} from "./actor"
+import { Object } from "./object"
+import { loadDocument } from "./document"
+import { loadActor } from "./actor"
 import * as vocab from "./vocab"
 
 // Activity is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Activity extends Object {
-	//
 
 	///////////////////////////////////
 	// Property getters
+	///////////////////////////////////
 
 	// actor returns the value of the "actor" property
 	actor = async () => {
@@ -16,8 +16,14 @@ export class Activity extends Object {
 		return await loadActor(actor)
 	}
 
+	// actorId returns the string value of the "actor" property (which may be a URL or an embedded object)
 	actorId = () => {
 		return this.getString("as", vocab.PropertyActor)
+	}
+
+	// context returns the message context (not @context) property for this activity
+	context = () => {
+		return this.getString("as", vocab.PropertyContext)
 	}
 
 	// object returns the value of the "object" property, which may be either a string URL or an embedded object
@@ -32,7 +38,7 @@ export class Activity extends Object {
 
 	// target returns the value of the "target" property
 	target = async () => {
-		const target = await this.get("as", vocab.PropertyTarget)
+		const target = this.get("as", vocab.PropertyTarget)
 		return await loadDocument(target)
 	}
 
@@ -45,10 +51,17 @@ export class Activity extends Object {
 	///////////////////////////////////
 	// Property setters
 
+	// setContext sets the context property (NOT @context) of this Activity
+	setContext = (context: string) => {
+		this.set(vocab.PropertyContext, context)
+	}
+
+	// setObject sets the object property of this Activity
 	setObject = (object: Object) => {
 		this.set(vocab.PropertyObject, object.toObject())
 	}
 
+	// setObjectId sets the object property of this Activity as a string ID (instead of an embedded object)
 	setObjectId = (id: string) => {
 		this.set(vocab.PropertyObject, id)
 	}

@@ -1,12 +1,17 @@
-import {type KeyPackage} from "ts-mls"
-import {decode} from "ts-mls"
-import {mlsMessageDecoder} from "ts-mls"
-import {wireformats} from "ts-mls"
-import {type APKeyPackage} from "../model/ap-keypackage"
-import {ContactFromActor, type Contact} from "../model/contact"
-import {Collection, rangeDocuments} from "../ap/collection"
-import {base64ToUint8Array} from "./utils"
-import {Actor} from "../ap/actor"
+// ts-mls TYpes
+import { type KeyPackage } from "ts-mls"
+import { decode } from "ts-mls"
+import { mlsMessageDecoder } from "ts-mls"
+import { wireformats } from "ts-mls"
+
+// Model Objects
+import { type APKeyPackage } from "../model/ap-keypackage"
+import { ContactFromActor, type Contact } from "../model/contact"
+
+// ActivityPub objects
+import { rangeDocuments } from "../ap/collection"
+import { Actor } from "../ap/actor"
+import { base64ToUint8Array } from "./utils"
 
 export class Directory {
 	#actorID: string // ID of the local actor

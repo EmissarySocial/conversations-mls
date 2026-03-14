@@ -1,7 +1,7 @@
 import m from "mithril"
-import {Controller} from "../controller"
+import {type Vnode} from "mithril"
+import {Controller} from "../service/controller"
 import {type APActor} from "../model/ap-actor"
-import {type Vnode, type VnodeDOM, type Component} from "mithril"
 import {Modal} from "./modal"
 import {ActorSearch} from "./actorSearch"
 

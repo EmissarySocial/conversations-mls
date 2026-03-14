@@ -1,15 +1,17 @@
-import {type MlsGroupInfo, type MlsMessage, type MlsMessageProtocol} from "ts-mls"
-import {type MlsFramedMessage} from "ts-mls"
-import {type MlsWelcomeMessage} from "ts-mls"
+import { type MlsGroupInfo, type MlsMessage } from "ts-mls"
+import { type MlsFramedMessage } from "ts-mls"
+import { type MlsWelcomeMessage } from "ts-mls"
 
-import {bytesToBase64, type Encoder} from "ts-mls"
-import {encode} from "ts-mls"
-import {decode} from "ts-mls"
-import {mlsMessageEncoder} from "ts-mls"
-import {mlsMessageDecoder} from "ts-mls"
+import { bytesToBase64, type Encoder } from "ts-mls"
+import { encode } from "ts-mls"
+import { decode } from "ts-mls"
+import { mlsMessageEncoder } from "ts-mls"
+import { mlsMessageDecoder } from "ts-mls"
 
-import {Activity} from "../ap/activity"
+import { MLS } from "./mls"
+import { Activity } from "../ap/activity"
 import * as vocab from "../ap/vocab"
+import { groupIsEncrypted, type Group } from "../model/group"
 
 // Delivery service sends messages via ActivityPub
 export class Delivery {
@@ -62,7 +64,7 @@ export class Delivery {
 	}
 
 	// sendGroupInfo sends an MLS GroupInfo message to the specified recipients
-	sendGroupInfo = (recipients: string[], message: MlsGroupInfo & MlsMessageProtocol) => {
+	sendGroupInfo = (recipients: string[], message: MlsGroupInfo) => {
 		this.#sendMlsMessage("mls:GroupInfo", recipients, message)
 	}
 
@@ -92,8 +94,8 @@ export class Delivery {
 		const contentBase64 = bytesToBase64(contentBytes)
 
 		// Create an ActivityPub activity for the private message
-		const activity = {
-			"@context": [vocab.ContextActivityStreams, {mls: vocab.ContextMLS}],
+		const activity = new Activity({
+			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
 			type: vocab.ActivityTypeCreate,
 			actor: this.#actorId,
 			to: recipients,
@@ -105,19 +107,28 @@ export class Delivery {
 				mediaType: "message/mls",
 				"mls:encoding": "base64",
 			},
-		}
-
-		// Send the activity via the Actor's outbox
-		return this.sendActivity(new Activity(activity))
-	}
-
-	// sendActivity sends an activity to the Actor's outbox
-	sendActivity = async (activity: Activity) => {
-		//
+		})
 
 		console.log("Sending activity:", activity.toJSON())
 
 		// Send the Activity to the server
+		const response = await fetch(this.#outboxUrl, {
+			method: "POST",
+			body: activity.toJSON(),
+			credentials: "include",
+		})
+
+		if (!response.ok) {
+			throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`)
+		}
+	}
+
+	// sendActivity sends an activity to the Actor's outbox
+	sendActivity = async (activity: Activity) => {
+
+		// If necessary, encrypt the activity using MLS before sending
+		// Send the Activity to the server
+		console.log("Sending activity:", activity.toJSON())
 		const response = await fetch(this.#outboxUrl, {
 			method: "POST",
 			body: activity.toJSON(),

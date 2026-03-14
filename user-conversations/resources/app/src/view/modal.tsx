@@ -1,4 +1,5 @@
-import m, {type ChildArrayOrPrimitive, type VnodeDOM} from "mithril"
+import m from "mithril"
+import {type VnodeDOM} from "mithril"
 import {keyCode, getFocusElements} from "./utils"
 
 interface ModalAttrs {

@@ -1,7 +1,6 @@
 import m from "mithril"
-import stream from "mithril/stream"
 import {type Vnode} from "mithril"
-import {Controller} from "../controller"
+import {Controller} from "../service/controller"
 import type {Config} from "../model/config"
 import {Welcome} from "./welcome"
 import {Index} from "."

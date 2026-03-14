@@ -1,5 +1,5 @@
 import m, {type Vnode} from "mithril"
-import type {Controller} from "../controller"
+import type {Controller} from "../service/controller"
 
 type WidgetMessageCreateVnode = Vnode<WidgetMessageCreateAttrs, WidgetMessageCreateState>
 

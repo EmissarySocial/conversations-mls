@@ -1,14 +1,14 @@
 // KeyPackage is the ActivityPub representation of a KeyPackage
 
-import {bytesToBase64} from "ts-mls"
-import {decode} from "ts-mls/codec/tlsDecoder.js"
-import {encode} from "ts-mls/codec/tlsEncoder.js"
-import type {KeyPackage} from "ts-mls/keyPackage.js"
-import {mlsMessageEncoder} from "ts-mls/message.js"
-import {mlsMessageDecoder} from "ts-mls/message.js"
-import {protocolVersions} from "ts-mls/protocolVersion.js"
-import {base64ToBytes} from "ts-mls/util/byteArray.js"
-import {wireformats} from "ts-mls/wireformat.js"
+import { bytesToBase64 } from "ts-mls"
+import { decode } from "ts-mls"
+import { encode } from "ts-mls"
+import type { KeyPackage } from "ts-mls"
+import { mlsMessageEncoder } from "ts-mls"
+import { mlsMessageDecoder } from "ts-mls"
+import { protocolVersions } from "ts-mls"
+import { base64ToBytes } from "ts-mls"
+import { wireformats } from "ts-mls"
 
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
 export interface APKeyPackage {

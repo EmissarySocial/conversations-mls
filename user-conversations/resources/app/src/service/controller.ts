@@ -1,22 +1,29 @@
 // old imports
 import m from "mithril"
 
-import {type ClientConfig, type KeyPackage, type Welcome} from "ts-mls"
-import {MLS} from "./service/mls"
-import {Actor} from "./ap/actor"
-import {Activity} from "./ap/activity"
-import {type Config, NewConfig} from "./model/config"
-import {type Contact} from "./model/contact"
-import {type Message, NewMessage} from "./model/message"
-import {type Group, groupIsEncrypted, NewGroup} from "./model/group"
+// ActivityPub objects
+import { Actor } from "../ap/actor"
+import { Activity } from "../ap/activity"
+import * as vocab from "../ap/vocab"
 
-import {MLSFactory} from "./service/mls-factory"
-import type {Delivery} from "./service/delivery"
-import type {Directory} from "./service/directory"
-import type {Database} from "./service/database"
-import type {Receiver} from "./service/receiver"
-import * as vocab from "./ap/vocab"
-import {newId} from "./service/utils"
+// Model objects
+import { type Config } from "../model/config"
+import { type Contact } from "../model/contact"
+import { type Message } from "../model/message"
+import { type Group } from "../model/group"
+import { NewConfig } from "../model/config"
+import { NewGroup } from "../model/group"
+import { NewMessage } from "../model/message"
+import { groupIsEncrypted } from "../model/group"
+
+// Services
+import { type Delivery } from "./delivery"
+import { type Directory } from "./directory"
+import { type Database } from "./database"
+import { type Receiver } from "./receiver"
+import { MLSFactory } from "./mls-factory"
+import { MLS } from "./mls"
+import { newId } from "./utils"
 
 export class Controller {
 	#actor: Actor
@@ -28,7 +35,6 @@ export class Controller {
 	#allowPlaintextMessages: boolean
 
 	config: Config
-	clientConfig: ClientConfig
 	groups: Group[]
 	group: Group
 	messages: Message[]
@@ -44,7 +50,6 @@ export class Controller {
 		directory: Directory,
 		receiver: Receiver,
 		allowPlaintextMessages: boolean,
-		clientConfig: ClientConfig,
 	) {
 		// Dependencies
 		this.#actor = actor
@@ -53,7 +58,6 @@ export class Controller {
 		this.#directory = directory
 		this.#receiver = receiver
 		this.#allowPlaintextMessages = allowPlaintextMessages
-		this.clientConfig = clientConfig
 
 		// Application State
 		this.groups = []
@@ -178,7 +182,7 @@ export class Controller {
 		// POST to the actor's outbox
 		const response = await fetch(this.#actor.outbox(), {
 			method: "POST",
-			headers: {"Content-Type": "application/activity+json"},
+			headers: { "Content-Type": "application/activity+json" },
 			body: JSON.stringify(activity),
 		})
 	}
@@ -333,6 +337,11 @@ export class Controller {
 		m.redraw()
 	}
 
+	// loadMessage retrieves a single message
+	loadMessage = async (messageId: string) => {
+		return await this.#database.loadMessage(messageId)
+	}
+
 	// sendMessage sends a message to the specified group
 	sendMessage = async (content: string) => {
 		//
@@ -368,13 +377,8 @@ export class Controller {
 
 		console.log("Created activity:", activity)
 
-		// Encrypt this message (if the group is encrypted)
-		if (groupIsEncrypted(this.group)) {
-			activity = await this.#mls.encodeActivity(this.group, activity)
-		}
-
 		// (asynchronously) Send the activity through the delivery service
-		this.#delivery.sendActivity(activity)
+		this.#sendActivity(this.group, activity)
 
 		// Create a new Message record for the database
 		var message = NewMessage()
@@ -384,6 +388,80 @@ export class Controller {
 
 		// Save the message to the database, and reload to refresh the UX
 		await this.#database.saveMessage(message)
+		await this.loadMessages()
+	}
+
+	like_message = async (messageId: string) => {
+
+		// Mark the message as "liked" in the database
+		const message = await this.#database.likeMessage(this.actorId(), messageId)
+
+		if (message == undefined) {
+			console.log("Unable to like message: " + messageId)
+			return
+		}
+
+		// Load the group that this message belongs to (for addressing info)
+		var group = await this.#database.loadGroup(message.group)
+		if (group == undefined) {
+			console.log("Error: cannot like message with missing group")
+			return
+		}
+
+		// Send a "like" activity to the actor's outbox
+		var activity = new Activity({
+			"@context": vocab.ContextActivityStreams,
+			id: newId(),
+			actor: this.actorId(),
+			type: vocab.ActivityTypeLike,
+			to: group.members,
+			object: message.id,
+		})
+
+		// Send the activity to the outbox
+		this.#sendActivity(group, activity)
+
+		// Reload messages to refresh the UX
+		await this.loadMessages()
+	}
+
+
+	undo_like_message = async (messageId: string) => {
+
+		// Undo Mark the message as "liked" in the database
+		const message = await this.#database.undoLikeMessage(this.actorId(), messageId)
+
+
+		// RULE: If the message doesn't exist, then exit
+		if (message == undefined) {
+			return
+		}
+
+		// Load the group that this message belongs to (for addressing info)
+		var group = await this.#database.loadGroup(message.group)
+		if (group == undefined) {
+			console.log("Error: cannot like message with missing group")
+			return
+		}
+
+		// Send a "like" activity to the actor's outbox
+		var activity = new Activity({
+			"@context": vocab.ContextActivityStreams,
+			id: newId(),
+			actor: this.actorId(),
+			type: vocab.ActivityTypeUndo,
+			to: group.members,
+			object: {
+				type: vocab.ActivityTypeLike,
+				actor: this.actorId(),
+				object: message.id,
+			}
+		})
+
+		// Send the activity to the outbox
+		this.#sendActivity(group, activity)
+
+		// Reload messages to refresh the UX
 		await this.loadMessages()
 	}
 
@@ -447,56 +525,123 @@ export class Controller {
 				throw new Error("Decrypted activity actor must match outer activity actor")
 			}
 
-			// Decode the object embedded in the activity.
-			const decodedObject = await decodedActivity.object()
-
-			if (decodedObject.attributedToId() != activity.actorId()) {
-				throw new Error("Decrypted activity actor must match object's attributedTo")
-			}
 
 			// Update activity and object to continue processing using the decoded values.
 			activity = decodedActivity
-			object = decodedObject
-
-			console.log("successfully decoded object:", object.toJSON())
+			console.log("successfully decoded object:", activity.toJSON())
 		}
 
 		switch (activity.type()) {
-			//
+
 			case vocab.ActivityTypeCreate:
-			// Update the group with the most recent message
-			// group.lastMessage = activity.content.slice(0, 100)
-			// await this.#database.saveGroup(group)
-			// intentional fall through (I know, but blame Javascript)
+				await this.#receiveActivity_CreateDocument(activity)
+				return
 
 			case vocab.ActivityTypeUpdate:
-				// Create a new message record in the database for this incoming message
-				const message = {
-					id: activity.id(),
-					group: object.context(),
-					sender: activity.actorId(),
-					plaintext: object.content(),
-					inReplyTo: object.inReplyToId(),
-					createDate: Date.now(),
-				}
-
-				// Save the message to the database
-				await this.#database.saveMessage(message)
+				await this.#receiveActivity_UpdateDocument(activity)
 				return
 
 			case vocab.ActivityTypeDelete:
-				await this.#database.deleteMessage(object.id())
+				await this.#receiveActivity_DeleteDocument(activity)
 				return
 
 			case vocab.ActivityTypeLike:
+				await this.#receiveActivity_Like(activity)
 				return
 
 			case vocab.ActivityTypeUndo:
+				await this.#receiveActivity_Undo(activity)
+
 				return
 
 			default:
 				console.log("Received unrecognized activity:", activity)
 				return
+		}
+	}
+
+	#receiveActivity_CreateDocument = async (activity: Activity) => {
+
+		// Decode the object embedded in the activity.
+		const object = await activity.object()
+
+		if (object.attributedToId() != activity.actorId()) {
+			throw new Error("Decrypted activity actor must match object's attributedTo")
+		}
+
+		// Create a new message record in the database for this incoming message
+		const message = {
+			id: activity.id(),
+			group: activity.context(),
+			sender: activity.actorId(),
+			plaintext: object.content(),
+			likes: [],
+			inReplyTo: object.inReplyToId(),
+			createDate: Date.now(),
+		}
+
+		// Save the message to the database
+		await this.#database.saveMessage(message)
+	}
+
+	#receiveActivity_UpdateDocument = async (activity: Activity) => {
+
+		// Decode the object embedded in the activity.
+		const object = await activity.object()
+
+		if (object.attributedToId() != activity.actorId()) {
+			throw new Error("Decrypted activity actor must match object's attributedTo")
+		}
+
+		// Create a new message record in the database for this incoming message
+		const message = {
+			id: activity.id(),
+			group: activity.context(),
+			sender: activity.actorId(),
+			plaintext: object.content(),
+			likes: [],
+			inReplyTo: object.inReplyToId(),
+			createDate: Date.now(),
+		}
+
+		// Save the message to the database
+		await this.#database.saveMessage(message)
+	}
+
+	#receiveActivity_DeleteDocument = async (activity: Activity) => {
+
+		// Delete the message from the database
+		await this.#database.deleteMessage(activity.objectId())
+
+		// Reload messages to refresh the UX
+		this.loadMessages()
+	}
+
+	#receiveActivity_Like = async (activity: Activity) => {
+
+		// Add a "like" to the message in the database
+		const message = await this.#database.likeMessage(activity.actorId(), activity.objectId())
+		if (message == undefined) {
+			return
+		}
+
+		// Reload messages to refresh the UX
+		if (message.group == this.selectedGroupId()) {
+			this.loadMessages()
+		}
+	}
+
+	#receiveActivity_Undo = async (activity: Activity) => {
+
+		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
+		const message = await this.#database.undoLikeMessage(activity.actorId(), activity.objectId())
+		if (message == undefined) {
+			return
+		}
+
+		// Reload messages to refresh the UX
+		if (message.group == this.selectedGroupId()) {
+			this.loadMessages()
 		}
 	}
 
@@ -510,5 +655,27 @@ export class Controller {
 
 	modal_newConversation = () => {
 		this.modalView = "NEW-CONVERSATION"
+	}
+
+
+	//////////////////////////////////////////
+	// Network Stuff
+	//////////////////////////////////////////
+
+
+	// sendActivity sends an activity to the Actor's outbox
+	#sendActivity = async (group: Group, activity: Activity) => {
+
+		// RULE: Guarantee that MLS service is initialized.
+		if (this.#mls == undefined) {
+			throw new Error("MLS service is not initialized")
+		}
+
+		// If necessary, encrypt the activity using MLS before sending
+		if (groupIsEncrypted(group)) {
+			activity = await this.#mls.encodeActivity(group, activity)
+		}
+
+		return this.#delivery.sendActivity(activity)
 	}
 }

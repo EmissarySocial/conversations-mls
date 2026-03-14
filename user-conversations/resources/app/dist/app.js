@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m16, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m15, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m16;
+          if (params[key] == null) return m15;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m16, key, extra) {
-            if (key == null) return "\\" + m16;
+          function(m15, key, extra) {
+            if (key == null) return "\\" + m15;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,38 +1597,40 @@
       var mountRedraw = require_mount_redraw2();
       var request2 = require_request2();
       var router = require_route();
-      var m16 = function m17() {
+      var m15 = function m16() {
         return hyperscript.apply(this, arguments);
       };
-      m16.m = hyperscript;
-      m16.trust = hyperscript.trust;
-      m16.fragment = hyperscript.fragment;
-      m16.Fragment = "[";
-      m16.mount = mountRedraw.mount;
-      m16.route = router;
-      m16.render = require_render2();
-      m16.redraw = mountRedraw.redraw;
-      m16.request = request2.request;
-      m16.parseQueryString = require_parse();
-      m16.buildQueryString = require_build();
-      m16.parsePathname = require_parse2();
-      m16.buildPathname = require_build2();
-      m16.vnode = require_vnode();
-      m16.censor = require_censor();
-      m16.domFor = require_domFor();
-      module.exports = m16;
+      m15.m = hyperscript;
+      m15.trust = hyperscript.trust;
+      m15.fragment = hyperscript.fragment;
+      m15.Fragment = "[";
+      m15.mount = mountRedraw.mount;
+      m15.route = router;
+      m15.render = require_render2();
+      m15.redraw = mountRedraw.redraw;
+      m15.request = request2.request;
+      m15.parseQueryString = require_parse();
+      m15.buildQueryString = require_build();
+      m15.parsePathname = require_parse2();
+      m15.buildPathname = require_build2();
+      m15.vnode = require_vnode();
+      m15.censor = require_censor();
+      m15.domFor = require_domFor();
+      module.exports = m15;
     }
   });
 
-  // node_modules/@noble/hashes/utils.js
+  // node_modules/@noble/ciphers/utils.js
   function isBytes2(a) {
     return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array";
   }
-  function anumber2(n, title = "") {
-    if (!Number.isSafeInteger(n) || n < 0) {
-      const prefix = title && `"${title}" `;
-      throw new Error(`${prefix}expected integer >= 0, got ${n}`);
-    }
+  function abool(b) {
+    if (typeof b !== "boolean")
+      throw new Error(`boolean expected, not ${b}`);
+  }
+  function anumber2(n) {
+    if (!Number.isSafeInteger(n) || n < 0)
+      throw new Error("positive integer expected, got " + n);
   }
   function abytes2(value, length, title = "") {
     const bytes = isBytes2(value);
@@ -1642,12 +1644,6 @@
     }
     return value;
   }
-  function ahash2(h) {
-    if (typeof h !== "function" || typeof h.create !== "function")
-      throw new Error("Hash must wrapped by utils.createHasher");
-    anumber2(h.outputLen);
-    anumber2(h.blockLen);
-  }
   function aexists2(instance, checkFinished = true) {
     if (instance.destroyed)
       throw new Error("Hash instance has been destroyed");
@@ -1655,10 +1651,10 @@
       throw new Error("Hash#digest() has already been called");
   }
   function aoutput2(out, instance) {
-    abytes2(out, void 0, "digestInto() output");
+    abytes2(out, void 0, "output");
     const min = instance.outputLen;
     if (out.length < min) {
-      throw new Error('"digestInto() output" expected to be of length >=' + min);
+      throw new Error("digestInto() expects output buffer of length at least " + min);
     }
   }
   function u32(arr) {
@@ -1670,6 +1666,880 @@
     }
   }
   function createView2(arr) {
+    return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
+  }
+  function checkOpts(defaults, opts) {
+    if (opts == null || typeof opts !== "object")
+      throw new Error("options must be defined");
+    const merged = Object.assign(defaults, opts);
+    return merged;
+  }
+  function equalBytes(a, b) {
+    if (a.length !== b.length)
+      return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++)
+      diff |= a[i] ^ b[i];
+    return diff === 0;
+  }
+  function getOutput(expectedLength, out, onlyAligned = true) {
+    if (out === void 0)
+      return new Uint8Array(expectedLength);
+    if (out.length !== expectedLength)
+      throw new Error('"output" expected Uint8Array of length ' + expectedLength + ", got: " + out.length);
+    if (onlyAligned && !isAligned32(out))
+      throw new Error("invalid output, must be aligned");
+    return out;
+  }
+  function u64Lengths(dataLength, aadLength, isLE3) {
+    abool(isLE3);
+    const num = new Uint8Array(16);
+    const view = createView2(num);
+    view.setBigUint64(0, BigInt(aadLength), isLE3);
+    view.setBigUint64(8, BigInt(dataLength), isLE3);
+    return num;
+  }
+  function isAligned32(bytes) {
+    return bytes.byteOffset % 4 === 0;
+  }
+  function copyBytes2(bytes) {
+    return Uint8Array.from(bytes);
+  }
+  function randomBytes(bytesLength = 32) {
+    const cr = typeof globalThis === "object" ? globalThis.crypto : null;
+    if (typeof cr?.getRandomValues !== "function")
+      throw new Error("crypto.getRandomValues must be defined");
+    return cr.getRandomValues(new Uint8Array(bytesLength));
+  }
+  var isLE, wrapCipher;
+  var init_utils = __esm({
+    "node_modules/@noble/ciphers/utils.js"() {
+      isLE = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
+      wrapCipher = /* @__NO_SIDE_EFFECTS__ */ (params, constructor) => {
+        function wrappedCipher(key, ...args) {
+          abytes2(key, void 0, "key");
+          if (!isLE)
+            throw new Error("Non little-endian hardware is not yet supported");
+          if (params.nonceLength !== void 0) {
+            const nonce = args[0];
+            abytes2(nonce, params.varSizeNonce ? void 0 : params.nonceLength, "nonce");
+          }
+          const tagl = params.tagLength;
+          if (tagl && args[1] !== void 0)
+            abytes2(args[1], void 0, "AAD");
+          const cipher = constructor(key, ...args);
+          const checkOutput = (fnLength, output) => {
+            if (output !== void 0) {
+              if (fnLength !== 2)
+                throw new Error("cipher output not supported");
+              abytes2(output, void 0, "output");
+            }
+          };
+          let called = false;
+          const wrCipher = {
+            encrypt(data, output) {
+              if (called)
+                throw new Error("cannot encrypt() twice with same key + nonce");
+              called = true;
+              abytes2(data);
+              checkOutput(cipher.encrypt.length, output);
+              return cipher.encrypt(data, output);
+            },
+            decrypt(data, output) {
+              abytes2(data);
+              if (tagl && data.length < tagl)
+                throw new Error('"ciphertext" expected length bigger than tagLength=' + tagl);
+              checkOutput(cipher.decrypt.length, output);
+              return cipher.decrypt(data, output);
+            }
+          };
+          return wrCipher;
+        }
+        Object.assign(wrappedCipher, params);
+        return wrappedCipher;
+      };
+    }
+  });
+
+  // node_modules/@noble/ciphers/_arx.js
+  function rotl(a, b) {
+    return a << b | a >>> 32 - b;
+  }
+  function isAligned322(b) {
+    return b.byteOffset % 4 === 0;
+  }
+  function runCipher(core, sigma, key, nonce, data, output, counter, rounds) {
+    const len = data.length;
+    const block = new Uint8Array(BLOCK_LEN);
+    const b32 = u32(block);
+    const isAligned = isAligned322(data) && isAligned322(output);
+    const d32 = isAligned ? u32(data) : U32_EMPTY;
+    const o32 = isAligned ? u32(output) : U32_EMPTY;
+    for (let pos = 0; pos < len; counter++) {
+      core(sigma, key, nonce, b32, counter, rounds);
+      if (counter >= MAX_COUNTER)
+        throw new Error("arx: counter overflow");
+      const take = Math.min(BLOCK_LEN, len - pos);
+      if (isAligned && take === BLOCK_LEN) {
+        const pos32 = pos / 4;
+        if (pos % 4 !== 0)
+          throw new Error("arx: invalid block position");
+        for (let j = 0, posj; j < BLOCK_LEN32; j++) {
+          posj = pos32 + j;
+          o32[posj] = d32[posj] ^ b32[j];
+        }
+        pos += BLOCK_LEN;
+        continue;
+      }
+      for (let j = 0, posj; j < take; j++) {
+        posj = pos + j;
+        output[posj] = data[posj] ^ block[j];
+      }
+      pos += take;
+    }
+  }
+  function createCipher(core, opts) {
+    const { allowShortKeys, extendNonceFn, counterLength, counterRight, rounds } = checkOpts({ allowShortKeys: false, counterLength: 8, counterRight: false, rounds: 20 }, opts);
+    if (typeof core !== "function")
+      throw new Error("core must be a function");
+    anumber2(counterLength);
+    anumber2(rounds);
+    abool(counterRight);
+    abool(allowShortKeys);
+    return (key, nonce, data, output, counter = 0) => {
+      abytes2(key, void 0, "key");
+      abytes2(nonce, void 0, "nonce");
+      abytes2(data, void 0, "data");
+      const len = data.length;
+      if (output === void 0)
+        output = new Uint8Array(len);
+      abytes2(output, void 0, "output");
+      anumber2(counter);
+      if (counter < 0 || counter >= MAX_COUNTER)
+        throw new Error("arx: counter overflow");
+      if (output.length < len)
+        throw new Error(`arx: output (${output.length}) is shorter than data (${len})`);
+      const toClean = [];
+      let l = key.length;
+      let k;
+      let sigma;
+      if (l === 32) {
+        toClean.push(k = copyBytes2(key));
+        sigma = sigma32_32;
+      } else if (l === 16 && allowShortKeys) {
+        k = new Uint8Array(32);
+        k.set(key);
+        k.set(key, 16);
+        sigma = sigma16_32;
+        toClean.push(k);
+      } else {
+        abytes2(key, 32, "arx key");
+        throw new Error("invalid key size");
+      }
+      if (!isAligned322(nonce))
+        toClean.push(nonce = copyBytes2(nonce));
+      const k32 = u32(k);
+      if (extendNonceFn) {
+        if (nonce.length !== 24)
+          throw new Error(`arx: extended nonce must be 24 bytes`);
+        extendNonceFn(sigma, k32, u32(nonce.subarray(0, 16)), k32);
+        nonce = nonce.subarray(16);
+      }
+      const nonceNcLen = 16 - counterLength;
+      if (nonceNcLen !== nonce.length)
+        throw new Error(`arx: nonce must be ${nonceNcLen} or 16 bytes`);
+      if (nonceNcLen !== 12) {
+        const nc = new Uint8Array(12);
+        nc.set(nonce, counterRight ? 0 : 12 - nonce.length);
+        nonce = nc;
+        toClean.push(nonce);
+      }
+      const n32 = u32(nonce);
+      runCipher(core, sigma, k32, n32, data, output, counter, rounds);
+      clean2(...toClean);
+      return output;
+    };
+  }
+  var encodeStr, sigma16, sigma32, sigma16_32, sigma32_32, BLOCK_LEN, BLOCK_LEN32, MAX_COUNTER, U32_EMPTY, _XorStreamPRG, createPRG;
+  var init_arx = __esm({
+    "node_modules/@noble/ciphers/_arx.js"() {
+      init_utils();
+      encodeStr = (str) => Uint8Array.from(str.split(""), (c) => c.charCodeAt(0));
+      sigma16 = encodeStr("expand 16-byte k");
+      sigma32 = encodeStr("expand 32-byte k");
+      sigma16_32 = u32(sigma16);
+      sigma32_32 = u32(sigma32);
+      BLOCK_LEN = 64;
+      BLOCK_LEN32 = 16;
+      MAX_COUNTER = 2 ** 32 - 1;
+      U32_EMPTY = Uint32Array.of();
+      _XorStreamPRG = class __XorStreamPRG {
+        blockLen;
+        keyLen;
+        nonceLen;
+        state;
+        buf;
+        key;
+        nonce;
+        pos;
+        ctr;
+        cipher;
+        constructor(cipher, blockLen, keyLen, nonceLen, seed) {
+          this.cipher = cipher;
+          this.blockLen = blockLen;
+          this.keyLen = keyLen;
+          this.nonceLen = nonceLen;
+          this.state = new Uint8Array(this.keyLen + this.nonceLen);
+          this.reseed(seed);
+          this.ctr = 0;
+          this.pos = this.blockLen;
+          this.buf = new Uint8Array(this.blockLen);
+          this.key = this.state.subarray(0, this.keyLen);
+          this.nonce = this.state.subarray(this.keyLen);
+        }
+        reseed(seed) {
+          abytes2(seed);
+          if (!seed || seed.length === 0)
+            throw new Error("entropy required");
+          for (let i = 0; i < seed.length; i++)
+            this.state[i % this.state.length] ^= seed[i];
+          this.ctr = 0;
+          this.pos = this.blockLen;
+        }
+        addEntropy(seed) {
+          this.state.set(this.randomBytes(this.state.length));
+          this.reseed(seed);
+        }
+        randomBytes(len) {
+          anumber2(len);
+          if (len === 0)
+            return new Uint8Array(0);
+          const out = new Uint8Array(len);
+          let outPos = 0;
+          if (this.pos < this.blockLen) {
+            const take = Math.min(len, this.blockLen - this.pos);
+            out.set(this.buf.subarray(this.pos, this.pos + take), 0);
+            this.pos += take;
+            outPos += take;
+            if (outPos === len)
+              return out;
+          }
+          const blocks = Math.floor((len - outPos) / this.blockLen);
+          if (blocks > 0) {
+            const blockBytes = blocks * this.blockLen;
+            const b = out.subarray(outPos, outPos + blockBytes);
+            this.cipher(this.key, this.nonce, b, b, this.ctr);
+            this.ctr += blocks;
+            outPos += blockBytes;
+          }
+          const left2 = len - outPos;
+          if (left2 > 0) {
+            this.buf.fill(0);
+            this.cipher(this.key, this.nonce, this.buf, this.buf, this.ctr++);
+            out.set(this.buf.subarray(0, left2), outPos);
+            this.pos = left2;
+          }
+          return out;
+        }
+        clone() {
+          return new __XorStreamPRG(this.cipher, this.blockLen, this.keyLen, this.nonceLen, this.randomBytes(this.state.length));
+        }
+        clean() {
+          this.pos = 0;
+          this.ctr = 0;
+          this.buf.fill(0);
+          this.state.fill(0);
+        }
+      };
+      createPRG = (cipher, blockLen, keyLen, nonceLen) => {
+        return (seed = randomBytes(32)) => new _XorStreamPRG(cipher, blockLen, keyLen, nonceLen, seed);
+      };
+    }
+  });
+
+  // node_modules/@noble/ciphers/_poly1305.js
+  function u8to16(a, i) {
+    return a[i++] & 255 | (a[i++] & 255) << 8;
+  }
+  function wrapConstructorWithKey(hashCons) {
+    const hashC = (msg, key) => hashCons(key).update(msg).digest();
+    const tmp = hashCons(new Uint8Array(32));
+    hashC.outputLen = tmp.outputLen;
+    hashC.blockLen = tmp.blockLen;
+    hashC.create = (key) => hashCons(key);
+    return hashC;
+  }
+  var Poly1305, poly1305;
+  var init_poly1305 = __esm({
+    "node_modules/@noble/ciphers/_poly1305.js"() {
+      init_utils();
+      Poly1305 = class {
+        blockLen = 16;
+        outputLen = 16;
+        buffer = new Uint8Array(16);
+        r = new Uint16Array(10);
+        // Allocating 1 array with .subarray() here is slower than 3
+        h = new Uint16Array(10);
+        pad = new Uint16Array(8);
+        pos = 0;
+        finished = false;
+        // Can be speed-up using BigUint64Array, at the cost of complexity
+        constructor(key) {
+          key = copyBytes2(abytes2(key, 32, "key"));
+          const t0 = u8to16(key, 0);
+          const t1 = u8to16(key, 2);
+          const t2 = u8to16(key, 4);
+          const t3 = u8to16(key, 6);
+          const t4 = u8to16(key, 8);
+          const t5 = u8to16(key, 10);
+          const t6 = u8to16(key, 12);
+          const t7 = u8to16(key, 14);
+          this.r[0] = t0 & 8191;
+          this.r[1] = (t0 >>> 13 | t1 << 3) & 8191;
+          this.r[2] = (t1 >>> 10 | t2 << 6) & 7939;
+          this.r[3] = (t2 >>> 7 | t3 << 9) & 8191;
+          this.r[4] = (t3 >>> 4 | t4 << 12) & 255;
+          this.r[5] = t4 >>> 1 & 8190;
+          this.r[6] = (t4 >>> 14 | t5 << 2) & 8191;
+          this.r[7] = (t5 >>> 11 | t6 << 5) & 8065;
+          this.r[8] = (t6 >>> 8 | t7 << 8) & 8191;
+          this.r[9] = t7 >>> 5 & 127;
+          for (let i = 0; i < 8; i++)
+            this.pad[i] = u8to16(key, 16 + 2 * i);
+        }
+        process(data, offset, isLast = false) {
+          const hibit = isLast ? 0 : 1 << 11;
+          const { h, r } = this;
+          const r0 = r[0];
+          const r1 = r[1];
+          const r2 = r[2];
+          const r3 = r[3];
+          const r4 = r[4];
+          const r5 = r[5];
+          const r6 = r[6];
+          const r7 = r[7];
+          const r8 = r[8];
+          const r9 = r[9];
+          const t0 = u8to16(data, offset + 0);
+          const t1 = u8to16(data, offset + 2);
+          const t2 = u8to16(data, offset + 4);
+          const t3 = u8to16(data, offset + 6);
+          const t4 = u8to16(data, offset + 8);
+          const t5 = u8to16(data, offset + 10);
+          const t6 = u8to16(data, offset + 12);
+          const t7 = u8to16(data, offset + 14);
+          let h0 = h[0] + (t0 & 8191);
+          let h1 = h[1] + ((t0 >>> 13 | t1 << 3) & 8191);
+          let h2 = h[2] + ((t1 >>> 10 | t2 << 6) & 8191);
+          let h3 = h[3] + ((t2 >>> 7 | t3 << 9) & 8191);
+          let h4 = h[4] + ((t3 >>> 4 | t4 << 12) & 8191);
+          let h5 = h[5] + (t4 >>> 1 & 8191);
+          let h6 = h[6] + ((t4 >>> 14 | t5 << 2) & 8191);
+          let h7 = h[7] + ((t5 >>> 11 | t6 << 5) & 8191);
+          let h8 = h[8] + ((t6 >>> 8 | t7 << 8) & 8191);
+          let h9 = h[9] + (t7 >>> 5 | hibit);
+          let c = 0;
+          let d0 = c + h0 * r0 + h1 * (5 * r9) + h2 * (5 * r8) + h3 * (5 * r7) + h4 * (5 * r6);
+          c = d0 >>> 13;
+          d0 &= 8191;
+          d0 += h5 * (5 * r5) + h6 * (5 * r4) + h7 * (5 * r3) + h8 * (5 * r2) + h9 * (5 * r1);
+          c += d0 >>> 13;
+          d0 &= 8191;
+          let d1 = c + h0 * r1 + h1 * r0 + h2 * (5 * r9) + h3 * (5 * r8) + h4 * (5 * r7);
+          c = d1 >>> 13;
+          d1 &= 8191;
+          d1 += h5 * (5 * r6) + h6 * (5 * r5) + h7 * (5 * r4) + h8 * (5 * r3) + h9 * (5 * r2);
+          c += d1 >>> 13;
+          d1 &= 8191;
+          let d2 = c + h0 * r2 + h1 * r1 + h2 * r0 + h3 * (5 * r9) + h4 * (5 * r8);
+          c = d2 >>> 13;
+          d2 &= 8191;
+          d2 += h5 * (5 * r7) + h6 * (5 * r6) + h7 * (5 * r5) + h8 * (5 * r4) + h9 * (5 * r3);
+          c += d2 >>> 13;
+          d2 &= 8191;
+          let d3 = c + h0 * r3 + h1 * r2 + h2 * r1 + h3 * r0 + h4 * (5 * r9);
+          c = d3 >>> 13;
+          d3 &= 8191;
+          d3 += h5 * (5 * r8) + h6 * (5 * r7) + h7 * (5 * r6) + h8 * (5 * r5) + h9 * (5 * r4);
+          c += d3 >>> 13;
+          d3 &= 8191;
+          let d4 = c + h0 * r4 + h1 * r3 + h2 * r2 + h3 * r1 + h4 * r0;
+          c = d4 >>> 13;
+          d4 &= 8191;
+          d4 += h5 * (5 * r9) + h6 * (5 * r8) + h7 * (5 * r7) + h8 * (5 * r6) + h9 * (5 * r5);
+          c += d4 >>> 13;
+          d4 &= 8191;
+          let d5 = c + h0 * r5 + h1 * r4 + h2 * r3 + h3 * r2 + h4 * r1;
+          c = d5 >>> 13;
+          d5 &= 8191;
+          d5 += h5 * r0 + h6 * (5 * r9) + h7 * (5 * r8) + h8 * (5 * r7) + h9 * (5 * r6);
+          c += d5 >>> 13;
+          d5 &= 8191;
+          let d6 = c + h0 * r6 + h1 * r5 + h2 * r4 + h3 * r3 + h4 * r2;
+          c = d6 >>> 13;
+          d6 &= 8191;
+          d6 += h5 * r1 + h6 * r0 + h7 * (5 * r9) + h8 * (5 * r8) + h9 * (5 * r7);
+          c += d6 >>> 13;
+          d6 &= 8191;
+          let d7 = c + h0 * r7 + h1 * r6 + h2 * r5 + h3 * r4 + h4 * r3;
+          c = d7 >>> 13;
+          d7 &= 8191;
+          d7 += h5 * r2 + h6 * r1 + h7 * r0 + h8 * (5 * r9) + h9 * (5 * r8);
+          c += d7 >>> 13;
+          d7 &= 8191;
+          let d8 = c + h0 * r8 + h1 * r7 + h2 * r6 + h3 * r5 + h4 * r4;
+          c = d8 >>> 13;
+          d8 &= 8191;
+          d8 += h5 * r3 + h6 * r2 + h7 * r1 + h8 * r0 + h9 * (5 * r9);
+          c += d8 >>> 13;
+          d8 &= 8191;
+          let d9 = c + h0 * r9 + h1 * r8 + h2 * r7 + h3 * r6 + h4 * r5;
+          c = d9 >>> 13;
+          d9 &= 8191;
+          d9 += h5 * r4 + h6 * r3 + h7 * r2 + h8 * r1 + h9 * r0;
+          c += d9 >>> 13;
+          d9 &= 8191;
+          c = (c << 2) + c | 0;
+          c = c + d0 | 0;
+          d0 = c & 8191;
+          c = c >>> 13;
+          d1 += c;
+          h[0] = d0;
+          h[1] = d1;
+          h[2] = d2;
+          h[3] = d3;
+          h[4] = d4;
+          h[5] = d5;
+          h[6] = d6;
+          h[7] = d7;
+          h[8] = d8;
+          h[9] = d9;
+        }
+        finalize() {
+          const { h, pad } = this;
+          const g = new Uint16Array(10);
+          let c = h[1] >>> 13;
+          h[1] &= 8191;
+          for (let i = 2; i < 10; i++) {
+            h[i] += c;
+            c = h[i] >>> 13;
+            h[i] &= 8191;
+          }
+          h[0] += c * 5;
+          c = h[0] >>> 13;
+          h[0] &= 8191;
+          h[1] += c;
+          c = h[1] >>> 13;
+          h[1] &= 8191;
+          h[2] += c;
+          g[0] = h[0] + 5;
+          c = g[0] >>> 13;
+          g[0] &= 8191;
+          for (let i = 1; i < 10; i++) {
+            g[i] = h[i] + c;
+            c = g[i] >>> 13;
+            g[i] &= 8191;
+          }
+          g[9] -= 1 << 13;
+          let mask = (c ^ 1) - 1;
+          for (let i = 0; i < 10; i++)
+            g[i] &= mask;
+          mask = ~mask;
+          for (let i = 0; i < 10; i++)
+            h[i] = h[i] & mask | g[i];
+          h[0] = (h[0] | h[1] << 13) & 65535;
+          h[1] = (h[1] >>> 3 | h[2] << 10) & 65535;
+          h[2] = (h[2] >>> 6 | h[3] << 7) & 65535;
+          h[3] = (h[3] >>> 9 | h[4] << 4) & 65535;
+          h[4] = (h[4] >>> 12 | h[5] << 1 | h[6] << 14) & 65535;
+          h[5] = (h[6] >>> 2 | h[7] << 11) & 65535;
+          h[6] = (h[7] >>> 5 | h[8] << 8) & 65535;
+          h[7] = (h[8] >>> 8 | h[9] << 5) & 65535;
+          let f = h[0] + pad[0];
+          h[0] = f & 65535;
+          for (let i = 1; i < 8; i++) {
+            f = (h[i] + pad[i] | 0) + (f >>> 16) | 0;
+            h[i] = f & 65535;
+          }
+          clean2(g);
+        }
+        update(data) {
+          aexists2(this);
+          abytes2(data);
+          data = copyBytes2(data);
+          const { buffer, blockLen } = this;
+          const len = data.length;
+          for (let pos = 0; pos < len; ) {
+            const take = Math.min(blockLen - this.pos, len - pos);
+            if (take === blockLen) {
+              for (; blockLen <= len - pos; pos += blockLen)
+                this.process(data, pos);
+              continue;
+            }
+            buffer.set(data.subarray(pos, pos + take), this.pos);
+            this.pos += take;
+            pos += take;
+            if (this.pos === blockLen) {
+              this.process(buffer, 0, false);
+              this.pos = 0;
+            }
+          }
+          return this;
+        }
+        destroy() {
+          clean2(this.h, this.r, this.buffer, this.pad);
+        }
+        digestInto(out) {
+          aexists2(this);
+          aoutput2(out, this);
+          this.finished = true;
+          const { buffer, h } = this;
+          let { pos } = this;
+          if (pos) {
+            buffer[pos++] = 1;
+            for (; pos < 16; pos++)
+              buffer[pos] = 0;
+            this.process(buffer, 0, true);
+          }
+          this.finalize();
+          let opos = 0;
+          for (let i = 0; i < 8; i++) {
+            out[opos++] = h[i] >>> 0;
+            out[opos++] = h[i] >>> 8;
+          }
+          return out;
+        }
+        digest() {
+          const { buffer, outputLen } = this;
+          this.digestInto(buffer);
+          const res = buffer.slice(0, outputLen);
+          this.destroy();
+          return res;
+        }
+      };
+      poly1305 = /* @__PURE__ */ (() => wrapConstructorWithKey((key) => new Poly1305(key)))();
+    }
+  });
+
+  // node_modules/@noble/ciphers/chacha.js
+  var chacha_exports = {};
+  __export(chacha_exports, {
+    _poly1305_aead: () => _poly1305_aead,
+    chacha12: () => chacha12,
+    chacha20: () => chacha20,
+    chacha20orig: () => chacha20orig,
+    chacha20poly1305: () => chacha20poly1305,
+    chacha8: () => chacha8,
+    hchacha: () => hchacha,
+    rngChacha20: () => rngChacha20,
+    rngChacha8: () => rngChacha8,
+    xchacha20: () => xchacha20,
+    xchacha20poly1305: () => xchacha20poly1305
+  });
+  function chachaCore(s, k, n, out, cnt, rounds = 20) {
+    let y00 = s[0], y01 = s[1], y02 = s[2], y03 = s[3], y04 = k[0], y05 = k[1], y06 = k[2], y07 = k[3], y08 = k[4], y09 = k[5], y10 = k[6], y11 = k[7], y12 = cnt, y13 = n[0], y14 = n[1], y15 = n[2];
+    let x00 = y00, x01 = y01, x02 = y02, x03 = y03, x04 = y04, x05 = y05, x06 = y06, x07 = y07, x08 = y08, x09 = y09, x10 = y10, x11 = y11, x12 = y12, x13 = y13, x14 = y14, x15 = y15;
+    for (let r = 0; r < rounds; r += 2) {
+      x00 = x00 + x04 | 0;
+      x12 = rotl(x12 ^ x00, 16);
+      x08 = x08 + x12 | 0;
+      x04 = rotl(x04 ^ x08, 12);
+      x00 = x00 + x04 | 0;
+      x12 = rotl(x12 ^ x00, 8);
+      x08 = x08 + x12 | 0;
+      x04 = rotl(x04 ^ x08, 7);
+      x01 = x01 + x05 | 0;
+      x13 = rotl(x13 ^ x01, 16);
+      x09 = x09 + x13 | 0;
+      x05 = rotl(x05 ^ x09, 12);
+      x01 = x01 + x05 | 0;
+      x13 = rotl(x13 ^ x01, 8);
+      x09 = x09 + x13 | 0;
+      x05 = rotl(x05 ^ x09, 7);
+      x02 = x02 + x06 | 0;
+      x14 = rotl(x14 ^ x02, 16);
+      x10 = x10 + x14 | 0;
+      x06 = rotl(x06 ^ x10, 12);
+      x02 = x02 + x06 | 0;
+      x14 = rotl(x14 ^ x02, 8);
+      x10 = x10 + x14 | 0;
+      x06 = rotl(x06 ^ x10, 7);
+      x03 = x03 + x07 | 0;
+      x15 = rotl(x15 ^ x03, 16);
+      x11 = x11 + x15 | 0;
+      x07 = rotl(x07 ^ x11, 12);
+      x03 = x03 + x07 | 0;
+      x15 = rotl(x15 ^ x03, 8);
+      x11 = x11 + x15 | 0;
+      x07 = rotl(x07 ^ x11, 7);
+      x00 = x00 + x05 | 0;
+      x15 = rotl(x15 ^ x00, 16);
+      x10 = x10 + x15 | 0;
+      x05 = rotl(x05 ^ x10, 12);
+      x00 = x00 + x05 | 0;
+      x15 = rotl(x15 ^ x00, 8);
+      x10 = x10 + x15 | 0;
+      x05 = rotl(x05 ^ x10, 7);
+      x01 = x01 + x06 | 0;
+      x12 = rotl(x12 ^ x01, 16);
+      x11 = x11 + x12 | 0;
+      x06 = rotl(x06 ^ x11, 12);
+      x01 = x01 + x06 | 0;
+      x12 = rotl(x12 ^ x01, 8);
+      x11 = x11 + x12 | 0;
+      x06 = rotl(x06 ^ x11, 7);
+      x02 = x02 + x07 | 0;
+      x13 = rotl(x13 ^ x02, 16);
+      x08 = x08 + x13 | 0;
+      x07 = rotl(x07 ^ x08, 12);
+      x02 = x02 + x07 | 0;
+      x13 = rotl(x13 ^ x02, 8);
+      x08 = x08 + x13 | 0;
+      x07 = rotl(x07 ^ x08, 7);
+      x03 = x03 + x04 | 0;
+      x14 = rotl(x14 ^ x03, 16);
+      x09 = x09 + x14 | 0;
+      x04 = rotl(x04 ^ x09, 12);
+      x03 = x03 + x04 | 0;
+      x14 = rotl(x14 ^ x03, 8);
+      x09 = x09 + x14 | 0;
+      x04 = rotl(x04 ^ x09, 7);
+    }
+    let oi = 0;
+    out[oi++] = y00 + x00 | 0;
+    out[oi++] = y01 + x01 | 0;
+    out[oi++] = y02 + x02 | 0;
+    out[oi++] = y03 + x03 | 0;
+    out[oi++] = y04 + x04 | 0;
+    out[oi++] = y05 + x05 | 0;
+    out[oi++] = y06 + x06 | 0;
+    out[oi++] = y07 + x07 | 0;
+    out[oi++] = y08 + x08 | 0;
+    out[oi++] = y09 + x09 | 0;
+    out[oi++] = y10 + x10 | 0;
+    out[oi++] = y11 + x11 | 0;
+    out[oi++] = y12 + x12 | 0;
+    out[oi++] = y13 + x13 | 0;
+    out[oi++] = y14 + x14 | 0;
+    out[oi++] = y15 + x15 | 0;
+  }
+  function hchacha(s, k, i, out) {
+    let x00 = s[0], x01 = s[1], x02 = s[2], x03 = s[3], x04 = k[0], x05 = k[1], x06 = k[2], x07 = k[3], x08 = k[4], x09 = k[5], x10 = k[6], x11 = k[7], x12 = i[0], x13 = i[1], x14 = i[2], x15 = i[3];
+    for (let r = 0; r < 20; r += 2) {
+      x00 = x00 + x04 | 0;
+      x12 = rotl(x12 ^ x00, 16);
+      x08 = x08 + x12 | 0;
+      x04 = rotl(x04 ^ x08, 12);
+      x00 = x00 + x04 | 0;
+      x12 = rotl(x12 ^ x00, 8);
+      x08 = x08 + x12 | 0;
+      x04 = rotl(x04 ^ x08, 7);
+      x01 = x01 + x05 | 0;
+      x13 = rotl(x13 ^ x01, 16);
+      x09 = x09 + x13 | 0;
+      x05 = rotl(x05 ^ x09, 12);
+      x01 = x01 + x05 | 0;
+      x13 = rotl(x13 ^ x01, 8);
+      x09 = x09 + x13 | 0;
+      x05 = rotl(x05 ^ x09, 7);
+      x02 = x02 + x06 | 0;
+      x14 = rotl(x14 ^ x02, 16);
+      x10 = x10 + x14 | 0;
+      x06 = rotl(x06 ^ x10, 12);
+      x02 = x02 + x06 | 0;
+      x14 = rotl(x14 ^ x02, 8);
+      x10 = x10 + x14 | 0;
+      x06 = rotl(x06 ^ x10, 7);
+      x03 = x03 + x07 | 0;
+      x15 = rotl(x15 ^ x03, 16);
+      x11 = x11 + x15 | 0;
+      x07 = rotl(x07 ^ x11, 12);
+      x03 = x03 + x07 | 0;
+      x15 = rotl(x15 ^ x03, 8);
+      x11 = x11 + x15 | 0;
+      x07 = rotl(x07 ^ x11, 7);
+      x00 = x00 + x05 | 0;
+      x15 = rotl(x15 ^ x00, 16);
+      x10 = x10 + x15 | 0;
+      x05 = rotl(x05 ^ x10, 12);
+      x00 = x00 + x05 | 0;
+      x15 = rotl(x15 ^ x00, 8);
+      x10 = x10 + x15 | 0;
+      x05 = rotl(x05 ^ x10, 7);
+      x01 = x01 + x06 | 0;
+      x12 = rotl(x12 ^ x01, 16);
+      x11 = x11 + x12 | 0;
+      x06 = rotl(x06 ^ x11, 12);
+      x01 = x01 + x06 | 0;
+      x12 = rotl(x12 ^ x01, 8);
+      x11 = x11 + x12 | 0;
+      x06 = rotl(x06 ^ x11, 7);
+      x02 = x02 + x07 | 0;
+      x13 = rotl(x13 ^ x02, 16);
+      x08 = x08 + x13 | 0;
+      x07 = rotl(x07 ^ x08, 12);
+      x02 = x02 + x07 | 0;
+      x13 = rotl(x13 ^ x02, 8);
+      x08 = x08 + x13 | 0;
+      x07 = rotl(x07 ^ x08, 7);
+      x03 = x03 + x04 | 0;
+      x14 = rotl(x14 ^ x03, 16);
+      x09 = x09 + x14 | 0;
+      x04 = rotl(x04 ^ x09, 12);
+      x03 = x03 + x04 | 0;
+      x14 = rotl(x14 ^ x03, 8);
+      x09 = x09 + x14 | 0;
+      x04 = rotl(x04 ^ x09, 7);
+    }
+    let oi = 0;
+    out[oi++] = x00;
+    out[oi++] = x01;
+    out[oi++] = x02;
+    out[oi++] = x03;
+    out[oi++] = x12;
+    out[oi++] = x13;
+    out[oi++] = x14;
+    out[oi++] = x15;
+  }
+  function computeTag(fn, key, nonce, ciphertext, AAD) {
+    if (AAD !== void 0)
+      abytes2(AAD, void 0, "AAD");
+    const authKey = fn(key, nonce, ZEROS32);
+    const lengths = u64Lengths(ciphertext.length, AAD ? AAD.length : 0, true);
+    const h = poly1305.create(authKey);
+    if (AAD)
+      updatePadded(h, AAD);
+    updatePadded(h, ciphertext);
+    h.update(lengths);
+    const res = h.digest();
+    clean2(authKey, lengths);
+    return res;
+  }
+  var chacha20orig, chacha20, xchacha20, chacha8, chacha12, ZEROS16, updatePadded, ZEROS32, _poly1305_aead, chacha20poly1305, xchacha20poly1305, rngChacha20, rngChacha8;
+  var init_chacha = __esm({
+    "node_modules/@noble/ciphers/chacha.js"() {
+      init_arx();
+      init_poly1305();
+      init_utils();
+      chacha20orig = /* @__PURE__ */ createCipher(chachaCore, {
+        counterRight: false,
+        counterLength: 8,
+        allowShortKeys: true
+      });
+      chacha20 = /* @__PURE__ */ createCipher(chachaCore, {
+        counterRight: false,
+        counterLength: 4,
+        allowShortKeys: false
+      });
+      xchacha20 = /* @__PURE__ */ createCipher(chachaCore, {
+        counterRight: false,
+        counterLength: 8,
+        extendNonceFn: hchacha,
+        allowShortKeys: false
+      });
+      chacha8 = /* @__PURE__ */ createCipher(chachaCore, {
+        counterRight: false,
+        counterLength: 4,
+        rounds: 8
+      });
+      chacha12 = /* @__PURE__ */ createCipher(chachaCore, {
+        counterRight: false,
+        counterLength: 4,
+        rounds: 12
+      });
+      ZEROS16 = /* @__PURE__ */ new Uint8Array(16);
+      updatePadded = (h, msg) => {
+        h.update(msg);
+        const leftover = msg.length % 16;
+        if (leftover)
+          h.update(ZEROS16.subarray(leftover));
+      };
+      ZEROS32 = /* @__PURE__ */ new Uint8Array(32);
+      _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
+        const tagLength = 16;
+        return {
+          encrypt(plaintext, output) {
+            const plength = plaintext.length;
+            output = getOutput(plength + tagLength, output, false);
+            output.set(plaintext);
+            const oPlain = output.subarray(0, -tagLength);
+            xorStream(key, nonce, oPlain, oPlain, 1);
+            const tag = computeTag(xorStream, key, nonce, oPlain, AAD);
+            output.set(tag, plength);
+            clean2(tag);
+            return output;
+          },
+          decrypt(ciphertext, output) {
+            output = getOutput(ciphertext.length - tagLength, output, false);
+            const data = ciphertext.subarray(0, -tagLength);
+            const passedTag = ciphertext.subarray(-tagLength);
+            const tag = computeTag(xorStream, key, nonce, data, AAD);
+            if (!equalBytes(passedTag, tag))
+              throw new Error("invalid tag");
+            output.set(ciphertext.subarray(0, -tagLength));
+            xorStream(key, nonce, output, output, 1);
+            clean2(tag);
+            return output;
+          }
+        };
+      };
+      chacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 12, tagLength: 16 }, _poly1305_aead(chacha20));
+      xchacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 24, tagLength: 16 }, _poly1305_aead(xchacha20));
+      rngChacha20 = /* @__PURE__ */ createPRG(chacha20orig, 64, 32, 8);
+      rngChacha8 = /* @__PURE__ */ createPRG(chacha8, 64, 32, 12);
+    }
+  });
+
+  // node_modules/@noble/hashes/utils.js
+  function isBytes3(a) {
+    return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array";
+  }
+  function anumber3(n, title = "") {
+    if (!Number.isSafeInteger(n) || n < 0) {
+      const prefix = title && `"${title}" `;
+      throw new Error(`${prefix}expected integer >= 0, got ${n}`);
+    }
+  }
+  function abytes3(value, length, title = "") {
+    const bytes = isBytes3(value);
+    const len = value?.length;
+    const needsLen = length !== void 0;
+    if (!bytes || needsLen && len !== length) {
+      const prefix = title && `"${title}" `;
+      const ofLen = needsLen ? ` of length ${length}` : "";
+      const got = bytes ? `length=${len}` : `type=${typeof value}`;
+      throw new Error(prefix + "expected Uint8Array" + ofLen + ", got " + got);
+    }
+    return value;
+  }
+  function ahash2(h) {
+    if (typeof h !== "function" || typeof h.create !== "function")
+      throw new Error("Hash must wrapped by utils.createHasher");
+    anumber3(h.outputLen);
+    anumber3(h.blockLen);
+  }
+  function aexists3(instance, checkFinished = true) {
+    if (instance.destroyed)
+      throw new Error("Hash instance has been destroyed");
+    if (checkFinished && instance.finished)
+      throw new Error("Hash#digest() has already been called");
+  }
+  function aoutput3(out, instance) {
+    abytes3(out, void 0, "digestInto() output");
+    const min = instance.outputLen;
+    if (out.length < min) {
+      throw new Error('"digestInto() output" expected to be of length >=' + min);
+    }
+  }
+  function u322(arr) {
+    return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
+  }
+  function clean3(...arrays) {
+    for (let i = 0; i < arrays.length; i++) {
+      arrays[i].fill(0);
+    }
+  }
+  function createView3(arr) {
     return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
   }
   function rotr2(word, shift) {
@@ -1684,8 +2554,8 @@
     }
     return arr;
   }
-  function bytesToHex(bytes) {
-    abytes2(bytes);
+  function bytesToHex2(bytes) {
+    abytes3(bytes);
     if (hasHexBuiltin)
       return bytes.toHex();
     let hex = "";
@@ -1724,11 +2594,11 @@
     }
     return array;
   }
-  function concatBytes(...arrays) {
+  function concatBytes2(...arrays) {
     let sum = 0;
     for (let i = 0; i < arrays.length; i++) {
       const a = arrays[i];
-      abytes2(a);
+      abytes3(a);
       sum += a.length;
     }
     const res = new Uint8Array(sum);
@@ -1748,17 +2618,17 @@
     Object.assign(hashC, info);
     return Object.freeze(hashC);
   }
-  function randomBytes(bytesLength = 32) {
+  function randomBytes2(bytesLength = 32) {
     const cr = typeof globalThis === "object" ? globalThis.crypto : null;
     if (typeof cr?.getRandomValues !== "function")
       throw new Error("crypto.getRandomValues must be defined");
     return cr.getRandomValues(new Uint8Array(bytesLength));
   }
-  var isLE, swap32IfBE, hasHexBuiltin, hexes, asciis, oidNist2;
-  var init_utils = __esm({
+  var isLE2, swap32IfBE, hasHexBuiltin, hexes, asciis, oidNist2;
+  var init_utils2 = __esm({
     "node_modules/@noble/hashes/utils.js"() {
-      isLE = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
-      swap32IfBE = isLE ? (u) => u : byteSwap32;
+      isLE2 = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
+      swap32IfBE = isLE2 ? (u) => u : byteSwap32;
       hasHexBuiltin = /* @__PURE__ */ (() => (
         // @ts-ignore
         typeof Uint8Array.from([]).toHex === "function" && typeof Uint8Array.fromHex === "function"
@@ -1781,7 +2651,7 @@
   var HashMD2, SHA256_IV2, SHA384_IV2, SHA512_IV2;
   var init_md = __esm({
     "node_modules/@noble/hashes/_md.js"() {
-      init_utils();
+      init_utils2();
       HashMD2 = class {
         blockLen;
         outputLen;
@@ -1800,17 +2670,17 @@
           this.padOffset = padOffset;
           this.isLE = isLE3;
           this.buffer = new Uint8Array(blockLen);
-          this.view = createView2(this.buffer);
+          this.view = createView3(this.buffer);
         }
         update(data) {
-          aexists2(this);
-          abytes2(data);
+          aexists3(this);
+          abytes3(data);
           const { view, buffer, blockLen } = this;
           const len = data.length;
           for (let pos = 0; pos < len; ) {
             const take = Math.min(blockLen - this.pos, len - pos);
             if (take === blockLen) {
-              const dataView = createView2(data);
+              const dataView = createView3(data);
               for (; blockLen <= len - pos; pos += blockLen)
                 this.process(dataView, pos);
               continue;
@@ -1828,13 +2698,13 @@
           return this;
         }
         digestInto(out) {
-          aexists2(this);
-          aoutput2(out, this);
+          aexists3(this);
+          aoutput3(out, this);
           this.finished = true;
           const { buffer, view, blockLen, isLE: isLE3 } = this;
           let { pos } = this;
           buffer[pos++] = 128;
-          clean2(this.buffer.subarray(pos));
+          clean3(this.buffer.subarray(pos));
           if (this.padOffset > blockLen - pos) {
             this.process(view, 0);
             pos = 0;
@@ -1843,7 +2713,7 @@
             buffer[i] = 0;
           view.setBigUint64(blockLen - 8, BigInt(this.length * 8), isLE3);
           this.process(view, 0);
-          const oview = createView2(out);
+          const oview = createView3(out);
           const len = this.outputLen;
           if (len % 4)
             throw new Error("_sha2: outputLen must be aligned to 32bit");
@@ -1976,7 +2846,7 @@
     "node_modules/@noble/hashes/sha2.js"() {
       init_md();
       init_u64();
-      init_utils();
+      init_utils2();
       SHA256_K = /* @__PURE__ */ Uint32Array.from([
         1116352408,
         1899447441,
@@ -2099,11 +2969,11 @@
           this.set(A, B, C, D, E, F, G, H);
         }
         roundClean() {
-          clean2(SHA256_W);
+          clean3(SHA256_W);
         }
         destroy() {
           this.set(0, 0, 0, 0, 0, 0, 0, 0);
-          clean2(this.buffer);
+          clean3(this.buffer);
         }
       };
       _SHA256 = class extends SHA2_32B {
@@ -2295,10 +3165,10 @@
           this.set(Ah, Al, Bh, Bl, Ch, Cl, Dh, Dl, Eh, El, Fh, Fl, Gh, Gl, Hh, Hl);
         }
         roundClean() {
-          clean2(SHA512_W_H, SHA512_W_L);
+          clean3(SHA512_W_H, SHA512_W_L);
         }
         destroy() {
-          clean2(this.buffer);
+          clean3(this.buffer);
           this.set(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
       };
@@ -2360,7 +3230,7 @@
   });
 
   // node_modules/@noble/curves/utils.js
-  function abool(value, title = "") {
+  function abool2(value, title = "") {
     if (typeof value !== "boolean") {
       const prefix = title && `"${title}" `;
       throw new Error(prefix + "expected boolean, got type=" + typeof value);
@@ -2372,7 +3242,7 @@
       if (!isPosBig(n))
         throw new Error("positive bigint expected, got " + n);
     } else
-      anumber2(n);
+      anumber3(n);
     return n;
   }
   function asafenumber(value, title = "") {
@@ -2385,19 +3255,19 @@
     const hex = abignumber(num).toString(16);
     return hex.length & 1 ? "0" + hex : hex;
   }
-  function hexToNumber(hex) {
+  function hexToNumber2(hex) {
     if (typeof hex !== "string")
       throw new Error("hex string expected, got " + typeof hex);
     return hex === "" ? _0n2 : BigInt("0x" + hex);
   }
   function bytesToNumberBE(bytes) {
-    return hexToNumber(bytesToHex(bytes));
+    return hexToNumber2(bytesToHex2(bytes));
   }
   function bytesToNumberLE2(bytes) {
-    return hexToNumber(bytesToHex(copyBytes2(abytes2(bytes)).reverse()));
+    return hexToNumber2(bytesToHex2(copyBytes3(abytes3(bytes)).reverse()));
   }
-  function numberToBytesBE(n, len) {
-    anumber2(len);
+  function numberToBytesBE2(n, len) {
+    anumber3(len);
     n = abignumber(n);
     const res = hexToBytes2(n.toString(16).padStart(len * 2, "0"));
     if (res.length !== len)
@@ -2405,9 +3275,9 @@
     return res;
   }
   function numberToBytesLE2(n, len) {
-    return numberToBytesBE(n, len).reverse();
+    return numberToBytesBE2(n, len).reverse();
   }
-  function equalBytes(a, b) {
+  function equalBytes2(a, b) {
     if (a.length !== b.length)
       return false;
     let diff = 0;
@@ -2415,7 +3285,7 @@
       diff |= a[i] ^ b[i];
     return diff === 0;
   }
-  function copyBytes2(bytes) {
+  function copyBytes3(bytes) {
     return Uint8Array.from(bytes);
   }
   function asciiToBytes(ascii) {
@@ -2441,8 +3311,8 @@
     return len;
   }
   function createHmacDrbg(hashLen, qByteLen, hmacFn) {
-    anumber2(hashLen, "hashLen");
-    anumber2(qByteLen, "qByteLen");
+    anumber3(hashLen, "hashLen");
+    anumber3(qByteLen, "qByteLen");
     if (typeof hmacFn !== "function")
       throw new Error("hmacFn must be a function");
     const u8n = (len) => new Uint8Array(len);
@@ -2458,7 +3328,7 @@
       k.fill(0);
       i = 0;
     };
-    const h = (...msgs) => hmacFn(k, concatBytes(v, ...msgs));
+    const h = (...msgs) => hmacFn(k, concatBytes2(v, ...msgs));
     const reseed = (seed = NULL) => {
       k = h(byte0, seed);
       v = h();
@@ -2478,7 +3348,7 @@
         out.push(sl);
         len += v.length;
       }
-      return concatBytes(...out);
+      return concatBytes2(...out);
     };
     const genUntil = (seed, pred) => {
       reset();
@@ -2518,10 +3388,10 @@
     };
   }
   var _0n2, _1n2, isPosBig, bitMask, notImplemented;
-  var init_utils2 = __esm({
+  var init_utils3 = __esm({
     "node_modules/@noble/curves/utils.js"() {
-      init_utils();
-      init_utils();
+      init_utils2();
+      init_utils2();
       _0n2 = /* @__PURE__ */ BigInt(0);
       _1n2 = /* @__PURE__ */ BigInt(1);
       isPosBig = (n) => typeof n === "bigint" && _0n2 <= n;
@@ -2556,9 +3426,9 @@
     while (a !== _0n3) {
       const q = b / a;
       const r = b % a;
-      const m16 = x - u * q;
+      const m15 = x - u * q;
       const n = y - v * q;
-      b = a, a = r, x = u, y = v, u = m16, v = n;
+      b = a, a = r, x = u, y = v, u = m15, v = n;
     }
     const gcd = b;
     if (gcd !== _1n3)
@@ -2724,7 +3594,7 @@
   }
   function nLength(n, nBitLength) {
     if (nBitLength !== void 0)
-      anumber2(nBitLength);
+      anumber3(nBitLength);
     const _nBitLength = nBitLength !== void 0 ? nBitLength : n.toString(2).length;
     const nByteLength = Math.ceil(_nBitLength / 8);
     return { nBitLength: _nBitLength, nByteLength };
@@ -2749,7 +3619,7 @@
     return length + Math.ceil(length / 2);
   }
   function mapHashToField(key, fieldOrder, isLE3 = false) {
-    abytes2(key);
+    abytes3(key);
     const len = key.length;
     const fieldLen = getFieldBytesLength(fieldOrder);
     const minLen = getMinHashLength(fieldOrder);
@@ -2757,12 +3627,12 @@
       throw new Error("expected " + minLen + "-1024 bytes of input, got " + len);
     const num = isLE3 ? bytesToNumberLE2(key) : bytesToNumberBE(key);
     const reduced = mod2(num, fieldOrder - _1n3) + _1n3;
-    return isLE3 ? numberToBytesLE2(reduced, fieldLen) : numberToBytesBE(reduced, fieldLen);
+    return isLE3 ? numberToBytesLE2(reduced, fieldLen) : numberToBytesBE2(reduced, fieldLen);
   }
   var _0n3, _1n3, _2n2, _3n, _4n, _5n, _7n, _8n, _9n, _16n, isNegativeLE, FIELD_FIELDS, _Field;
   var init_modular = __esm({
     "node_modules/@noble/curves/abstract/modular.js"() {
-      init_utils2();
+      init_utils3();
       _0n3 = /* @__PURE__ */ BigInt(0);
       _1n3 = /* @__PURE__ */ BigInt(1);
       _2n2 = /* @__PURE__ */ BigInt(2);
@@ -2894,10 +3764,10 @@
           return this._sqrt(this, num);
         }
         toBytes(num) {
-          return this.isLE ? numberToBytesLE2(num, this.BYTES) : numberToBytesBE(num, this.BYTES);
+          return this.isLE ? numberToBytesLE2(num, this.BYTES) : numberToBytesBE2(num, this.BYTES);
         }
         fromBytes(bytes, skipValidation = false) {
-          abytes2(bytes);
+          abytes3(bytes);
           const { _lengths: allowedLengths, BYTES, isLE: isLE3, ORDER, _mod: modFromBytes } = this;
           if (allowedLengths) {
             if (!allowedLengths.includes(bytes.length) || bytes.length > BYTES) {
@@ -3087,7 +3957,7 @@
   var _0n4, _1n4, pointPrecomputes, pointWindowSizes, wNAF;
   var init_curve = __esm({
     "node_modules/@noble/curves/abstract/curve.js"() {
-      init_utils2();
+      init_utils3();
       init_modular();
       _0n4 = /* @__PURE__ */ BigInt(0);
       _1n4 = /* @__PURE__ */ BigInt(1);
@@ -3331,9 +4201,9 @@
       static fromBytes(bytes, zip215 = false) {
         const len = Fp3.BYTES;
         const { a, d } = CURVE;
-        bytes = copyBytes2(abytes2(bytes, len, "point"));
-        abool(zip215, "zip215");
-        const normed = copyBytes2(bytes);
+        bytes = copyBytes3(abytes3(bytes, len, "point"));
+        abool2(zip215, "zip215");
+        const normed = copyBytes3(bytes);
         const lastByte = bytes[len - 1];
         normed[len - 1] = lastByte & ~128;
         const y = bytesToNumberLE2(normed);
@@ -3485,7 +4355,7 @@
         return bytes;
       }
       toHex() {
-        return bytesToHex(this.toBytes());
+        return bytesToHex2(this.toBytes());
       }
       toString() {
         return `<Point ${this.is0() ? "ZERO" : this.toHex()}>`;
@@ -3507,10 +4377,10 @@
     });
     const { prehash } = eddsaOpts;
     const { BASE, Fp: Fp3, Fn: Fn3 } = Point;
-    const randomBytes3 = eddsaOpts.randomBytes || randomBytes;
+    const randomBytes3 = eddsaOpts.randomBytes || randomBytes2;
     const adjustScalarBytes3 = eddsaOpts.adjustScalarBytes || ((bytes) => bytes);
     const domain = eddsaOpts.domain || ((data, ctx, phflag) => {
-      abool(phflag, "phflag");
+      abool2(phflag, "phflag");
       if (ctx.length || phflag)
         throw new Error("Contexts/pre-hash are not supported");
       return data;
@@ -3520,8 +4390,8 @@
     }
     function getPrivateScalar(key) {
       const len = lengths.secretKey;
-      abytes2(key, lengths.secretKey, "secretKey");
-      const hashed = abytes2(cHash(key), 2 * len, "hashedSecretKey");
+      abytes3(key, lengths.secretKey, "secretKey");
+      const hashed = abytes3(cHash(key), 2 * len, "hashedSecretKey");
       const head = adjustScalarBytes3(hashed.slice(0, len));
       const prefix = hashed.slice(len, 2 * len);
       const scalar = modN_LE(head);
@@ -3537,11 +4407,11 @@
       return getExtendedPublicKey(secretKey).pointBytes;
     }
     function hashDomainToScalar(context = Uint8Array.of(), ...msgs) {
-      const msg = concatBytes(...msgs);
-      return modN_LE(cHash(domain(msg, abytes2(context, void 0, "context"), !!prehash)));
+      const msg = concatBytes2(...msgs);
+      return modN_LE(cHash(domain(msg, abytes3(context, void 0, "context"), !!prehash)));
     }
     function sign(msg, secretKey, options = {}) {
-      msg = abytes2(msg, void 0, "message");
+      msg = abytes3(msg, void 0, "message");
       if (prehash)
         msg = prehash(msg);
       const { prefix, scalar, pointBytes } = getExtendedPublicKey(secretKey);
@@ -3551,18 +4421,18 @@
       const s = Fn3.create(r + k * scalar);
       if (!Fn3.isValid(s))
         throw new Error("sign failed: invalid s");
-      const rs = concatBytes(R, Fn3.toBytes(s));
-      return abytes2(rs, lengths.signature, "result");
+      const rs = concatBytes2(R, Fn3.toBytes(s));
+      return abytes3(rs, lengths.signature, "result");
     }
     const verifyOpts = { zip215: true };
     function verify(sig, msg, publicKey, options = verifyOpts) {
       const { context, zip215 } = options;
       const len = lengths.signature;
-      sig = abytes2(sig, len, "signature");
-      msg = abytes2(msg, void 0, "message");
-      publicKey = abytes2(publicKey, lengths.publicKey, "publicKey");
+      sig = abytes3(sig, len, "signature");
+      msg = abytes3(msg, void 0, "message");
+      publicKey = abytes3(publicKey, lengths.publicKey, "publicKey");
       if (zip215 !== void 0)
-        abool(zip215, "zip215");
+        abool2(zip215, "zip215");
       if (prehash)
         msg = prehash(msg);
       const mid = len / 2;
@@ -3590,10 +4460,10 @@
       seed: _size
     };
     function randomSecretKey(seed = randomBytes3(lengths.seed)) {
-      return abytes2(seed, lengths.seed, "seed");
+      return abytes3(seed, lengths.seed, "seed");
     }
     function isValidSecretKey(key) {
-      return isBytes2(key) && key.length === Fn3.BYTES;
+      return isBytes3(key) && key.length === Fn3.BYTES;
     }
     function isValidPublicKey(key, zip215) {
       try {
@@ -3627,7 +4497,7 @@
       },
       toMontgomerySecret(secretKey) {
         const size = lengths.secretKey;
-        abytes2(secretKey, size);
+        abytes3(secretKey, size);
         const hashed = cHash(secretKey.subarray(0, size));
         return adjustScalarBytes3(hashed).subarray(0, size);
       }
@@ -3645,7 +4515,7 @@
   var _0n5, _1n5, _2n3, _8n2, PrimeEdwardsPoint;
   var init_edwards = __esm({
     "node_modules/@noble/curves/abstract/edwards.js"() {
-      init_utils2();
+      init_utils3();
       init_curve();
       _0n5 = BigInt(0);
       _1n5 = BigInt(1);
@@ -3684,7 +4554,7 @@
           return this.ep.toAffine(invertedZ);
         }
         toHex() {
-          return bytesToHex(this.toBytes());
+          return bytesToHex2(this.toBytes());
         }
         toString() {
           return this.toHex();
@@ -3743,35 +4613,35 @@
     return arr;
   }
   function normDST(DST) {
-    if (!isBytes2(DST) && typeof DST !== "string")
+    if (!isBytes3(DST) && typeof DST !== "string")
       throw new Error("DST must be Uint8Array or ascii string");
     return typeof DST === "string" ? asciiToBytes(DST) : DST;
   }
   function expand_message_xmd(msg, DST, lenInBytes, H) {
-    abytes2(msg);
+    abytes3(msg);
     asafenumber(lenInBytes);
     DST = normDST(DST);
     if (DST.length > 255)
-      DST = H(concatBytes(asciiToBytes("H2C-OVERSIZE-DST-"), DST));
+      DST = H(concatBytes2(asciiToBytes("H2C-OVERSIZE-DST-"), DST));
     const { outputLen: b_in_bytes, blockLen: r_in_bytes } = H;
     const ell = Math.ceil(lenInBytes / b_in_bytes);
     if (lenInBytes > 65535 || ell > 255)
       throw new Error("expand_message_xmd: invalid lenInBytes");
-    const DST_prime = concatBytes(DST, i2osp(DST.length, 1));
+    const DST_prime = concatBytes2(DST, i2osp(DST.length, 1));
     const Z_pad = i2osp(0, r_in_bytes);
     const l_i_b_str = i2osp(lenInBytes, 2);
     const b = new Array(ell);
-    const b_0 = H(concatBytes(Z_pad, msg, l_i_b_str, i2osp(0, 1), DST_prime));
-    b[0] = H(concatBytes(b_0, i2osp(1, 1), DST_prime));
+    const b_0 = H(concatBytes2(Z_pad, msg, l_i_b_str, i2osp(0, 1), DST_prime));
+    b[0] = H(concatBytes2(b_0, i2osp(1, 1), DST_prime));
     for (let i = 1; i <= ell; i++) {
       const args = [strxor(b_0, b[i - 1]), i2osp(i + 1, 1), DST_prime];
-      b[i] = H(concatBytes(...args));
+      b[i] = H(concatBytes2(...args));
     }
-    const pseudo_random_bytes = concatBytes(...b);
+    const pseudo_random_bytes = concatBytes2(...b);
     return pseudo_random_bytes.slice(0, lenInBytes);
   }
   function expand_message_xof(msg, DST, lenInBytes, k, H) {
-    abytes2(msg);
+    abytes3(msg);
     asafenumber(lenInBytes);
     DST = normDST(DST);
     if (DST.length > 255) {
@@ -3789,13 +4659,13 @@
       k: "number",
       hash: "function"
     });
-    const { p, k, m: m16, hash, expand, DST } = options;
+    const { p, k, m: m15, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
-    abytes2(msg);
+    abytes3(msg);
     asafenumber(count);
     const log2p = p.toString(2).length;
     const L = Math.ceil((log2p + k) / 8);
-    const len_in_bytes = count * m16 * L;
+    const len_in_bytes = count * m15 * L;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -3808,9 +4678,9 @@
     }
     const u = new Array(count);
     for (let i = 0; i < count; i++) {
-      const e = new Array(m16);
-      for (let j = 0; j < m16; j++) {
-        const elm_offset = L * (j + i * m16);
+      const e = new Array(m15);
+      for (let j = 0; j < m15; j++) {
+        const elm_offset = L * (j + i * m15);
         const tv = prb.subarray(elm_offset, elm_offset + L);
         e[j] = mod2(os2ip(tv), p);
       }
@@ -3874,7 +4744,7 @@
   var os2ip, _DST_scalar;
   var init_hash_to_curve = __esm({
     "node_modules/@noble/curves/abstract/hash-to-curve.js"() {
-      init_utils2();
+      init_utils3();
       init_modular();
       os2ip = bytesToNumberBE;
       _DST_scalar = asciiToBytes("HashToScalar-");
@@ -3895,7 +4765,7 @@
     const is25519 = type === "x25519";
     if (!is25519 && type !== "x448")
       throw new Error("invalid type");
-    const randomBytes_ = rand || randomBytes;
+    const randomBytes_ = rand || randomBytes2;
     const montgomeryBits = is25519 ? 255 : 448;
     const fieldLen = is25519 ? 32 : 56;
     const Gu = is25519 ? BigInt(9) : BigInt(5);
@@ -3909,13 +4779,13 @@
       return numberToBytesLE2(modP(u), fieldLen);
     }
     function decodeU(u) {
-      const _u = copyBytes2(abytes2(u, fieldLen, "uCoordinate"));
+      const _u = copyBytes3(abytes3(u, fieldLen, "uCoordinate"));
       if (is25519)
         _u[31] &= 127;
       return modP(bytesToNumberLE2(_u));
     }
     function decodeScalar(scalar) {
-      return bytesToNumberLE2(adjustScalarBytes3(copyBytes2(abytes2(scalar, fieldLen, "scalar"))));
+      return bytesToNumberLE2(adjustScalarBytes3(copyBytes3(abytes3(scalar, fieldLen, "scalar"))));
     }
     function scalarMult(scalar, u) {
       const pu = montgomeryLadder(decodeU(u), decodeScalar(scalar));
@@ -3977,7 +4847,7 @@
       seed: fieldLen
     };
     const randomSecretKey = (seed = randomBytes_(fieldLen)) => {
-      abytes2(seed, lengths.seed, "seed");
+      abytes3(seed, lengths.seed, "seed");
       return seed;
     };
     const utils = { randomSecretKey };
@@ -3995,7 +4865,7 @@
   var _0n6, _1n6, _2n4;
   var init_montgomery = __esm({
     "node_modules/@noble/curves/abstract/montgomery.js"() {
-      init_utils2();
+      init_utils3();
       init_curve();
       init_modular();
       _0n6 = BigInt(0);
@@ -4015,15 +4885,15 @@
     const { name, Point, hash } = opts;
     const { Fn: Fn3 } = Point;
     const hashToGroup = (msg, ctx) => opts.hashToGroup(msg, {
-      DST: concatBytes(asciiToBytes("HashToGroup-"), ctx)
+      DST: concatBytes2(asciiToBytes("HashToGroup-"), ctx)
     });
-    const hashToScalarPrefixed = (msg, ctx) => opts.hashToScalar(msg, { DST: concatBytes(_DST_scalar, ctx) });
-    const randomScalar = (rng = randomBytes) => {
+    const hashToScalarPrefixed = (msg, ctx) => opts.hashToScalar(msg, { DST: concatBytes2(_DST_scalar, ctx) });
+    const randomScalar = (rng = randomBytes2) => {
       const t = mapHashToField(rng(getMinHashLength(Fn3.ORDER)), Fn3.ORDER, Fn3.isLE);
       return Fn3.isLE ? bytesToNumberLE2(t) : bytesToNumberBE(t);
     };
     const msm = (points, scalars) => pippenger(Point, points, scalars);
-    const getCtx = (mode) => concatBytes(asciiToBytes("OPRFV1-"), new Uint8Array([mode]), asciiToBytes("-" + name));
+    const getCtx = (mode) => concatBytes2(asciiToBytes("OPRFV1-"), new Uint8Array([mode]), asciiToBytes("-" + name));
     const ctxOPRF = getCtx(0);
     const ctxVOPRF = getCtx(1);
     const ctxPOPRF = getCtx(2);
@@ -4031,20 +4901,20 @@
       const res = [];
       for (const a of args) {
         if (typeof a === "number")
-          res.push(numberToBytesBE(a, 2));
+          res.push(numberToBytesBE2(a, 2));
         else if (typeof a === "string")
           res.push(asciiToBytes(a));
         else {
-          abytes2(a);
-          res.push(numberToBytesBE(a.length, 2), a);
+          abytes3(a);
+          res.push(numberToBytesBE2(a.length, 2), a);
         }
       }
-      return concatBytes(...res);
+      return concatBytes2(...res);
     }
     const hashInput = (...bytes) => hash(encode2(...bytes, "Finalize"));
     function getTranscripts(B, C, D, ctx) {
       const Bm = B.toBytes();
-      const seed = hash(encode2(Bm, concatBytes(asciiToBytes("Seed-"), ctx)));
+      const seed = hash(encode2(Bm, concatBytes2(asciiToBytes("Seed-"), ctx)));
       const res = [];
       for (let i = 0; i < C.length; i++) {
         const Ci = C[i].toBytes();
@@ -4077,10 +4947,10 @@
       const t3 = M.multiply(r);
       const c = challengeTranscript(B, M, Z, t2, t3, ctx);
       const s = Fn3.sub(r, Fn3.mul(c, k));
-      return concatBytes(...[c, s].map((i) => Fn3.toBytes(i)));
+      return concatBytes2(...[c, s].map((i) => Fn3.toBytes(i)));
     }
     function verifyProof(ctx, B, C, D, proof) {
-      abytes2(proof, 2 * Fn3.BYTES);
+      abytes3(proof, 2 * Fn3.BYTES);
       const { M, Z } = computeComposites(B, C, D, ctx);
       const [c, s] = [proof.subarray(0, Fn3.BYTES), proof.subarray(Fn3.BYTES)].map((f) => Fn3.fromBytes(f));
       const t2 = Point.BASE.multiply(s).add(B.multiply(c));
@@ -4095,8 +4965,8 @@
       return { secretKey: Fn3.toBytes(skS), publicKey: pkS.toBytes() };
     }
     function deriveKeyPair(ctx, seed, info) {
-      const dst = concatBytes(asciiToBytes("DeriveKeyPair"), ctx);
-      const msg = concatBytes(seed, encode2(info), Uint8Array.of(0));
+      const dst = concatBytes2(asciiToBytes("DeriveKeyPair"), ctx);
+      const msg = concatBytes2(seed, encode2(info), Uint8Array.of(0));
       for (let counter = 0; counter <= 255; counter++) {
         msg[msg.length - 1] = counter;
         const skS = opts.hashToScalar(msg, { DST: dst });
@@ -4106,7 +4976,7 @@
       }
       throw new Error("Cannot derive key");
     }
-    function blind(ctx, input, rng = randomBytes) {
+    function blind(ctx, input, rng = randomBytes2) {
       const blind2 = randomScalar(rng);
       const inputPoint = hashToGroup(input, ctx);
       if (inputPoint.equals(Point.ZERO))
@@ -4125,7 +4995,7 @@
     const oprf = {
       generateKeyPair,
       deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxOPRF, seed, keyInfo),
-      blind: (input, rng = randomBytes) => blind(ctxOPRF, input, rng),
+      blind: (input, rng = randomBytes2) => blind(ctxOPRF, input, rng),
       blindEvaluate(secretKey, blindedPoint) {
         const skS = Fn3.fromBytes(secretKey);
         const elm = Point.fromBytes(blindedPoint);
@@ -4142,8 +5012,8 @@
     const voprf = {
       generateKeyPair,
       deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxVOPRF, seed, keyInfo),
-      blind: (input, rng = randomBytes) => blind(ctxVOPRF, input, rng),
-      blindEvaluateBatch(secretKey, publicKey, blinded, rng = randomBytes) {
+      blind: (input, rng = randomBytes2) => blind(ctxVOPRF, input, rng),
+      blindEvaluateBatch(secretKey, publicKey, blinded, rng = randomBytes2) {
         if (!Array.isArray(blinded))
           throw new Error("expected array");
         const skS = Fn3.fromBytes(secretKey);
@@ -4153,7 +5023,7 @@
         const proof = generateProof(ctxVOPRF, skS, pkS, blindedPoints, evaluated, rng);
         return { evaluated: evaluated.map((i) => i.toBytes()), proof };
       },
-      blindEvaluate(secretKey, publicKey, blinded, rng = randomBytes) {
+      blindEvaluate(secretKey, publicKey, blinded, rng = randomBytes2) {
         const res = this.blindEvaluateBatch(secretKey, publicKey, [blinded], rng);
         return { evaluated: res.evaluated[0], proof: res.proof };
       },
@@ -4172,12 +5042,12 @@
       evaluate: (secretKey, input) => evaluate(ctxVOPRF, secretKey, input)
     };
     const poprf = (info) => {
-      const m16 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T = Point.BASE.multiply(m16);
+      const m15 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T = Point.BASE.multiply(m15);
       return {
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
-        blind(input, publicKey, rng = randomBytes) {
+        blind(input, publicKey, rng = randomBytes2) {
           const pkS = Point.fromBytes(publicKey);
           const tweakedKey = T.add(pkS);
           if (tweakedKey.equals(Point.ZERO))
@@ -4193,11 +5063,11 @@
             tweakedKey: tweakedKey.toBytes()
           };
         },
-        blindEvaluateBatch(secretKey, blinded, rng = randomBytes) {
+        blindEvaluateBatch(secretKey, blinded, rng = randomBytes2) {
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn3.fromBytes(secretKey);
-          const t = Fn3.add(skS, m16);
+          const t = Fn3.add(skS, m15);
           const invT = Fn3.inv(t);
           const blindedPoints = blinded.map(Point.fromBytes);
           const evalPoints = blindedPoints.map((i) => i.multiply(invT));
@@ -4205,7 +5075,7 @@
           const proof = generateProof(ctxPOPRF, t, tweakedKey, evalPoints, blindedPoints, rng);
           return { evaluated: evalPoints.map((i) => i.toBytes()), proof };
         },
-        blindEvaluate(secretKey, blinded, rng = randomBytes) {
+        blindEvaluate(secretKey, blinded, rng = randomBytes2) {
           const res = this.blindEvaluateBatch(secretKey, [blinded], rng);
           return { evaluated: res.evaluated[0], proof: res.proof };
         },
@@ -4228,7 +5098,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t = Fn3.add(skS, m16);
+          const t = Fn3.add(skS, m15);
           const invT = Fn3.inv(t);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -4239,7 +5109,7 @@
   }
   var init_oprf = __esm({
     "node_modules/@noble/curves/abstract/oprf.js"() {
-      init_utils2();
+      init_utils3();
       init_curve();
       init_hash_to_curve();
       init_modular();
@@ -4306,7 +5176,7 @@
   function ed25519_domain(data, ctx, phflag) {
     if (ctx.length > 255)
       throw new Error("Context is too big");
-    return concatBytes(asciiToBytes("SigEd25519 no Ed25519 collisions"), new Uint8Array([phflag ? 1 : 0, ctx.length]), ctx, data);
+    return concatBytes2(asciiToBytes("SigEd25519 no Ed25519 collisions"), new Uint8Array([phflag ? 1 : 0, ctx.length]), ctx, data);
   }
   function ed(opts) {
     return eddsa(ed25519_Point, sha5122, Object.assign({ adjustScalarBytes }, opts));
@@ -4398,13 +5268,13 @@
   var init_ed25519 = __esm({
     "node_modules/@noble/curves/ed25519.js"() {
       init_sha2();
-      init_utils();
+      init_utils2();
       init_edwards();
       init_hash_to_curve();
       init_modular();
       init_montgomery();
       init_oprf();
-      init_utils2();
+      init_utils3();
       _0n7 = /* @__PURE__ */ BigInt(0);
       _1n7 = BigInt(1);
       _2n5 = BigInt(2);
@@ -4486,12 +5356,12 @@
           return new __RistrettoPoint(ep);
         }
         static fromBytes(bytes) {
-          abytes2(bytes, 32);
+          abytes3(bytes, 32);
           const { a, d } = ed25519_CURVE;
           const P = ed25519_CURVE_p;
           const mod3 = (n) => Fp.create(n);
           const s = bytes255ToNumberLE(bytes);
-          if (!equalBytes(Fp.toBytes(s), bytes) || isNegativeLE(s, P))
+          if (!equalBytes2(Fp.toBytes(s), bytes) || isNegativeLE(s, P))
             throw new Error("invalid ristretto255 encoding 1");
           const s2 = mod3(s * s);
           const u1 = mod3(_1n7 + a * s2);
@@ -4600,7 +5470,7 @@
          * It was later reused as a component in the newer `hash_to_ristretto255` function defined in RFC 9380.
          */
         deriveToCurve(bytes) {
-          abytes2(bytes, 64);
+          abytes3(bytes, 64);
           const r1 = bytes255ToNumberLE(bytes.subarray(0, 32));
           const R1 = calcElligatorRistrettoMap(r1);
           const r2 = bytes255ToNumberLE(bytes.subarray(32, 64));
@@ -4667,13 +5537,13 @@
       s[0] ^= SHA3_IOTA_H[round];
       s[1] ^= SHA3_IOTA_L[round];
     }
-    clean2(B);
+    clean3(B);
   }
   var _0n8, _1n8, _2n6, _7n2, _256n, _0x71n, SHA3_PI, SHA3_ROTL, _SHA3_IOTA, IOTAS, SHA3_IOTA_H, SHA3_IOTA_L, rotlH, rotlL, Keccak, genShake, shake256;
   var init_sha3 = __esm({
     "node_modules/@noble/hashes/sha3.js"() {
       init_u64();
-      init_utils();
+      init_utils2();
       _0n8 = BigInt(0);
       _1n8 = BigInt(1);
       _2n6 = BigInt(2);
@@ -4719,11 +5589,11 @@
           this.outputLen = outputLen;
           this.enableXOF = enableXOF;
           this.rounds = rounds;
-          anumber2(outputLen, "outputLen");
+          anumber3(outputLen, "outputLen");
           if (!(0 < blockLen && blockLen < 200))
             throw new Error("only keccak-f1600 function is supported");
           this.state = new Uint8Array(200);
-          this.state32 = u32(this.state);
+          this.state32 = u322(this.state);
         }
         clone() {
           return this._cloneInto();
@@ -4736,8 +5606,8 @@
           this.pos = 0;
         }
         update(data) {
-          aexists2(this);
-          abytes2(data);
+          aexists3(this);
+          abytes3(data);
           const { blockLen, state } = this;
           const len = data.length;
           for (let pos = 0; pos < len; ) {
@@ -4761,8 +5631,8 @@
           this.keccak();
         }
         writeInto(out) {
-          aexists2(this, false);
-          abytes2(out);
+          aexists3(this, false);
+          abytes3(out);
           this.finish();
           const bufferOut = this.state;
           const { blockLen } = this;
@@ -4782,11 +5652,11 @@
           return this.writeInto(out);
         }
         xof(bytes) {
-          anumber2(bytes);
+          anumber3(bytes);
           return this.xofInto(new Uint8Array(bytes));
         }
         digestInto(out) {
-          aoutput2(out, this);
+          aoutput3(out, this);
           if (this.finished)
             throw new Error("digest() was already called");
           this.writeInto(out);
@@ -4798,7 +5668,7 @@
         }
         destroy() {
           this.destroyed = true;
-          clean2(this.state);
+          clean3(this.state);
         }
         _cloneInto(to) {
           const { blockLen, suffix, outputLen, rounds, enableXOF } = this;
@@ -4868,7 +5738,7 @@
   function dom4(data, ctx, phflag) {
     if (ctx.length > 255)
       throw new Error("context must be smaller than 255, got: " + ctx.length);
-    return concatBytes(asciiToBytes("SigEd448"), new Uint8Array([phflag ? 1 : 0, ctx.length]), ctx, data);
+    return concatBytes2(asciiToBytes("SigEd448"), new Uint8Array([phflag ? 1 : 0, ctx.length]), ctx, data);
   }
   function ed4(opts) {
     return eddsa(ed448_Point, shake256_114, Object.assign({ adjustScalarBytes: adjustScalarBytes2, domain: dom4 }, opts));
@@ -4971,13 +5841,13 @@
   var init_ed448 = __esm({
     "node_modules/@noble/curves/ed448.js"() {
       init_sha3();
-      init_utils();
+      init_utils2();
       init_edwards();
       init_hash_to_curve();
       init_modular();
       init_montgomery();
       init_oprf();
-      init_utils2();
+      init_utils3();
       ed448_CURVE_p = BigInt("0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
       ed448_CURVE = /* @__PURE__ */ (() => ({
         p: ed448_CURVE_p,
@@ -5065,11 +5935,11 @@
           return new __DecafPoint(ep);
         }
         static fromBytes(bytes) {
-          abytes2(bytes, 56);
+          abytes3(bytes, 56);
           const { d, p: P } = ed448_CURVE;
           const mod3 = (n) => Fp448.create(n);
           const s = Fp448.fromBytes(bytes);
-          if (!equalBytes(Fn448.toBytes(s), bytes) || isNegativeLE(s, P))
+          if (!equalBytes2(Fn448.toBytes(s), bytes) || isNegativeLE(s, P))
             throw new Error("invalid decaf448 encoding 1");
           const s2 = mod3(s * s);
           const u1 = mod3(_1n9 + s2);
@@ -5152,7 +6022,7 @@
          * It was later reused as a component in the newer `hash_to_ristretto255` function defined in RFC 9380.
          */
         deriveToCurve(bytes) {
-          abytes2(bytes, 112);
+          abytes3(bytes, 112);
           const skipValidation = true;
           const r1 = Fp448.create(Fp448.fromBytes(bytes.subarray(0, 56), skipValidation));
           const R1 = calcElligatorDecafMap(r1);
@@ -5181,7 +6051,7 @@
   var _HMAC2, hmac2;
   var init_hmac = __esm({
     "node_modules/@noble/hashes/hmac.js"() {
-      init_utils();
+      init_utils2();
       _HMAC2 = class {
         oHash;
         iHash;
@@ -5191,7 +6061,7 @@
         destroyed = false;
         constructor(hash, key) {
           ahash2(hash);
-          abytes2(key, void 0, "key");
+          abytes3(key, void 0, "key");
           this.iHash = hash.create();
           if (typeof this.iHash.update !== "function")
             throw new Error("Expected instance of class which extends utils.Hash");
@@ -5207,16 +6077,16 @@
           for (let i = 0; i < pad.length; i++)
             pad[i] ^= 54 ^ 92;
           this.oHash.update(pad);
-          clean2(pad);
+          clean3(pad);
         }
         update(buf) {
-          aexists2(this);
+          aexists3(this);
           this.iHash.update(buf);
           return this;
         }
         digestInto(out) {
-          aexists2(this);
-          abytes2(out, this.outputLen, "output");
+          aexists3(this);
+          abytes3(out, this.outputLen, "output");
           this.finished = true;
           this.iHash.digestInto(out);
           this.oHash.update(out);
@@ -5283,8 +6153,8 @@
     for (let optName of Object.keys(def)) {
       optsn[optName] = opts[optName] === void 0 ? def[optName] : opts[optName];
     }
-    abool(optsn.lowS, "lowS");
-    abool(optsn.prehash, "prehash");
+    abool2(optsn.lowS, "lowS");
+    abool2(optsn.prehash, "prehash");
     if (optsn.format !== void 0)
       validateSigFormat(optsn.format);
     return optsn;
@@ -5316,17 +6186,17 @@
     function pointToBytes(_c, point, isCompressed) {
       const { x, y } = point.toAffine();
       const bx = Fp3.toBytes(x);
-      abool(isCompressed, "isCompressed");
+      abool2(isCompressed, "isCompressed");
       if (isCompressed) {
         assertCompressionIsSupported();
         const hasEvenY = !Fp3.isOdd(y);
-        return concatBytes(pprefix(hasEvenY), bx);
+        return concatBytes2(pprefix(hasEvenY), bx);
       } else {
-        return concatBytes(Uint8Array.of(4), bx, Fp3.toBytes(y));
+        return concatBytes2(Uint8Array.of(4), bx, Fp3.toBytes(y));
       }
     }
     function pointFromBytes(bytes) {
-      abytes2(bytes, void 0, "Point");
+      abytes3(bytes, void 0, "Point");
       const { publicKey: comp, publicKeyUncompressed: uncomp } = lengths;
       const length = bytes.length;
       const head = bytes[0];
@@ -5464,7 +6334,7 @@
         return new Point(x, y, Fp3.ONE);
       }
       static fromBytes(bytes) {
-        const P = Point.fromAffine(decodePoint(abytes2(bytes, void 0, "point")));
+        const P = Point.fromAffine(decodePoint(abytes3(bytes, void 0, "point")));
         P.assertValidity();
         return P;
       }
@@ -5628,15 +6498,15 @@
         if (!Fn3.isValidNot0(scalar))
           throw new Error("invalid scalar: out of range");
         let point, fake;
-        const mul3 = (n) => wnaf.cached(this, n, (p) => normalizeZ(Point, p));
+        const mul = (n) => wnaf.cached(this, n, (p) => normalizeZ(Point, p));
         if (endo2) {
           const { k1neg, k1, k2neg, k2 } = splitEndoScalarN(scalar);
-          const { p: k1p, f: k1f } = mul3(k1);
-          const { p: k2p, f: k2f } = mul3(k2);
+          const { p: k1p, f: k1f } = mul(k1);
+          const { p: k2p, f: k2f } = mul(k2);
           fake = k1f.add(k2f);
           point = finishEndo(endo2.beta, k1p, k2p, k1neg, k2neg);
         } else {
-          const { p, f } = mul3(scalar);
+          const { p, f } = mul(scalar);
           point = p;
           fake = f;
         }
@@ -5697,12 +6567,12 @@
         return this.multiplyUnsafe(cofactor).is0();
       }
       toBytes(isCompressed = true) {
-        abool(isCompressed, "isCompressed");
+        abool2(isCompressed, "isCompressed");
         this.assertValidity();
         return encodePoint(Point, this, isCompressed);
       }
       toHex(isCompressed = true) {
-        return bytesToHex(this.toBytes(isCompressed));
+        return bytesToHex2(this.toBytes(isCompressed));
       }
       toString() {
         return `<Point ${this.is0() ? "ZERO" : this.toHex()}>`;
@@ -5828,7 +6698,7 @@
   }
   function ecdh(Point, ecdhOpts = {}) {
     const { Fn: Fn3 } = Point;
-    const randomBytes_ = ecdhOpts.randomBytes || randomBytes;
+    const randomBytes_ = ecdhOpts.randomBytes || randomBytes2;
     const lengths = Object.assign(getWLengths(Point.Fp, Fn3), { seed: getMinHashLength(Fn3.ORDER) });
     function isValidSecretKey(secretKey) {
       try {
@@ -5852,18 +6722,18 @@
       }
     }
     function randomSecretKey(seed = randomBytes_(lengths.seed)) {
-      return mapHashToField(abytes2(seed, lengths.seed, "seed"), Fn3.ORDER);
+      return mapHashToField(abytes3(seed, lengths.seed, "seed"), Fn3.ORDER);
     }
     function getPublicKey(secretKey, isCompressed = true) {
       return Point.BASE.multiply(Fn3.fromBytes(secretKey)).toBytes(isCompressed);
     }
     function isProbPub(item) {
       const { secretKey, publicKey, publicKeyUncompressed } = lengths;
-      if (!isBytes2(item))
+      if (!isBytes3(item))
         return void 0;
       if ("_lengths" in Fn3 && Fn3._lengths || secretKey === publicKey)
         return void 0;
-      const l = abytes2(item, void 0, "key").length;
+      const l = abytes3(item, void 0, "key").length;
       return l === publicKey || l === publicKeyUncompressed;
     }
     function getSharedSecret(secretKeyA, publicKeyB, isCompressed = true) {
@@ -5893,7 +6763,7 @@
       bits2int_modN: "function"
     });
     ecdsaOpts = Object.assign({}, ecdsaOpts);
-    const randomBytes3 = ecdsaOpts.randomBytes || randomBytes;
+    const randomBytes3 = ecdsaOpts.randomBytes || randomBytes2;
     const hmac3 = ecdsaOpts.hmac || ((key, msg) => hmac2(hash, key, msg));
     const { Fp: Fp3, Fn: Fn3 } = Point;
     const { ORDER: CURVE_ORDER, BITS: fnBits } = Fn3;
@@ -5922,7 +6792,7 @@
       validateSigFormat(format);
       const size = lengths.signature;
       const sizer = format === "compact" ? size : format === "recovered" ? size + 1 : void 0;
-      return abytes2(bytes, sizer);
+      return abytes3(bytes, sizer);
     }
     class Signature {
       r;
@@ -5943,7 +6813,7 @@
         validateSigLength(bytes, format);
         let recid;
         if (format === "der") {
-          const { r: r2, s: s2 } = DER.toSig(abytes2(bytes));
+          const { r: r2, s: s2 } = DER.toSig(abytes3(bytes));
           return new Signature(r2, s2);
         }
         if (format === "recovered") {
@@ -5975,9 +6845,9 @@
         if (!Fp3.isValid(radj))
           throw new Error("invalid recovery id: sig.r+curve.n != R.x");
         const x = Fp3.toBytes(radj);
-        const R = Point.fromBytes(concatBytes(pprefix((recovery & 1) === 0), x));
+        const R = Point.fromBytes(concatBytes2(pprefix((recovery & 1) === 0), x));
         const ir = Fn3.inv(radj);
-        const h = bits2int_modN(abytes2(messageHash, void 0, "msgHash"));
+        const h = bits2int_modN(abytes3(messageHash, void 0, "msgHash"));
         const u1 = Fn3.create(-h * ir);
         const u2 = Fn3.create(s * ir);
         const Q = Point.BASE.multiplyUnsafe(u1).add(R.multiplyUnsafe(u2));
@@ -5999,12 +6869,12 @@
         const sb = Fn3.toBytes(s);
         if (format === "recovered") {
           assertSmallCofactor();
-          return concatBytes(Uint8Array.of(this.assertRecovery()), rb, sb);
+          return concatBytes2(Uint8Array.of(this.assertRecovery()), rb, sb);
         }
-        return concatBytes(rb, sb);
+        return concatBytes2(rb, sb);
       }
       toHex(format) {
-        return bytesToHex(this.toBytes(format));
+        return bytesToHex2(this.toBytes(format));
       }
     }
     const bits2int = ecdsaOpts.bits2int || function bits2int_def(bytes) {
@@ -6023,8 +6893,8 @@
       return Fn3.toBytes(num);
     }
     function validateMsgAndHash(message, prehash) {
-      abytes2(message, void 0, "message");
-      return prehash ? abytes2(hash(message), void 0, "prehashed message") : message;
+      abytes3(message, void 0, "message");
+      return prehash ? abytes3(hash(message), void 0, "prehashed message") : message;
     }
     function prepSig(message, secretKey, opts) {
       const { lowS, prehash, extraEntropy } = validateSigOpts(opts, defaultSigOpts);
@@ -6036,10 +6906,10 @@
       const seedArgs = [int2octets(d), int2octets(h1int)];
       if (extraEntropy != null && extraEntropy !== false) {
         const e = extraEntropy === true ? randomBytes3(lengths.secretKey) : extraEntropy;
-        seedArgs.push(abytes2(e, void 0, "extraEntropy"));
+        seedArgs.push(abytes3(e, void 0, "extraEntropy"));
       }
-      const seed = concatBytes(...seedArgs);
-      const m16 = h1int;
+      const seed = concatBytes2(...seedArgs);
+      const m15 = h1int;
       function k2sig(kBytes) {
         const k = bits2int(kBytes);
         if (!Fn3.isValidNot0(k))
@@ -6049,7 +6919,7 @@
         const r = Fn3.create(q.x);
         if (r === _0n9)
           return;
-        const s = Fn3.create(ik * Fn3.create(m16 + r * d));
+        const s = Fn3.create(ik * Fn3.create(m15 + r * d));
         if (s === _0n9)
           return;
         let recovery = (q.x === r ? 0 : 2) | Number(q.y & _1n10);
@@ -6070,9 +6940,9 @@
     }
     function verify(signature, message, publicKey, opts = {}) {
       const { lowS, prehash, format } = validateSigOpts(opts, defaultSigOpts);
-      publicKey = abytes2(publicKey, void 0, "publicKey");
+      publicKey = abytes3(publicKey, void 0, "publicKey");
       message = validateMsgAndHash(message, prehash);
-      if (!isBytes2(signature)) {
+      if (!isBytes3(signature)) {
         const end = signature instanceof Signature ? ", use sig.toBytes()" : "";
         throw new Error("verify expects Uint8Array signature" + end);
       }
@@ -6119,14 +6989,14 @@
   var init_weierstrass = __esm({
     "node_modules/@noble/curves/abstract/weierstrass.js"() {
       init_hmac();
-      init_utils();
       init_utils2();
+      init_utils3();
       init_curve();
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m16 = "") {
-          super(m16);
+        constructor(m15 = "") {
+          super(m15);
         }
       };
       DER = {
@@ -6211,7 +7081,7 @@
         },
         toSig(bytes) {
           const { Err: E, _int: int, _tlv: tlv } = DER;
-          const data = abytes2(bytes, void 0, "signature");
+          const data = abytes3(bytes, void 0, "signature");
           const { v: seqBytes, l: seqLeftBytes } = tlv.decode(48, data);
           if (seqLeftBytes.length)
             throw new E("invalid signature: left bytes after parsing");
@@ -6366,1062 +7236,8 @@
     }
   });
 
-  // node_modules/@noble/ciphers/utils.js
-  function isBytes3(a) {
-    return a instanceof Uint8Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint8Array";
-  }
-  function abool2(b) {
-    if (typeof b !== "boolean")
-      throw new Error(`boolean expected, not ${b}`);
-  }
-  function anumber3(n) {
-    if (!Number.isSafeInteger(n) || n < 0)
-      throw new Error("positive integer expected, got " + n);
-  }
-  function abytes3(value, length, title = "") {
-    const bytes = isBytes3(value);
-    const len = value?.length;
-    const needsLen = length !== void 0;
-    if (!bytes || needsLen && len !== length) {
-      const prefix = title && `"${title}" `;
-      const ofLen = needsLen ? ` of length ${length}` : "";
-      const got = bytes ? `length=${len}` : `type=${typeof value}`;
-      throw new Error(prefix + "expected Uint8Array" + ofLen + ", got " + got);
-    }
-    return value;
-  }
-  function aexists3(instance, checkFinished = true) {
-    if (instance.destroyed)
-      throw new Error("Hash instance has been destroyed");
-    if (checkFinished && instance.finished)
-      throw new Error("Hash#digest() has already been called");
-  }
-  function aoutput3(out, instance) {
-    abytes3(out, void 0, "output");
-    const min = instance.outputLen;
-    if (out.length < min) {
-      throw new Error("digestInto() expects output buffer of length at least " + min);
-    }
-  }
-  function u8(arr) {
-    return new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength);
-  }
-  function u322(arr) {
-    return new Uint32Array(arr.buffer, arr.byteOffset, Math.floor(arr.byteLength / 4));
-  }
-  function clean3(...arrays) {
-    for (let i = 0; i < arrays.length; i++) {
-      arrays[i].fill(0);
-    }
-  }
-  function createView3(arr) {
-    return new DataView(arr.buffer, arr.byteOffset, arr.byteLength);
-  }
-  function checkOpts(defaults, opts) {
-    if (opts == null || typeof opts !== "object")
-      throw new Error("options must be defined");
-    const merged = Object.assign(defaults, opts);
-    return merged;
-  }
-  function equalBytes2(a, b) {
-    if (a.length !== b.length)
-      return false;
-    let diff = 0;
-    for (let i = 0; i < a.length; i++)
-      diff |= a[i] ^ b[i];
-    return diff === 0;
-  }
-  function getOutput(expectedLength, out, onlyAligned = true) {
-    if (out === void 0)
-      return new Uint8Array(expectedLength);
-    if (out.length !== expectedLength)
-      throw new Error('"output" expected Uint8Array of length ' + expectedLength + ", got: " + out.length);
-    if (onlyAligned && !isAligned32(out))
-      throw new Error("invalid output, must be aligned");
-    return out;
-  }
-  function u64Lengths(dataLength, aadLength, isLE3) {
-    abool2(isLE3);
-    const num = new Uint8Array(16);
-    const view = createView3(num);
-    view.setBigUint64(0, BigInt(aadLength), isLE3);
-    view.setBigUint64(8, BigInt(dataLength), isLE3);
-    return num;
-  }
-  function isAligned32(bytes) {
-    return bytes.byteOffset % 4 === 0;
-  }
-  function copyBytes3(bytes) {
-    return Uint8Array.from(bytes);
-  }
-  function randomBytes2(bytesLength = 32) {
-    const cr = typeof globalThis === "object" ? globalThis.crypto : null;
-    if (typeof cr?.getRandomValues !== "function")
-      throw new Error("crypto.getRandomValues must be defined");
-    return cr.getRandomValues(new Uint8Array(bytesLength));
-  }
-  var isLE2, wrapCipher;
-  var init_utils3 = __esm({
-    "node_modules/@noble/ciphers/utils.js"() {
-      isLE2 = /* @__PURE__ */ (() => new Uint8Array(new Uint32Array([287454020]).buffer)[0] === 68)();
-      wrapCipher = /* @__NO_SIDE_EFFECTS__ */ (params, constructor) => {
-        function wrappedCipher(key, ...args) {
-          abytes3(key, void 0, "key");
-          if (!isLE2)
-            throw new Error("Non little-endian hardware is not yet supported");
-          if (params.nonceLength !== void 0) {
-            const nonce = args[0];
-            abytes3(nonce, params.varSizeNonce ? void 0 : params.nonceLength, "nonce");
-          }
-          const tagl = params.tagLength;
-          if (tagl && args[1] !== void 0)
-            abytes3(args[1], void 0, "AAD");
-          const cipher = constructor(key, ...args);
-          const checkOutput = (fnLength, output) => {
-            if (output !== void 0) {
-              if (fnLength !== 2)
-                throw new Error("cipher output not supported");
-              abytes3(output, void 0, "output");
-            }
-          };
-          let called = false;
-          const wrCipher = {
-            encrypt(data, output) {
-              if (called)
-                throw new Error("cannot encrypt() twice with same key + nonce");
-              called = true;
-              abytes3(data);
-              checkOutput(cipher.encrypt.length, output);
-              return cipher.encrypt(data, output);
-            },
-            decrypt(data, output) {
-              abytes3(data);
-              if (tagl && data.length < tagl)
-                throw new Error('"ciphertext" expected length bigger than tagLength=' + tagl);
-              checkOutput(cipher.decrypt.length, output);
-              return cipher.decrypt(data, output);
-            }
-          };
-          return wrCipher;
-        }
-        Object.assign(wrappedCipher, params);
-        return wrappedCipher;
-      };
-    }
-  });
-
-  // node_modules/@noble/ciphers/_arx.js
-  function rotl(a, b) {
-    return a << b | a >>> 32 - b;
-  }
-  function isAligned322(b) {
-    return b.byteOffset % 4 === 0;
-  }
-  function runCipher(core, sigma, key, nonce, data, output, counter, rounds) {
-    const len = data.length;
-    const block = new Uint8Array(BLOCK_LEN);
-    const b32 = u322(block);
-    const isAligned = isAligned322(data) && isAligned322(output);
-    const d32 = isAligned ? u322(data) : U32_EMPTY;
-    const o32 = isAligned ? u322(output) : U32_EMPTY;
-    for (let pos = 0; pos < len; counter++) {
-      core(sigma, key, nonce, b32, counter, rounds);
-      if (counter >= MAX_COUNTER)
-        throw new Error("arx: counter overflow");
-      const take = Math.min(BLOCK_LEN, len - pos);
-      if (isAligned && take === BLOCK_LEN) {
-        const pos32 = pos / 4;
-        if (pos % 4 !== 0)
-          throw new Error("arx: invalid block position");
-        for (let j = 0, posj; j < BLOCK_LEN32; j++) {
-          posj = pos32 + j;
-          o32[posj] = d32[posj] ^ b32[j];
-        }
-        pos += BLOCK_LEN;
-        continue;
-      }
-      for (let j = 0, posj; j < take; j++) {
-        posj = pos + j;
-        output[posj] = data[posj] ^ block[j];
-      }
-      pos += take;
-    }
-  }
-  function createCipher(core, opts) {
-    const { allowShortKeys, extendNonceFn, counterLength, counterRight, rounds } = checkOpts({ allowShortKeys: false, counterLength: 8, counterRight: false, rounds: 20 }, opts);
-    if (typeof core !== "function")
-      throw new Error("core must be a function");
-    anumber3(counterLength);
-    anumber3(rounds);
-    abool2(counterRight);
-    abool2(allowShortKeys);
-    return (key, nonce, data, output, counter = 0) => {
-      abytes3(key, void 0, "key");
-      abytes3(nonce, void 0, "nonce");
-      abytes3(data, void 0, "data");
-      const len = data.length;
-      if (output === void 0)
-        output = new Uint8Array(len);
-      abytes3(output, void 0, "output");
-      anumber3(counter);
-      if (counter < 0 || counter >= MAX_COUNTER)
-        throw new Error("arx: counter overflow");
-      if (output.length < len)
-        throw new Error(`arx: output (${output.length}) is shorter than data (${len})`);
-      const toClean = [];
-      let l = key.length;
-      let k;
-      let sigma;
-      if (l === 32) {
-        toClean.push(k = copyBytes3(key));
-        sigma = sigma32_32;
-      } else if (l === 16 && allowShortKeys) {
-        k = new Uint8Array(32);
-        k.set(key);
-        k.set(key, 16);
-        sigma = sigma16_32;
-        toClean.push(k);
-      } else {
-        abytes3(key, 32, "arx key");
-        throw new Error("invalid key size");
-      }
-      if (!isAligned322(nonce))
-        toClean.push(nonce = copyBytes3(nonce));
-      const k32 = u322(k);
-      if (extendNonceFn) {
-        if (nonce.length !== 24)
-          throw new Error(`arx: extended nonce must be 24 bytes`);
-        extendNonceFn(sigma, k32, u322(nonce.subarray(0, 16)), k32);
-        nonce = nonce.subarray(16);
-      }
-      const nonceNcLen = 16 - counterLength;
-      if (nonceNcLen !== nonce.length)
-        throw new Error(`arx: nonce must be ${nonceNcLen} or 16 bytes`);
-      if (nonceNcLen !== 12) {
-        const nc = new Uint8Array(12);
-        nc.set(nonce, counterRight ? 0 : 12 - nonce.length);
-        nonce = nc;
-        toClean.push(nonce);
-      }
-      const n32 = u322(nonce);
-      runCipher(core, sigma, k32, n32, data, output, counter, rounds);
-      clean3(...toClean);
-      return output;
-    };
-  }
-  var encodeStr, sigma16, sigma32, sigma16_32, sigma32_32, BLOCK_LEN, BLOCK_LEN32, MAX_COUNTER, U32_EMPTY, _XorStreamPRG, createPRG;
-  var init_arx = __esm({
-    "node_modules/@noble/ciphers/_arx.js"() {
-      init_utils3();
-      encodeStr = (str) => Uint8Array.from(str.split(""), (c) => c.charCodeAt(0));
-      sigma16 = encodeStr("expand 16-byte k");
-      sigma32 = encodeStr("expand 32-byte k");
-      sigma16_32 = u322(sigma16);
-      sigma32_32 = u322(sigma32);
-      BLOCK_LEN = 64;
-      BLOCK_LEN32 = 16;
-      MAX_COUNTER = 2 ** 32 - 1;
-      U32_EMPTY = Uint32Array.of();
-      _XorStreamPRG = class __XorStreamPRG {
-        blockLen;
-        keyLen;
-        nonceLen;
-        state;
-        buf;
-        key;
-        nonce;
-        pos;
-        ctr;
-        cipher;
-        constructor(cipher, blockLen, keyLen, nonceLen, seed) {
-          this.cipher = cipher;
-          this.blockLen = blockLen;
-          this.keyLen = keyLen;
-          this.nonceLen = nonceLen;
-          this.state = new Uint8Array(this.keyLen + this.nonceLen);
-          this.reseed(seed);
-          this.ctr = 0;
-          this.pos = this.blockLen;
-          this.buf = new Uint8Array(this.blockLen);
-          this.key = this.state.subarray(0, this.keyLen);
-          this.nonce = this.state.subarray(this.keyLen);
-        }
-        reseed(seed) {
-          abytes3(seed);
-          if (!seed || seed.length === 0)
-            throw new Error("entropy required");
-          for (let i = 0; i < seed.length; i++)
-            this.state[i % this.state.length] ^= seed[i];
-          this.ctr = 0;
-          this.pos = this.blockLen;
-        }
-        addEntropy(seed) {
-          this.state.set(this.randomBytes(this.state.length));
-          this.reseed(seed);
-        }
-        randomBytes(len) {
-          anumber3(len);
-          if (len === 0)
-            return new Uint8Array(0);
-          const out = new Uint8Array(len);
-          let outPos = 0;
-          if (this.pos < this.blockLen) {
-            const take = Math.min(len, this.blockLen - this.pos);
-            out.set(this.buf.subarray(this.pos, this.pos + take), 0);
-            this.pos += take;
-            outPos += take;
-            if (outPos === len)
-              return out;
-          }
-          const blocks = Math.floor((len - outPos) / this.blockLen);
-          if (blocks > 0) {
-            const blockBytes = blocks * this.blockLen;
-            const b = out.subarray(outPos, outPos + blockBytes);
-            this.cipher(this.key, this.nonce, b, b, this.ctr);
-            this.ctr += blocks;
-            outPos += blockBytes;
-          }
-          const left2 = len - outPos;
-          if (left2 > 0) {
-            this.buf.fill(0);
-            this.cipher(this.key, this.nonce, this.buf, this.buf, this.ctr++);
-            out.set(this.buf.subarray(0, left2), outPos);
-            this.pos = left2;
-          }
-          return out;
-        }
-        clone() {
-          return new __XorStreamPRG(this.cipher, this.blockLen, this.keyLen, this.nonceLen, this.randomBytes(this.state.length));
-        }
-        clean() {
-          this.pos = 0;
-          this.ctr = 0;
-          this.buf.fill(0);
-          this.state.fill(0);
-        }
-      };
-      createPRG = (cipher, blockLen, keyLen, nonceLen) => {
-        return (seed = randomBytes2(32)) => new _XorStreamPRG(cipher, blockLen, keyLen, nonceLen, seed);
-      };
-    }
-  });
-
-  // node_modules/@noble/ciphers/_poly1305.js
-  function u8to16(a, i) {
-    return a[i++] & 255 | (a[i++] & 255) << 8;
-  }
-  function wrapConstructorWithKey2(hashCons) {
-    const hashC = (msg, key) => hashCons(key).update(msg).digest();
-    const tmp = hashCons(new Uint8Array(32));
-    hashC.outputLen = tmp.outputLen;
-    hashC.blockLen = tmp.blockLen;
-    hashC.create = (key) => hashCons(key);
-    return hashC;
-  }
-  var Poly1305, poly1305;
-  var init_poly1305 = __esm({
-    "node_modules/@noble/ciphers/_poly1305.js"() {
-      init_utils3();
-      Poly1305 = class {
-        blockLen = 16;
-        outputLen = 16;
-        buffer = new Uint8Array(16);
-        r = new Uint16Array(10);
-        // Allocating 1 array with .subarray() here is slower than 3
-        h = new Uint16Array(10);
-        pad = new Uint16Array(8);
-        pos = 0;
-        finished = false;
-        // Can be speed-up using BigUint64Array, at the cost of complexity
-        constructor(key) {
-          key = copyBytes3(abytes3(key, 32, "key"));
-          const t0 = u8to16(key, 0);
-          const t1 = u8to16(key, 2);
-          const t2 = u8to16(key, 4);
-          const t3 = u8to16(key, 6);
-          const t4 = u8to16(key, 8);
-          const t5 = u8to16(key, 10);
-          const t6 = u8to16(key, 12);
-          const t7 = u8to16(key, 14);
-          this.r[0] = t0 & 8191;
-          this.r[1] = (t0 >>> 13 | t1 << 3) & 8191;
-          this.r[2] = (t1 >>> 10 | t2 << 6) & 7939;
-          this.r[3] = (t2 >>> 7 | t3 << 9) & 8191;
-          this.r[4] = (t3 >>> 4 | t4 << 12) & 255;
-          this.r[5] = t4 >>> 1 & 8190;
-          this.r[6] = (t4 >>> 14 | t5 << 2) & 8191;
-          this.r[7] = (t5 >>> 11 | t6 << 5) & 8065;
-          this.r[8] = (t6 >>> 8 | t7 << 8) & 8191;
-          this.r[9] = t7 >>> 5 & 127;
-          for (let i = 0; i < 8; i++)
-            this.pad[i] = u8to16(key, 16 + 2 * i);
-        }
-        process(data, offset, isLast = false) {
-          const hibit = isLast ? 0 : 1 << 11;
-          const { h, r } = this;
-          const r0 = r[0];
-          const r1 = r[1];
-          const r2 = r[2];
-          const r3 = r[3];
-          const r4 = r[4];
-          const r5 = r[5];
-          const r6 = r[6];
-          const r7 = r[7];
-          const r8 = r[8];
-          const r9 = r[9];
-          const t0 = u8to16(data, offset + 0);
-          const t1 = u8to16(data, offset + 2);
-          const t2 = u8to16(data, offset + 4);
-          const t3 = u8to16(data, offset + 6);
-          const t4 = u8to16(data, offset + 8);
-          const t5 = u8to16(data, offset + 10);
-          const t6 = u8to16(data, offset + 12);
-          const t7 = u8to16(data, offset + 14);
-          let h0 = h[0] + (t0 & 8191);
-          let h1 = h[1] + ((t0 >>> 13 | t1 << 3) & 8191);
-          let h2 = h[2] + ((t1 >>> 10 | t2 << 6) & 8191);
-          let h3 = h[3] + ((t2 >>> 7 | t3 << 9) & 8191);
-          let h4 = h[4] + ((t3 >>> 4 | t4 << 12) & 8191);
-          let h5 = h[5] + (t4 >>> 1 & 8191);
-          let h6 = h[6] + ((t4 >>> 14 | t5 << 2) & 8191);
-          let h7 = h[7] + ((t5 >>> 11 | t6 << 5) & 8191);
-          let h8 = h[8] + ((t6 >>> 8 | t7 << 8) & 8191);
-          let h9 = h[9] + (t7 >>> 5 | hibit);
-          let c = 0;
-          let d0 = c + h0 * r0 + h1 * (5 * r9) + h2 * (5 * r8) + h3 * (5 * r7) + h4 * (5 * r6);
-          c = d0 >>> 13;
-          d0 &= 8191;
-          d0 += h5 * (5 * r5) + h6 * (5 * r4) + h7 * (5 * r3) + h8 * (5 * r2) + h9 * (5 * r1);
-          c += d0 >>> 13;
-          d0 &= 8191;
-          let d1 = c + h0 * r1 + h1 * r0 + h2 * (5 * r9) + h3 * (5 * r8) + h4 * (5 * r7);
-          c = d1 >>> 13;
-          d1 &= 8191;
-          d1 += h5 * (5 * r6) + h6 * (5 * r5) + h7 * (5 * r4) + h8 * (5 * r3) + h9 * (5 * r2);
-          c += d1 >>> 13;
-          d1 &= 8191;
-          let d2 = c + h0 * r2 + h1 * r1 + h2 * r0 + h3 * (5 * r9) + h4 * (5 * r8);
-          c = d2 >>> 13;
-          d2 &= 8191;
-          d2 += h5 * (5 * r7) + h6 * (5 * r6) + h7 * (5 * r5) + h8 * (5 * r4) + h9 * (5 * r3);
-          c += d2 >>> 13;
-          d2 &= 8191;
-          let d3 = c + h0 * r3 + h1 * r2 + h2 * r1 + h3 * r0 + h4 * (5 * r9);
-          c = d3 >>> 13;
-          d3 &= 8191;
-          d3 += h5 * (5 * r8) + h6 * (5 * r7) + h7 * (5 * r6) + h8 * (5 * r5) + h9 * (5 * r4);
-          c += d3 >>> 13;
-          d3 &= 8191;
-          let d4 = c + h0 * r4 + h1 * r3 + h2 * r2 + h3 * r1 + h4 * r0;
-          c = d4 >>> 13;
-          d4 &= 8191;
-          d4 += h5 * (5 * r9) + h6 * (5 * r8) + h7 * (5 * r7) + h8 * (5 * r6) + h9 * (5 * r5);
-          c += d4 >>> 13;
-          d4 &= 8191;
-          let d5 = c + h0 * r5 + h1 * r4 + h2 * r3 + h3 * r2 + h4 * r1;
-          c = d5 >>> 13;
-          d5 &= 8191;
-          d5 += h5 * r0 + h6 * (5 * r9) + h7 * (5 * r8) + h8 * (5 * r7) + h9 * (5 * r6);
-          c += d5 >>> 13;
-          d5 &= 8191;
-          let d6 = c + h0 * r6 + h1 * r5 + h2 * r4 + h3 * r3 + h4 * r2;
-          c = d6 >>> 13;
-          d6 &= 8191;
-          d6 += h5 * r1 + h6 * r0 + h7 * (5 * r9) + h8 * (5 * r8) + h9 * (5 * r7);
-          c += d6 >>> 13;
-          d6 &= 8191;
-          let d7 = c + h0 * r7 + h1 * r6 + h2 * r5 + h3 * r4 + h4 * r3;
-          c = d7 >>> 13;
-          d7 &= 8191;
-          d7 += h5 * r2 + h6 * r1 + h7 * r0 + h8 * (5 * r9) + h9 * (5 * r8);
-          c += d7 >>> 13;
-          d7 &= 8191;
-          let d8 = c + h0 * r8 + h1 * r7 + h2 * r6 + h3 * r5 + h4 * r4;
-          c = d8 >>> 13;
-          d8 &= 8191;
-          d8 += h5 * r3 + h6 * r2 + h7 * r1 + h8 * r0 + h9 * (5 * r9);
-          c += d8 >>> 13;
-          d8 &= 8191;
-          let d9 = c + h0 * r9 + h1 * r8 + h2 * r7 + h3 * r6 + h4 * r5;
-          c = d9 >>> 13;
-          d9 &= 8191;
-          d9 += h5 * r4 + h6 * r3 + h7 * r2 + h8 * r1 + h9 * r0;
-          c += d9 >>> 13;
-          d9 &= 8191;
-          c = (c << 2) + c | 0;
-          c = c + d0 | 0;
-          d0 = c & 8191;
-          c = c >>> 13;
-          d1 += c;
-          h[0] = d0;
-          h[1] = d1;
-          h[2] = d2;
-          h[3] = d3;
-          h[4] = d4;
-          h[5] = d5;
-          h[6] = d6;
-          h[7] = d7;
-          h[8] = d8;
-          h[9] = d9;
-        }
-        finalize() {
-          const { h, pad } = this;
-          const g = new Uint16Array(10);
-          let c = h[1] >>> 13;
-          h[1] &= 8191;
-          for (let i = 2; i < 10; i++) {
-            h[i] += c;
-            c = h[i] >>> 13;
-            h[i] &= 8191;
-          }
-          h[0] += c * 5;
-          c = h[0] >>> 13;
-          h[0] &= 8191;
-          h[1] += c;
-          c = h[1] >>> 13;
-          h[1] &= 8191;
-          h[2] += c;
-          g[0] = h[0] + 5;
-          c = g[0] >>> 13;
-          g[0] &= 8191;
-          for (let i = 1; i < 10; i++) {
-            g[i] = h[i] + c;
-            c = g[i] >>> 13;
-            g[i] &= 8191;
-          }
-          g[9] -= 1 << 13;
-          let mask = (c ^ 1) - 1;
-          for (let i = 0; i < 10; i++)
-            g[i] &= mask;
-          mask = ~mask;
-          for (let i = 0; i < 10; i++)
-            h[i] = h[i] & mask | g[i];
-          h[0] = (h[0] | h[1] << 13) & 65535;
-          h[1] = (h[1] >>> 3 | h[2] << 10) & 65535;
-          h[2] = (h[2] >>> 6 | h[3] << 7) & 65535;
-          h[3] = (h[3] >>> 9 | h[4] << 4) & 65535;
-          h[4] = (h[4] >>> 12 | h[5] << 1 | h[6] << 14) & 65535;
-          h[5] = (h[6] >>> 2 | h[7] << 11) & 65535;
-          h[6] = (h[7] >>> 5 | h[8] << 8) & 65535;
-          h[7] = (h[8] >>> 8 | h[9] << 5) & 65535;
-          let f = h[0] + pad[0];
-          h[0] = f & 65535;
-          for (let i = 1; i < 8; i++) {
-            f = (h[i] + pad[i] | 0) + (f >>> 16) | 0;
-            h[i] = f & 65535;
-          }
-          clean3(g);
-        }
-        update(data) {
-          aexists3(this);
-          abytes3(data);
-          data = copyBytes3(data);
-          const { buffer, blockLen } = this;
-          const len = data.length;
-          for (let pos = 0; pos < len; ) {
-            const take = Math.min(blockLen - this.pos, len - pos);
-            if (take === blockLen) {
-              for (; blockLen <= len - pos; pos += blockLen)
-                this.process(data, pos);
-              continue;
-            }
-            buffer.set(data.subarray(pos, pos + take), this.pos);
-            this.pos += take;
-            pos += take;
-            if (this.pos === blockLen) {
-              this.process(buffer, 0, false);
-              this.pos = 0;
-            }
-          }
-          return this;
-        }
-        destroy() {
-          clean3(this.h, this.r, this.buffer, this.pad);
-        }
-        digestInto(out) {
-          aexists3(this);
-          aoutput3(out, this);
-          this.finished = true;
-          const { buffer, h } = this;
-          let { pos } = this;
-          if (pos) {
-            buffer[pos++] = 1;
-            for (; pos < 16; pos++)
-              buffer[pos] = 0;
-            this.process(buffer, 0, true);
-          }
-          this.finalize();
-          let opos = 0;
-          for (let i = 0; i < 8; i++) {
-            out[opos++] = h[i] >>> 0;
-            out[opos++] = h[i] >>> 8;
-          }
-          return out;
-        }
-        digest() {
-          const { buffer, outputLen } = this;
-          this.digestInto(buffer);
-          const res = buffer.slice(0, outputLen);
-          this.destroy();
-          return res;
-        }
-      };
-      poly1305 = /* @__PURE__ */ (() => wrapConstructorWithKey2((key) => new Poly1305(key)))();
-    }
-  });
-
-  // node_modules/@noble/ciphers/chacha.js
-  var chacha_exports = {};
-  __export(chacha_exports, {
-    _poly1305_aead: () => _poly1305_aead,
-    chacha12: () => chacha12,
-    chacha20: () => chacha20,
-    chacha20orig: () => chacha20orig,
-    chacha20poly1305: () => chacha20poly1305,
-    chacha8: () => chacha8,
-    hchacha: () => hchacha,
-    rngChacha20: () => rngChacha20,
-    rngChacha8: () => rngChacha8,
-    xchacha20: () => xchacha20,
-    xchacha20poly1305: () => xchacha20poly1305
-  });
-  function chachaCore(s, k, n, out, cnt, rounds = 20) {
-    let y00 = s[0], y01 = s[1], y02 = s[2], y03 = s[3], y04 = k[0], y05 = k[1], y06 = k[2], y07 = k[3], y08 = k[4], y09 = k[5], y10 = k[6], y11 = k[7], y12 = cnt, y13 = n[0], y14 = n[1], y15 = n[2];
-    let x00 = y00, x01 = y01, x02 = y02, x03 = y03, x04 = y04, x05 = y05, x06 = y06, x07 = y07, x08 = y08, x09 = y09, x10 = y10, x11 = y11, x12 = y12, x13 = y13, x14 = y14, x15 = y15;
-    for (let r = 0; r < rounds; r += 2) {
-      x00 = x00 + x04 | 0;
-      x12 = rotl(x12 ^ x00, 16);
-      x08 = x08 + x12 | 0;
-      x04 = rotl(x04 ^ x08, 12);
-      x00 = x00 + x04 | 0;
-      x12 = rotl(x12 ^ x00, 8);
-      x08 = x08 + x12 | 0;
-      x04 = rotl(x04 ^ x08, 7);
-      x01 = x01 + x05 | 0;
-      x13 = rotl(x13 ^ x01, 16);
-      x09 = x09 + x13 | 0;
-      x05 = rotl(x05 ^ x09, 12);
-      x01 = x01 + x05 | 0;
-      x13 = rotl(x13 ^ x01, 8);
-      x09 = x09 + x13 | 0;
-      x05 = rotl(x05 ^ x09, 7);
-      x02 = x02 + x06 | 0;
-      x14 = rotl(x14 ^ x02, 16);
-      x10 = x10 + x14 | 0;
-      x06 = rotl(x06 ^ x10, 12);
-      x02 = x02 + x06 | 0;
-      x14 = rotl(x14 ^ x02, 8);
-      x10 = x10 + x14 | 0;
-      x06 = rotl(x06 ^ x10, 7);
-      x03 = x03 + x07 | 0;
-      x15 = rotl(x15 ^ x03, 16);
-      x11 = x11 + x15 | 0;
-      x07 = rotl(x07 ^ x11, 12);
-      x03 = x03 + x07 | 0;
-      x15 = rotl(x15 ^ x03, 8);
-      x11 = x11 + x15 | 0;
-      x07 = rotl(x07 ^ x11, 7);
-      x00 = x00 + x05 | 0;
-      x15 = rotl(x15 ^ x00, 16);
-      x10 = x10 + x15 | 0;
-      x05 = rotl(x05 ^ x10, 12);
-      x00 = x00 + x05 | 0;
-      x15 = rotl(x15 ^ x00, 8);
-      x10 = x10 + x15 | 0;
-      x05 = rotl(x05 ^ x10, 7);
-      x01 = x01 + x06 | 0;
-      x12 = rotl(x12 ^ x01, 16);
-      x11 = x11 + x12 | 0;
-      x06 = rotl(x06 ^ x11, 12);
-      x01 = x01 + x06 | 0;
-      x12 = rotl(x12 ^ x01, 8);
-      x11 = x11 + x12 | 0;
-      x06 = rotl(x06 ^ x11, 7);
-      x02 = x02 + x07 | 0;
-      x13 = rotl(x13 ^ x02, 16);
-      x08 = x08 + x13 | 0;
-      x07 = rotl(x07 ^ x08, 12);
-      x02 = x02 + x07 | 0;
-      x13 = rotl(x13 ^ x02, 8);
-      x08 = x08 + x13 | 0;
-      x07 = rotl(x07 ^ x08, 7);
-      x03 = x03 + x04 | 0;
-      x14 = rotl(x14 ^ x03, 16);
-      x09 = x09 + x14 | 0;
-      x04 = rotl(x04 ^ x09, 12);
-      x03 = x03 + x04 | 0;
-      x14 = rotl(x14 ^ x03, 8);
-      x09 = x09 + x14 | 0;
-      x04 = rotl(x04 ^ x09, 7);
-    }
-    let oi = 0;
-    out[oi++] = y00 + x00 | 0;
-    out[oi++] = y01 + x01 | 0;
-    out[oi++] = y02 + x02 | 0;
-    out[oi++] = y03 + x03 | 0;
-    out[oi++] = y04 + x04 | 0;
-    out[oi++] = y05 + x05 | 0;
-    out[oi++] = y06 + x06 | 0;
-    out[oi++] = y07 + x07 | 0;
-    out[oi++] = y08 + x08 | 0;
-    out[oi++] = y09 + x09 | 0;
-    out[oi++] = y10 + x10 | 0;
-    out[oi++] = y11 + x11 | 0;
-    out[oi++] = y12 + x12 | 0;
-    out[oi++] = y13 + x13 | 0;
-    out[oi++] = y14 + x14 | 0;
-    out[oi++] = y15 + x15 | 0;
-  }
-  function hchacha(s, k, i, out) {
-    let x00 = s[0], x01 = s[1], x02 = s[2], x03 = s[3], x04 = k[0], x05 = k[1], x06 = k[2], x07 = k[3], x08 = k[4], x09 = k[5], x10 = k[6], x11 = k[7], x12 = i[0], x13 = i[1], x14 = i[2], x15 = i[3];
-    for (let r = 0; r < 20; r += 2) {
-      x00 = x00 + x04 | 0;
-      x12 = rotl(x12 ^ x00, 16);
-      x08 = x08 + x12 | 0;
-      x04 = rotl(x04 ^ x08, 12);
-      x00 = x00 + x04 | 0;
-      x12 = rotl(x12 ^ x00, 8);
-      x08 = x08 + x12 | 0;
-      x04 = rotl(x04 ^ x08, 7);
-      x01 = x01 + x05 | 0;
-      x13 = rotl(x13 ^ x01, 16);
-      x09 = x09 + x13 | 0;
-      x05 = rotl(x05 ^ x09, 12);
-      x01 = x01 + x05 | 0;
-      x13 = rotl(x13 ^ x01, 8);
-      x09 = x09 + x13 | 0;
-      x05 = rotl(x05 ^ x09, 7);
-      x02 = x02 + x06 | 0;
-      x14 = rotl(x14 ^ x02, 16);
-      x10 = x10 + x14 | 0;
-      x06 = rotl(x06 ^ x10, 12);
-      x02 = x02 + x06 | 0;
-      x14 = rotl(x14 ^ x02, 8);
-      x10 = x10 + x14 | 0;
-      x06 = rotl(x06 ^ x10, 7);
-      x03 = x03 + x07 | 0;
-      x15 = rotl(x15 ^ x03, 16);
-      x11 = x11 + x15 | 0;
-      x07 = rotl(x07 ^ x11, 12);
-      x03 = x03 + x07 | 0;
-      x15 = rotl(x15 ^ x03, 8);
-      x11 = x11 + x15 | 0;
-      x07 = rotl(x07 ^ x11, 7);
-      x00 = x00 + x05 | 0;
-      x15 = rotl(x15 ^ x00, 16);
-      x10 = x10 + x15 | 0;
-      x05 = rotl(x05 ^ x10, 12);
-      x00 = x00 + x05 | 0;
-      x15 = rotl(x15 ^ x00, 8);
-      x10 = x10 + x15 | 0;
-      x05 = rotl(x05 ^ x10, 7);
-      x01 = x01 + x06 | 0;
-      x12 = rotl(x12 ^ x01, 16);
-      x11 = x11 + x12 | 0;
-      x06 = rotl(x06 ^ x11, 12);
-      x01 = x01 + x06 | 0;
-      x12 = rotl(x12 ^ x01, 8);
-      x11 = x11 + x12 | 0;
-      x06 = rotl(x06 ^ x11, 7);
-      x02 = x02 + x07 | 0;
-      x13 = rotl(x13 ^ x02, 16);
-      x08 = x08 + x13 | 0;
-      x07 = rotl(x07 ^ x08, 12);
-      x02 = x02 + x07 | 0;
-      x13 = rotl(x13 ^ x02, 8);
-      x08 = x08 + x13 | 0;
-      x07 = rotl(x07 ^ x08, 7);
-      x03 = x03 + x04 | 0;
-      x14 = rotl(x14 ^ x03, 16);
-      x09 = x09 + x14 | 0;
-      x04 = rotl(x04 ^ x09, 12);
-      x03 = x03 + x04 | 0;
-      x14 = rotl(x14 ^ x03, 8);
-      x09 = x09 + x14 | 0;
-      x04 = rotl(x04 ^ x09, 7);
-    }
-    let oi = 0;
-    out[oi++] = x00;
-    out[oi++] = x01;
-    out[oi++] = x02;
-    out[oi++] = x03;
-    out[oi++] = x12;
-    out[oi++] = x13;
-    out[oi++] = x14;
-    out[oi++] = x15;
-  }
-  function computeTag2(fn, key, nonce, ciphertext, AAD) {
-    if (AAD !== void 0)
-      abytes3(AAD, void 0, "AAD");
-    const authKey = fn(key, nonce, ZEROS322);
-    const lengths = u64Lengths(ciphertext.length, AAD ? AAD.length : 0, true);
-    const h = poly1305.create(authKey);
-    if (AAD)
-      updatePadded(h, AAD);
-    updatePadded(h, ciphertext);
-    h.update(lengths);
-    const res = h.digest();
-    clean3(authKey, lengths);
-    return res;
-  }
-  var chacha20orig, chacha20, xchacha20, chacha8, chacha12, ZEROS162, updatePadded, ZEROS322, _poly1305_aead, chacha20poly1305, xchacha20poly1305, rngChacha20, rngChacha8;
-  var init_chacha = __esm({
-    "node_modules/@noble/ciphers/chacha.js"() {
-      init_arx();
-      init_poly1305();
-      init_utils3();
-      chacha20orig = /* @__PURE__ */ createCipher(chachaCore, {
-        counterRight: false,
-        counterLength: 8,
-        allowShortKeys: true
-      });
-      chacha20 = /* @__PURE__ */ createCipher(chachaCore, {
-        counterRight: false,
-        counterLength: 4,
-        allowShortKeys: false
-      });
-      xchacha20 = /* @__PURE__ */ createCipher(chachaCore, {
-        counterRight: false,
-        counterLength: 8,
-        extendNonceFn: hchacha,
-        allowShortKeys: false
-      });
-      chacha8 = /* @__PURE__ */ createCipher(chachaCore, {
-        counterRight: false,
-        counterLength: 4,
-        rounds: 8
-      });
-      chacha12 = /* @__PURE__ */ createCipher(chachaCore, {
-        counterRight: false,
-        counterLength: 4,
-        rounds: 12
-      });
-      ZEROS162 = /* @__PURE__ */ new Uint8Array(16);
-      updatePadded = (h, msg) => {
-        h.update(msg);
-        const leftover = msg.length % 16;
-        if (leftover)
-          h.update(ZEROS162.subarray(leftover));
-      };
-      ZEROS322 = /* @__PURE__ */ new Uint8Array(32);
-      _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
-        const tagLength = 16;
-        return {
-          encrypt(plaintext, output) {
-            const plength = plaintext.length;
-            output = getOutput(plength + tagLength, output, false);
-            output.set(plaintext);
-            const oPlain = output.subarray(0, -tagLength);
-            xorStream(key, nonce, oPlain, oPlain, 1);
-            const tag = computeTag2(xorStream, key, nonce, oPlain, AAD);
-            output.set(tag, plength);
-            clean3(tag);
-            return output;
-          },
-          decrypt(ciphertext, output) {
-            output = getOutput(ciphertext.length - tagLength, output, false);
-            const data = ciphertext.subarray(0, -tagLength);
-            const passedTag = ciphertext.subarray(-tagLength);
-            const tag = computeTag2(xorStream, key, nonce, data, AAD);
-            if (!equalBytes2(passedTag, tag))
-              throw new Error("invalid tag");
-            output.set(ciphertext.subarray(0, -tagLength));
-            xorStream(key, nonce, output, output, 1);
-            clean3(tag);
-            return output;
-          }
-        };
-      };
-      chacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 12, tagLength: 16 }, _poly1305_aead(chacha20));
-      xchacha20poly1305 = /* @__PURE__ */ wrapCipher({ blockSize: 64, nonceLength: 24, tagLength: 16 }, _poly1305_aead(xchacha20));
-      rngChacha20 = /* @__PURE__ */ createPRG(chacha20orig, 64, 32, 8);
-      rngChacha8 = /* @__PURE__ */ createPRG(chacha8, 64, 32, 12);
-    }
-  });
-
-  // node_modules/mithril/stream/stream.js
-  var require_stream = __commonJS({
-    "node_modules/mithril/stream/stream.js"(exports, module) {
-      (function() {
-        "use strict";
-        Stream.SKIP = {};
-        Stream.lift = lift;
-        Stream.scan = scan;
-        Stream.merge = merge;
-        Stream.combine = combine;
-        Stream.scanMerge = scanMerge;
-        Stream["fantasy-land/of"] = Stream;
-        var warnedHalt = false;
-        Object.defineProperty(Stream, "HALT", {
-          get: function() {
-            warnedHalt || console.log("HALT is deprecated and has been renamed to SKIP");
-            warnedHalt = true;
-            return Stream.SKIP;
-          }
-        });
-        function Stream(value) {
-          var dependentStreams = [];
-          var dependentFns = [];
-          function stream4(v) {
-            if (arguments.length && v !== Stream.SKIP) {
-              value = v;
-              if (open(stream4)) {
-                stream4._changing();
-                stream4._state = "active";
-                dependentStreams.slice().forEach(function(s, i) {
-                  if (open(s)) s(this[i](value));
-                }, dependentFns.slice());
-              }
-            }
-            return value;
-          }
-          stream4.constructor = Stream;
-          stream4._state = arguments.length && value !== Stream.SKIP ? "active" : "pending";
-          stream4._parents = [];
-          stream4._changing = function() {
-            if (open(stream4)) stream4._state = "changing";
-            dependentStreams.forEach(function(s) {
-              s._changing();
-            });
-          };
-          stream4._map = function(fn, ignoreInitial) {
-            var target = ignoreInitial ? Stream() : Stream(fn(value));
-            target._parents.push(stream4);
-            dependentStreams.push(target);
-            dependentFns.push(fn);
-            return target;
-          };
-          stream4.map = function(fn) {
-            return stream4._map(fn, stream4._state !== "active");
-          };
-          var end;
-          function createEnd() {
-            end = Stream();
-            end.map(function(value2) {
-              if (value2 === true) {
-                stream4._parents.forEach(function(p) {
-                  p._unregisterChild(stream4);
-                });
-                stream4._state = "ended";
-                stream4._parents.length = dependentStreams.length = dependentFns.length = 0;
-              }
-              return value2;
-            });
-            return end;
-          }
-          stream4.toJSON = function() {
-            return value != null && typeof value.toJSON === "function" ? value.toJSON() : value;
-          };
-          stream4["fantasy-land/map"] = stream4.map;
-          stream4["fantasy-land/ap"] = function(x) {
-            return combine(function(s1, s2) {
-              return s1()(s2());
-            }, [x, stream4]);
-          };
-          stream4._unregisterChild = function(child) {
-            var childIndex = dependentStreams.indexOf(child);
-            if (childIndex !== -1) {
-              dependentStreams.splice(childIndex, 1);
-              dependentFns.splice(childIndex, 1);
-            }
-          };
-          Object.defineProperty(stream4, "end", {
-            get: function() {
-              return end || createEnd();
-            }
-          });
-          return stream4;
-        }
-        function combine(fn, streams) {
-          var ready = streams.every(function(s) {
-            if (s.constructor !== Stream)
-              throw new Error("Ensure that each item passed to stream.combine/stream.merge/lift is a stream.");
-            return s._state === "active";
-          });
-          var stream4 = ready ? Stream(fn.apply(null, streams.concat([streams]))) : Stream();
-          var changed = [];
-          var mappers = streams.map(function(s) {
-            return s._map(function(value) {
-              changed.push(s);
-              if (ready || streams.every(function(s2) {
-                return s2._state !== "pending";
-              })) {
-                ready = true;
-                stream4(fn.apply(null, streams.concat([changed])));
-                changed = [];
-              }
-              return value;
-            }, true);
-          });
-          var endStream = stream4.end.map(function(value) {
-            if (value === true) {
-              mappers.forEach(function(mapper) {
-                mapper.end(true);
-              });
-              endStream.end(true);
-            }
-            return void 0;
-          });
-          return stream4;
-        }
-        function merge(streams) {
-          return combine(function() {
-            return streams.map(function(s) {
-              return s();
-            });
-          }, streams);
-        }
-        function scan(fn, acc, origin) {
-          var stream4 = origin.map(function(v) {
-            var next = fn(acc, v);
-            if (next !== Stream.SKIP) acc = next;
-            return next;
-          });
-          stream4(acc);
-          return stream4;
-        }
-        function scanMerge(tuples, seed) {
-          var streams = tuples.map(function(tuple) {
-            return tuple[0];
-          });
-          var stream4 = combine(function() {
-            var changed = arguments[arguments.length - 1];
-            streams.forEach(function(stream5, i) {
-              if (changed.indexOf(stream5) > -1)
-                seed = tuples[i][1](seed, stream5());
-            });
-            return seed;
-          }, streams);
-          stream4(seed);
-          return stream4;
-        }
-        function lift() {
-          var fn = arguments[0];
-          var streams = Array.prototype.slice.call(arguments, 1);
-          return merge(streams).map(function(streams2) {
-            return fn.apply(void 0, streams2);
-          });
-        }
-        function open(s) {
-          return s._state === "pending" || s._state === "active" || s._state === "changing";
-        }
-        if (typeof module !== "undefined") module["exports"] = Stream;
-        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream;
-        else window.m = { stream: Stream };
-      })();
-    }
-  });
-
-  // node_modules/mithril/stream.js
-  var require_stream2 = __commonJS({
-    "node_modules/mithril/stream.js"(exports, module) {
-      "use strict";
-      module.exports = require_stream();
-    }
-  });
-
   // src/app.tsx
-  var import_mithril24 = __toESM(require_mithril(), 1);
+  var import_mithril23 = __toESM(require_mithril(), 1);
 
   // src/ap/utils.ts
   function toString(value) {
@@ -7461,85 +7277,48 @@
 
   // src/ap/object.ts
   var Object2 = class {
+    #value;
     constructor(value) {
-      ///////////////////////////////////
-      // Conversion methods
-      // fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
-      this.fromURL = async (url, options = {}) => {
-        options["headers"] = {
-          Accept: "application/activity+json"
-        };
-        const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
-        }
-        const body = await response.text();
-        this.fromJSON(body);
-        return this;
-      };
-      // fromJSON parses a JSON string into the JSONLD struct
-      this.fromJSON = (json) => {
-        this.#value = JSON.parse(json);
-        return this;
-      };
-      // toObject returns the raw JSON object represented by this JSONLD struct
-      this.toObject = () => {
-        return this.#value;
-      };
-      // toJSON returns a JSON string representation of the JSONLD struct
-      this.toJSON = () => {
-        return JSON.stringify(this.#value);
-      };
-      ///////////////////////////////////
-      // Setters
-      // set sets a property on the JSONLD struct with the given name and value
-      this.set = (name, value) => {
-        this.#value[name] = value;
-      };
-      this.getString = (namespace, property) => {
-        return toString(this.get(namespace, property));
-      };
-      this.getInteger = (namespace, property) => {
-        const result = this.get(namespace, property);
-        if (result == void 0) {
-          return 0;
-        }
-        switch (typeof result) {
-          case "number":
-            return Math.floor(result);
-          case "string":
-            const parsed = parseInt(result);
-            if (!isNaN(parsed)) {
-              return parsed;
-            }
-        }
-        return 0;
-      };
-      this.getArray = (namespace, property) => {
-        const result = this.get(namespace, property);
-        if (result == void 0) {
-          return [];
-        }
-        if (Array.isArray(result)) {
-          return result;
-        }
-        return [result];
-      };
-      ///////////////////////////////////
-      // Properties
-      this.type = () => {
-        return this.getString("as", "type");
-      };
-      this.id = () => {
-        return this.getString("as", "id");
-      };
       if (value != void 0) {
         this.#value = value;
       } else {
         this.#value = {};
       }
     }
-    #value;
+    ///////////////////////////////////
+    // Conversion methods
+    // fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
+    fromURL = async (url, options = {}) => {
+      options["headers"] = {
+        Accept: "application/activity+json"
+      };
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+      }
+      const body = await response.text();
+      this.fromJSON(body);
+      return this;
+    };
+    // fromJSON parses a JSON string into the JSONLD struct
+    fromJSON = (json) => {
+      this.#value = JSON.parse(json);
+      return this;
+    };
+    // toObject returns the raw JSON object represented by this JSONLD struct
+    toObject = () => {
+      return this.#value;
+    };
+    // toJSON returns a JSON string representation of the JSONLD struct
+    toJSON = () => {
+      return JSON.stringify(this.#value);
+    };
+    ///////////////////////////////////
+    // Setters
+    // set sets a property on the JSONLD struct with the given name and value
+    set = (name, value) => {
+      this.#value[name] = value;
+    };
     ///////////////////////////////////
     // Property conversion methods
     get(namespace, property) {
@@ -7563,89 +7342,105 @@
       }
       return void 0;
     }
+    getString = (namespace, property) => {
+      return toString(this.get(namespace, property));
+    };
+    getInteger = (namespace, property) => {
+      const result = this.get(namespace, property);
+      if (result == void 0) {
+        return 0;
+      }
+      switch (typeof result) {
+        case "number":
+          return Math.floor(result);
+        case "string":
+          const parsed = parseInt(result);
+          if (!isNaN(parsed)) {
+            return parsed;
+          }
+      }
+      return 0;
+    };
+    getArray = (namespace, property) => {
+      const result = this.get(namespace, property);
+      if (result == void 0) {
+        return [];
+      }
+      if (Array.isArray(result)) {
+        return result;
+      }
+      return [result];
+    };
+    ///////////////////////////////////
+    // Properties
+    type = () => {
+      return this.getString("as", "type");
+    };
+    id = () => {
+      return this.getString("as", "id");
+    };
   };
-
-  // src/ap/vocab.ts
-  var ActivityTypeCreate = "Create";
-  var ActivityTypeDelete = "Delete";
-  var ActivityTypeLike = "Like";
-  var ActivityTypeUndo = "Undo";
-  var ActivityTypeUpdate = "Update";
-  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
-  var ContextMLS = "https://purl.archive.org/socialweb/mls";
-  var EncodingTypeBase64 = "base64";
-  var MediaTypeMLSMessage = "message/mls";
-  var ObjectTypeNote = "Note";
-  var ObjectTypeMLSPrivateMessage = "mls:PrivateMessage";
-  var PropertyActor = "actor";
-  var PropertyContext = "context";
-  var PropertyObject = "object";
-  var PropertyTarget = "target";
-  var PropertyTo = "to";
 
   // src/ap/actor.ts
   var Actor = class extends Object2 {
-    constructor() {
-      super(...arguments);
-      //
-      ///////////////////////////////////
-      // Property accessors
-      // icon returns the value of the "icon" property
-      this.icon = () => {
-        return this.getString("as", "icon");
-      };
-      // id returns the value of the "id" property
-      this.id = () => {
-        return this.getString("as", "id");
-      };
-      // name returns the value of the "name" property
-      this.name = () => {
-        return this.getString("as", "name");
-      };
-      this.outbox = () => {
-        return this.getString("as", "outbox");
-      };
-      this.preferredUsername = () => {
-        return this.getString("as", "preferredUsername");
-      };
-      this.summary = () => {
-        return this.getString("as", "summary");
-      };
-      this.type = () => {
-        return this.getString("as", "type");
-      };
-      ///////////////////////////////////
-      // MLS-specific properties
-      this.mlsMessages = () => {
-        return this.getString("mls", "messages");
-      };
-      this.mlsKeyPackages = () => {
-        return this.getString("mls", "keyPackages");
-      };
-      ///////////////////////////////////
-      // Emissary-specific properties
-      // emissaryMessages returns the URL for the Emissary-specific messages collection
-      // that returns BOTH encrypted and unencrypted messages. This is preferred over mls:messages because it allows the client to receive direct messages that are not encrypted with MLS.
-      this.emissaryMessages = () => {
-        return this.getString("emissary", "messages");
-      };
-      // messages returns the URL for the preferred messages collection,
-      // which may be either the Emissary-specific collection (if supported) or
-      // the standard mls:messages collection (if Emissary-specific collection is not supported).
-      // The boolean return value indicates whether the returned URL is for the
-      // Emissary-specific collection (true) or the standard mls:messages collection (false).
-      this.messages = () => {
-        const emissaryMessages = this.emissaryMessages();
-        if (emissaryMessages != "") {
-          return { url: emissaryMessages, plaintext: true };
-        }
-        const mlsMessages = this.mlsMessages();
-        if (mlsMessages != "") {
-          return { url: mlsMessages, plaintext: false };
-        }
-        return { url: "", plaintext: false };
-      };
-    }
+    //
+    ///////////////////////////////////
+    // Property accessors
+    // icon returns the value of the "icon" property
+    icon = () => {
+      return this.getString("as", "icon");
+    };
+    // id returns the value of the "id" property
+    id = () => {
+      return this.getString("as", "id");
+    };
+    // name returns the value of the "name" property
+    name = () => {
+      return this.getString("as", "name");
+    };
+    outbox = () => {
+      return this.getString("as", "outbox");
+    };
+    preferredUsername = () => {
+      return this.getString("as", "preferredUsername");
+    };
+    summary = () => {
+      return this.getString("as", "summary");
+    };
+    type = () => {
+      return this.getString("as", "type");
+    };
+    ///////////////////////////////////
+    // MLS-specific properties
+    mlsMessages = () => {
+      return this.getString("mls", "messages");
+    };
+    mlsKeyPackages = () => {
+      return this.getString("mls", "keyPackages");
+    };
+    ///////////////////////////////////
+    // Emissary-specific properties
+    // emissaryMessages returns the URL for the Emissary-specific messages collection
+    // that returns BOTH encrypted and unencrypted messages. This is preferred over mls:messages because it allows the client to receive direct messages that are not encrypted with MLS.
+    emissaryMessages = () => {
+      return this.getString("emissary", "messages");
+    };
+    // messages returns the URL for the preferred messages collection,
+    // which may be either the Emissary-specific collection (if supported) or
+    // the standard mls:messages collection (if Emissary-specific collection is not supported).
+    // The boolean return value indicates whether the returned URL is for the
+    // Emissary-specific collection (true) or the standard mls:messages collection (false).
+    messages = () => {
+      const emissaryMessages = this.emissaryMessages();
+      if (emissaryMessages != "") {
+        return { url: emissaryMessages, plaintext: true };
+      }
+      const mlsMessages = this.mlsMessages();
+      if (mlsMessages != "") {
+        return { url: mlsMessages, plaintext: false };
+      }
+      return { url: "", plaintext: false };
+    };
   };
   async function loadActor(value) {
     switch (typeof value) {
@@ -7663,306 +7458,63 @@
     return new Actor();
   }
 
-  // node_modules/ts-mls/dist/src/util/constantTimeCompare.js
-  function constantTimeEqual(a, b) {
-    if (a.length !== b.length)
-      return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a[i] ^ b[i];
+  // node_modules/ts-mls/dist/src/codec/number.js
+  var uint8Encoder = (n) => [
+    1,
+    (offset, buffer) => {
+      const view = new DataView(buffer);
+      view.setUint8(offset, n);
     }
-    return result === 0;
-  }
-
-  // node_modules/ts-mls/dist/src/keyPackageEqualityConfig.js
-  var defaultKeyPackageEqualityConfig = {
-    compareKeyPackages(a, b) {
-      return constantTimeEqual(a.leafNode.signaturePublicKey, b.leafNode.signaturePublicKey);
-    },
-    compareKeyPackageToLeafNode(a, b) {
-      return constantTimeEqual(a.leafNode.signaturePublicKey, b.signaturePublicKey);
+  ];
+  var uint8Decoder = (b, offset) => {
+    const value = b.at(offset);
+    return value !== void 0 ? [value, 1] : void 0;
+  };
+  var uint16Encoder = (n) => [
+    2,
+    (offset, buffer) => {
+      const view = new DataView(buffer);
+      view.setUint16(offset, n);
+    }
+  ];
+  var uint16Decoder = (b, offset) => {
+    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    try {
+      return [view.getUint16(offset), 2];
+    } catch (e) {
+      return void 0;
     }
   };
-
-  // node_modules/ts-mls/dist/src/keyRetentionConfig.js
-  var defaultKeyRetentionConfig = {
-    retainKeysForGenerations: 10,
-    retainKeysForEpochs: 4,
-    maximumForwardRatchetSteps: 200
-  };
-
-  // node_modules/ts-mls/dist/src/lifetimeConfig.js
-  var defaultLifetimeConfig = {
-    maximumTotalLifetime: 10368000n,
-    // 4 months
-    validateLifetimeOnReceive: false
-  };
-
-  // node_modules/ts-mls/dist/src/paddingConfig.js
-  var defaultPaddingConfig = { kind: "padUntilLength", padUntilLength: 256 };
-  function byteLengthToPad(encodedLength, config) {
-    if (config.kind === "alwaysPad")
-      return config.paddingLength;
-    else
-      return encodedLength >= config.padUntilLength ? 0 : config.padUntilLength - encodedLength;
-  }
-
-  // node_modules/ts-mls/dist/src/clientConfig.js
-  var defaultClientConfig = {
-    keyRetentionConfig: defaultKeyRetentionConfig,
-    lifetimeConfig: defaultLifetimeConfig,
-    keyPackageEqualityConfig: defaultKeyPackageEqualityConfig,
-    paddingConfig: defaultPaddingConfig
-  };
-
-  // node_modules/idb/build/index.js
-  var instanceOfAny = (object, constructors) => constructors.some((c) => object instanceof c);
-  var idbProxyableTypes;
-  var cursorAdvanceMethods;
-  function getIdbProxyableTypes() {
-    return idbProxyableTypes || (idbProxyableTypes = [
-      IDBDatabase,
-      IDBObjectStore,
-      IDBIndex,
-      IDBCursor,
-      IDBTransaction
-    ]);
-  }
-  function getCursorAdvanceMethods() {
-    return cursorAdvanceMethods || (cursorAdvanceMethods = [
-      IDBCursor.prototype.advance,
-      IDBCursor.prototype.continue,
-      IDBCursor.prototype.continuePrimaryKey
-    ]);
-  }
-  var transactionDoneMap = /* @__PURE__ */ new WeakMap();
-  var transformCache = /* @__PURE__ */ new WeakMap();
-  var reverseTransformCache = /* @__PURE__ */ new WeakMap();
-  function promisifyRequest(request2) {
-    const promise = new Promise((resolve, reject) => {
-      const unlisten = () => {
-        request2.removeEventListener("success", success);
-        request2.removeEventListener("error", error);
-      };
-      const success = () => {
-        resolve(wrap(request2.result));
-        unlisten();
-      };
-      const error = () => {
-        reject(request2.error);
-        unlisten();
-      };
-      request2.addEventListener("success", success);
-      request2.addEventListener("error", error);
-    });
-    reverseTransformCache.set(promise, request2);
-    return promise;
-  }
-  function cacheDonePromiseForTransaction(tx) {
-    if (transactionDoneMap.has(tx))
-      return;
-    const done = new Promise((resolve, reject) => {
-      const unlisten = () => {
-        tx.removeEventListener("complete", complete);
-        tx.removeEventListener("error", error);
-        tx.removeEventListener("abort", error);
-      };
-      const complete = () => {
-        resolve();
-        unlisten();
-      };
-      const error = () => {
-        reject(tx.error || new DOMException("AbortError", "AbortError"));
-        unlisten();
-      };
-      tx.addEventListener("complete", complete);
-      tx.addEventListener("error", error);
-      tx.addEventListener("abort", error);
-    });
-    transactionDoneMap.set(tx, done);
-  }
-  var idbProxyTraps = {
-    get(target, prop, receiver) {
-      if (target instanceof IDBTransaction) {
-        if (prop === "done")
-          return transactionDoneMap.get(target);
-        if (prop === "store") {
-          return receiver.objectStoreNames[1] ? void 0 : receiver.objectStore(receiver.objectStoreNames[0]);
-        }
-      }
-      return wrap(target[prop]);
-    },
-    set(target, prop, value) {
-      target[prop] = value;
-      return true;
-    },
-    has(target, prop) {
-      if (target instanceof IDBTransaction && (prop === "done" || prop === "store")) {
-        return true;
-      }
-      return prop in target;
+  var uint32Encoder = (n) => [
+    4,
+    (offset, buffer) => {
+      const view = new DataView(buffer);
+      view.setUint32(offset, n);
+    }
+  ];
+  var uint32Decoder = (b, offset) => {
+    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    try {
+      return [view.getUint32(offset), 4];
+    } catch (e) {
+      return void 0;
     }
   };
-  function replaceTraps(callback) {
-    idbProxyTraps = callback(idbProxyTraps);
-  }
-  function wrapFunction(func) {
-    if (getCursorAdvanceMethods().includes(func)) {
-      return function(...args) {
-        func.apply(unwrap(this), args);
-        return wrap(this.request);
-      };
+  var uint64Encoder = (n) => [
+    8,
+    (offset, buffer) => {
+      const view = new DataView(buffer);
+      view.setBigUint64(offset, n);
     }
-    return function(...args) {
-      return wrap(func.apply(unwrap(this), args));
-    };
-  }
-  function transformCachableValue(value) {
-    if (typeof value === "function")
-      return wrapFunction(value);
-    if (value instanceof IDBTransaction)
-      cacheDonePromiseForTransaction(value);
-    if (instanceOfAny(value, getIdbProxyableTypes()))
-      return new Proxy(value, idbProxyTraps);
-    return value;
-  }
-  function wrap(value) {
-    if (value instanceof IDBRequest)
-      return promisifyRequest(value);
-    if (transformCache.has(value))
-      return transformCache.get(value);
-    const newValue = transformCachableValue(value);
-    if (newValue !== value) {
-      transformCache.set(value, newValue);
-      reverseTransformCache.set(newValue, value);
-    }
-    return newValue;
-  }
-  var unwrap = (value) => reverseTransformCache.get(value);
-  function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
-    const request2 = indexedDB.open(name, version);
-    const openPromise = wrap(request2);
-    if (upgrade) {
-      request2.addEventListener("upgradeneeded", (event) => {
-        upgrade(wrap(request2.result), event.oldVersion, event.newVersion, wrap(request2.transaction), event);
-      });
-    }
-    if (blocked) {
-      request2.addEventListener("blocked", (event) => blocked(
-        // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
-        event.oldVersion,
-        event.newVersion,
-        event
-      ));
-    }
-    openPromise.then((db) => {
-      if (terminated)
-        db.addEventListener("close", () => terminated());
-      if (blocking) {
-        db.addEventListener("versionchange", (event) => blocking(event.oldVersion, event.newVersion, event));
-      }
-    }).catch(() => {
-    });
-    return openPromise;
-  }
-  var readMethods = ["get", "getKey", "getAll", "getAllKeys", "count"];
-  var writeMethods = ["put", "add", "delete", "clear"];
-  var cachedMethods = /* @__PURE__ */ new Map();
-  function getMethod(target, prop) {
-    if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === "string")) {
-      return;
-    }
-    if (cachedMethods.get(prop))
-      return cachedMethods.get(prop);
-    const targetFuncName = prop.replace(/FromIndex$/, "");
-    const useIndex = prop !== targetFuncName;
-    const isWrite = writeMethods.includes(targetFuncName);
-    if (
-      // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
-      !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))
-    ) {
-      return;
-    }
-    const method = async function(storeName, ...args) {
-      const tx = this.transaction(storeName, isWrite ? "readwrite" : "readonly");
-      let target2 = tx.store;
-      if (useIndex)
-        target2 = target2.index(args.shift());
-      return (await Promise.all([
-        target2[targetFuncName](...args),
-        isWrite && tx.done
-      ]))[0];
-    };
-    cachedMethods.set(prop, method);
-    return method;
-  }
-  replaceTraps((oldTraps) => ({
-    ...oldTraps,
-    get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
-    has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
-  }));
-  var advanceMethodProps = ["continue", "continuePrimaryKey", "advance"];
-  var methodMap = {};
-  var advanceResults = /* @__PURE__ */ new WeakMap();
-  var ittrProxiedCursorToOriginalProxy = /* @__PURE__ */ new WeakMap();
-  var cursorIteratorTraps = {
-    get(target, prop) {
-      if (!advanceMethodProps.includes(prop))
-        return target[prop];
-      let cachedFunc = methodMap[prop];
-      if (!cachedFunc) {
-        cachedFunc = methodMap[prop] = function(...args) {
-          advanceResults.set(this, ittrProxiedCursorToOriginalProxy.get(this)[prop](...args));
-        };
-      }
-      return cachedFunc;
+  ];
+  var uint64Decoder = (b, offset) => {
+    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+    try {
+      return [view.getBigUint64(offset), 8];
+    } catch (e) {
+      return void 0;
     }
   };
-  async function* iterate(...args) {
-    let cursor = this;
-    if (!(cursor instanceof IDBCursor)) {
-      cursor = await cursor.openCursor(...args);
-    }
-    if (!cursor)
-      return;
-    cursor = cursor;
-    const proxiedCursor = new Proxy(cursor, cursorIteratorTraps);
-    ittrProxiedCursorToOriginalProxy.set(proxiedCursor, cursor);
-    reverseTransformCache.set(proxiedCursor, unwrap(cursor));
-    while (cursor) {
-      yield proxiedCursor;
-      cursor = await (advanceResults.get(proxiedCursor) || cursor.continue());
-      advanceResults.delete(proxiedCursor);
-    }
-  }
-  function isIteratorProp(target, prop) {
-    return prop === Symbol.asyncIterator && instanceOfAny(target, [IDBIndex, IDBObjectStore, IDBCursor]) || prop === "iterate" && instanceOfAny(target, [IDBIndex, IDBObjectStore]);
-  }
-  replaceTraps((oldTraps) => ({
-    ...oldTraps,
-    get(target, prop, receiver) {
-      if (isIteratorProp(target, prop))
-        return iterate;
-      return oldTraps.get(target, prop, receiver);
-    },
-    has(target, prop) {
-      return isIteratorProp(target, prop) || oldTraps.has(target, prop);
-    }
-  }));
-
-  // src/model/config.ts
-  var ConfigID = "config";
-  function NewConfig() {
-    return {
-      id: ConfigID,
-      ready: false,
-      welcome: false,
-      hasEncryptionKeys: false,
-      password: "",
-      passwordHint: "",
-      clientName: "Unknown Device"
-    };
-  }
 
   // node_modules/ts-mls/dist/src/codec/tlsDecoder.js
   function decode(dec, t) {
@@ -8061,20 +7613,25 @@
   function contramapBufferEncoders(encoders, toTuple) {
     return (value) => {
       const values = toTuple(value);
+      const lengths = new Array(encoders.length);
+      const writes = new Array(encoders.length);
       let totalLength = 0;
-      let writeTotal = (_offset, _buffer) => {
-      };
       for (let i = 0; i < encoders.length; i++) {
         const [len, write] = encoders[i](values[i]);
-        const oldFunc = writeTotal;
-        const currentLen = totalLength;
-        writeTotal = (offset, buffer) => {
-          oldFunc(offset, buffer);
-          write(offset + currentLen, buffer);
-        };
+        lengths[i] = len;
+        writes[i] = write;
         totalLength += len;
       }
-      return [totalLength, writeTotal];
+      return [
+        totalLength,
+        (offset, buffer) => {
+          let cursor = offset;
+          for (let i = 0; i < writes.length; i++) {
+            writes[i](cursor, buffer);
+            cursor += lengths[i];
+          }
+        }
+      ];
     };
   }
   function composeBufferEncoders(encoders) {
@@ -8188,64 +7745,15 @@
       buf[i] ^= buf[i];
     }
   }
-
-  // node_modules/ts-mls/dist/src/codec/number.js
-  var uint8Encoder = (n) => [
-    1,
-    (offset, buffer) => {
-      const view = new DataView(buffer);
-      view.setUint8(offset, n);
+  function fastEqual(a, b) {
+    if (a.length !== b.length)
+      return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i])
+        return false;
     }
-  ];
-  var uint8Decoder = (b, offset) => {
-    const value = b.at(offset);
-    return value !== void 0 ? [value, 1] : void 0;
-  };
-  var uint16Encoder = (n) => [
-    2,
-    (offset, buffer) => {
-      const view = new DataView(buffer);
-      view.setUint16(offset, n);
-    }
-  ];
-  var uint16Decoder = (b, offset) => {
-    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
-    try {
-      return [view.getUint16(offset), 2];
-    } catch (e) {
-      return void 0;
-    }
-  };
-  var uint32Encoder = (n) => [
-    4,
-    (offset, buffer) => {
-      const view = new DataView(buffer);
-      view.setUint32(offset, n);
-    }
-  ];
-  var uint32Decoder = (b, offset) => {
-    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
-    try {
-      return [view.getUint32(offset), 4];
-    } catch (e) {
-      return void 0;
-    }
-  };
-  var uint64Encoder = (n) => [
-    8,
-    (offset, buffer) => {
-      const view = new DataView(buffer);
-      view.setBigUint64(offset, n);
-    }
-  ];
-  var uint64Decoder = (b, offset) => {
-    const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
-    try {
-      return [view.getBigUint64(offset), 8];
-    } catch (e) {
-      return void 0;
-    }
-  };
+    return true;
+  }
 
   // node_modules/ts-mls/dist/src/codec/variableLength.js
   var varLenDataEncoder = (data) => {
@@ -8264,28 +7772,28 @@
       return [
         1,
         (offset, buffer) => {
-          const view = new DataView(buffer);
-          view.setUint8(offset, len & 63);
+          const view = new Uint8Array(buffer);
+          view[offset] = len & 63;
         }
       ];
     } else if (len < 16384) {
       return [
         2,
         (offset, buffer) => {
-          const view = new DataView(buffer);
-          view.setUint8(offset, len >> 8 & 63 | 64);
-          view.setUint8(offset + 1, len & 255);
+          const view = new Uint8Array(buffer);
+          view[offset] = len >> 8 & 63 | 64;
+          view[offset + 1] = len & 255;
         }
       ];
     } else if (len < 1073741824) {
       return [
         4,
         (offset, buffer) => {
-          const view = new DataView(buffer);
-          view.setUint8(offset, len >> 24 & 63 | 128);
-          view.setUint8(offset + 1, len >> 16 & 255);
-          view.setUint8(offset + 2, len >> 8 & 255);
-          view.setUint8(offset + 3, len & 255);
+          const view = new Uint8Array(buffer);
+          view[offset] = len >> 24 & 63 | 128;
+          view[offset + 1] = len >> 16 & 255;
+          view[offset + 2] = len >> 8 & 255;
+          view[offset + 3] = len & 255;
         }
       ];
     } else {
@@ -8405,275 +7913,6 @@
     return mapDecoder(varLenTypeDecoder(mapDecoders([uint64Decoder, valueDecoder], (key, value) => [key, value])), (entries) => new Map(entries));
   }
 
-  // node_modules/ts-mls/dist/src/crypto/hash.js
-  function refhash(label, value, h) {
-    return h.digest(encodeRefHash(label, value));
-  }
-  function encodeRefHash(label, value) {
-    const labelBytes = new TextEncoder().encode(label);
-    const enc = composeBufferEncoders([varLenDataEncoder, varLenDataEncoder]);
-    return encode(enc, [labelBytes, value]);
-  }
-
-  // node_modules/ts-mls/dist/src/codec/optional.js
-  function optionalEncoder(encodeT) {
-    return (t) => {
-      if (t) {
-        const [len, write] = encodeT(t);
-        return [
-          len + 1,
-          (offset, buffer) => {
-            const view = new DataView(buffer);
-            view.setUint8(offset, 1);
-            write(offset + 1, buffer);
-          }
-        ];
-      } else {
-        return [
-          1,
-          (offset, buffer) => {
-            const view = new DataView(buffer);
-            view.setUint8(offset, 0);
-          }
-        ];
-      }
-    };
-  }
-  function optionalDecoder(decodeT) {
-    return (b, offset) => {
-      const presenceOctet = uint8Decoder(b, offset)?.[0];
-      if (presenceOctet == 1) {
-        const result = decodeT(b, offset + 1);
-        return result === void 0 ? void 0 : [result[0], result[1] + 1];
-      } else {
-        return [void 0, 1];
-      }
-    };
-  }
-
-  // node_modules/ts-mls/dist/src/crypto/ciphersuite.js
-  var ciphersuites = {
-    MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519: 1,
-    MLS_128_DHKEMP256_AES128GCM_SHA256_P256: 2,
-    MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519: 3,
-    MLS_256_DHKEMX448_AES256GCM_SHA512_Ed448: 4,
-    MLS_256_DHKEMP521_AES256GCM_SHA512_P521: 5,
-    MLS_256_DHKEMX448_CHACHA20POLY1305_SHA512_Ed448: 6,
-    MLS_256_DHKEMP384_AES256GCM_SHA384_P384: 7,
-    MLS_128_MLKEM512_AES128GCM_SHA256_Ed25519: 77,
-    MLS_128_MLKEM512_CHACHA20POLY1305_SHA256_Ed25519: 78,
-    MLS_256_MLKEM768_AES256GCM_SHA384_Ed25519: 79,
-    MLS_256_MLKEM768_CHACHA20POLY1305_SHA384_Ed25519: 80,
-    MLS_256_MLKEM1024_AES256GCM_SHA512_Ed25519: 81,
-    MLS_256_MLKEM1024_CHACHA20POLY1305_SHA512_Ed25519: 82,
-    MLS_256_XWING_AES256GCM_SHA512_Ed25519: 83,
-    MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519: 84,
-    MLS_256_MLKEM1024_AES256GCM_SHA512_MLDSA87: 85,
-    MLS_256_MLKEM1024_CHACHA20POLY1305_SHA512_MLDSA87: 86,
-    MLS_256_XWING_AES256GCM_SHA512_MLDSA87: 87,
-    MLS_256_XWING_CHACHA20POLY1305_SHA512_MLDSA87: 88
-  };
-  var ciphersuiteEncoder = uint16Encoder;
-  var ciphersuiteDecoder = (b, offset) => {
-    const decoded = uint16Decoder(b, offset);
-    return decoded === void 0 ? void 0 : [decoded[0], decoded[1]];
-  };
-  function getCiphersuiteFromName(name) {
-    return ciphersuiteValues[ciphersuites[name]];
-  }
-  var ciphersuiteValues = {
-    1: {
-      hash: "SHA-256",
-      hpke: {
-        kem: "DHKEM-X25519-HKDF-SHA256",
-        aead: "AES128GCM",
-        kdf: "HKDF-SHA256"
-      },
-      signature: "Ed25519",
-      name: 1
-    },
-    2: {
-      hash: "SHA-256",
-      hpke: {
-        kem: "DHKEM-P256-HKDF-SHA256",
-        aead: "AES128GCM",
-        kdf: "HKDF-SHA256"
-      },
-      signature: "P256",
-      name: 2
-    },
-    3: {
-      hash: "SHA-256",
-      hpke: {
-        kem: "DHKEM-X25519-HKDF-SHA256",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA256"
-      },
-      signature: "Ed25519",
-      name: 3
-    },
-    4: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "DHKEM-X448-HKDF-SHA512",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed448",
-      name: 4
-    },
-    5: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "DHKEM-P521-HKDF-SHA512",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "P521",
-      name: 5
-    },
-    6: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "DHKEM-X448-HKDF-SHA512",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed448",
-      name: 6
-    },
-    7: {
-      hash: "SHA-384",
-      hpke: {
-        kem: "DHKEM-P384-HKDF-SHA384",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA384"
-      },
-      signature: "P384",
-      name: 7
-    },
-    77: {
-      hash: "SHA-256",
-      hpke: {
-        kem: "ML-KEM-512",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 77
-    },
-    78: {
-      hash: "SHA-256",
-      hpke: {
-        kem: "ML-KEM-512",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 78
-    },
-    79: {
-      hash: "SHA-384",
-      hpke: {
-        kem: "ML-KEM-768",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 79
-    },
-    80: {
-      hash: "SHA-384",
-      hpke: {
-        kem: "ML-KEM-768",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 80
-    },
-    81: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "ML-KEM-1024",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 81
-    },
-    82: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "ML-KEM-1024",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 82
-    },
-    83: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "X-Wing",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 83
-    },
-    84: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "X-Wing",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "Ed25519",
-      name: 84
-    },
-    85: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "ML-KEM-1024",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "ML-DSA-87",
-      name: 85
-    },
-    86: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "ML-KEM-1024",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "ML-DSA-87",
-      name: 86
-    },
-    87: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "X-Wing",
-        aead: "AES256GCM",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "ML-DSA-87",
-      name: 87
-    },
-    88: {
-      hash: "SHA-512",
-      hpke: {
-        kem: "X-Wing",
-        aead: "CHACHA20POLY1305",
-        kdf: "HKDF-SHA512"
-      },
-      signature: "ML-DSA-87",
-      name: 88
-    }
-  };
-
   // node_modules/ts-mls/dist/src/defaultExtensionType.js
   var defaultExtensionTypes = {
     application_id: 1,
@@ -8740,6 +7979,17 @@
   var requiredCapabilitiesEncoder = contramapBufferEncoders([varLenTypeEncoder(uint16Encoder), varLenTypeEncoder(uint16Encoder), varLenTypeEncoder(uint16Encoder)], (rc) => [rc.extensionTypes, rc.proposalTypes, rc.credentialTypes]);
   var requiredCapabilitiesDecoder = mapDecoders([varLenTypeDecoder(uint16Decoder), varLenTypeDecoder(uint16Decoder), varLenTypeDecoder(uint16Decoder)], (extensionTypes, proposalTypes, credentialTypes) => ({ extensionTypes, proposalTypes, credentialTypes }));
 
+  // node_modules/ts-mls/dist/src/util/constantTimeCompare.js
+  function constantTimeEqual(a, b) {
+    if (a.length !== b.length)
+      return false;
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+      result |= a[i] ^ b[i];
+    }
+    return result === 0;
+  }
+
   // node_modules/ts-mls/dist/src/extension.js
   function isDefaultExtension(e) {
     return isDefaultExtensionTypeValue(e.extensionType);
@@ -8795,7 +8045,7 @@
   function extensionEqual(a, b) {
     if (a.extensionType !== b.extensionType)
       return false;
-    if (isDefaultExtension(a) && isDefaultExtension(b)) {
+    if (isDefaultExtension(a)) {
       if (a.extensionType === defaultExtensionTypes.required_capabilities) {
         return a.extensionData === b.extensionData;
       } else if (a.extensionType === defaultExtensionTypes.external_senders && b.extensionType === defaultExtensionTypes.external_senders) {
@@ -8811,6 +8061,16 @@
   }
   function extensionsSupportedByCapabilities(requiredExtensions, capabilities) {
     return requiredExtensions.filter((ex) => !isDefaultExtensionTypeValue(ex.extensionType)).every((ex) => capabilities.extensions.includes(ex.extensionType));
+  }
+
+  // node_modules/ts-mls/dist/src/crypto/hash.js
+  function refhash(label, value, h) {
+    return h.digest(encodeRefHash(label, value));
+  }
+  function encodeRefHash(label, value) {
+    const labelBytes = new TextEncoder().encode(label);
+    const enc = composeBufferEncoders([varLenDataEncoder, varLenDataEncoder]);
+    return encode(enc, [labelBytes, value]);
   }
 
   // node_modules/ts-mls/dist/src/crypto/signature.js
@@ -8834,14 +8094,14 @@
   // node_modules/ts-mls/dist/src/capabilities.js
   var capabilitiesEncoder = contramapBufferEncoders([
     varLenTypeEncoder(protocolVersionEncoder),
-    varLenTypeEncoder(ciphersuiteEncoder),
+    varLenTypeEncoder(uint16Encoder),
     varLenTypeEncoder(uint16Encoder),
     varLenTypeEncoder(uint16Encoder),
     varLenTypeEncoder(uint16Encoder)
   ], (cap) => [cap.versions, cap.ciphersuites, cap.extensions, cap.proposals, cap.credentials]);
   var capabilitiesDecoder = mapDecoders([
     varLenTypeDecoder(protocolVersionDecoder),
-    varLenTypeDecoder(ciphersuiteDecoder),
+    varLenTypeDecoder(uint16Decoder),
     varLenTypeDecoder(uint16Decoder),
     varLenTypeDecoder(uint16Decoder),
     varLenTypeDecoder(uint16Decoder)
@@ -8983,6 +8243,227 @@
   function verifyLeafNodeSignatureKeyPackage(leaf, sig) {
     return verifyWithLabel(leaf.signaturePublicKey, "LeafNodeTBS", encode(leafNodeTBSEncoder, leaf), leaf.signature, sig);
   }
+  function leafNodeEqual(a, b) {
+    return fastEqual(a.signaturePublicKey, b.signaturePublicKey);
+  }
+
+  // node_modules/ts-mls/dist/src/crypto/ciphersuite.js
+  var ciphersuites = {
+    MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519: 1,
+    MLS_128_DHKEMP256_AES128GCM_SHA256_P256: 2,
+    MLS_128_DHKEMX25519_CHACHA20POLY1305_SHA256_Ed25519: 3,
+    MLS_256_DHKEMX448_AES256GCM_SHA512_Ed448: 4,
+    MLS_256_DHKEMP521_AES256GCM_SHA512_P521: 5,
+    MLS_256_DHKEMX448_CHACHA20POLY1305_SHA512_Ed448: 6,
+    MLS_256_DHKEMP384_AES256GCM_SHA384_P384: 7,
+    MLS_128_MLKEM512_AES128GCM_SHA256_Ed25519: 61447,
+    MLS_128_MLKEM512_CHACHA20POLY1305_SHA256_Ed25519: 61448,
+    MLS_256_MLKEM768_AES256GCM_SHA384_Ed25519: 61449,
+    MLS_256_MLKEM768_CHACHA20POLY1305_SHA384_Ed25519: 61450,
+    MLS_256_MLKEM1024_AES256GCM_SHA512_Ed25519: 61451,
+    MLS_256_MLKEM1024_CHACHA20POLY1305_SHA512_Ed25519: 61452,
+    MLS_256_XWING_AES256GCM_SHA512_Ed25519: 61453,
+    MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519: 61454,
+    MLS_256_MLKEM1024_AES256GCM_SHA512_MLDSA87: 61455,
+    MLS_256_MLKEM1024_CHACHA20POLY1305_SHA512_MLDSA87: 61456,
+    MLS_256_XWING_AES256GCM_SHA512_MLDSA87: 61457,
+    MLS_256_XWING_CHACHA20POLY1305_SHA512_MLDSA87: 61458
+  };
+  function isDefaultCiphersuiteId(id) {
+    return ciphersuiteValues[id] ? true : false;
+  }
+  var ciphersuiteValues = {
+    1: {
+      hash: "SHA-256",
+      hpke: {
+        kem: "DHKEM-X25519-HKDF-SHA256",
+        aead: "AES128GCM",
+        kdf: "HKDF-SHA256"
+      },
+      signature: "Ed25519",
+      id: 1
+    },
+    2: {
+      hash: "SHA-256",
+      hpke: {
+        kem: "DHKEM-P256-HKDF-SHA256",
+        aead: "AES128GCM",
+        kdf: "HKDF-SHA256"
+      },
+      signature: "P256",
+      id: 2
+    },
+    3: {
+      hash: "SHA-256",
+      hpke: {
+        kem: "DHKEM-X25519-HKDF-SHA256",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA256"
+      },
+      signature: "Ed25519",
+      id: 3
+    },
+    4: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "DHKEM-X448-HKDF-SHA512",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed448",
+      id: 4
+    },
+    5: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "DHKEM-P521-HKDF-SHA512",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "P521",
+      id: 5
+    },
+    6: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "DHKEM-X448-HKDF-SHA512",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed448",
+      id: 6
+    },
+    7: {
+      hash: "SHA-384",
+      hpke: {
+        kem: "DHKEM-P384-HKDF-SHA384",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA384"
+      },
+      signature: "P384",
+      id: 7
+    },
+    61447: {
+      hash: "SHA-256",
+      hpke: {
+        kem: "ML-KEM-512",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61447
+    },
+    61448: {
+      hash: "SHA-256",
+      hpke: {
+        kem: "ML-KEM-512",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61448
+    },
+    61449: {
+      hash: "SHA-384",
+      hpke: {
+        kem: "ML-KEM-768",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61449
+    },
+    61450: {
+      hash: "SHA-384",
+      hpke: {
+        kem: "ML-KEM-768",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61450
+    },
+    61451: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "ML-KEM-1024",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61451
+    },
+    61452: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "ML-KEM-1024",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61452
+    },
+    61453: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "X-Wing",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61453
+    },
+    61454: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "X-Wing",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "Ed25519",
+      id: 61454
+    },
+    61455: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "ML-KEM-1024",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "ML-DSA-87",
+      id: 61455
+    },
+    61456: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "ML-KEM-1024",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "ML-DSA-87",
+      id: 61456
+    },
+    61457: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "X-Wing",
+        aead: "AES256GCM",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "ML-DSA-87",
+      id: 61457
+    },
+    61458: {
+      hash: "SHA-512",
+      hpke: {
+        kem: "X-Wing",
+        aead: "CHACHA20POLY1305",
+        kdf: "HKDF-SHA512"
+      },
+      signature: "ML-DSA-87",
+      id: 61458
+    }
+  };
 
   // node_modules/ts-mls/dist/src/grease.js
   var greaseValues = [
@@ -9036,7 +8517,7 @@
   }
 
   // node_modules/ts-mls/dist/src/keyPackage.js
-  var keyPackageTBSEncoder = contramapBufferEncoders([protocolVersionEncoder, ciphersuiteEncoder, varLenDataEncoder, leafNodeEncoder, varLenTypeEncoder(extensionEncoder)], (keyPackageTBS) => [
+  var keyPackageTBSEncoder = contramapBufferEncoders([protocolVersionEncoder, uint16Encoder, varLenDataEncoder, leafNodeEncoder, varLenTypeEncoder(extensionEncoder)], (keyPackageTBS) => [
     keyPackageTBS.version,
     keyPackageTBS.cipherSuite,
     keyPackageTBS.initKey,
@@ -9045,7 +8526,7 @@
   ]);
   var keyPackageTBSDecoder = mapDecoders([
     protocolVersionDecoder,
-    ciphersuiteDecoder,
+    uint16Decoder,
     varLenDataDecoder,
     leafNodeKeyPackageDecoder,
     varLenTypeDecoder(customExtensionDecoder)
@@ -9070,6 +8551,8 @@
   function makeKeyPackageRef(value, h) {
     return refhash("MLS 1.0 KeyPackage Reference", encode(keyPackageEncoder, value), h);
   }
+  var privateKeyPackageEncoder = contramapBufferEncoders([varLenDataEncoder, varLenDataEncoder, varLenDataEncoder], (pkp) => [pkp.initPrivateKey, pkp.hpkePrivateKey, pkp.signaturePrivateKey]);
+  var privateKeyPackageDecoder = mapDecoders([varLenDataDecoder, varLenDataDecoder, varLenDataDecoder], (initPrivateKey, hpkePrivateKey, signaturePrivateKey) => ({ initPrivateKey, hpkePrivateKey, signaturePrivateKey }));
   async function generateKeyPackageWithKey(params) {
     const { credential, signatureKeyPair, cipherSuite, leafNodeExtensions } = params;
     const capabilities = params.capabilities ?? defaultCapabilities();
@@ -9094,7 +8577,7 @@
     };
     const tbs = {
       version: protocolVersions.mls10,
-      cipherSuite: cs.name,
+      cipherSuite: cs.id,
       initKey: await cs.hpke.exportPublicKey(initKeys.publicKey),
       leafNode: await signLeafNodeKeyPackage(leafNodeTbs, signatureKeyPair.signKey, cs.signature),
       extensions: extensions ?? []
@@ -9212,8 +8695,8 @@
   var removeDecoder = mapDecoder(uint32Decoder, (removed) => ({ removed }));
   var pskEncoder = contramapBufferEncoder(pskIdEncoder, (p) => p.preSharedKeyId);
   var pskDecoder = mapDecoder(pskIdDecoder, (preSharedKeyId) => ({ preSharedKeyId }));
-  var reinitEncoder = contramapBufferEncoders([varLenDataEncoder, protocolVersionEncoder, ciphersuiteEncoder, varLenTypeEncoder(extensionEncoder)], (r) => [r.groupId, r.version, r.cipherSuite, r.extensions]);
-  var reinitDecoder = mapDecoders([varLenDataDecoder, protocolVersionDecoder, ciphersuiteDecoder, varLenTypeDecoder(groupContextExtensionDecoder)], (groupId, version, cipherSuite, extensions) => ({ groupId, version, cipherSuite, extensions }));
+  var reinitEncoder = contramapBufferEncoders([varLenDataEncoder, protocolVersionEncoder, uint16Encoder, varLenTypeEncoder(extensionEncoder)], (r) => [r.groupId, r.version, r.cipherSuite, r.extensions]);
+  var reinitDecoder = mapDecoders([varLenDataDecoder, protocolVersionDecoder, uint16Decoder, varLenTypeDecoder(groupContextExtensionDecoder)], (groupId, version, cipherSuite, extensions) => ({ groupId, version, cipherSuite, extensions }));
   var externalInitEncoder = contramapBufferEncoder(varLenDataEncoder, (e) => e.kemOutput);
   var externalInitDecoder = mapDecoder(varLenDataDecoder, (kemOutput) => ({ kemOutput }));
   var groupContextExtensionsEncoder = contramapBufferEncoder(varLenTypeEncoder(extensionEncoder), (g) => g.extensions);
@@ -9296,6 +8779,42 @@
     }
   }), flatMapDecoder(uint16Decoder, (n) => proposalCustomDecoder(n)));
 
+  // node_modules/ts-mls/dist/src/codec/optional.js
+  function optionalEncoder(encodeT) {
+    return (t) => {
+      if (t) {
+        const [len, write] = encodeT(t);
+        return [
+          len + 1,
+          (offset, buffer) => {
+            const view = new DataView(buffer);
+            view.setUint8(offset, 1);
+            write(offset + 1, buffer);
+          }
+        ];
+      } else {
+        return [
+          1,
+          (offset, buffer) => {
+            const view = new DataView(buffer);
+            view.setUint8(offset, 0);
+          }
+        ];
+      }
+    };
+  }
+  function optionalDecoder(decodeT) {
+    return (b, offset) => {
+      const presenceOctet = uint8Decoder(b, offset)?.[0];
+      if (presenceOctet == 1) {
+        const result = decodeT(b, offset + 1);
+        return result === void 0 ? void 0 : [result[0], result[1] + 1];
+      } else {
+        return [void 0, 1];
+      }
+    };
+  }
+
   // node_modules/ts-mls/dist/src/proposalOrRefType.js
   var proposalOrRefTypes = {
     proposal: 1,
@@ -9335,7 +8854,7 @@
   // node_modules/ts-mls/dist/src/groupContext.js
   var groupContextEncoder = contramapBufferEncoders([
     protocolVersionEncoder,
-    ciphersuiteEncoder,
+    uint16Encoder,
     varLenDataEncoder,
     // groupId
     uint64Encoder,
@@ -9348,7 +8867,7 @@
   ], (gc) => [gc.version, gc.cipherSuite, gc.groupId, gc.epoch, gc.treeHash, gc.confirmedTranscriptHash, gc.extensions]);
   var groupContextDecoder = mapDecoders([
     protocolVersionDecoder,
-    ciphersuiteDecoder,
+    uint16Decoder,
     varLenDataDecoder,
     // groupId
     uint64Decoder,
@@ -9523,23 +9042,23 @@
       throw new InternalError("The last node in the ratchet tree must be non-blank.");
     }
     const neededSize = nextFullBinaryTreeSize(tree.length);
-    const copy = tree.slice();
-    while (copy.length < neededSize) {
-      copy.push(void 0);
+    while (tree.length < neededSize) {
+      tree.push(void 0);
     }
-    return copy;
+    return tree;
   }
   function nextFullBinaryTreeSize(n) {
-    let d = 0;
-    while ((1 << d + 1) - 1 < n) {
-      d++;
-    }
-    return (1 << d + 1) - 1;
+    const value = n + 1;
+    const exponent = 32 - Math.clz32(value - 1);
+    return 2 ** exponent - 1;
   }
   function stripBlankNodes(tree) {
     let lastNonBlank = tree.length - 1;
     while (lastNonBlank >= 0 && tree[lastNonBlank] === void 0) {
       lastNonBlank--;
+    }
+    if (lastNonBlank === tree.length - 1) {
+      return tree;
     }
     return tree.slice(0, lastNonBlank + 1);
   }
@@ -9628,7 +9147,12 @@
       const r = right(nodeIndex);
       const leftRes = resolution(tree, l);
       const rightRes = resolution(tree, r);
-      return [...leftRes, ...rightRes];
+      if (leftRes.length === 0)
+        return rightRes;
+      if (rightRes.length === 0)
+        return leftRes;
+      leftRes.push(...rightRes);
+      return leftRes;
     }
     if (isLeaf(nodeIndex)) {
       return [nodeIndex];
@@ -9646,18 +9170,22 @@
     const leafNodeIndex = leafToNodeIndex(leafIndex);
     const lWidth = leafWidth(tree.length);
     const cp = copath(leafNodeIndex, lWidth);
-    return directPath(leafNodeIndex, lWidth).reduce((acc, cur, n) => {
+    const result = [];
+    const direct = directPath(leafNodeIndex, lWidth);
+    for (let n = 0; n < direct.length; n++) {
+      const cur = direct[n];
       const r = resolution(tree, cp[n]);
-      if (r.length === 0)
-        return acc;
-      else
-        return [...acc, { nodeIndex: cur, resolution: r }];
-    }, []);
+      if (r.length !== 0) {
+        result.push({ nodeIndex: cur, resolution: r });
+      }
+    }
+    return result;
   }
   function removeLeaves(tree, leafIndices) {
     const copy = tree.slice();
+    const removedLeaves = new Set(leafIndices);
     function shouldBeRemoved(leafIndex) {
-      return leafIndices.find((x) => leafIndex === x) !== void 0;
+      return removedLeaves.has(toLeafIndex(leafIndex));
     }
     for (const [i, n] of tree.entries()) {
       if (n !== void 0) {
@@ -9699,7 +9227,7 @@
       if (isLeaf(toNodeIndex(nodeIndex)) && node !== void 0) {
         if (node.nodeType === nodeTypes.parent)
           throw new InternalError("Found parent node in leaf node position");
-        return constantTimeEqual(encode(leafNodeEncoder, node.leaf), encode(leafNodeEncoder, leaf));
+        return leafNodeEqual(leaf, node.leaf);
       }
       return false;
     });
@@ -10691,8 +10219,8 @@
   // node_modules/ts-mls/dist/src/welcome.js
   var encryptedGroupSecretsEncoder = contramapBufferEncoders([varLenDataEncoder, hpkeCiphertextEncoder], (egs) => [egs.newMember, egs.encryptedGroupSecrets]);
   var encryptedGroupSecretsDecoder = mapDecoders([varLenDataDecoder, hpkeCiphertextDecoder], (newMember, encryptedGroupSecrets) => ({ newMember, encryptedGroupSecrets }));
-  var welcomeEncoder = contramapBufferEncoders([ciphersuiteEncoder, varLenTypeEncoder(encryptedGroupSecretsEncoder), varLenDataEncoder], (welcome) => [welcome.cipherSuite, welcome.secrets, welcome.encryptedGroupInfo]);
-  var welcomeDecoder = mapDecoders([ciphersuiteDecoder, varLenTypeDecoder(encryptedGroupSecretsDecoder), varLenDataDecoder], (cipherSuite, secrets, encryptedGroupInfo) => ({ cipherSuite, secrets, encryptedGroupInfo }));
+  var welcomeEncoder = contramapBufferEncoders([uint16Encoder, varLenTypeEncoder(encryptedGroupSecretsEncoder), varLenDataEncoder], (welcome) => [welcome.cipherSuite, welcome.secrets, welcome.encryptedGroupInfo]);
+  var welcomeDecoder = mapDecoders([uint16Decoder, varLenTypeDecoder(encryptedGroupSecretsDecoder), varLenDataDecoder], (cipherSuite, secrets, encryptedGroupInfo) => ({ cipherSuite, secrets, encryptedGroupInfo }));
   function welcomeNonce(welcomeSecret, cs) {
     return expandWithLabel(welcomeSecret, "nonce", new Uint8Array(), cs.hpke.nonceLength, cs.kdf);
   }
@@ -10723,6 +10251,47 @@
     const decrypted = await decryptWithLabel(initPrivateKey, "Welcome", welcome.encryptedGroupInfo, secret.encryptedGroupSecrets.kemOutput, secret.encryptedGroupSecrets.ciphertext, hpke);
     return groupSecretsDecoder(decrypted, 0)?.[0];
   }
+
+  // node_modules/ts-mls/dist/src/keyPackageEqualityConfig.js
+  var defaultKeyPackageEqualityConfig = {
+    compareKeyPackages(a, b) {
+      return constantTimeEqual(a.leafNode.signaturePublicKey, b.leafNode.signaturePublicKey);
+    },
+    compareKeyPackageToLeafNode(a, b) {
+      return constantTimeEqual(a.leafNode.signaturePublicKey, b.signaturePublicKey);
+    }
+  };
+
+  // node_modules/ts-mls/dist/src/keyRetentionConfig.js
+  var defaultKeyRetentionConfig = {
+    retainKeysForGenerations: 10,
+    retainKeysForEpochs: 4,
+    maximumForwardRatchetSteps: 200
+  };
+
+  // node_modules/ts-mls/dist/src/lifetimeConfig.js
+  var defaultLifetimeConfig = {
+    maximumTotalLifetime: 10368000n,
+    // 4 months
+    validateLifetimeOnReceive: false
+  };
+
+  // node_modules/ts-mls/dist/src/paddingConfig.js
+  var defaultPaddingConfig = { kind: "padUntilLength", padUntilLength: 256 };
+  function byteLengthToPad(encodedLength, config) {
+    if (config.kind === "alwaysPad")
+      return config.paddingLength;
+    else
+      return encodedLength >= config.padUntilLength ? 0 : config.padUntilLength - encodedLength;
+  }
+
+  // node_modules/ts-mls/dist/src/clientConfig.js
+  var defaultClientConfig = {
+    keyRetentionConfig: defaultKeyRetentionConfig,
+    lifetimeConfig: defaultLifetimeConfig,
+    keyPackageEqualityConfig: defaultKeyPackageEqualityConfig,
+    paddingConfig: defaultPaddingConfig
+  };
 
   // node_modules/ts-mls/dist/src/util/array.js
   function arraysEqual(a, b) {
@@ -10854,9 +10423,7 @@
     [defaultProposalTypes.group_context_extensions]: []
   };
   function flattenExtensions(groupContextExtensions) {
-    return groupContextExtensions.reduce((acc, { proposal }) => {
-      return [...acc, ...proposal.groupContextExtensions.extensions];
-    }, []);
+    return groupContextExtensions[0]?.proposal.groupContextExtensions.extensions ?? [];
   }
   async function validateProposals(p, committerLeafIndex, groupContext, config, authService, tree) {
     const containsUpdateByCommitter = p[defaultProposalTypes.update].some((o) => o.senderLeafIndex !== void 0 && o.senderLeafIndex === committerLeafIndex);
@@ -11296,7 +10863,7 @@
     const confirmedTranscriptHash = new Uint8Array();
     const groupContext = {
       version: protocolVersions.mls10,
-      cipherSuite: cs.name,
+      cipherSuite: cs.id,
       epoch: 0n,
       treeHash: await treeHashRoot(ratchetTree, cs.hash),
       groupId,
@@ -11427,11 +10994,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m16) => [m16.applicationData, m16.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m15) => [m15.applicationData, m15.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m16) => [m16.proposal, m16.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m15) => [m15.proposal, m15.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m16) => [m16.commit, m16.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m15) => [m15.commit, m15.auth]), config)(msg);
       }
     };
   }
@@ -11883,7 +11450,8 @@
             kind: "applicationMessage",
             message: result2.content.content.applicationData,
             newState,
-            consumed: result2.consumed
+            consumed: result2.consumed,
+            aad: result2.content.content.authenticatedData
           };
         } else {
           throw new ValidationError("Cannot process commit or proposal from former epoch");
@@ -11899,15 +11467,19 @@
         kind: "applicationMessage",
         message: result.content.content.applicationData,
         newState: updatedState,
-        consumed: result.consumed
+        consumed: result.consumed,
+        aad: result.content.content.authenticatedData
       };
     } else if (result.content.content.contentType === contentTypes.commit) {
-      const { newState, actionTaken, consumed } = await processCommit(updatedState, result.content, "mls_private_message", pskSearch, cb, auth, clientConfig, cipherSuite);
+      if (result.content.auth.contentType !== result.content.content.contentType)
+        throw new ValidationError("Received content as commit, but not auth");
+      const { newState, actionTaken, consumed } = await processCommit(updatedState, result.content.content, result.content.auth, "mls_private_message", pskSearch, cb, auth, clientConfig, cipherSuite);
       return {
         kind: "newState",
         newState,
         actionTaken,
-        consumed: [...result.consumed, ...consumed]
+        consumed: [...result.consumed, ...consumed],
+        aad: result.content.content.authenticatedData
       };
     } else {
       const action = cb({
@@ -11922,14 +11494,16 @@
           kind: "newState",
           newState: updatedState,
           actionTaken: action,
-          consumed: result.consumed
+          consumed: result.consumed,
+          aad: result.content.content.authenticatedData
         };
       else
         return {
           kind: "newState",
           newState: await processProposal(updatedState, result.content, result.content.content.proposal, cipherSuite.hash),
           actionTaken: action,
-          consumed: result.consumed
+          consumed: result.consumed,
+          aad: result.content.content.authenticatedData
         };
     }
   }
@@ -11954,45 +11528,46 @@
         return {
           newState: state,
           actionTaken: action,
-          consumed: []
+          consumed: [],
+          aad: content.content.authenticatedData
         };
       else
         return {
           newState: await processProposal(state, content, content.content.proposal, cipherSuite.hash),
           actionTaken: action,
-          consumed: []
+          consumed: [],
+          aad: content.content.authenticatedData
         };
     } else {
-      return processCommit(state, content, "mls_public_message", pskSearch, callback, auth, clientConfig, cipherSuite);
+      if (content.auth.contentType !== content.content.contentType)
+        throw new ValidationError("Received content as commit, but not auth");
+      return processCommit(state, content.content, content.auth, "mls_public_message", pskSearch, callback, auth, clientConfig, cipherSuite);
     }
   }
-  async function processCommit(state, content, wireformat, pskSearch, callback, authService, clientConfig, cs) {
-    if (content.content.epoch !== state.groupContext.epoch)
+  async function processCommit(state, content, auth, wireformat, pskSearch, callback, authService, clientConfig, cs) {
+    if (content.epoch !== state.groupContext.epoch)
       throw new ValidationError("Could not validate epoch");
-    const senderLeafIndex = content.content.sender.senderType === senderTypes.member ? toLeafIndex(content.content.sender.leafIndex) : void 0;
-    const result = await applyProposals(state, content.content.commit.proposals, senderLeafIndex, pskSearch, false, clientConfig, authService, cs);
+    const senderLeafIndex = content.sender.senderType === senderTypes.member ? toLeafIndex(content.sender.leafIndex) : void 0;
+    const result = await applyProposals(state, content.commit.proposals, senderLeafIndex, pskSearch, false, clientConfig, authService, cs);
     const action = callback({ kind: "commit", senderLeafIndex, proposals: result.allProposals });
     if (action === "reject") {
-      return { newState: state, actionTaken: action, consumed: [] };
+      return { newState: state, actionTaken: action, consumed: [], aad: content.authenticatedData };
     }
-    if (content.content.commit.path !== void 0) {
+    if (content.commit.path !== void 0) {
       const committerLeafIndex = senderLeafIndex ?? (result.additionalResult.kind === "externalCommit" ? result.additionalResult.newMemberLeafIndex : void 0);
       if (committerLeafIndex === void 0)
         throw new ValidationError("Cannot verify commit leaf node because no commiter leaf index found");
-      throwIfDefined(await validateLeafNodeUpdateOrCommit(content.content.commit.path.leafNode, committerLeafIndex, state.groupContext, authService, cs.signature));
-      throwIfDefined(await validateLeafNodeCredentialAndKeyUniqueness(result.tree, content.content.commit.path.leafNode, committerLeafIndex));
+      throwIfDefined(await validateLeafNodeUpdateOrCommit(content.commit.path.leafNode, committerLeafIndex, state.groupContext, authService, cs.signature));
+      throwIfDefined(await validateLeafNodeCredentialAndKeyUniqueness(result.tree, content.commit.path.leafNode, committerLeafIndex));
     }
-    if (result.needsUpdatePath && content.content.commit.path === void 0)
+    if (result.needsUpdatePath && content.commit.path === void 0)
       throw new ValidationError("Update path is required");
     const groupContextWithExtensions = result.additionalResult.kind === "memberCommit" && result.additionalResult.extensions.length > 0 ? { ...state.groupContext, extensions: result.additionalResult.extensions } : state.groupContext;
-    const [pkp, commitSecret, tree] = await applyTreeUpdate(content.content.commit.path, content.content.sender, result.tree, cs, state, groupContextWithExtensions, result.additionalResult.kind === "memberCommit" ? result.additionalResult.addedLeafNodes.map((l) => leafToNodeIndex(toLeafIndex(l[0]))) : [findBlankLeafNodeIndex(result.tree) ?? toNodeIndex(result.tree.length + 1)], cs.kdf);
-    const newTreeHash = await treeHashRoot(tree, cs.hash);
-    if (content.auth.contentType !== contentTypes.commit)
-      throw new ValidationError("Received content as commit, but not auth");
-    const updatedGroupContext = await nextEpochContext(groupContextWithExtensions, wireformat, content.content, content.auth.signature, newTreeHash, state.confirmationTag, cs.hash);
+    const [pkp, commitSecret, tree, newTreeHash] = await applyTreeUpdate(content.commit.path, content.sender, result.tree, cs, state, groupContextWithExtensions, result.additionalResult.kind === "memberCommit" ? result.additionalResult.addedLeafNodes.map((l) => leafToNodeIndex(toLeafIndex(l[0]))) : [findBlankLeafNodeIndex(result.tree) ?? toNodeIndex(result.tree.length + 1)], cs.kdf);
+    const updatedGroupContext = await nextEpochContext(groupContextWithExtensions, wireformat, content, auth.signature, newTreeHash, state.confirmationTag, cs.hash);
     const initSecret = result.additionalResult.kind === "externalCommit" ? result.additionalResult.externalInitSecret : state.keySchedule.initSecret;
     const epochSecrets = await initializeEpoch(initSecret, commitSecret, updatedGroupContext, result.pskSecret, cs.kdf);
-    const confirmationTagValid = await verifyConfirmationTag(epochSecrets.keySchedule.confirmationKey, content.auth.confirmationTag, updatedGroupContext.confirmedTranscriptHash, cs.hash);
+    const confirmationTagValid = await verifyConfirmationTag(epochSecrets.keySchedule.confirmationKey, auth.confirmationTag, updatedGroupContext.confirmedTranscriptHash, cs.hash);
     if (!confirmationTagValid)
       throw new CryptoVerificationError("Could not verify confirmation tag");
     const secretTree = createSecretTree(leafWidth(tree.length), epochSecrets.encryptionSecret);
@@ -12010,28 +11585,31 @@
         privatePath: pkp,
         groupContext: updatedGroupContext,
         keySchedule: epochSecrets.keySchedule,
-        confirmationTag: content.auth.confirmationTag,
+        confirmationTag: auth.confirmationTag,
         historicalReceiverData,
         unappliedProposals: {},
         groupActiveState
       },
       actionTaken: action,
-      consumed
+      consumed,
+      aad: content.authenticatedData
     };
   }
   async function applyTreeUpdate(path, sender, tree, cs, state, groupContext, excludeNodes, kdf) {
     if (path === void 0)
-      return [state.privatePath, new Uint8Array(kdf.size), tree];
+      return [state.privatePath, new Uint8Array(kdf.size), tree, await treeHashRoot(tree, cs.hash)];
     if (sender.senderType === senderTypes.member) {
       const updatedTree = await applyUpdatePath(tree, toLeafIndex(sender.leafIndex), path, cs.hash);
-      const [pkp, commitSecret] = await updatePrivateKeyPath(updatedTree, state, toLeafIndex(sender.leafIndex), { ...groupContext, treeHash: await treeHashRoot(updatedTree, cs.hash), epoch: groupContext.epoch + 1n }, path, excludeNodes, cs);
-      return [pkp, commitSecret, updatedTree];
+      const newTreeHash = await treeHashRoot(updatedTree, cs.hash);
+      const [pkp, commitSecret] = await updatePrivateKeyPath(updatedTree, state, toLeafIndex(sender.leafIndex), { ...groupContext, treeHash: newTreeHash, epoch: groupContext.epoch + 1n }, path, excludeNodes, cs);
+      return [pkp, commitSecret, updatedTree, newTreeHash];
     } else {
       const [treeWithLeafNode, leafNodeIndex] = addLeafNode(tree, path.leafNode);
       const senderLeafIndex = nodeToLeafIndex(leafNodeIndex);
       const updatedTree = await applyUpdatePath(treeWithLeafNode, senderLeafIndex, path, cs.hash, true);
-      const [pkp, commitSecret] = await updatePrivateKeyPath(updatedTree, state, senderLeafIndex, { ...groupContext, treeHash: await treeHashRoot(updatedTree, cs.hash), epoch: groupContext.epoch + 1n }, path, excludeNodes, cs);
-      return [pkp, commitSecret, updatedTree];
+      const newTreeHash = await treeHashRoot(updatedTree, cs.hash);
+      const [pkp, commitSecret] = await updatePrivateKeyPath(updatedTree, state, senderLeafIndex, { ...groupContext, treeHash: newTreeHash, epoch: groupContext.epoch + 1n }, path, excludeNodes, cs);
+      return [pkp, commitSecret, updatedTree, newTreeHash];
     }
   }
   async function updatePrivateKeyPath(tree, state, leafNodeIndex, groupContext, path, excludeNodes, cs) {
@@ -12069,6 +11647,29 @@
         privateMessage: message.privateMessage,
         callback: action
       });
+  }
+
+  // node_modules/ts-mls/dist/src/crypto/implementation/default/makeHashImpl.js
+  function makeHashImpl(sc, h) {
+    return {
+      async digest(data) {
+        const result = await sc.digest(h, toBufferSource(data));
+        return new Uint8Array(result);
+      },
+      async mac(key, data) {
+        const result = await sc.sign("HMAC", await importMacKey(key, h), toBufferSource(data));
+        return new Uint8Array(result);
+      },
+      async verifyMac(key, mac, data) {
+        return sc.verify("HMAC", await importMacKey(key, h), toBufferSource(mac), toBufferSource(data));
+      }
+    };
+  }
+  function importMacKey(rawKey, h) {
+    return crypto.subtle.importKey("raw", toBufferSource(rawKey), {
+      name: "HMAC",
+      hash: { name: h }
+    }, false, ["sign", "verify"]);
   }
 
   // node_modules/@hpke/common/esm/src/errors.js
@@ -14458,6 +14059,78 @@
     return concatUint8Arrays(new Uint8Array(lengthDifference), k);
   }
 
+  // node_modules/ts-mls/dist/src/crypto/implementation/default/makeAead.js
+  async function makeAead(aeadAlg) {
+    switch (aeadAlg) {
+      case "AES128GCM":
+        return [
+          {
+            encrypt(key, nonce, aad, plaintext) {
+              return encryptAesGcm(key, nonce, aad, plaintext);
+            },
+            decrypt(key, nonce, aad, ciphertext) {
+              return decryptAesGcm(key, nonce, aad, ciphertext);
+            }
+          },
+          new Aes128Gcm()
+        ];
+      case "AES256GCM":
+        return [
+          {
+            encrypt(key, nonce, aad, plaintext) {
+              return encryptAesGcm(key, nonce, aad, plaintext);
+            },
+            decrypt(key, nonce, aad, ciphertext) {
+              return decryptAesGcm(key, nonce, aad, ciphertext);
+            }
+          },
+          new Aes256Gcm()
+        ];
+      case "CHACHA20POLY1305":
+        try {
+          const { Chacha20Poly1305 } = await import("@hpke/chacha20poly1305");
+          const { chacha20poly1305: chacha20poly13052 } = await Promise.resolve().then(() => (init_chacha(), chacha_exports));
+          return [
+            {
+              async encrypt(key, nonce, aad, plaintext) {
+                return chacha20poly13052(key, nonce, aad).encrypt(plaintext);
+              },
+              async decrypt(key, nonce, aad, ciphertext) {
+                return chacha20poly13052(key, nonce, aad).decrypt(ciphertext);
+              }
+            },
+            new Chacha20Poly1305()
+          ];
+        } catch (err) {
+          throw new DependencyError("Optional dependency '@hpke/chacha20poly1305' is not installed. Please install it to use this feature.");
+        }
+    }
+  }
+  async function encryptAesGcm(key, nonce, aad, plaintext) {
+    const cryptoKey = await crypto.subtle.importKey("raw", toBufferSource(key), { name: "AES-GCM" }, false, ["encrypt"]);
+    const params = {
+      name: "AES-GCM",
+      iv: toBufferSource(nonce)
+    };
+    if (aad.length > 0) {
+      params.additionalData = toBufferSource(aad);
+    }
+    const result = await crypto.subtle.encrypt(params, cryptoKey, toBufferSource(plaintext));
+    return new Uint8Array(result);
+  }
+  async function decryptAesGcm(key, nonce, aad, ciphertext) {
+    const cryptoKey = await crypto.subtle.importKey("raw", toBufferSource(key), { name: "AES-GCM" }, false, ["decrypt"]);
+    const params = {
+      name: "AES-GCM",
+      iv: toBufferSource(nonce)
+    };
+    if (aad.length > 0) {
+      params.additionalData = toBufferSource(aad);
+    }
+    const result = await crypto.subtle.decrypt(params, cryptoKey, toBufferSource(ciphertext));
+    return new Uint8Array(result);
+  }
+
   // node_modules/ts-mls/dist/src/crypto/implementation/default/makeKdfImpl.js
   function makeKdfImpl(k) {
     return {
@@ -14531,6 +14204,17 @@
           throw new DependencyError("Optional dependency '@hpke/hybridkem-x-wing' is not installed. Please install it to use this feature.");
         }
     }
+  }
+
+  // node_modules/ts-mls/dist/src/crypto/implementation/default/makeHpke.js
+  async function makeHpke(hpkealg) {
+    const [aead, aeadInterface] = await makeAead(hpkealg.aead);
+    const cs = new CipherSuite({
+      kem: await makeDhKem(hpkealg.kem),
+      kdf: makeKdf(hpkealg.kdf),
+      aead: aeadInterface
+    });
+    return makeGenericHpke(hpkealg, aead, cs);
   }
 
   // node_modules/ts-mls/dist/src/crypto/implementation/default/rng.js
@@ -14687,6 +14371,31 @@
     }
   }
 
+  // node_modules/ts-mls/dist/src/crypto/implementation/default/provider.js
+  var defaultCryptoProvider = {
+    async getCiphersuiteImpl(id) {
+      if (isDefaultCiphersuiteId(id)) {
+        const cs = ciphersuiteValues[id];
+        const sc = crypto.subtle;
+        return {
+          kdf: makeKdfImpl(makeKdf(cs.hpke.kdf)),
+          hash: makeHashImpl(sc, cs.hash),
+          signature: await makeNobleSignatureImpl(cs.signature),
+          hpke: await makeHpke(cs.hpke),
+          rng: defaultRng,
+          id
+        };
+      } else {
+        throw new DependencyError(`Unrecognized ciphersuite: ${id}`);
+      }
+    }
+  };
+
+  // node_modules/ts-mls/dist/src/crypto/getCiphersuiteImpl.js
+  async function getCiphersuiteImpl(cs, provider = defaultCryptoProvider) {
+    return provider.getCiphersuiteImpl(ciphersuites[cs]);
+  }
+
   // node_modules/ts-mls/dist/src/authenticationService.js
   var unsafeTestingAuthenticationService = {
     async validateCredential(_credential, _signaturePublicKey) {
@@ -14695,12 +14404,12 @@
   };
 
   // node_modules/ts-mls/dist/src/message.js
-  var mlsPublicMessageEncoder = contramapBufferEncoders([wireformatEncoder, publicMessageEncoder], (msg) => [msg.wireformat, msg.publicMessage]);
-  var mlsWelcomeEncoder = contramapBufferEncoders([wireformatEncoder, welcomeEncoder], (wm) => [wm.wireformat, wm.welcome]);
-  var mlsPrivateMessageEncoder = contramapBufferEncoders([wireformatEncoder, privateMessageEncoder], (pm) => [pm.wireformat, pm.privateMessage]);
-  var mlsGroupInfoEncoder = contramapBufferEncoders([wireformatEncoder, groupInfoEncoder], (gi) => [gi.wireformat, gi.groupInfo]);
-  var mlsKeyPackageEncoder = contramapBufferEncoders([wireformatEncoder, keyPackageEncoder], (kp) => [kp.wireformat, kp.keyPackage]);
-  var mlsMessageContentEncoder = (mc) => {
+  var mlsPublicMessageEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, publicMessageEncoder], (msg) => [msg.version, msg.wireformat, msg.publicMessage]);
+  var mlsWelcomeEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, welcomeEncoder], (wm) => [wm.version, wm.wireformat, wm.welcome]);
+  var mlsPrivateMessageEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, privateMessageEncoder], (pm) => [pm.version, pm.wireformat, pm.privateMessage]);
+  var mlsGroupInfoEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, groupInfoEncoder], (gi) => [gi.version, gi.wireformat, gi.groupInfo]);
+  var mlsKeyPackageEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, keyPackageEncoder], (kp) => [kp.version, kp.wireformat, kp.keyPackage]);
+  var mlsMessageEncoder = (mc) => {
     switch (mc.wireformat) {
       case wireformats.mls_public_message:
         return mlsPublicMessageEncoder(mc);
@@ -14714,657 +14423,269 @@
         return mlsKeyPackageEncoder(mc);
     }
   };
-  var mlsMessageContentDecoder = flatMapDecoder(wireformatDecoder, (wireformat) => {
+  var mlsMessageDecoder = flatMapDecoder(protocolVersionDecoder, (version) => flatMapDecoder(wireformatDecoder, (wireformat) => {
     switch (wireformat) {
       case wireformats.mls_public_message:
-        return mapDecoder(publicMessageDecoder, (publicMessage) => ({ wireformat, publicMessage }));
+        return mapDecoder(publicMessageDecoder, (publicMessage) => ({ version, wireformat, publicMessage }));
       case wireformats.mls_welcome:
-        return mapDecoder(welcomeDecoder, (welcome) => ({ wireformat, welcome }));
+        return mapDecoder(welcomeDecoder, (welcome) => ({ version, wireformat, welcome }));
       case wireformats.mls_private_message:
-        return mapDecoder(privateMessageDecoder, (privateMessage) => ({ wireformat, privateMessage }));
+        return mapDecoder(privateMessageDecoder, (privateMessage) => ({ version, wireformat, privateMessage }));
       case wireformats.mls_group_info:
-        return mapDecoder(groupInfoDecoder, (groupInfo) => ({ wireformat, groupInfo }));
+        return mapDecoder(groupInfoDecoder, (groupInfo) => ({ version, wireformat, groupInfo }));
       case wireformats.mls_key_package:
-        return mapDecoder(keyPackageDecoder, (keyPackage) => ({ wireformat, keyPackage }));
+        return mapDecoder(keyPackageDecoder, (keyPackage) => ({ version, wireformat, keyPackage }));
     }
-  });
-  var mlsMessageEncoder = contramapBufferEncoders([protocolVersionEncoder, mlsMessageContentEncoder], (w) => [w.version, w]);
-  var mlsMessageDecoder = mapDecoders([protocolVersionDecoder, mlsMessageContentDecoder], (version, mc) => ({ ...mc, version }));
+  }));
 
-  // node_modules/ts-mls/dist/src/crypto/implementation/noble/makeHashImpl.js
-  init_sha2();
-  init_hmac();
-  function makeHashImpl(h) {
-    return {
-      async digest(data) {
-        switch (h) {
-          case "SHA-256":
-            return sha2562(data);
-          case "SHA-384":
-            return sha3842(data);
-          case "SHA-512":
-            return sha5122(data);
-          default:
-            throw new Error(`Unsupported hash algorithm: ${h}`);
-        }
-      },
-      async mac(key, data) {
-        switch (h) {
-          case "SHA-256":
-            return hmac2(sha2562, key, data);
-          case "SHA-384":
-            return hmac2(sha3842, key, data);
-          case "SHA-512":
-            return hmac2(sha5122, key, data);
-          default:
-            throw new Error(`Unsupported hash algorithm: ${h}`);
-        }
-      },
-      async verifyMac(key, mac, data) {
-        const expectedMac = await this.mac(key, data);
-        return constantTimeEqual(mac, expectedMac);
-      }
-    };
+  // node_modules/idb/build/index.js
+  var instanceOfAny = (object, constructors) => constructors.some((c) => object instanceof c);
+  var idbProxyableTypes;
+  var cursorAdvanceMethods;
+  function getIdbProxyableTypes() {
+    return idbProxyableTypes || (idbProxyableTypes = [
+      IDBDatabase,
+      IDBObjectStore,
+      IDBIndex,
+      IDBCursor,
+      IDBTransaction
+    ]);
   }
-
-  // node_modules/@noble/ciphers/_polyval.js
-  init_utils3();
-  var BLOCK_SIZE = 16;
-  var ZEROS16 = /* @__PURE__ */ new Uint8Array(16);
-  var ZEROS32 = u322(ZEROS16);
-  var POLY = 225;
-  var mul2 = (s0, s1, s2, s3) => {
-    const hiBit = s3 & 1;
-    return {
-      s3: s2 << 31 | s3 >>> 1,
-      s2: s1 << 31 | s2 >>> 1,
-      s1: s0 << 31 | s1 >>> 1,
-      s0: s0 >>> 1 ^ POLY << 24 & -(hiBit & 1)
-      // reduce % poly
-    };
-  };
-  var swapLE = (n) => (n >>> 0 & 255) << 24 | (n >>> 8 & 255) << 16 | (n >>> 16 & 255) << 8 | n >>> 24 & 255 | 0;
-  function _toGHASHKey(k) {
-    k.reverse();
-    const hiBit = k[15] & 1;
-    let carry = 0;
-    for (let i = 0; i < k.length; i++) {
-      const t = k[i];
-      k[i] = t >>> 1 | carry;
-      carry = (t & 1) << 7;
-    }
-    k[0] ^= -hiBit & 225;
-    return k;
+  function getCursorAdvanceMethods() {
+    return cursorAdvanceMethods || (cursorAdvanceMethods = [
+      IDBCursor.prototype.advance,
+      IDBCursor.prototype.continue,
+      IDBCursor.prototype.continuePrimaryKey
+    ]);
   }
-  var estimateWindow = (bytes) => {
-    if (bytes > 64 * 1024)
-      return 8;
-    if (bytes > 1024)
-      return 4;
-    return 2;
-  };
-  var GHASH = class {
-    blockLen = BLOCK_SIZE;
-    outputLen = BLOCK_SIZE;
-    s0 = 0;
-    s1 = 0;
-    s2 = 0;
-    s3 = 0;
-    finished = false;
-    t;
-    W;
-    windowSize;
-    // We select bits per window adaptively based on expectedLength
-    constructor(key, expectedLength) {
-      abytes3(key, 16, "key");
-      key = copyBytes3(key);
-      const kView = createView3(key);
-      let k0 = kView.getUint32(0, false);
-      let k1 = kView.getUint32(4, false);
-      let k2 = kView.getUint32(8, false);
-      let k3 = kView.getUint32(12, false);
-      const doubles = [];
-      for (let i = 0; i < 128; i++) {
-        doubles.push({ s0: swapLE(k0), s1: swapLE(k1), s2: swapLE(k2), s3: swapLE(k3) });
-        ({ s0: k0, s1: k1, s2: k2, s3: k3 } = mul2(k0, k1, k2, k3));
-      }
-      const W = estimateWindow(expectedLength || 1024);
-      if (![1, 2, 4, 8].includes(W))
-        throw new Error("ghash: invalid window size, expected 2, 4 or 8");
-      this.W = W;
-      const bits = 128;
-      const windows = bits / W;
-      const windowSize = this.windowSize = 2 ** W;
-      const items = [];
-      for (let w = 0; w < windows; w++) {
-        for (let byte = 0; byte < windowSize; byte++) {
-          let s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-          for (let j = 0; j < W; j++) {
-            const bit = byte >>> W - j - 1 & 1;
-            if (!bit)
-              continue;
-            const { s0: d0, s1: d1, s2: d2, s3: d3 } = doubles[W * w + j];
-            s0 ^= d0, s1 ^= d1, s2 ^= d2, s3 ^= d3;
-          }
-          items.push({ s0, s1, s2, s3 });
-        }
-      }
-      this.t = items;
-    }
-    _updateBlock(s0, s1, s2, s3) {
-      s0 ^= this.s0, s1 ^= this.s1, s2 ^= this.s2, s3 ^= this.s3;
-      const { W, t, windowSize } = this;
-      let o0 = 0, o1 = 0, o2 = 0, o3 = 0;
-      const mask = (1 << W) - 1;
-      let w = 0;
-      for (const num of [s0, s1, s2, s3]) {
-        for (let bytePos = 0; bytePos < 4; bytePos++) {
-          const byte = num >>> 8 * bytePos & 255;
-          for (let bitPos = 8 / W - 1; bitPos >= 0; bitPos--) {
-            const bit = byte >>> W * bitPos & mask;
-            const { s0: e0, s1: e1, s2: e2, s3: e3 } = t[w * windowSize + bit];
-            o0 ^= e0, o1 ^= e1, o2 ^= e2, o3 ^= e3;
-            w += 1;
-          }
-        }
-      }
-      this.s0 = o0;
-      this.s1 = o1;
-      this.s2 = o2;
-      this.s3 = o3;
-    }
-    update(data) {
-      aexists3(this);
-      abytes3(data);
-      data = copyBytes3(data);
-      const b32 = u322(data);
-      const blocks = Math.floor(data.length / BLOCK_SIZE);
-      const left2 = data.length % BLOCK_SIZE;
-      for (let i = 0; i < blocks; i++) {
-        this._updateBlock(b32[i * 4 + 0], b32[i * 4 + 1], b32[i * 4 + 2], b32[i * 4 + 3]);
-      }
-      if (left2) {
-        ZEROS16.set(data.subarray(blocks * BLOCK_SIZE));
-        this._updateBlock(ZEROS32[0], ZEROS32[1], ZEROS32[2], ZEROS32[3]);
-        clean3(ZEROS32);
-      }
-      return this;
-    }
-    destroy() {
-      const { t } = this;
-      for (const elm of t) {
-        elm.s0 = 0, elm.s1 = 0, elm.s2 = 0, elm.s3 = 0;
-      }
-    }
-    digestInto(out) {
-      aexists3(this);
-      aoutput3(out, this);
-      this.finished = true;
-      const { s0, s1, s2, s3 } = this;
-      const o32 = u322(out);
-      o32[0] = s0;
-      o32[1] = s1;
-      o32[2] = s2;
-      o32[3] = s3;
-      return out;
-    }
-    digest() {
-      const res = new Uint8Array(BLOCK_SIZE);
-      this.digestInto(res);
-      this.destroy();
-      return res;
-    }
-  };
-  var Polyval = class extends GHASH {
-    constructor(key, expectedLength) {
-      abytes3(key);
-      const ghKey = _toGHASHKey(copyBytes3(key));
-      super(ghKey, expectedLength);
-      clean3(ghKey);
-    }
-    update(data) {
-      aexists3(this);
-      abytes3(data);
-      data = copyBytes3(data);
-      const b32 = u322(data);
-      const left2 = data.length % BLOCK_SIZE;
-      const blocks = Math.floor(data.length / BLOCK_SIZE);
-      for (let i = 0; i < blocks; i++) {
-        this._updateBlock(swapLE(b32[i * 4 + 3]), swapLE(b32[i * 4 + 2]), swapLE(b32[i * 4 + 1]), swapLE(b32[i * 4 + 0]));
-      }
-      if (left2) {
-        ZEROS16.set(data.subarray(blocks * BLOCK_SIZE));
-        this._updateBlock(swapLE(ZEROS32[3]), swapLE(ZEROS32[2]), swapLE(ZEROS32[1]), swapLE(ZEROS32[0]));
-        clean3(ZEROS32);
-      }
-      return this;
-    }
-    digestInto(out) {
-      aexists3(this);
-      aoutput3(out, this);
-      this.finished = true;
-      const { s0, s1, s2, s3 } = this;
-      const o32 = u322(out);
-      o32[0] = s0;
-      o32[1] = s1;
-      o32[2] = s2;
-      o32[3] = s3;
-      return out.reverse();
-    }
-  };
-  function wrapConstructorWithKey(hashCons) {
-    const hashC = (msg, key) => hashCons(key, msg.length).update(msg).digest();
-    const tmp = hashCons(new Uint8Array(16), 0);
-    hashC.outputLen = tmp.outputLen;
-    hashC.blockLen = tmp.blockLen;
-    hashC.create = (key, expectedLength) => hashCons(key, expectedLength);
-    return hashC;
-  }
-  var ghash = wrapConstructorWithKey((key, expectedLength) => new GHASH(key, expectedLength));
-  var polyval = wrapConstructorWithKey((key, expectedLength) => new Polyval(key, expectedLength));
-
-  // node_modules/@noble/ciphers/aes.js
-  init_utils3();
-  var BLOCK_SIZE2 = 16;
-  var BLOCK_SIZE32 = 4;
-  var EMPTY_BLOCK = /* @__PURE__ */ new Uint8Array(BLOCK_SIZE2);
-  var POLY2 = 283;
-  function validateKeyLength(key) {
-    if (![16, 24, 32].includes(key.length))
-      throw new Error('"aes key" expected Uint8Array of length 16/24/32, got length=' + key.length);
-  }
-  function mul22(n) {
-    return n << 1 ^ POLY2 & -(n >> 7);
-  }
-  function mul(a, b) {
-    let res = 0;
-    for (; b > 0; b >>= 1) {
-      res ^= a & -(b & 1);
-      a = mul22(a);
-    }
-    return res;
-  }
-  var sbox = /* @__PURE__ */ (() => {
-    const t = new Uint8Array(256);
-    for (let i = 0, x = 1; i < 256; i++, x ^= mul22(x))
-      t[i] = x;
-    const box = new Uint8Array(256);
-    box[0] = 99;
-    for (let i = 0; i < 255; i++) {
-      let x = t[255 - i];
-      x |= x << 8;
-      box[t[i]] = (x ^ x >> 4 ^ x >> 5 ^ x >> 6 ^ x >> 7 ^ 99) & 255;
-    }
-    clean3(t);
-    return box;
-  })();
-  var rotr32_8 = (n) => n << 24 | n >>> 8;
-  var rotl32_8 = (n) => n << 8 | n >>> 24;
-  function genTtable(sbox2, fn) {
-    if (sbox2.length !== 256)
-      throw new Error("Wrong sbox length");
-    const T0 = new Uint32Array(256).map((_, j) => fn(sbox2[j]));
-    const T1 = T0.map(rotl32_8);
-    const T2 = T1.map(rotl32_8);
-    const T3 = T2.map(rotl32_8);
-    const T01 = new Uint32Array(256 * 256);
-    const T23 = new Uint32Array(256 * 256);
-    const sbox22 = new Uint16Array(256 * 256);
-    for (let i = 0; i < 256; i++) {
-      for (let j = 0; j < 256; j++) {
-        const idx = i * 256 + j;
-        T01[idx] = T0[i] ^ T1[j];
-        T23[idx] = T2[i] ^ T3[j];
-        sbox22[idx] = sbox2[i] << 8 | sbox2[j];
-      }
-    }
-    return { sbox: sbox2, sbox2: sbox22, T0, T1, T2, T3, T01, T23 };
-  }
-  var tableEncoding = /* @__PURE__ */ genTtable(sbox, (s) => mul(s, 3) << 24 | s << 16 | s << 8 | mul(s, 2));
-  var xPowers = /* @__PURE__ */ (() => {
-    const p = new Uint8Array(16);
-    for (let i = 0, x = 1; i < 16; i++, x = mul22(x))
-      p[i] = x;
-    return p;
-  })();
-  function expandKeyLE(key) {
-    abytes3(key);
-    const len = key.length;
-    validateKeyLength(key);
-    const { sbox2 } = tableEncoding;
-    const toClean = [];
-    if (!isAligned32(key))
-      toClean.push(key = copyBytes3(key));
-    const k32 = u322(key);
-    const Nk = k32.length;
-    const subByte = (n) => applySbox(sbox2, n, n, n, n);
-    const xk = new Uint32Array(len + 28);
-    xk.set(k32);
-    for (let i = Nk; i < xk.length; i++) {
-      let t = xk[i - 1];
-      if (i % Nk === 0)
-        t = subByte(rotr32_8(t)) ^ xPowers[i / Nk - 1];
-      else if (Nk > 6 && i % Nk === 4)
-        t = subByte(t);
-      xk[i] = xk[i - Nk] ^ t;
-    }
-    clean3(...toClean);
-    return xk;
-  }
-  function apply0123(T01, T23, s0, s1, s2, s3) {
-    return T01[s0 << 8 & 65280 | s1 >>> 8 & 255] ^ T23[s2 >>> 8 & 65280 | s3 >>> 24 & 255];
-  }
-  function applySbox(sbox2, s0, s1, s2, s3) {
-    return sbox2[s0 & 255 | s1 & 65280] | sbox2[s2 >>> 16 & 255 | s3 >>> 16 & 65280] << 16;
-  }
-  function encrypt(xk, s0, s1, s2, s3) {
-    const { sbox2, T01, T23 } = tableEncoding;
-    let k = 0;
-    s0 ^= xk[k++], s1 ^= xk[k++], s2 ^= xk[k++], s3 ^= xk[k++];
-    const rounds = xk.length / 4 - 2;
-    for (let i = 0; i < rounds; i++) {
-      const t02 = xk[k++] ^ apply0123(T01, T23, s0, s1, s2, s3);
-      const t12 = xk[k++] ^ apply0123(T01, T23, s1, s2, s3, s0);
-      const t22 = xk[k++] ^ apply0123(T01, T23, s2, s3, s0, s1);
-      const t32 = xk[k++] ^ apply0123(T01, T23, s3, s0, s1, s2);
-      s0 = t02, s1 = t12, s2 = t22, s3 = t32;
-    }
-    const t0 = xk[k++] ^ applySbox(sbox2, s0, s1, s2, s3);
-    const t1 = xk[k++] ^ applySbox(sbox2, s1, s2, s3, s0);
-    const t2 = xk[k++] ^ applySbox(sbox2, s2, s3, s0, s1);
-    const t3 = xk[k++] ^ applySbox(sbox2, s3, s0, s1, s2);
-    return { s0: t0, s1: t1, s2: t2, s3: t3 };
-  }
-  function ctr32(xk, isLE3, nonce, src, dst) {
-    abytes3(nonce, BLOCK_SIZE2, "nonce");
-    abytes3(src);
-    dst = getOutput(src.length, dst);
-    const ctr = nonce;
-    const c32 = u322(ctr);
-    const view = createView3(ctr);
-    const src32 = u322(src);
-    const dst32 = u322(dst);
-    const ctrPos = isLE3 ? 0 : 12;
-    const srcLen = src.length;
-    let ctrNum = view.getUint32(ctrPos, isLE3);
-    let { s0, s1, s2, s3 } = encrypt(xk, c32[0], c32[1], c32[2], c32[3]);
-    for (let i = 0; i + 4 <= src32.length; i += 4) {
-      dst32[i + 0] = src32[i + 0] ^ s0;
-      dst32[i + 1] = src32[i + 1] ^ s1;
-      dst32[i + 2] = src32[i + 2] ^ s2;
-      dst32[i + 3] = src32[i + 3] ^ s3;
-      ctrNum = ctrNum + 1 >>> 0;
-      view.setUint32(ctrPos, ctrNum, isLE3);
-      ({ s0, s1, s2, s3 } = encrypt(xk, c32[0], c32[1], c32[2], c32[3]));
-    }
-    const start = BLOCK_SIZE2 * Math.floor(src32.length / BLOCK_SIZE32);
-    if (start < srcLen) {
-      const b32 = new Uint32Array([s0, s1, s2, s3]);
-      const buf = u8(b32);
-      for (let i = start, pos = 0; i < srcLen; i++, pos++)
-        dst[i] = src[i] ^ buf[pos];
-      clean3(b32);
-    }
-    return dst;
-  }
-  function computeTag(fn, isLE3, key, data, AAD) {
-    const aadLength = AAD ? AAD.length : 0;
-    const h = fn.create(key, data.length + aadLength);
-    if (AAD)
-      h.update(AAD);
-    const num = u64Lengths(8 * data.length, 8 * aadLength, isLE3);
-    h.update(data);
-    h.update(num);
-    const res = h.digest();
-    clean3(num);
-    return res;
-  }
-  var gcm = /* @__PURE__ */ wrapCipher({ blockSize: 16, nonceLength: 12, tagLength: 16, varSizeNonce: true }, function aesgcm(key, nonce, AAD) {
-    if (nonce.length < 8)
-      throw new Error("aes/gcm: invalid nonce length");
-    const tagLength = 16;
-    function _computeTag(authKey, tagMask, data) {
-      const tag = computeTag(ghash, false, authKey, data, AAD);
-      for (let i = 0; i < tagMask.length; i++)
-        tag[i] ^= tagMask[i];
-      return tag;
-    }
-    function deriveKeys() {
-      const xk = expandKeyLE(key);
-      const authKey = EMPTY_BLOCK.slice();
-      const counter = EMPTY_BLOCK.slice();
-      ctr32(xk, false, counter, counter, authKey);
-      if (nonce.length === 12) {
-        counter.set(nonce);
-      } else {
-        const nonceLen = EMPTY_BLOCK.slice();
-        const view = createView3(nonceLen);
-        view.setBigUint64(8, BigInt(nonce.length * 8), false);
-        const g = ghash.create(authKey).update(nonce).update(nonceLen);
-        g.digestInto(counter);
-        g.destroy();
-      }
-      const tagMask = ctr32(xk, false, counter, EMPTY_BLOCK);
-      return { xk, authKey, counter, tagMask };
-    }
-    return {
-      encrypt(plaintext) {
-        const { xk, authKey, counter, tagMask } = deriveKeys();
-        const out = new Uint8Array(plaintext.length + tagLength);
-        const toClean = [xk, authKey, counter, tagMask];
-        if (!isAligned32(plaintext))
-          toClean.push(plaintext = copyBytes3(plaintext));
-        ctr32(xk, false, counter, plaintext, out.subarray(0, plaintext.length));
-        const tag = _computeTag(authKey, tagMask, out.subarray(0, out.length - tagLength));
-        toClean.push(tag);
-        out.set(tag, plaintext.length);
-        clean3(...toClean);
-        return out;
-      },
-      decrypt(ciphertext) {
-        const { xk, authKey, counter, tagMask } = deriveKeys();
-        const toClean = [xk, authKey, tagMask, counter];
-        if (!isAligned32(ciphertext))
-          toClean.push(ciphertext = copyBytes3(ciphertext));
-        const data = ciphertext.subarray(0, -tagLength);
-        const passedTag = ciphertext.subarray(-tagLength);
-        const tag = _computeTag(authKey, tagMask, data);
-        toClean.push(tag);
-        if (!equalBytes2(tag, passedTag))
-          throw new Error("aes/gcm: invalid ghash tag");
-        const out = ctr32(xk, false, counter, data);
-        clean3(...toClean);
-        return out;
-      }
-    };
-  });
-  function isBytes32(a) {
-    return a instanceof Uint32Array || ArrayBuffer.isView(a) && a.constructor.name === "Uint32Array";
-  }
-  function encryptBlock(xk, block) {
-    abytes3(block, 16, "block");
-    if (!isBytes32(xk))
-      throw new Error("_encryptBlock accepts result of expandKeyLE");
-    const b32 = u322(block);
-    let { s0, s1, s2, s3 } = encrypt(xk, b32[0], b32[1], b32[2], b32[3]);
-    b32[0] = s0, b32[1] = s1, b32[2] = s2, b32[3] = s3;
-    return block;
-  }
-  function dbl(block) {
-    let carry = 0;
-    for (let i = BLOCK_SIZE2 - 1; i >= 0; i--) {
-      const newCarry = (block[i] & 128) >>> 7;
-      block[i] = block[i] << 1 | carry;
-      carry = newCarry;
-    }
-    if (carry) {
-      block[BLOCK_SIZE2 - 1] ^= 135;
-    }
-    return block;
-  }
-  function xorBlock(a, b) {
-    if (a.length !== b.length)
-      throw new Error("xorBlock: blocks must have same length");
-    for (let i = 0; i < a.length; i++) {
-      a[i] = a[i] ^ b[i];
-    }
-    return a;
-  }
-  var _CMAC = class {
-    buffer;
-    destroyed;
-    k1;
-    k2;
-    xk;
-    constructor(key) {
-      abytes3(key);
-      validateKeyLength(key);
-      this.xk = expandKeyLE(key);
-      this.buffer = new Uint8Array(0);
-      this.destroyed = false;
-      const L = new Uint8Array(BLOCK_SIZE2);
-      encryptBlock(this.xk, L);
-      this.k1 = dbl(L);
-      this.k2 = dbl(new Uint8Array(this.k1));
-    }
-    update(data) {
-      const { destroyed, buffer } = this;
-      if (destroyed)
-        throw new Error("CMAC instance was destroyed");
-      abytes3(data);
-      const newBuffer = new Uint8Array(buffer.length + data.length);
-      newBuffer.set(buffer);
-      newBuffer.set(data, buffer.length);
-      this.buffer = newBuffer;
-      return this;
-    }
-    // see https://www.rfc-editor.org/rfc/rfc4493.html#section-2.4
-    digest() {
-      if (this.destroyed)
-        throw new Error("CMAC instance was destroyed");
-      const { buffer } = this;
-      const msgLen = buffer.length;
-      let n = Math.ceil(msgLen / BLOCK_SIZE2);
-      let flag;
-      if (n === 0) {
-        n = 1;
-        flag = false;
-      } else {
-        flag = msgLen % BLOCK_SIZE2 === 0;
-      }
-      const lastBlockStart = (n - 1) * BLOCK_SIZE2;
-      const lastBlockData = buffer.subarray(lastBlockStart);
-      let m_last;
-      if (flag) {
-        m_last = xorBlock(new Uint8Array(lastBlockData), this.k1);
-      } else {
-        const padded = new Uint8Array(BLOCK_SIZE2);
-        padded.set(lastBlockData);
-        padded[lastBlockData.length] = 128;
-        m_last = xorBlock(padded, this.k2);
-      }
-      let x = new Uint8Array(BLOCK_SIZE2);
-      for (let i = 0; i < n - 1; i++) {
-        const m_i = buffer.subarray(i * BLOCK_SIZE2, (i + 1) * BLOCK_SIZE2);
-        xorBlock(x, m_i);
-        encryptBlock(this.xk, x);
-      }
-      xorBlock(x, m_last);
-      encryptBlock(this.xk, x);
-      clean3(m_last);
-      return x;
-    }
-    destroy() {
-      const { buffer, destroyed, xk, k1, k2 } = this;
-      if (destroyed)
-        return;
-      this.destroyed = true;
-      clean3(buffer, xk, k1, k2);
-    }
-  };
-  var cmac = (key, message) => new _CMAC(key).update(message).digest();
-  cmac.create = (key) => new _CMAC(key);
-
-  // node_modules/ts-mls/dist/src/crypto/implementation/noble/makeAead.js
-  async function makeAead(aeadAlg) {
-    switch (aeadAlg) {
-      case "AES128GCM":
-        return [
-          {
-            encrypt(key, nonce, aad, plaintext) {
-              return encryptAesGcm(key, nonce, aad, plaintext);
-            },
-            decrypt(key, nonce, aad, ciphertext) {
-              return decryptAesGcm(key, nonce, aad, ciphertext);
-            }
-          },
-          new Aes128Gcm()
-        ];
-      case "AES256GCM":
-        return [
-          {
-            encrypt(key, nonce, aad, plaintext) {
-              return encryptAesGcm(key, nonce, aad, plaintext);
-            },
-            decrypt(key, nonce, aad, ciphertext) {
-              return decryptAesGcm(key, nonce, aad, ciphertext);
-            }
-          },
-          new Aes256Gcm()
-        ];
-      case "CHACHA20POLY1305":
-        try {
-          const { Chacha20Poly1305 } = await import("@hpke/chacha20poly1305");
-          const { chacha20poly1305: chacha20poly13052 } = await Promise.resolve().then(() => (init_chacha(), chacha_exports));
-          return [
-            {
-              async encrypt(key, nonce, aad, plaintext) {
-                return chacha20poly13052(key, nonce, aad).encrypt(plaintext);
-              },
-              async decrypt(key, nonce, aad, ciphertext) {
-                return chacha20poly13052(key, nonce, aad).decrypt(ciphertext);
-              }
-            },
-            new Chacha20Poly1305()
-          ];
-        } catch (err) {
-          throw new DependencyError("Optional dependency '@hpke/chacha20poly1305' is not installed. Please install it to use this feature.");
-        }
-    }
-  }
-  async function encryptAesGcm(key, nonce, aad, plaintext) {
-    const cipher = gcm(key, nonce, aad);
-    return cipher.encrypt(plaintext);
-  }
-  async function decryptAesGcm(key, nonce, aad, ciphertext) {
-    const cipher = gcm(key, nonce, aad);
-    return cipher.decrypt(ciphertext);
-  }
-
-  // node_modules/ts-mls/dist/src/crypto/implementation/noble/makeHpke.js
-  async function makeHpke(hpkealg) {
-    const [aead, aeadInterface] = await makeAead(hpkealg.aead);
-    const cs = new CipherSuite({
-      kem: await makeDhKem(hpkealg.kem),
-      kdf: makeKdf(hpkealg.kdf),
-      aead: aeadInterface
+  var transactionDoneMap = /* @__PURE__ */ new WeakMap();
+  var transformCache = /* @__PURE__ */ new WeakMap();
+  var reverseTransformCache = /* @__PURE__ */ new WeakMap();
+  function promisifyRequest(request2) {
+    const promise = new Promise((resolve, reject) => {
+      const unlisten = () => {
+        request2.removeEventListener("success", success);
+        request2.removeEventListener("error", error);
+      };
+      const success = () => {
+        resolve(wrap(request2.result));
+        unlisten();
+      };
+      const error = () => {
+        reject(request2.error);
+        unlisten();
+      };
+      request2.addEventListener("success", success);
+      request2.addEventListener("error", error);
     });
-    return makeGenericHpke(hpkealg, aead, cs);
+    reverseTransformCache.set(promise, request2);
+    return promise;
   }
-
-  // node_modules/ts-mls/dist/src/crypto/implementation/noble/provider.js
-  var nobleCryptoProvider = {
-    async getCiphersuiteImpl(cs) {
-      return {
-        kdf: makeKdfImpl(makeKdf(cs.hpke.kdf)),
-        hash: makeHashImpl(cs.hash),
-        signature: await makeNobleSignatureImpl(cs.signature),
-        hpke: await makeHpke(cs.hpke),
-        rng: defaultRng,
-        name: cs.name
+  function cacheDonePromiseForTransaction(tx) {
+    if (transactionDoneMap.has(tx))
+      return;
+    const done = new Promise((resolve, reject) => {
+      const unlisten = () => {
+        tx.removeEventListener("complete", complete);
+        tx.removeEventListener("error", error);
+        tx.removeEventListener("abort", error);
+      };
+      const complete = () => {
+        resolve();
+        unlisten();
+      };
+      const error = () => {
+        reject(tx.error || new DOMException("AbortError", "AbortError"));
+        unlisten();
+      };
+      tx.addEventListener("complete", complete);
+      tx.addEventListener("error", error);
+      tx.addEventListener("abort", error);
+    });
+    transactionDoneMap.set(tx, done);
+  }
+  var idbProxyTraps = {
+    get(target, prop, receiver) {
+      if (target instanceof IDBTransaction) {
+        if (prop === "done")
+          return transactionDoneMap.get(target);
+        if (prop === "store") {
+          return receiver.objectStoreNames[1] ? void 0 : receiver.objectStore(receiver.objectStoreNames[0]);
+        }
+      }
+      return wrap(target[prop]);
+    },
+    set(target, prop, value) {
+      target[prop] = value;
+      return true;
+    },
+    has(target, prop) {
+      if (target instanceof IDBTransaction && (prop === "done" || prop === "store")) {
+        return true;
+      }
+      return prop in target;
+    }
+  };
+  function replaceTraps(callback) {
+    idbProxyTraps = callback(idbProxyTraps);
+  }
+  function wrapFunction(func) {
+    if (getCursorAdvanceMethods().includes(func)) {
+      return function(...args) {
+        func.apply(unwrap(this), args);
+        return wrap(this.request);
       };
     }
+    return function(...args) {
+      return wrap(func.apply(unwrap(this), args));
+    };
+  }
+  function transformCachableValue(value) {
+    if (typeof value === "function")
+      return wrapFunction(value);
+    if (value instanceof IDBTransaction)
+      cacheDonePromiseForTransaction(value);
+    if (instanceOfAny(value, getIdbProxyableTypes()))
+      return new Proxy(value, idbProxyTraps);
+    return value;
+  }
+  function wrap(value) {
+    if (value instanceof IDBRequest)
+      return promisifyRequest(value);
+    if (transformCache.has(value))
+      return transformCache.get(value);
+    const newValue = transformCachableValue(value);
+    if (newValue !== value) {
+      transformCache.set(value, newValue);
+      reverseTransformCache.set(newValue, value);
+    }
+    return newValue;
+  }
+  var unwrap = (value) => reverseTransformCache.get(value);
+  function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
+    const request2 = indexedDB.open(name, version);
+    const openPromise = wrap(request2);
+    if (upgrade) {
+      request2.addEventListener("upgradeneeded", (event) => {
+        upgrade(wrap(request2.result), event.oldVersion, event.newVersion, wrap(request2.transaction), event);
+      });
+    }
+    if (blocked) {
+      request2.addEventListener("blocked", (event) => blocked(
+        // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
+        event.oldVersion,
+        event.newVersion,
+        event
+      ));
+    }
+    openPromise.then((db) => {
+      if (terminated)
+        db.addEventListener("close", () => terminated());
+      if (blocking) {
+        db.addEventListener("versionchange", (event) => blocking(event.oldVersion, event.newVersion, event));
+      }
+    }).catch(() => {
+    });
+    return openPromise;
+  }
+  var readMethods = ["get", "getKey", "getAll", "getAllKeys", "count"];
+  var writeMethods = ["put", "add", "delete", "clear"];
+  var cachedMethods = /* @__PURE__ */ new Map();
+  function getMethod(target, prop) {
+    if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === "string")) {
+      return;
+    }
+    if (cachedMethods.get(prop))
+      return cachedMethods.get(prop);
+    const targetFuncName = prop.replace(/FromIndex$/, "");
+    const useIndex = prop !== targetFuncName;
+    const isWrite = writeMethods.includes(targetFuncName);
+    if (
+      // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
+      !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))
+    ) {
+      return;
+    }
+    const method = async function(storeName, ...args) {
+      const tx = this.transaction(storeName, isWrite ? "readwrite" : "readonly");
+      let target2 = tx.store;
+      if (useIndex)
+        target2 = target2.index(args.shift());
+      return (await Promise.all([
+        target2[targetFuncName](...args),
+        isWrite && tx.done
+      ]))[0];
+    };
+    cachedMethods.set(prop, method);
+    return method;
+  }
+  replaceTraps((oldTraps) => ({
+    ...oldTraps,
+    get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
+    has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
+  }));
+  var advanceMethodProps = ["continue", "continuePrimaryKey", "advance"];
+  var methodMap = {};
+  var advanceResults = /* @__PURE__ */ new WeakMap();
+  var ittrProxiedCursorToOriginalProxy = /* @__PURE__ */ new WeakMap();
+  var cursorIteratorTraps = {
+    get(target, prop) {
+      if (!advanceMethodProps.includes(prop))
+        return target[prop];
+      let cachedFunc = methodMap[prop];
+      if (!cachedFunc) {
+        cachedFunc = methodMap[prop] = function(...args) {
+          advanceResults.set(this, ittrProxiedCursorToOriginalProxy.get(this)[prop](...args));
+        };
+      }
+      return cachedFunc;
+    }
   };
+  async function* iterate(...args) {
+    let cursor = this;
+    if (!(cursor instanceof IDBCursor)) {
+      cursor = await cursor.openCursor(...args);
+    }
+    if (!cursor)
+      return;
+    cursor = cursor;
+    const proxiedCursor = new Proxy(cursor, cursorIteratorTraps);
+    ittrProxiedCursorToOriginalProxy.set(proxiedCursor, cursor);
+    reverseTransformCache.set(proxiedCursor, unwrap(cursor));
+    while (cursor) {
+      yield proxiedCursor;
+      cursor = await (advanceResults.get(proxiedCursor) || cursor.continue());
+      advanceResults.delete(proxiedCursor);
+    }
+  }
+  function isIteratorProp(target, prop) {
+    return prop === Symbol.asyncIterator && instanceOfAny(target, [IDBIndex, IDBObjectStore, IDBCursor]) || prop === "iterate" && instanceOfAny(target, [IDBIndex, IDBObjectStore]);
+  }
+  replaceTraps((oldTraps) => ({
+    ...oldTraps,
+    get(target, prop, receiver) {
+      if (isIteratorProp(target, prop))
+        return iterate;
+      return oldTraps.get(target, prop, receiver);
+    },
+    has(target, prop) {
+      return isIteratorProp(target, prop) || oldTraps.has(target, prop);
+    }
+  }));
+
+  // src/model/config.ts
+  var ConfigID = "config";
+  function NewConfig() {
+    return {
+      id: ConfigID,
+      ready: false,
+      welcome: false,
+      hasEncryptionKeys: false,
+      password: "",
+      passwordHint: "",
+      clientName: "Unknown Device"
+    };
+  }
 
   // src/model/group.ts
   function NewGroup() {
@@ -15417,6 +14738,7 @@
       group: "",
       sender: "",
       plaintext: "",
+      likes: [],
       createDate: Date.now()
     };
   }
@@ -15439,112 +14761,50 @@
     });
   }
   var Database = class {
-    constructor(db, clientConfig) {
-      // setChange allows the caller to provide a redraw function that will be called after database operations
-      this.onchange = (callback) => {
-        this.#onchange = callback;
-      };
-      /////////////////////////////////////////////
-      // Config
-      /////////////////////////////////////////////
-      // loadConfig retrieves the config record from the database
-      this.loadConfig = async () => {
-        var result = await this.#db.get("config", ConfigID);
-        if (result == void 0) {
-          result = NewConfig();
-        }
-        result.ready = true;
-        return result;
-      };
-      // saveConfig saves the config record to the database
-      this.saveConfig = async (config) => {
-        config.id = ConfigID;
-        config.ready = true;
-        await this.#db.put("config", config);
-      };
-      /////////////////////////////////////////////
-      // Contacts
-      /////////////////////////////////////////////
-      // allContacts returns all contacts from the database
-      this.allContacts = async () => {
-        return await this.#db.getAll("contact");
-      };
-      // getContact retrieves a single contact from the database by ID
-      this.getContact = async (id) => {
-        return this.#db.get("contact", id);
-      };
-      // saveContact saves a single contact to the database
-      this.saveContact = async (contact) => {
-        await this.#db.put("contact", contact);
-      };
-      // saveGroup saves a group to the database
-      this.saveGroup = async (group) => {
-        await this.#db.put("group", group);
-        this.#onchange();
-      };
-      // loadGroup retrieves a group from the database
-      this.loadGroup = async (groupID) => {
-        const group = await this.#db.get("group", groupID);
-        if (group == void 0) {
-          throw new Error("Group not found: " + groupID);
-        }
-        return group;
-      };
-      // deleteGroup removes a group from the database
-      this.deleteGroup = async (group) => {
-        const messages = await this.#db.getAllKeysFromIndex("message", "group", group);
-        for (const message of messages) {
-          await this.#db.delete("message", message);
-        }
-        await this.#db.delete("group", group);
-        this.#onchange();
-      };
-      /////////////////////////////////////////////
-      // Private KeyPackage
-      /////////////////////////////////////////////
-      this.loadKeyPackage = async () => {
-        const keyPackage = await this.#db.get("keyPackage", "self");
-        return keyPackage;
-      };
-      this.saveKeyPackage = async (keyPackage) => {
-        await this.#db.put("keyPackage", keyPackage);
-      };
-      /////////////////////////////////////////////
-      // Messages
-      /////////////////////////////////////////////
-      // allMessages returns all messages in the specified group, sorted by createDate ascending
-      // TODO: This will need to be limited or pagincated for long discussions.
-      this.allMessages = async (group) => {
-        var messages = await this.#db.getAllFromIndex("message", "group", group);
-        messages.sort((a, b) => a.createDate - b.createDate);
-        return messages;
-      };
-      // loadMessage retrieves a message from the database
-      this.loadMessage = async (messageID) => {
-        const message = await this.#db.get("message", messageID);
-        if (message == void 0) {
-          throw new Error("Message not found: " + messageID);
-        }
-        return message;
-      };
-      // saveMessage saves a message to the database
-      this.saveMessage = async (message) => {
-        await this.#db.put("message", message);
-        this.#onchange();
-      };
-      // deleteMessage removes a message from the database
-      this.deleteMessage = async (messageId) => {
-        await this.#db.delete("message", messageId);
-        this.#onchange();
-      };
+    #db;
+    #onchange;
+    constructor(db) {
       this.#db = db;
-      this.#clientConfig = clientConfig;
       this.#onchange = () => {
       };
     }
-    #db;
-    #clientConfig;
-    #onchange;
+    // setChange allows the caller to provide a redraw function that will be called after database operations
+    onchange = (callback) => {
+      this.#onchange = callback;
+    };
+    /////////////////////////////////////////////
+    // Config
+    /////////////////////////////////////////////
+    // loadConfig retrieves the config record from the database
+    loadConfig = async () => {
+      var result = await this.#db.get("config", ConfigID);
+      if (result == void 0) {
+        result = NewConfig();
+      }
+      result.ready = true;
+      return result;
+    };
+    // saveConfig saves the config record to the database
+    saveConfig = async (config) => {
+      config.id = ConfigID;
+      config.ready = true;
+      await this.#db.put("config", config);
+    };
+    /////////////////////////////////////////////
+    // Contacts
+    /////////////////////////////////////////////
+    // allContacts returns all contacts from the database
+    allContacts = async () => {
+      return await this.#db.getAll("contact");
+    };
+    // getContact retrieves a single contact from the database by ID
+    getContact = async (id) => {
+      return this.#db.get("contact", id);
+    };
+    // saveContact saves a single contact to the database
+    saveContact = async (contact) => {
+      await this.#db.put("contact", contact);
+    };
     /////////////////////////////////////////////
     // Groups
     /////////////////////////////////////////////
@@ -15554,89 +14814,189 @@
       groups.sort((a, b) => b.updateDate - a.updateDate);
       return groups;
     }
+    // saveGroup saves a group to the database
+    saveGroup = async (group) => {
+      await this.#db.put("group", group);
+      this.#onchange();
+    };
+    // loadGroup retrieves a group from the database
+    loadGroup = async (groupID) => {
+      const group = await this.#db.get("group", groupID);
+      if (group == void 0) {
+        return void 0;
+      }
+      return group;
+    };
+    // deleteGroup removes a group from the database
+    deleteGroup = async (group) => {
+      const messages = await this.#db.getAllKeysFromIndex("message", "group", group);
+      for (const message of messages) {
+        await this.#db.delete("message", message);
+      }
+      await this.#db.delete("group", group);
+      this.#onchange();
+    };
+    /////////////////////////////////////////////
+    // Private KeyPackage
+    /////////////////////////////////////////////
+    loadKeyPackage = async () => {
+      const keyPackage = await this.#db.get("keyPackage", "self");
+      return keyPackage;
+    };
+    saveKeyPackage = async (keyPackage) => {
+      await this.#db.put("keyPackage", keyPackage);
+    };
+    /////////////////////////////////////////////
+    // Messages
+    /////////////////////////////////////////////
+    // allMessages returns all messages in the specified group, sorted by createDate ascending
+    // TODO: This will need to be limited or pagincated for long discussions.
+    allMessages = async (group) => {
+      var messages = await this.#db.getAllFromIndex("message", "group", group);
+      messages.sort((a, b) => a.createDate - b.createDate);
+      return messages;
+    };
+    // loadMessage retrieves a message from the database
+    loadMessage = async (messageID) => {
+      const message = await this.#db.get("message", messageID);
+      if (message == void 0) {
+        throw new Error("Message not found: " + messageID);
+      }
+      return message;
+    };
+    // saveMessage saves a message to the database
+    saveMessage = async (message) => {
+      await this.#db.put("message", message);
+      this.#onchange();
+    };
+    // deleteMessage removes a message from the database
+    deleteMessage = async (messageId) => {
+      await this.#db.delete("message", messageId);
+      this.#onchange();
+    };
+    // likeMessage adds a "like" from the specified actor to the specified message
+    likeMessage = async (actorId, messageId) => {
+      var message = await this.loadMessage(messageId);
+      if (message == void 0) {
+        console.log("Error: cannot like message that doesn't exist");
+        return;
+      }
+      if (message.likes == void 0) {
+        message.likes = [];
+      }
+      if (message.likes.includes(actorId)) {
+        return;
+      }
+      message.likes.push(actorId);
+      await this.saveMessage(message);
+      return message;
+    };
+    undoLikeMessage = async (actorId, messageId) => {
+      var message = await this.loadMessage(messageId);
+      if (message == void 0) {
+        console.log("Error: cannot undo like on message that doesn't exist");
+        return void 0;
+      }
+      if (message.likes == void 0) {
+        message.likes = [];
+      }
+      if (!message.likes.includes(actorId)) {
+        return void 0;
+      }
+      message.likes = message.likes.filter((id) => id !== actorId);
+      await this.saveMessage(message);
+      return message;
+    };
   };
+
+  // src/ap/vocab.ts
+  var ActivityTypeCreate = "Create";
+  var ActivityTypeDelete = "Delete";
+  var ActivityTypeLike = "Like";
+  var ActivityTypeUndo = "Undo";
+  var ActivityTypeUpdate = "Update";
+  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
+  var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var EncodingTypeBase64 = "base64";
+  var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeNote = "Note";
+  var ObjectTypeMLSPrivateMessage = "mls:PrivateMessage";
+  var PropertyActor = "actor";
+  var PropertyContext = "context";
+  var PropertyObject = "object";
+  var PropertyTarget = "target";
+  var PropertyTo = "to";
 
   // src/ap/document.ts
   var Document = class extends Object2 {
-    constructor() {
-      super(...arguments);
-      //
-      ///////////////////////////////////
-      // Setters
-      // setContext sets the context property (NOT @context) on the Document struct
-      this.setContext = (context) => {
-        this.set(PropertyContext, context);
-      };
-      ///////////////////////////////////
-      // Property accessors
-      // attributedTo returns the value of the "attributedTo" property
-      this.attributedTo = async () => {
-        const attributedTo = this.get("as", "attributedTo");
-        return await loadActor(attributedTo);
-      };
-      // attributedToId returns the string/id value of the "attributedTo" property
-      this.attributedToId = () => {
-        return this.getString("as", "attributedTo");
-      };
-      // content returns the value of the "content" property
-      this.content = () => {
-        return this.getString("as", "content");
-      };
-      // context returns the value of the "context" property (NOT @context)
-      this.context = () => {
-        return this.getString("as", "context");
-      };
-      // icon returns the value of the "icon" property
-      this.icon = () => {
-        return this.getString("as", "icon");
-      };
-      // inReplyTo returns the string/id value of the "inReplyTo" property
-      this.inReplyToId = () => {
-        return this.getString("as", "inReplyTo");
-      };
-      // inReplyTo returns the value of the "inReplyTo" property
-      this.inReplyTo = () => {
-        const inReplyTo = this.get("as", "inReplyTo");
-        return loadDocument(inReplyTo);
-      };
-      // name returns the value of the "name" property
-      this.name = () => {
-        return this.getString("as", "name");
-      };
-      // summary returns the value of the "summary" property
-      this.summary = () => {
-        return this.getString("as", "summary");
-      };
-      // to returns the value of the "to" property
-      this.to = async () => {
-        const result = await this.getArray("as", "to");
-        return result.map(async (actor) => await loadActor(actor));
-      };
-      ///////////////////////////////////
-      // MLS-specific properties
-      this.encoding = () => {
-        return this.getString("mls", "encoding");
-      };
-      // isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
-      this.isMLSMessage = () => {
-        if (this.mediaType() == MediaTypeMLSMessage) {
-          if (this.encoding() == EncodingTypeBase64) {
-            if (this.content() != "") {
-              return true;
-            }
+    ///////////////////////////////////
+    // Property accessors
+    // attributedTo returns the value of the "attributedTo" property
+    attributedTo = async () => {
+      const attributedTo = this.get("as", "attributedTo");
+      return await loadActor(attributedTo);
+    };
+    // attributedToId returns the string/id value of the "attributedTo" property
+    attributedToId = () => {
+      return this.getString("as", "attributedTo");
+    };
+    // content returns the value of the "content" property
+    content = () => {
+      return this.getString("as", "content");
+    };
+    // icon returns the value of the "icon" property
+    icon = () => {
+      return this.getString("as", "icon");
+    };
+    // inReplyTo returns the string/id value of the "inReplyTo" property
+    inReplyToId = () => {
+      return this.getString("as", "inReplyTo");
+    };
+    // inReplyTo returns the value of the "inReplyTo" property
+    inReplyTo = () => {
+      const inReplyTo = this.get("as", "inReplyTo");
+      return loadDocument(inReplyTo);
+    };
+    // name returns the value of the "name" property
+    name = () => {
+      return this.getString("as", "name");
+    };
+    // summary returns the value of the "summary" property
+    summary = () => {
+      return this.getString("as", "summary");
+    };
+    // to returns the value of the "to" property
+    to = async () => {
+      const result = await this.getArray("as", "to");
+      return result.map(async (actor) => await loadActor(actor));
+    };
+    ///////////////////////////////////
+    // MLS-specific properties
+    encoding = () => {
+      return this.getString("mls", "encoding");
+    };
+    // isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
+    isMLSMessage = () => {
+      if (this.mediaType() == MediaTypeMLSMessage) {
+        if (this.encoding() == EncodingTypeBase64) {
+          if (this.content() != "") {
+            return true;
           }
         }
-        return false;
-      };
-      this.mediaType = () => {
-        return this.getString("mls", "mediaType");
-      };
-    }
+      }
+      return false;
+    };
+    mediaType = () => {
+      return this.getString("mls", "mediaType");
+    };
   };
   async function loadDocument(value) {
     switch (typeof value) {
       case "string":
-        return await new Document().fromURL(value);
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+          return await new Document().fromURL(value);
+        }
+        return new Document();
       case "object":
         if (Array.isArray(value)) {
           if (value.length > 0) {
@@ -15651,46 +15011,54 @@
 
   // src/ap/activity.ts
   var Activity = class extends Object2 {
-    constructor() {
-      super(...arguments);
-      //
-      ///////////////////////////////////
-      // Property getters
-      // actor returns the value of the "actor" property
-      this.actor = async () => {
-        const actor = this.get("as", PropertyActor);
-        return await loadActor(actor);
-      };
-      this.actorId = () => {
-        return this.getString("as", PropertyActor);
-      };
-      // object returns the value of the "object" property, which may be either a string URL or an embedded object
-      this.object = async () => {
-        const object = this.get("as", PropertyObject);
-        return await loadDocument(object);
-      };
-      this.objectId = () => {
-        return this.getString("as", PropertyObject);
-      };
-      // target returns the value of the "target" property
-      this.target = async () => {
-        const target = await this.get("as", PropertyTarget);
-        return await loadDocument(target);
-      };
-      // to returns the value of the "to" property
-      this.to = async () => {
-        const result = await this.getArray("as", PropertyTo);
-        return result.map(async (actor) => await loadActor(actor));
-      };
-      ///////////////////////////////////
-      // Property setters
-      this.setObject = (object) => {
-        this.set(PropertyObject, object.toObject());
-      };
-      this.setObjectId = (id) => {
-        this.set(PropertyObject, id);
-      };
-    }
+    ///////////////////////////////////
+    // Property getters
+    ///////////////////////////////////
+    // actor returns the value of the "actor" property
+    actor = async () => {
+      const actor = this.get("as", PropertyActor);
+      return await loadActor(actor);
+    };
+    // actorId returns the string value of the "actor" property (which may be a URL or an embedded object)
+    actorId = () => {
+      return this.getString("as", PropertyActor);
+    };
+    // context returns the message context (not @context) property for this activity
+    context = () => {
+      return this.getString("as", PropertyContext);
+    };
+    // object returns the value of the "object" property, which may be either a string URL or an embedded object
+    object = async () => {
+      const object = this.get("as", PropertyObject);
+      return await loadDocument(object);
+    };
+    objectId = () => {
+      return this.getString("as", PropertyObject);
+    };
+    // target returns the value of the "target" property
+    target = async () => {
+      const target = this.get("as", PropertyTarget);
+      return await loadDocument(target);
+    };
+    // to returns the value of the "to" property
+    to = async () => {
+      const result = await this.getArray("as", PropertyTo);
+      return result.map(async (actor) => await loadActor(actor));
+    };
+    ///////////////////////////////////
+    // Property setters
+    // setContext sets the context property (NOT @context) of this Activity
+    setContext = (context) => {
+      this.set(PropertyContext, context);
+    };
+    // setObject sets the object property of this Activity
+    setObject = (object) => {
+      this.set(PropertyObject, object.toObject());
+    };
+    // setObjectId sets the object property of this Activity as a string ID (instead of an embedded object)
+    setObjectId = (id) => {
+      this.set(PropertyObject, id);
+    };
   };
   async function loadActivity(value) {
     switch (typeof value) {
@@ -15707,95 +15075,6 @@
     }
     return new Activity();
   }
-
-  // src/service/delivery.ts
-  var Delivery = class {
-    constructor(actorId, outboxUrl) {
-      /**
-       * load GETs an ActivityPub resource with proper Accept headers.
-       * If a URL is provided, then it fetches the resource from the network.
-       * If an object is provided, it simply returns it.
-       *
-       * @param url - The URL to fetch
-       * @returns The parsed JSON response
-       * @throws Error if the fetch fails
-       */
-      this.load = async (url) => {
-        if (typeof url != "string") {
-          return url;
-        }
-        const response = await fetch(url, {
-          headers: {
-            Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-      };
-      // sendFramedMessage sends an MLS FramedMessage to the specified recipients
-      this.sendFramedMessage = (recipients, message) => {
-        this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
-      };
-      // sendGroupInfo sends an MLS GroupInfo message to the specified recipients
-      this.sendGroupInfo = (recipients, message) => {
-        this.#sendMlsMessage("mls:GroupInfo", recipients, message);
-      };
-      // sendPrivateMessage sends an MLS PrivateMessage to the specified recipients
-      this.sendPrivateMessage = (recipients, message) => {
-        this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
-      };
-      // sendWelcome sends an MLS Welcome message to the specified recipients
-      this.sendWelcome = (recipients, message) => {
-        this.#sendMlsMessage("mls:Welcome", recipients, message);
-      };
-      // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-      this.#sendMlsMessage = async (type, recipients, message) => {
-        recipients = recipients.filter((recipient) => recipient !== this.#actorId);
-        if (recipients.length === 0) {
-          return;
-        }
-        const contentBytes = encode(mlsMessageEncoder, message);
-        const contentBase64 = bytesToBase64(contentBytes);
-        const activity = {
-          "@context": [ContextActivityStreams, { mls: ContextMLS }],
-          type: ActivityTypeCreate,
-          actor: this.#actorId,
-          to: recipients,
-          object: {
-            type,
-            attributedTo: this.#actorId,
-            to: recipients,
-            content: contentBase64,
-            mediaType: "message/mls",
-            "mls:encoding": "base64"
-          }
-        };
-        return this.sendActivity(new Activity(activity));
-      };
-      // sendActivity sends an activity to the Actor's outbox
-      this.sendActivity = async (activity) => {
-        console.log("Sending activity:", activity.toJSON());
-        const response = await fetch(this.#outboxUrl, {
-          method: "POST",
-          body: activity.toJSON(),
-          credentials: "include"
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
-        }
-      };
-      this.#actorId = actorId;
-      this.#outboxUrl = outboxUrl;
-    }
-    //
-    // actorId is the ID of the user sending messages
-    #actorId;
-    // outboxUrl is the URL of the user's outbox
-    #outboxUrl;
-    #sendMlsMessage;
-  };
 
   // src/model/ap-keypackage.ts
   function NewAPKeyPackage(generator, actorID, publicPackage) {
@@ -15819,94 +15098,6 @@
     };
   }
 
-  // src/ap/collection.ts
-  var Collection = class extends Object2 {
-    constructor() {
-      super(...arguments);
-      //
-      // eventStream returns the value of the "eventStream" property
-      this.eventStream = () => {
-        return this.getString("sse", "eventStream");
-      };
-      // first returns the value of the "first" property, which is used for pagination in ActivityPub collections
-      this.first = () => {
-        return this.getString("as", "first");
-      };
-      // items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
-      this.items = () => {
-        var result = [];
-        switch (this.type()) {
-          case "Collection":
-          case "CollectionPage":
-            return this.getArray("as", "items");
-          case "OrderedCollection":
-          case "OrderedCollectionPage":
-            return this.getArray("as", "orderedItems");
-        }
-        return [];
-      };
-      // next returns the value of the "next" property, which is used for pagination in ActivityPub collections
-      this.next = () => {
-        return this.getString("as", "next");
-      };
-      this.totalItems = () => {
-        return this.getInteger("as", "totalItems");
-      };
-    }
-  };
-  async function* rangeActivities(url, after = "", options = {}) {
-    const items = range(url, after, options);
-    for await (const item of items) {
-      yield await loadActivity(item);
-    }
-  }
-  async function* rangeDocuments(url, after = "", options = {}) {
-    const items = range(url, after, options);
-    for await (const item of items) {
-      yield await loadDocument(item);
-    }
-  }
-  async function* range(url, after = "", options = {}) {
-    if (url == "") {
-      return;
-    }
-    if (after != "") {
-      if (url.includes("?")) {
-        url = url + "&after=" + encodeURIComponent(after);
-      } else {
-        url = url + "?after=" + encodeURIComponent(after);
-      }
-    }
-    var collection;
-    try {
-      collection = await new Collection().fromURL(url, options);
-    } catch (error) {
-      console.error("Error fetching collection:", url, error);
-      return;
-    }
-    const items = collection.items();
-    if (items.length > 0) {
-      for await (const item of items) {
-        yield item;
-      }
-      return;
-    }
-    var pageUrl = collection.first() || collection.next();
-    while (pageUrl) {
-      var page;
-      try {
-        page = await new Collection().fromURL(pageUrl, options);
-      } catch (error) {
-        console.log("Error fetching collection page:", pageUrl, error);
-        return;
-      }
-      for await (const item of page.items()) {
-        yield item;
-      }
-      pageUrl = page.next();
-    }
-  }
-
   // src/service/utils.ts
   function base64ToUint8Array(base64) {
     console.log("base64ToUint8Array: Converting base64 string to Uint8Array", base64);
@@ -15922,249 +15113,16 @@
     return "uri:uuid:" + crypto.randomUUID();
   }
 
-  // src/service/directory.ts
-  var Directory = class {
-    // Outbox URL of the local actor
-    constructor(actorID, outboxURL) {
-      // getKeyPackage loads the KeyPackages published by a single actor
-      this.getKeyPackages = async (actorIDs) => {
-        var result = [];
-        for (const actorID of actorIDs) {
-          const actor = await new Actor().fromURL(actorID);
-          const keyPackages = rangeDocuments(actor.mlsKeyPackages());
-          for await (const keyPackage of keyPackages) {
-            const contentBytes = base64ToUint8Array(keyPackage.content());
-            const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
-            if (decodedKeyPackage == void 0) {
-              console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
-              continue;
-            }
-            if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-              console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
-              continue;
-            }
-            result.push(decodedKeyPackage.keyPackage);
-          }
-        }
-        return result;
-      };
-      // createKeyPackage publishes a new KeyPackage to the User's outbox.
-      this.createKeyPackage = async (keyPackage) => {
-        return await this.#createObject(keyPackage);
-      };
-      // createObject POSTs an ActivityPub object to the user's outbox
-      // and returns the Location header from the response
-      this.#createObject = async (object) => {
-        return await this.#send(this.#outboxURL, {
-          "@context": "https://www.w3.org/ns/activitystreams",
-          type: "Create",
-          actor: this.#actorID,
-          object
-        });
-      };
-      // send POSTs an ActivityPub activity to the specified outbox
-      // and returns the Location header from the response
-      this.#send = async (outbox, activity) => {
-        const response = await fetch(outbox, {
-          method: "POST",
-          body: JSON.stringify(activity),
-          credentials: "include"
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
-        }
-        return response.headers.get("Location") || "";
-      };
-      this.getContact = async (id) => {
-        const response = await new Actor().fromURL(id);
-        return ContactFromActor(response);
-      };
-      this.#actorID = actorID;
-      this.#outboxURL = outboxURL;
-    }
-    #actorID;
-    // ID of the local actor
-    #outboxURL;
-    #createObject;
-    #send;
-  };
-
-  // src/service/receiver.ts
-  var Receiver = class {
-    // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
-    // constructor initializes the Receiver with the actor's ID and messages URL
-    constructor(actorId, messagesUrl) {
-      // registerHandler adds a new MessageHandler to the list of handlers that will be called
-      this.registerHandler = (handler) => {
-        this.#handler = handler;
-      };
-      // start begins polling for new messages and processing them with the registered handlers
-      this.start = async () => {
-        this.poll();
-        const collection = await new Collection().fromURL(this.#messagesUrl);
-        const sseEndpoint = collection.eventStream();
-        if (sseEndpoint != "") {
-          this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
-          this.#eventSource.onmessage = (event) => {
-            this.poll();
-          };
-        }
-      };
-      // poll retrieves new messages from the mls:messages collection and calls the
-      // onMessage callback for each new message
-      this.poll = async () => {
-        if (this.#polling) {
-          this.#pollAgain = true;
-          return;
-        }
-        this.#polling = true;
-        const lastUrl = localStorage.getItem("lastUrl") || "";
-        const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" });
-        for await (const activity of activities) {
-          console.log("Received activity:", activity.toJSON());
-          localStorage.setItem("lastUrl", activity.id());
-          await this.#handler(activity);
-        }
-        this.#polling = false;
-        if (this.#pollAgain) {
-          this.#pollAgain = false;
-          this.poll();
-        }
-      };
-      this.#actorId = actorId;
-      this.#messagesUrl = messagesUrl;
-      this.#handler = async function(activity) {
-      };
-      this.#polling = false;
-      this.#pollAgain = false;
-    }
-    //
-    #actorId;
-    // ID of the user receiving messages
-    #messagesUrl;
-    // endpoint for the actor's mls:messages collection
-    #eventSource;
-    // EventSource for listening to server-sent events (SSE)
-    #handler;
-    // list of registered message handlers
-    #polling;
-    // Pseudo-lock to prevent simultaneous polls
-    #pollAgain;
-  };
-
-  // src/controller.ts
-  var import_mithril = __toESM(require_mithril(), 1);
-
   // src/service/mls.ts
   var MLS = class {
+    #database;
+    #delivery;
+    #directory;
+    #cipherSuite;
+    #publicKeyPackage;
+    #privateKeyPackage;
+    #actor;
     constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
-      /// Sending Messages
-      // createGroup creates a new MLS group and saves it to the database
-      this.createGroup = async () => {
-        const context = this.#context();
-        const groupID = "uri:uuid:" + crypto.randomUUID();
-        const groupIDBytes = new TextEncoder().encode(groupID);
-        const clientState = await createGroup({
-          context,
-          groupId: groupIDBytes,
-          keyPackage: this.#publicKeyPackage,
-          privateKeyPackage: this.#privateKeyPackage
-        });
-        const group = {
-          id: groupID,
-          members: [],
-          name: "New Group",
-          tags: [],
-          lastMessage: "",
-          clientState,
-          createDate: Date.now(),
-          updateDate: Date.now(),
-          readDate: Date.now()
-        };
-        await this.#database.saveGroup(group);
-        return group;
-      };
-      // addGroupMembers updates the group state.  It sends a Commit
-      // message to existing members, and a Welcome message to new members,
-      this.addGroupMembers = async (group, newMembers) => {
-        const currentMembers = group.members;
-        const keyPackages = await this.#directory.getKeyPackages(newMembers);
-        const addProposals = keyPackages.map((keyPackage) => ({
-          proposalType: defaultProposalTypes.add,
-          add: {
-            keyPackage
-          }
-        }));
-        const commitResult = await createCommit({
-          context: this.#context(),
-          state: group.clientState,
-          extraProposals: addProposals,
-          ratchetTreeExtension: true
-        });
-        commitResult.consumed.forEach(zeroOutUint8Array);
-        group.clientState = commitResult.newState;
-        group.members = currentMembers.concat(newMembers);
-        await this.#database.saveGroup(group);
-        if (commitResult.welcome != void 0) {
-          this.#delivery.sendWelcome(newMembers, commitResult.welcome);
-        }
-        if (currentMembers.length > 0) {
-          this.#delivery.sendFramedMessage(currentMembers, commitResult.commit);
-        }
-        return group;
-      };
-      // getGroupMembers returns the list of member IDs for a given group
-      this.getGroupMembers = async (group) => {
-        const leafNodes = await getGroupMembers(group.clientState);
-        const members = leafNodes.map((leaf) => {
-          const credential = leaf.credential;
-          if (credential.identity != void 0) {
-            return new TextDecoder().decode(credential.identity);
-          }
-          return "";
-        }).filter((identity) => identity != "");
-        return members;
-      };
-      this.encodeActivity = async (group, activity) => {
-        const messageText = activity.toJSON();
-        const messageBytes = new TextEncoder().encode(messageText);
-        const applicationMessage = await createApplicationMessage({
-          context: this.#context(),
-          state: group.clientState,
-          message: messageBytes
-        });
-        applicationMessage.consumed.forEach(zeroOutUint8Array);
-        group.clientState = applicationMessage.newState;
-        group.updateDate = Date.now();
-        await this.#database.saveGroup(group);
-        const contentBytes = encode(mlsMessageEncoder, applicationMessage.message);
-        const contentBase64 = bytesToBase64(contentBytes);
-        const recipients = group.members.filter((member) => member !== this.#actor.id());
-        const result = new Activity({
-          "@context": [ContextActivityStreams, { mls: ContextMLS }],
-          id: newId2(),
-          actor: this.#actor.id(),
-          type: ActivityTypeCreate,
-          to: recipients,
-          object: {
-            type: ObjectTypeMLSPrivateMessage,
-            attributedTo: this.#actor.id(),
-            to: recipients,
-            content: contentBase64,
-            mediaType: "message/mls",
-            "mls:encoding": "base64"
-          }
-        });
-        return result;
-      };
-      /// Helper methods
-      // Use arrow function to preserve "this" context when passing as a callback
-      this.#context = () => {
-        return {
-          cipherSuite: this.#cipherSuite,
-          authService: unsafeTestingAuthenticationService
-        };
-      };
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
@@ -16173,13 +15131,105 @@
       this.#publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
     }
-    #database;
-    #delivery;
-    #directory;
-    #cipherSuite;
-    #publicKeyPackage;
-    #privateKeyPackage;
-    #actor;
+    /// Sending Messages
+    // createGroup creates a new MLS group and saves it to the database
+    createGroup = async () => {
+      const context = this.#context();
+      const groupID = "uri:uuid:" + crypto.randomUUID();
+      const groupIDBytes = new TextEncoder().encode(groupID);
+      const clientState = await createGroup({
+        context,
+        groupId: groupIDBytes,
+        keyPackage: this.#publicKeyPackage,
+        privateKeyPackage: this.#privateKeyPackage
+      });
+      const group = {
+        id: groupID,
+        members: [],
+        name: "New Group",
+        tags: [],
+        lastMessage: "",
+        clientState,
+        createDate: Date.now(),
+        updateDate: Date.now(),
+        readDate: Date.now()
+      };
+      await this.#database.saveGroup(group);
+      return group;
+    };
+    // addGroupMembers updates the group state.  It sends a Commit
+    // message to existing members, and a Welcome message to new members,
+    addGroupMembers = async (group, newMembers) => {
+      const currentMembers = group.members;
+      const keyPackages = await this.#directory.getKeyPackages(newMembers);
+      const addProposals = keyPackages.map((keyPackage) => ({
+        proposalType: defaultProposalTypes.add,
+        add: {
+          keyPackage
+        }
+      }));
+      const commitResult = await createCommit({
+        context: this.#context(),
+        state: group.clientState,
+        extraProposals: addProposals,
+        ratchetTreeExtension: true
+      });
+      commitResult.consumed.forEach(zeroOutUint8Array);
+      group.clientState = commitResult.newState;
+      group.members = currentMembers.concat(newMembers);
+      await this.#database.saveGroup(group);
+      if (commitResult.welcome != void 0) {
+        this.#delivery.sendWelcome(newMembers, commitResult.welcome);
+      }
+      if (currentMembers.length > 0) {
+        this.#delivery.sendFramedMessage(currentMembers, commitResult.commit);
+      }
+      return group;
+    };
+    // getGroupMembers returns the list of member IDs for a given group
+    getGroupMembers = async (group) => {
+      const leafNodes = await getGroupMembers(group.clientState);
+      const members = leafNodes.map((leaf) => {
+        const credential = leaf.credential;
+        if (credential.identity != void 0) {
+          return new TextDecoder().decode(credential.identity);
+        }
+        return "";
+      }).filter((identity) => identity != "");
+      return members;
+    };
+    encodeActivity = async (group, activity) => {
+      const messageText = activity.toJSON();
+      const messageBytes = new TextEncoder().encode(messageText);
+      const applicationMessage = await createApplicationMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: messageBytes
+      });
+      applicationMessage.consumed.forEach(zeroOutUint8Array);
+      group.clientState = applicationMessage.newState;
+      group.updateDate = Date.now();
+      await this.#database.saveGroup(group);
+      const contentBytes = encode(mlsMessageEncoder, applicationMessage.message);
+      const contentBase64 = bytesToBase64(contentBytes);
+      const recipients = group.members.filter((member) => member !== this.#actor.id());
+      const result = new Activity({
+        "@context": [ContextActivityStreams, { mls: ContextMLS }],
+        id: newId2(),
+        actor: this.#actor.id(),
+        type: ActivityTypeCreate,
+        to: recipients,
+        object: {
+          type: ObjectTypeMLSPrivateMessage,
+          attributedTo: this.#actor.id(),
+          to: recipients,
+          content: contentBase64,
+          mediaType: "message/mls",
+          "mls:encoding": "base64"
+        }
+      });
+      return result;
+    };
     /// Receiving Activities
     // use arrow function to preserve "this" context when passing as a callback
     async decodeMessage(message) {
@@ -16236,6 +15286,10 @@
     async #onMessage_PrivateMessage(mlsMessage) {
       const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId);
       const group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        console.error("Received message for unknown group", groupId);
+        return null;
+      }
       if (!groupIsEncrypted(group)) {
         throw new Error("Group client state is undefined");
       }
@@ -16253,20 +15307,337 @@
       }
       const plaintext = new TextDecoder().decode(decodedMessage.message);
       var result = new Activity().fromJSON(plaintext);
-      var object = await result.object();
-      if (object.context() == "") {
-        object.setContext(groupId);
-        result.setObject(object);
+      if (result.context() == "") {
+        result.setContext(groupId);
       }
       return result;
     }
-    #context;
+    /// Helper methods
+    // Use arrow function to preserve "this" context when passing as a callback
+    #context = () => {
+      return {
+        cipherSuite: this.#cipherSuite,
+        authService: unsafeTestingAuthenticationService
+      };
+    };
   };
+
+  // src/service/delivery.ts
+  var Delivery = class {
+    //
+    // actorId is the ID of the user sending messages
+    #actorId;
+    // outboxUrl is the URL of the user's outbox
+    #outboxUrl;
+    constructor(actorId, outboxUrl) {
+      this.#actorId = actorId;
+      this.#outboxUrl = outboxUrl;
+    }
+    /**
+     * load GETs an ActivityPub resource with proper Accept headers.
+     * If a URL is provided, then it fetches the resource from the network.
+     * If an object is provided, it simply returns it.
+     *
+     * @param url - The URL to fetch
+     * @returns The parsed JSON response
+     * @throws Error if the fetch fails
+     */
+    load = async (url) => {
+      if (typeof url != "string") {
+        return url;
+      }
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
+      }
+      return response.json();
+    };
+    // sendFramedMessage sends an MLS FramedMessage to the specified recipients
+    sendFramedMessage = (recipients, message) => {
+      this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
+    };
+    // sendGroupInfo sends an MLS GroupInfo message to the specified recipients
+    sendGroupInfo = (recipients, message) => {
+      this.#sendMlsMessage("mls:GroupInfo", recipients, message);
+    };
+    // sendPrivateMessage sends an MLS PrivateMessage to the specified recipients
+    sendPrivateMessage = (recipients, message) => {
+      this.#sendMlsMessage("mls:PrivateMessage", recipients, message);
+    };
+    // sendWelcome sends an MLS Welcome message to the specified recipients
+    sendWelcome = (recipients, message) => {
+      this.#sendMlsMessage("mls:Welcome", recipients, message);
+    };
+    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+    #sendMlsMessage = async (type, recipients, message) => {
+      recipients = recipients.filter((recipient) => recipient !== this.#actorId);
+      if (recipients.length === 0) {
+        return;
+      }
+      const contentBytes = encode(mlsMessageEncoder, message);
+      const contentBase64 = bytesToBase64(contentBytes);
+      const activity = new Activity({
+        "@context": [ContextActivityStreams, { mls: ContextMLS }],
+        type: ActivityTypeCreate,
+        actor: this.#actorId,
+        to: recipients,
+        object: {
+          type,
+          attributedTo: this.#actorId,
+          to: recipients,
+          content: contentBase64,
+          mediaType: "message/mls",
+          "mls:encoding": "base64"
+        }
+      });
+      console.log("Sending activity:", activity.toJSON());
+      const response = await fetch(this.#outboxUrl, {
+        method: "POST",
+        body: activity.toJSON(),
+        credentials: "include"
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
+      }
+    };
+    // sendActivity sends an activity to the Actor's outbox
+    sendActivity = async (activity) => {
+      console.log("Sending activity:", activity.toJSON());
+      const response = await fetch(this.#outboxUrl, {
+        method: "POST",
+        body: activity.toJSON(),
+        credentials: "include"
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
+      }
+    };
+  };
+
+  // src/ap/collection.ts
+  var Collection = class extends Object2 {
+    //
+    // eventStream returns the value of the "eventStream" property
+    eventStream = () => {
+      return this.getString("sse", "eventStream");
+    };
+    // first returns the value of the "first" property, which is used for pagination in ActivityPub collections
+    first = () => {
+      return this.getString("as", "first");
+    };
+    // items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
+    items = () => {
+      var result = [];
+      switch (this.type()) {
+        case "Collection":
+        case "CollectionPage":
+          return this.getArray("as", "items");
+        case "OrderedCollection":
+        case "OrderedCollectionPage":
+          return this.getArray("as", "orderedItems");
+      }
+      return [];
+    };
+    // next returns the value of the "next" property, which is used for pagination in ActivityPub collections
+    next = () => {
+      return this.getString("as", "next");
+    };
+    totalItems = () => {
+      return this.getInteger("as", "totalItems");
+    };
+  };
+  async function* rangeActivities(url, after = "", options = {}) {
+    const items = range(url, after, options);
+    for await (const item of items) {
+      yield await loadActivity(item);
+    }
+  }
+  async function* rangeDocuments(url, after = "", options = {}) {
+    const items = range(url, after, options);
+    for await (const item of items) {
+      yield await loadDocument(item);
+    }
+  }
+  async function* range(url, after = "", options = {}) {
+    if (url == "") {
+      return;
+    }
+    if (after != "") {
+      if (url.includes("?")) {
+        url = url + "&after=" + encodeURIComponent(after);
+      } else {
+        url = url + "?after=" + encodeURIComponent(after);
+      }
+    }
+    var collection;
+    try {
+      collection = await new Collection().fromURL(url, options);
+    } catch (error) {
+      console.error("Error fetching collection:", url, error);
+      return;
+    }
+    const items = collection.items();
+    if (items.length > 0) {
+      for await (const item of items) {
+        yield item;
+      }
+      return;
+    }
+    var pageUrl = collection.first() || collection.next();
+    while (pageUrl) {
+      var page;
+      try {
+        page = await new Collection().fromURL(pageUrl, options);
+      } catch (error) {
+        console.log("Error fetching collection page:", pageUrl, error);
+        return;
+      }
+      for await (const item of page.items()) {
+        yield item;
+      }
+      pageUrl = page.next();
+    }
+  }
+
+  // src/service/directory.ts
+  var Directory = class {
+    #actorID;
+    // ID of the local actor
+    #outboxURL;
+    // Outbox URL of the local actor
+    constructor(actorID, outboxURL) {
+      this.#actorID = actorID;
+      this.#outboxURL = outboxURL;
+    }
+    // getKeyPackage loads the KeyPackages published by a single actor
+    getKeyPackages = async (actorIDs) => {
+      var result = [];
+      for (const actorID of actorIDs) {
+        const actor = await new Actor().fromURL(actorID);
+        const keyPackages = rangeDocuments(actor.mlsKeyPackages());
+        for await (const keyPackage of keyPackages) {
+          const contentBytes = base64ToUint8Array(keyPackage.content());
+          const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
+          if (decodedKeyPackage == void 0) {
+            console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
+            continue;
+          }
+          if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
+            console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
+            continue;
+          }
+          result.push(decodedKeyPackage.keyPackage);
+        }
+      }
+      return result;
+    };
+    // createKeyPackage publishes a new KeyPackage to the User's outbox.
+    createKeyPackage = async (keyPackage) => {
+      return await this.#createObject(keyPackage);
+    };
+    // createObject POSTs an ActivityPub object to the user's outbox
+    // and returns the Location header from the response
+    #createObject = async (object) => {
+      return await this.#send(this.#outboxURL, {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        type: "Create",
+        actor: this.#actorID,
+        object
+      });
+    };
+    // send POSTs an ActivityPub activity to the specified outbox
+    // and returns the Location header from the response
+    #send = async (outbox, activity) => {
+      const response = await fetch(outbox, {
+        method: "POST",
+        body: JSON.stringify(activity),
+        credentials: "include"
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
+      }
+      return response.headers.get("Location") || "";
+    };
+    getContact = async (id) => {
+      const response = await new Actor().fromURL(id);
+      return ContactFromActor(response);
+    };
+  };
+
+  // src/service/receiver.ts
+  var Receiver = class {
+    //
+    #actorId;
+    // ID of the user receiving messages
+    #messagesUrl;
+    // endpoint for the actor's mls:messages collection
+    #eventSource;
+    // EventSource for listening to server-sent events (SSE)
+    #handler;
+    // list of registered message handlers
+    #polling;
+    // Pseudo-lock to prevent simultaneous polls
+    #pollAgain;
+    // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+    // constructor initializes the Receiver with the actor's ID and messages URL
+    constructor(actorId, messagesUrl) {
+      this.#actorId = actorId;
+      this.#messagesUrl = messagesUrl;
+      this.#handler = async function(activity) {
+      };
+      this.#polling = false;
+      this.#pollAgain = false;
+    }
+    // registerHandler adds a new MessageHandler to the list of handlers that will be called
+    registerHandler = (handler) => {
+      this.#handler = handler;
+    };
+    // start begins polling for new messages and processing them with the registered handlers
+    start = async () => {
+      this.poll();
+      const collection = await new Collection().fromURL(this.#messagesUrl);
+      const sseEndpoint = collection.eventStream();
+      if (sseEndpoint != "") {
+        this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
+        this.#eventSource.onmessage = (event) => {
+          this.poll();
+        };
+      }
+    };
+    // poll retrieves new messages from the mls:messages collection and calls the
+    // onMessage callback for each new message
+    poll = async () => {
+      if (this.#polling) {
+        this.#pollAgain = true;
+        return;
+      }
+      this.#polling = true;
+      const lastUrl = localStorage.getItem("lastUrl") || "";
+      const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" });
+      for await (const activity of activities) {
+        console.log("Received activity:", activity.toJSON());
+        localStorage.setItem("lastUrl", activity.id());
+        await this.#handler(activity);
+      }
+      this.#polling = false;
+      if (this.#pollAgain) {
+        this.#pollAgain = false;
+        this.poll();
+      }
+    };
+  };
+
+  // src/service/controller.ts
+  var import_mithril = __toESM(require_mithril(), 1);
 
   // src/service/mls-factory.ts
   async function MLSFactory(database, delivery, directory, receiver, actor, clientName) {
     const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
-    const cipherSuite = await nobleCryptoProvider.getCiphersuiteImpl(getCiphersuiteFromName(cipherSuiteName));
+    const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
     var dbKeyPackage = await database.loadKeyPackage();
     if (dbKeyPackage == void 0) {
       const credential = {
@@ -16275,7 +15646,8 @@
       };
       var keyPackageResult = await generateKeyPackage({
         credential,
-        cipherSuite
+        cipherSuite,
+        lifetime: defaultLifetime()
       });
       const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage);
       const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage);
@@ -16305,310 +15677,30 @@
     return result;
   }
 
-  // src/controller.ts
+  // src/service/controller.ts
   var Controller = class {
+    #actor;
+    #database;
+    #delivery;
+    #directory;
+    #receiver;
+    #mls;
+    #allowPlaintextMessages;
+    config;
+    groups;
+    group;
+    messages;
+    contacts;
+    pageView;
+    modalView;
     // constructor initializes the Controller with its dependencies
-    constructor(actor, database, delivery, directory, receiver, allowPlaintextMessages, clientConfig) {
-      //////////////////////////////////////////
-      // Startup
-      //////////////////////////////////////////
-      // loadConfig retrieves the configuration from the
-      // database and starts the MLS service (if encryption keys are present)
-      this.loadConfig = async () => {
-        this.config = await this.#database.loadConfig();
-        if (this.config.hasEncryptionKeys) {
-          this.#startMLS();
-        }
-        import_mithril.default.redraw();
-      };
-      // startMLS initializes the MLS service IF the configuration includes encryption keys
-      this.#startMLS = async () => {
-        if (this.config.hasEncryptionKeys == false) {
-          throw new Error("Cannot start MLS without encryption keys");
-        }
-        this.#mls = await MLSFactory(
-          this.#database,
-          this.#delivery,
-          this.#directory,
-          this.#receiver,
-          this.#actor,
-          this.config.clientName
-        );
-        this.#database.onchange(async () => {
-          await this.loadGroups();
-          await this.loadMessages();
-          await this.loadContacts();
-        });
-      };
-      // createEncryptionKeys creates a new set of encryption keys
-      // for this user on this device
-      this.createEncryptionKeys = async (clientName, password, passwordHint) => {
-        this.config.ready = true;
-        this.config.welcome = true;
-        this.config.hasEncryptionKeys = true;
-        this.config.clientName = clientName;
-        this.config.password = password;
-        this.config.passwordHint = passwordHint;
-        await this.#database.saveConfig(this.config);
-        this.#startMLS();
-        import_mithril.default.redraw();
-      };
-      // skipEncryptionKeys is called when the user just wants to
-      // use "direct messages" and does not want to create encryption keys (yet)
-      this.skipEncryptionKeys = async () => {
-        this.config.welcome = true;
-        await this.#database.saveConfig(this.config);
-        import_mithril.default.redraw();
-      };
-      //////////////////////////////////////////
-      // Getters
-      //////////////////////////////////////////
-      this.actorId = () => {
-        return this.#actor.id();
-      };
-      //////////////////////////////////////////
-      // Conversations (Plaintext)
-      //////////////////////////////////////////
-      // newConversation creates a new plaintext ActivityPub conversation
-      // with the specified recipients
-      this.newConversation = async (to, message) => {
-        const activity = {
-          "@context": "https://www.w3.org/ns/activitystreams",
-          type: "Create",
-          actor: this.#actor.id(),
-          to,
-          object: {
-            type: "Note",
-            content: message
-          }
-        };
-        const response = await fetch(this.#actor.outbox(), {
-          method: "POST",
-          headers: { "Content-Type": "application/activity+json" },
-          body: JSON.stringify(activity)
-        });
-      };
-      //////////////////////////////////////////
-      // Contacts
-      //////////////////////////////////////////
-      this.loadContacts = async () => {
-        const promises = this.group.members.map(async (actorId) => this.loadContact(actorId));
-        const contacts = await Promise.all(promises);
-        const result = /* @__PURE__ */ new Map();
-        for (const contact of contacts) {
-          if (contact == void 0) {
-            continue;
-          }
-          result.set(contact.id, contact);
-        }
-        this.contacts = result;
-        import_mithril.default.redraw();
-      };
-      this.loadContact = async (actorId) => {
-        var result = await this.#database.getContact(actorId);
-        if (result !== void 0) {
-          return result;
-        }
-        return await this.#directory.getContact(actorId);
-      };
-      //////////////////////////////////////////
-      // Groups (Encrypted)
-      //////////////////////////////////////////
-      // createGroup creates a new MLS-encrypted
-      // group message with the specified recipients
-      this.createGroup = async (recipients) => {
-        if (this.#mls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        var group = await this.#mls.createGroup();
-        this.group = await this.#mls.addGroupMembers(group, recipients);
-        await this.#database.saveGroup(this.group);
-        await this.loadGroups();
-      };
-      // loadGroups retrieves all groups from the database and
-      // updates the "groups" and "messages" streams.
-      this.loadGroups = async () => {
-        this.groups = await this.#database.allGroups();
-        this.selectGroup(this.selectedGroupId());
-      };
-      // selectGroup updates the "selectedGroupId" and reloads messages for that group
-      this.selectGroup = (groupId) => {
-        if (this.groups.length == 0) {
-          this.group = NewGroup();
-          this.messages = [];
-          this.contacts = /* @__PURE__ */ new Map();
-          return;
-        }
-        const group = this.groups.find((group2) => group2.id == groupId);
-        if (group != void 0) {
-          this.group = group;
-          this.loadMessages();
-          this.loadContacts();
-          this.page_messages();
-          return;
-        }
-        this.group = this.groups[0];
-        this.loadMessages();
-        this.loadContacts();
-        this.page_messages();
-      };
-      this.selectedGroupId = () => {
-        if (this.group != void 0) {
-          return this.group.id;
-        }
-        return "";
-      };
-      // saveGroup saves the specified group to the database and reloads groups
-      this.saveGroup = async (group) => {
-        group.lastMessage = group.lastMessage.slice(0, 100);
-        await this.#database.saveGroup(group);
-        await this.loadGroups();
-      };
-      // deleteGroup deletes the specified group from the database
-      this.deleteGroup = async (group) => {
-        if (this.#database == void 0) {
-          throw new Error("Database service is not initialized");
-        }
-        await this.#database.deleteGroup(group);
-        await this.loadGroups();
-      };
-      //////////////////////////////////////////
-      // Messages
-      //////////////////////////////////////////
-      // loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
-      this.loadMessages = async () => {
-        this.messages = await this.#database.allMessages(this.selectedGroupId());
-        import_mithril.default.redraw();
-      };
-      // sendMessage sends a message to the specified group
-      this.sendMessage = async (content) => {
-        if (this.#mls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        if (this.group == void 0) {
-          throw new Error("No group selected");
-        }
-        this.group.lastMessage = content;
-        await this.saveGroup(this.group);
-        var activity = new Activity({
-          "@context": ContextActivityStreams,
-          id: newId2(),
-          actor: this.actorId(),
-          type: ActivityTypeCreate,
-          to: this.group.members,
-          object: {
-            id: newId2(),
-            attributedTo: this.actorId(),
-            type: ObjectTypeNote,
-            to: this.group.members,
-            context: this.selectedGroupId,
-            content,
-            published: (/* @__PURE__ */ new Date()).toISOString()
-          }
-        });
-        console.log("Created activity:", activity);
-        if (groupIsEncrypted(this.group)) {
-          activity = await this.#mls.encodeActivity(this.group, activity);
-        }
-        this.#delivery.sendActivity(activity);
-        var message = NewMessage();
-        message.group = this.group.id;
-        message.sender = this.#actor.id();
-        message.plaintext = content;
-        await this.#database.saveMessage(message);
-        await this.loadMessages();
-      };
-      //////////////////////////////////////////
-      // Pages
-      //////////////////////////////////////////
-      this.page_groups = () => {
-        this.pageView = "GROUPS";
-        import_mithril.default.redraw();
-      };
-      this.page_messages = () => {
-        this.pageView = "MESSAGES";
-        import_mithril.default.redraw();
-      };
-      this.page_group_settings = () => {
-        this.pageView = "GROUP-SETTINGS";
-        import_mithril.default.redraw();
-      };
-      //////////////////////////////////////////
-      // Receiving Activities
-      //////////////////////////////////////////
-      this.receiveActivity = async (activity) => {
-        console.log("Received activity:", activity.toJSON());
-        var object = await activity.object();
-        if (activity.actorId() != object.attributedToId()) {
-          console.log("Error processing activity:", activity);
-          throw new Error("Activity actor must match object actor");
-        }
-        if (object.isMLSMessage()) {
-          if (this.#mls == void 0) {
-            throw new Error("MLS service is not initialized");
-          }
-          const decodedActivity = await this.#mls.decodeMessage(object.content());
-          if (decodedActivity == null) {
-            console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)");
-            return;
-          }
-          if (decodedActivity.actorId() != activity.actorId()) {
-            throw new Error("Decrypted activity actor must match outer activity actor");
-          }
-          const decodedObject = await decodedActivity.object();
-          if (decodedObject.attributedToId() != activity.actorId()) {
-            throw new Error("Decrypted activity actor must match object's attributedTo");
-          }
-          activity = decodedActivity;
-          object = decodedObject;
-          console.log("successfully decoded object:", object.toJSON());
-        }
-        switch (activity.type()) {
-          //
-          case ActivityTypeCreate:
-          // Update the group with the most recent message
-          // group.lastMessage = activity.content.slice(0, 100)
-          // await this.#database.saveGroup(group)
-          // intentional fall through (I know, but blame Javascript)
-          case ActivityTypeUpdate:
-            const message = {
-              id: activity.id(),
-              group: object.context(),
-              sender: activity.actorId(),
-              plaintext: object.content(),
-              inReplyTo: object.inReplyToId(),
-              createDate: Date.now()
-            };
-            await this.#database.saveMessage(message);
-            return;
-          case ActivityTypeDelete:
-            await this.#database.deleteMessage(object.id());
-            return;
-          case ActivityTypeLike:
-            return;
-          case ActivityTypeUndo:
-            return;
-          default:
-            console.log("Received unrecognized activity:", activity);
-            return;
-        }
-      };
-      //////////////////////////////////////////
-      // Modal Dialogs
-      //////////////////////////////////////////
-      this.modal_close = () => {
-        this.modalView = "";
-      };
-      this.modal_newConversation = () => {
-        this.modalView = "NEW-CONVERSATION";
-      };
+    constructor(actor, database, delivery, directory, receiver, allowPlaintextMessages) {
       this.#actor = actor;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
       this.#receiver = receiver;
       this.#allowPlaintextMessages = allowPlaintextMessages;
-      this.clientConfig = clientConfig;
       this.groups = [];
       this.group = NewGroup();
       this.messages = [];
@@ -16620,30 +15712,416 @@
       this.loadConfig();
       this.loadGroups();
     }
-    #actor;
-    #database;
-    #delivery;
-    #directory;
-    #receiver;
-    #mls;
-    #allowPlaintextMessages;
-    #startMLS;
+    //////////////////////////////////////////
+    // Startup
+    //////////////////////////////////////////
+    // loadConfig retrieves the configuration from the
+    // database and starts the MLS service (if encryption keys are present)
+    loadConfig = async () => {
+      this.config = await this.#database.loadConfig();
+      if (this.config.hasEncryptionKeys) {
+        this.#startMLS();
+      }
+      import_mithril.default.redraw();
+    };
+    // startMLS initializes the MLS service IF the configuration includes encryption keys
+    #startMLS = async () => {
+      if (this.config.hasEncryptionKeys == false) {
+        throw new Error("Cannot start MLS without encryption keys");
+      }
+      this.#mls = await MLSFactory(
+        this.#database,
+        this.#delivery,
+        this.#directory,
+        this.#receiver,
+        this.#actor,
+        this.config.clientName
+      );
+      this.#database.onchange(async () => {
+        await this.loadGroups();
+        await this.loadMessages();
+        await this.loadContacts();
+      });
+    };
+    // createEncryptionKeys creates a new set of encryption keys
+    // for this user on this device
+    createEncryptionKeys = async (clientName, password, passwordHint) => {
+      this.config.ready = true;
+      this.config.welcome = true;
+      this.config.hasEncryptionKeys = true;
+      this.config.clientName = clientName;
+      this.config.password = password;
+      this.config.passwordHint = passwordHint;
+      await this.#database.saveConfig(this.config);
+      this.#startMLS();
+      import_mithril.default.redraw();
+    };
+    // skipEncryptionKeys is called when the user just wants to
+    // use "direct messages" and does not want to create encryption keys (yet)
+    skipEncryptionKeys = async () => {
+      this.config.welcome = true;
+      await this.#database.saveConfig(this.config);
+      import_mithril.default.redraw();
+    };
+    //////////////////////////////////////////
+    // Getters
+    //////////////////////////////////////////
+    actorId = () => {
+      return this.#actor.id();
+    };
+    //////////////////////////////////////////
+    // Conversations (Plaintext)
+    //////////////////////////////////////////
+    // newConversation creates a new plaintext ActivityPub conversation
+    // with the specified recipients
+    newConversation = async (to, message) => {
+      const activity = {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        type: "Create",
+        actor: this.#actor.id(),
+        to,
+        object: {
+          type: "Note",
+          content: message
+        }
+      };
+      const response = await fetch(this.#actor.outbox(), {
+        method: "POST",
+        headers: { "Content-Type": "application/activity+json" },
+        body: JSON.stringify(activity)
+      });
+    };
+    //////////////////////////////////////////
+    // Contacts
+    //////////////////////////////////////////
+    loadContacts = async () => {
+      const promises = this.group.members.map(async (actorId) => this.loadContact(actorId));
+      const contacts = await Promise.all(promises);
+      const result = /* @__PURE__ */ new Map();
+      for (const contact of contacts) {
+        if (contact == void 0) {
+          continue;
+        }
+        result.set(contact.id, contact);
+      }
+      this.contacts = result;
+      import_mithril.default.redraw();
+    };
+    loadContact = async (actorId) => {
+      var result = await this.#database.getContact(actorId);
+      if (result !== void 0) {
+        return result;
+      }
+      return await this.#directory.getContact(actorId);
+    };
+    //////////////////////////////////////////
+    // Groups (Encrypted)
+    //////////////////////////////////////////
+    // createGroup creates a new MLS-encrypted
+    // group message with the specified recipients
+    createGroup = async (recipients) => {
+      if (this.#mls == void 0) {
+        throw new Error("MLS service is not initialized");
+      }
+      var group = await this.#mls.createGroup();
+      this.group = await this.#mls.addGroupMembers(group, recipients);
+      await this.#database.saveGroup(this.group);
+      await this.loadGroups();
+    };
+    // loadGroups retrieves all groups from the database and
+    // updates the "groups" and "messages" streams.
+    loadGroups = async () => {
+      this.groups = await this.#database.allGroups();
+      this.selectGroup(this.selectedGroupId());
+    };
+    // selectGroup updates the "selectedGroupId" and reloads messages for that group
+    selectGroup = (groupId) => {
+      if (this.groups.length == 0) {
+        this.group = NewGroup();
+        this.messages = [];
+        this.contacts = /* @__PURE__ */ new Map();
+        return;
+      }
+      const group = this.groups.find((group2) => group2.id == groupId);
+      if (group != void 0) {
+        this.group = group;
+        this.loadMessages();
+        this.loadContacts();
+        this.page_messages();
+        return;
+      }
+      this.group = this.groups[0];
+      this.loadMessages();
+      this.loadContacts();
+      this.page_messages();
+    };
+    selectedGroupId = () => {
+      if (this.group != void 0) {
+        return this.group.id;
+      }
+      return "";
+    };
+    // saveGroup saves the specified group to the database and reloads groups
+    saveGroup = async (group) => {
+      group.lastMessage = group.lastMessage.slice(0, 100);
+      await this.#database.saveGroup(group);
+      await this.loadGroups();
+    };
+    // deleteGroup deletes the specified group from the database
+    deleteGroup = async (group) => {
+      if (this.#database == void 0) {
+        throw new Error("Database service is not initialized");
+      }
+      await this.#database.deleteGroup(group);
+      await this.loadGroups();
+    };
+    //////////////////////////////////////////
+    // Messages
+    //////////////////////////////////////////
+    // loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
+    loadMessages = async () => {
+      this.messages = await this.#database.allMessages(this.selectedGroupId());
+      import_mithril.default.redraw();
+    };
+    // loadMessage retrieves a single message
+    loadMessage = async (messageId) => {
+      return await this.#database.loadMessage(messageId);
+    };
+    // sendMessage sends a message to the specified group
+    sendMessage = async (content) => {
+      if (this.#mls == void 0) {
+        throw new Error("MLS service is not initialized");
+      }
+      if (this.group == void 0) {
+        throw new Error("No group selected");
+      }
+      this.group.lastMessage = content;
+      await this.saveGroup(this.group);
+      var activity = new Activity({
+        "@context": ContextActivityStreams,
+        id: newId2(),
+        actor: this.actorId(),
+        type: ActivityTypeCreate,
+        to: this.group.members,
+        object: {
+          id: newId2(),
+          attributedTo: this.actorId(),
+          type: ObjectTypeNote,
+          to: this.group.members,
+          context: this.selectedGroupId,
+          content,
+          published: (/* @__PURE__ */ new Date()).toISOString()
+        }
+      });
+      console.log("Created activity:", activity);
+      this.#sendActivity(this.group, activity);
+      var message = NewMessage();
+      message.group = this.group.id;
+      message.sender = this.#actor.id();
+      message.plaintext = content;
+      await this.#database.saveMessage(message);
+      await this.loadMessages();
+    };
+    like_message = async (messageId) => {
+      const message = await this.#database.likeMessage(this.actorId(), messageId);
+      if (message == void 0) {
+        console.log("Unable to like message: " + messageId);
+        return;
+      }
+      var group = await this.#database.loadGroup(message.group);
+      if (group == void 0) {
+        console.log("Error: cannot like message with missing group");
+        return;
+      }
+      var activity = new Activity({
+        "@context": ContextActivityStreams,
+        id: newId2(),
+        actor: this.actorId(),
+        type: ActivityTypeLike,
+        to: group.members,
+        object: message.id
+      });
+      this.#sendActivity(group, activity);
+      await this.loadMessages();
+    };
+    undo_like_message = async (messageId) => {
+      const message = await this.#database.undoLikeMessage(this.actorId(), messageId);
+      if (message == void 0) {
+        return;
+      }
+      var group = await this.#database.loadGroup(message.group);
+      if (group == void 0) {
+        console.log("Error: cannot like message with missing group");
+        return;
+      }
+      var activity = new Activity({
+        "@context": ContextActivityStreams,
+        id: newId2(),
+        actor: this.actorId(),
+        type: ActivityTypeUndo,
+        to: group.members,
+        object: {
+          type: ActivityTypeLike,
+          actor: this.actorId(),
+          object: message.id
+        }
+      });
+      this.#sendActivity(group, activity);
+      await this.loadMessages();
+    };
+    //////////////////////////////////////////
+    // Pages
+    //////////////////////////////////////////
+    page_groups = () => {
+      this.pageView = "GROUPS";
+      import_mithril.default.redraw();
+    };
+    page_messages = () => {
+      this.pageView = "MESSAGES";
+      import_mithril.default.redraw();
+    };
+    page_group_settings = () => {
+      this.pageView = "GROUP-SETTINGS";
+      import_mithril.default.redraw();
+    };
+    //////////////////////////////////////////
+    // Receiving Activities
+    //////////////////////////////////////////
+    receiveActivity = async (activity) => {
+      console.log("Received activity:", activity.toJSON());
+      var object = await activity.object();
+      if (activity.actorId() != object.attributedToId()) {
+        console.log("Error processing activity:", activity);
+        throw new Error("Activity actor must match object actor");
+      }
+      if (object.isMLSMessage()) {
+        if (this.#mls == void 0) {
+          throw new Error("MLS service is not initialized");
+        }
+        const decodedActivity = await this.#mls.decodeMessage(object.content());
+        if (decodedActivity == null) {
+          console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)");
+          return;
+        }
+        if (decodedActivity.actorId() != activity.actorId()) {
+          throw new Error("Decrypted activity actor must match outer activity actor");
+        }
+        activity = decodedActivity;
+        console.log("successfully decoded object:", activity.toJSON());
+      }
+      switch (activity.type()) {
+        case ActivityTypeCreate:
+          await this.#receiveActivity_CreateDocument(activity);
+          return;
+        case ActivityTypeUpdate:
+          await this.#receiveActivity_UpdateDocument(activity);
+          return;
+        case ActivityTypeDelete:
+          await this.#receiveActivity_DeleteDocument(activity);
+          return;
+        case ActivityTypeLike:
+          await this.#receiveActivity_Like(activity);
+          return;
+        case ActivityTypeUndo:
+          await this.#receiveActivity_Undo(activity);
+          return;
+        default:
+          console.log("Received unrecognized activity:", activity);
+          return;
+      }
+    };
+    #receiveActivity_CreateDocument = async (activity) => {
+      const object = await activity.object();
+      if (object.attributedToId() != activity.actorId()) {
+        throw new Error("Decrypted activity actor must match object's attributedTo");
+      }
+      const message = {
+        id: activity.id(),
+        group: activity.context(),
+        sender: activity.actorId(),
+        plaintext: object.content(),
+        likes: [],
+        inReplyTo: object.inReplyToId(),
+        createDate: Date.now()
+      };
+      await this.#database.saveMessage(message);
+    };
+    #receiveActivity_UpdateDocument = async (activity) => {
+      const object = await activity.object();
+      if (object.attributedToId() != activity.actorId()) {
+        throw new Error("Decrypted activity actor must match object's attributedTo");
+      }
+      const message = {
+        id: activity.id(),
+        group: activity.context(),
+        sender: activity.actorId(),
+        plaintext: object.content(),
+        likes: [],
+        inReplyTo: object.inReplyToId(),
+        createDate: Date.now()
+      };
+      await this.#database.saveMessage(message);
+    };
+    #receiveActivity_DeleteDocument = async (activity) => {
+      await this.#database.deleteMessage(activity.objectId());
+      this.loadMessages();
+    };
+    #receiveActivity_Like = async (activity) => {
+      const message = await this.#database.likeMessage(activity.actorId(), activity.objectId());
+      if (message == void 0) {
+        return;
+      }
+      if (message.group == this.selectedGroupId()) {
+        this.loadMessages();
+      }
+    };
+    #receiveActivity_Undo = async (activity) => {
+      const message = await this.#database.undoLikeMessage(activity.actorId(), activity.objectId());
+      if (message == void 0) {
+        return;
+      }
+      if (message.group == this.selectedGroupId()) {
+        this.loadMessages();
+      }
+    };
+    //////////////////////////////////////////
+    // Modal Dialogs
+    //////////////////////////////////////////
+    modal_close = () => {
+      this.modalView = "";
+    };
+    modal_newConversation = () => {
+      this.modalView = "NEW-CONVERSATION";
+    };
+    //////////////////////////////////////////
+    // Network Stuff
+    //////////////////////////////////////////
+    // sendActivity sends an activity to the Actor's outbox
+    #sendActivity = async (group, activity) => {
+      if (this.#mls == void 0) {
+        throw new Error("MLS service is not initialized");
+      }
+      if (groupIsEncrypted(group)) {
+        activity = await this.#mls.encodeActivity(group, activity);
+      }
+      return this.#delivery.sendActivity(activity);
+    };
   };
 
   // src/view/main.tsx
+  var import_mithril21 = __toESM(require_mithril(), 1);
   var import_mithril22 = __toESM(require_mithril(), 1);
-  var import_stream3 = __toESM(require_stream2(), 1);
-  var import_mithril23 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
-  var import_mithril5 = __toESM(require_mithril(), 1);
+  var import_mithril6 = __toESM(require_mithril(), 1);
 
   // src/view/modal-createKeys.tsx
-  var import_mithril3 = __toESM(require_mithril(), 1);
   var import_mithril4 = __toESM(require_mithril(), 1);
+  var import_mithril5 = __toESM(require_mithril(), 1);
 
   // src/view/modal.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
+  var import_mithril3 = __toESM(require_mithril(), 1);
 
   // src/view/utils.ts
   function keyCode(evt) {
@@ -16730,7 +16208,7 @@
       if (vnode.attrs.modal != "SETUP-KEYS") {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril3.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril3.default)("form", { onsubmit: (event) => this.onSubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril3.default)("h1", null, /* @__PURE__ */ (0, import_mithril3.default)("i", { class: "bi bi-key" }), " Encryption Keys"), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "margin-vertical" }, "Private Keys are stored only on this device and never shared with anyone. Choose a password to lock your private keys on this device."), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "margin-vertical" }, /* @__PURE__ */ (0, import_mithril3.default)("b", null, "BE CAREFUL!"), " If you lose this password, you will not be able to recover your private message history, so please store your password in a safe place, such as a password manager."), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "password" }, "Conversation Password"), /* @__PURE__ */ (0, import_mithril3.default)(
+      return /* @__PURE__ */ (0, import_mithril4.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril4.default)("form", { onsubmit: (event) => this.onSubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril4.default)("h1", null, /* @__PURE__ */ (0, import_mithril4.default)("i", { class: "bi bi-key" }), " Encryption Keys"), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "margin-vertical" }, "Private Keys are stored only on this device and never shared with anyone. Choose a password to lock your private keys on this device."), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "margin-vertical" }, /* @__PURE__ */ (0, import_mithril4.default)("b", null, "BE CAREFUL!"), " If you lose this password, you will not be able to recover your private message history, so please store your password in a safe place, such as a password manager."), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril4.default)("label", { for: "password" }, "Conversation Password"), /* @__PURE__ */ (0, import_mithril4.default)(
         "input",
         {
           type: "password",
@@ -16741,7 +16219,7 @@
           value: vnode.state.password,
           oninput: (event) => this.setPassword(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-sm text-gray" }, "Should be different from your account password (which is stored on your server). If you lose this password, you will lose your encrypted message history.")), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "passwordHint" }, "Password Hint"), /* @__PURE__ */ (0, import_mithril3.default)(
+      ), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "text-sm text-gray" }, "Should be different from your account password (which is stored on your server). If you lose this password, you will lose your encrypted message history.")), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril4.default)("label", { for: "passwordHint" }, "Password Hint"), /* @__PURE__ */ (0, import_mithril4.default)(
         "input",
         {
           type: "text",
@@ -16750,7 +16228,7 @@
           value: vnode.state.passwordHint,
           oninput: (event) => this.setPasswordHint(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-sm text-gray" }, "(Optional) Helps you remember your password in case your forget it.")), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril3.default)(
+      ), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "text-sm text-gray" }, "(Optional) Helps you remember your password in case your forget it.")), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril4.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril4.default)(
         "input",
         {
           type: "text",
@@ -16763,7 +16241,7 @@
           required: "true",
           oninput: (event) => this.setClientName(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-sm text-gray" }, "Helps identify this device in the", " ", /* @__PURE__ */ (0, import_mithril3.default)("a", { href: "/@me/settings/keyPackages", target: "_blank" }, "key manager ", /* @__PURE__ */ (0, import_mithril3.default)("i", { class: "bi bi-box-arrow-up-right" })))))), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril3.default)("button", { class: "primary" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril3.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      ), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "text-sm text-gray" }, "Helps identify this device in the", " ", /* @__PURE__ */ (0, import_mithril4.default)("a", { href: "/@me/settings/keyPackages", target: "_blank" }, "key manager ", /* @__PURE__ */ (0, import_mithril4.default)("i", { class: "bi bi-box-arrow-up-right" })))))), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril4.default)("button", { class: "primary" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril4.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     setClientName(vnode, event) {
       const input = event.target;
@@ -16827,7 +16305,7 @@
   // src/view/welcome.tsx
   var Welcome = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center width-100%" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "text-xl bold flex-grow" }, /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-chat-fill" }), " Conversations"), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "nowrap" })), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "card padding max-width-640 margin-top" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-bottom-lg" }, "Conversations collect all of your personal messages into a single place, including", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "direct messages"), " (which can be read by server admins) and", " ", /* @__PURE__ */ (0, import_mithril5.default)("b", { class: "nowrap" }, "private messages"), ". (which are encrypted and cannot be read by others).", " ", /* @__PURE__ */ (0, import_mithril5.default)("a", { href: "https://emissary.dev/conversations", target: "_blank", class: "nowrap" }, "Learn More About Conversations ", /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-box-arrow-up-right" }))), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { class: "primary", onclick: () => vnode.state.modal = "SETUP-KEYS" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to participate in encrypted conversations.")), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril5.default)("button", { onclick: () => this.skipEncryptionKeys(vnode) }, "Continue Without Keys\xA0"), /* @__PURE__ */ (0, import_mithril5.default)("div", null, "to send/receive unencrypted messages only."))), /* @__PURE__ */ (0, import_mithril5.default)(
+      return /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril6.default)("div", null, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "flex-row flex-align-center width-100%" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "text-xl bold flex-grow" }, /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-chat-fill" }), " Conversations"), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "nowrap" })), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "card padding max-width-640 margin-top" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "margin-bottom-lg" }, "Conversations collect all of your personal messages into a single place, including", " ", /* @__PURE__ */ (0, import_mithril6.default)("b", { class: "nowrap" }, "direct messages"), " (which can be read by server admins) and", " ", /* @__PURE__ */ (0, import_mithril6.default)("b", { class: "nowrap" }, "private messages"), ". (which are encrypted and cannot be read by others).", " ", /* @__PURE__ */ (0, import_mithril6.default)("a", { href: "https://emissary.dev/conversations", target: "_blank", class: "nowrap" }, "Learn More About Conversations ", /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-box-arrow-up-right" }))), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril6.default)("button", { class: "primary", onclick: () => vnode.state.modal = "SETUP-KEYS" }, "Create Encryption Keys"), /* @__PURE__ */ (0, import_mithril6.default)("div", null, "to participate in encrypted conversations.")), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "flex-row flex-align-center margin-vertical" }, /* @__PURE__ */ (0, import_mithril6.default)("button", { onclick: () => this.skipEncryptionKeys(vnode) }, "Continue Without Keys\xA0"), /* @__PURE__ */ (0, import_mithril6.default)("div", null, "to send/receive unencrypted messages only."))), /* @__PURE__ */ (0, import_mithril6.default)(
         CreateKeys,
         {
           controller: vnode.attrs.controller,
@@ -16845,23 +16323,22 @@
       document.getElementById("modal")?.classList.remove("ready");
       window.setTimeout(() => {
         vnode.state.modal = "";
-        import_mithril5.default.redraw();
+        import_mithril6.default.redraw();
       }, 240);
     }
   };
 
   // src/view/index.tsx
+  var import_mithril19 = __toESM(require_mithril(), 1);
   var import_mithril20 = __toESM(require_mithril(), 1);
-  var import_stream2 = __toESM(require_stream2(), 1);
-  var import_mithril21 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
-  var import_mithril8 = __toESM(require_mithril(), 1);
   var import_mithril9 = __toESM(require_mithril(), 1);
+  var import_mithril10 = __toESM(require_mithril(), 1);
 
   // src/view/actorSearch.tsx
-  var import_mithril6 = __toESM(require_mithril(), 1);
   var import_mithril7 = __toESM(require_mithril(), 1);
+  var import_mithril8 = __toESM(require_mithril(), 1);
   var ActorSearch = class {
     oninit(vnode) {
       vnode.state.search = "";
@@ -16871,11 +16348,11 @@
       vnode.state.highlightedOption = -1;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
+      return /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
         const keyPackageCount = vnode.state.keyPackages[actor.id];
         const isSecure = keyPackageCount != void 0 && keyPackageCount > 0;
-        return /* @__PURE__ */ (0, import_mithril6.default)("span", { class: isSecure ? "tag blue" : "tag gray" }, /* @__PURE__ */ (0, import_mithril6.default)("span", { style: "display:inline-flex; align-items:center; margin-right:8px;" }, /* @__PURE__ */ (0, import_mithril6.default)("img", { src: actor.icon, class: "circle", style: "height:1em; margin:0px 4px;" }), /* @__PURE__ */ (0, import_mithril6.default)("span", { class: "bold" }, actor.name), "\xA0", isSecure ? /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) }));
-      }), /* @__PURE__ */ (0, import_mithril6.default)(
+        return /* @__PURE__ */ (0, import_mithril7.default)("span", { class: isSecure ? "tag blue" : "tag gray" }, /* @__PURE__ */ (0, import_mithril7.default)("span", { style: "display:inline-flex; align-items:center; margin-right:8px;" }, /* @__PURE__ */ (0, import_mithril7.default)("img", { src: actor.icon, class: "circle", style: "height:1em; margin:0px 4px;" }), /* @__PURE__ */ (0, import_mithril7.default)("span", { class: "bold" }, actor.name), "\xA0", isSecure ? /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) }));
+      }), /* @__PURE__ */ (0, import_mithril7.default)(
         "input",
         {
           id: "idActorSearch",
@@ -16896,10 +16373,10 @@
           onfocus: () => this.loadOptions(vnode),
           onblur: () => this.onblur(vnode)
         }
-      )), vnode.state.actors.length ? /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "options" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { role: "menu", class: "menu" }, vnode.state.actors.map((actor, index) => {
+      )), vnode.state.actors.length ? /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "options" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { role: "menu", class: "menu" }, vnode.state.actors.map((actor, index) => {
         const keyPackageCount = vnode.state.keyPackages[actor.id];
         const isSecure = keyPackageCount != void 0 && keyPackageCount > 0;
-        return /* @__PURE__ */ (0, import_mithril6.default)(
+        return /* @__PURE__ */ (0, import_mithril7.default)(
           "div",
           {
             role: "menuitem",
@@ -16907,8 +16384,8 @@
             onmousedown: () => this.selectActor(vnode, index),
             "aria-selected": index == vnode.state.highlightedOption ? "true" : null
           },
-          /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril6.default)("img", { src: actor.icon, class: "width-32 circle" })),
-          /* @__PURE__ */ (0, import_mithril6.default)("div", null, /* @__PURE__ */ (0, import_mithril6.default)("div", null, actor.name, " \xA0", isSecure ? /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "text-xs text-light-gray bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "text-xs text-light-gray" }, actor.username))
+          /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril7.default)("img", { src: actor.icon, class: "width-32 circle" })),
+          /* @__PURE__ */ (0, import_mithril7.default)("div", null, /* @__PURE__ */ (0, import_mithril7.default)("div", null, actor.name, " \xA0", isSecure ? /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "text-xs text-light-gray bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-xs text-light-gray" }, actor.username))
         );
       }))) : null);
     }
@@ -16962,7 +16439,7 @@
         return;
       }
       vnode.state.loading = true;
-      vnode.state.actors = await import_mithril6.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
+      vnode.state.actors = await import_mithril7.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
       vnode.state.loading = false;
       vnode.state.highlightedOption = -1;
       this.loadKeyPackages(vnode);
@@ -16977,13 +16454,13 @@
           if (actor["mls:keyPackages"] == "") {
             continue;
           }
-          import_mithril6.default.request(
+          import_mithril7.default.request(
             "/.api/collectionHeader?url=" + encodeURIComponent(actor["mls:keyPackages"])
           ).then((header) => {
             if (header != void 0) {
               if (header.totalItems != void 0) {
                 vnode.state.keyPackages[actor.id] = header.totalItems;
-                import_mithril6.default.redraw();
+                import_mithril7.default.redraw();
               }
             }
           });
@@ -16994,7 +16471,7 @@
       requestAnimationFrame(() => {
         vnode.state.actors = [];
         vnode.state.highlightedOption = -1;
-        import_mithril6.default.redraw();
+        import_mithril7.default.redraw();
       });
     }
     selectActor(vnode, index) {
@@ -17023,7 +16500,7 @@
       vnode.state.encrypted = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril8.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril8.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout layout-vertical" }, this.header(vnode), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril8.default)("label", { for: "" }, "Participants"), /* @__PURE__ */ (0, import_mithril8.default)(
+      return /* @__PURE__ */ (0, import_mithril9.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril9.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout layout-vertical" }, this.header(vnode), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril9.default)("label", { for: "" }, "Participants"), /* @__PURE__ */ (0, import_mithril9.default)(
         ActorSearch,
         {
           name: "actorIds",
@@ -17031,34 +16508,34 @@
           endpoint: "/.api/actors",
           onselect: (actors) => this.selectActors(vnode, actors)
         }
-      )), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril8.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril8.default)("textarea", { rows: "8", onchange: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril8.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      )), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril9.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril9.default)("textarea", { rows: "8", onchange: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril9.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     header(vnode) {
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-plus" }), " Start a Conversation");
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-plus" }), " Start a Conversation");
       }
       if (vnode.state.encrypted) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-shield-lock" }), " Encrypted Message");
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-shield-lock" }), " Encrypted Message");
       }
-      return /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-envelope-open" }), " Direct Message");
+      return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-envelope-open" }), " Direct Message");
     }
     description(vnode) {
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("span", null);
+        return /* @__PURE__ */ (0, import_mithril9.default)("span", null);
       }
       if (vnode.state.encrypted) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("div", null, "This will be encrypted before it leaves this device, and will not be readable by anyone other than the recipients.");
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", null, "This will be encrypted before it leaves this device, and will not be readable by anyone other than the recipients.");
       }
-      return /* @__PURE__ */ (0, import_mithril8.default)("div", null, /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " One or more of your recipients cannot receive encrypted messages. Others on the Internet may be able to read this message.");
+      return /* @__PURE__ */ (0, import_mithril9.default)("div", null, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " One or more of your recipients cannot receive encrypted messages. Others on the Internet may be able to read this message.");
     }
     submitButton(vnode) {
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("button", { class: "primary", disabled: true }, "Start a Conversation");
+        return /* @__PURE__ */ (0, import_mithril9.default)("button", { class: "primary", disabled: true }, "Start a Conversation");
       }
       if (vnode.state.encrypted) {
-        return /* @__PURE__ */ (0, import_mithril8.default)("button", { class: "primary", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-lock" }), " Send Encrypted");
+        return /* @__PURE__ */ (0, import_mithril9.default)("button", { class: "primary", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock" }), " Send Encrypted");
       }
-      return /* @__PURE__ */ (0, import_mithril8.default)("button", { class: "selected", disabled: true }, "Send Direct Message");
+      return /* @__PURE__ */ (0, import_mithril9.default)("button", { class: "selected", disabled: true }, "Send Direct Message");
     }
     selectActors(vnode, actors) {
       vnode.state.actors = actors;
@@ -17092,66 +16569,12 @@
     }
   };
 
-  // src/view/modal-debug.tsx
-  var import_mithril10 = __toESM(require_mithril(), 1);
-  var import_mithril11 = __toESM(require_mithril(), 1);
-  var Debug = class {
-    //
-    oninit(vnode) {
-      vnode.state.name = vnode.attrs.group.name;
-    }
-    view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril10.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril10.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-lock-fill" }), " Edit Group"), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril10.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril10.default)(
-        "input",
-        {
-          id: "idGroupName",
-          type: "text",
-          name: "actorIds",
-          value: vnode.state.name,
-          oninput: (event) => this.setName(vnode, event)
-        }
-      )))), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril10.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril10.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close")), /* @__PURE__ */ (0, import_mithril10.default)("div", null, /* @__PURE__ */ (0, import_mithril10.default)(
-        "span",
-        {
-          onclick: () => {
-            this.delete(vnode);
-          },
-          class: "clickable text-red"
-        },
-        "Leave Group"
-      )))));
-    }
-    setName(vnode, event) {
-      const target = event.target;
-      vnode.state.name = target.value;
-    }
-    async onsubmit(event, vnode) {
-      event.preventDefault();
-      event.stopPropagation();
-      vnode.attrs.group.name = vnode.state.name;
-      await vnode.attrs.controller.saveGroup(vnode.attrs.group);
-      return this.close(vnode);
-    }
-    async delete(vnode) {
-      if (!confirm("Are you sure you want to leave this group? This action cannot be undone.")) {
-        return;
-      }
-      await vnode.attrs.controller.deleteGroup(vnode.attrs.group.id);
-      this.close(vnode);
-    }
-    close(vnode) {
-      vnode.attrs.close();
-      import_mithril10.default.redraw();
-    }
-  };
-
   // src/view/messages.tsx
+  var import_mithril12 = __toESM(require_mithril(), 1);
   var import_mithril13 = __toESM(require_mithril(), 1);
-  var import_stream = __toESM(require_stream2(), 1);
-  var import_mithril14 = __toESM(require_mithril(), 1);
 
   // src/view/widget-message-create.tsx
-  var import_mithril12 = __toESM(require_mithril(), 1);
+  var import_mithril11 = __toESM(require_mithril(), 1);
   var WidgetMessageCreate = class {
     oninit(vnode) {
       vnode.state.message = "";
@@ -17160,14 +16583,14 @@
       const enabled = vnode.state.message.trim() !== "";
       const disabled = !enabled;
       const color = enabled ? "var(--blue50)" : "var(--gray30)";
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { role: "input", class: "flex-row" }, /* @__PURE__ */ (0, import_mithril12.default)(
+      return /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "input", class: "flex-row" }, /* @__PURE__ */ (0, import_mithril11.default)(
         "textarea",
         {
           value: vnode.state.message,
           style: "border:none; min-height:3em; field-sizing:content; resize:none;",
           oninput: (e) => this.oninput(vnode, e)
         }
-      ), /* @__PURE__ */ (0, import_mithril12.default)(
+      ), /* @__PURE__ */ (0, import_mithril11.default)(
         "button",
         {
           tabIndex: "0",
@@ -17175,7 +16598,7 @@
           disabled,
           style: `background-color:${color}; color:white; font-size:24px;`
         },
-        /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-arrow-up-circle-fill" })
+        /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-arrow-up-circle-fill" })
       ));
     }
     oninput(vnode, event) {
@@ -17200,21 +16623,36 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       const contactsList = Array.from(controller2.contacts.values());
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "bold" }, controller2.group.name), "\xA0", /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril13.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_group_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "bold" }, controller2.group.name), "\xA0", /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-xs text-gray" }, contactsList.slice(0, 6).map((contact, index) => /* @__PURE__ */ (0, import_mithril12.default)("button", null, contact.name)))), /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "text-sm", onclick: () => vnode.attrs.controller.page_group_settings() }, "Group Info")))), /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         const contact = controller2.contacts.get(message.sender) || NewContact();
         const isMe = message.sender == controller2.actorId();
-        return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: `message ${isMe ? " me" : ""}` }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril13.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()));
-      }))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril13.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))));
+        if (isMe) {
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message me pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril12.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "pos-absolute-top-right text-sm" }, this.likes(vnode, message)));
+        }
+        return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bold flex-grow" }, contact.name), /* @__PURE__ */ (0, import_mithril12.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "pos-absolute-top-right text-sm" }, this.likes(vnode, message)));
+      }))), /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril12.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))));
+    }
+    likes(vnode, message) {
+      if (message.likes == void 0) {
+        message.likes = [];
+      }
+      if (message.likes.length == 0) {
+        return /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "hover-show clickable", onclick: () => vnode.attrs.controller.like_message(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-heart" }));
+      }
+      if (message.likes.includes(vnode.attrs.controller.actorId())) {
+        return /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "clickable", onclick: () => vnode.attrs.controller.undo_like_message(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-heart-fill text-red margin-right-xs", hint: vnode.attrs.controller.actorId() }), message.likes.length);
+      }
+      return /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "clickable", onclick: () => vnode.attrs.controller.like_message(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-heart-fill margin-right-xs", hint: vnode.attrs.controller.actorId() }), message.likes.length);
     }
   };
 
   // src/view/groups.tsx
+  var import_mithril14 = __toESM(require_mithril(), 1);
   var import_mithril15 = __toESM(require_mithril(), 1);
-  var import_mithril16 = __toESM(require_mithril(), 1);
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril15.default)("div", null, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bold text-lg margin-none flex-grow" }, "Conversations"), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "link text-lg margin-none", onclick: () => controller2.modal_newConversation(), tabindex: "0" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "input", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril15.default)("label", { class: "bi bi-search", for: "idSearch" }), /* @__PURE__ */ (0, import_mithril15.default)(
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", null, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bold text-lg margin-none flex-grow" }, "Conversations"), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "link text-lg margin-none", onclick: () => controller2.modal_newConversation(), tabindex: "0" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "input", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril14.default)("label", { class: "bi bi-search", for: "idSearch" }), /* @__PURE__ */ (0, import_mithril14.default)(
         "input",
         {
           id: "idSearch",
@@ -17223,19 +16661,19 @@
           class: "flex-grow margin-none padding-none",
           style: "border:none; outline:none;"
         }
-      )), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-lg text-gray margin-none clickable", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-filter-circle" }))), /* @__PURE__ */ (0, import_mithril15.default)("hr", { class: "margin-vertical-sm" }), controller2.groups.map((group) => {
+      )), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-lg text-gray margin-none clickable", tabindex: "0" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-filter-circle" }))), /* @__PURE__ */ (0, import_mithril14.default)("hr", { class: "margin-vertical-sm" }), controller2.groups.map((group) => {
         var cssClass = "flex-row flex-align-center padding hover-trigger";
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril15.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
+        return /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
       }));
     }
   };
 
   // src/view/group-settings.tsx
+  var import_mithril16 = __toESM(require_mithril(), 1);
   var import_mithril17 = __toESM(require_mithril(), 1);
-  var import_mithril18 = __toESM(require_mithril(), 1);
   var GroupSettings = class {
     //
     oninit(vnode) {
@@ -17249,7 +16687,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("div", null, /* @__PURE__ */ (0, import_mithril17.default)("span", { role: "button", class: "link", onclick: () => vnode.attrs.controller.page_messages() }, "\u2190")), /* @__PURE__ */ (0, import_mithril17.default)("span", { class: "bold text-lg" }, "GroupSettings for ", controller2.group.name))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril17.default)(
+      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril16.default)("div", null, /* @__PURE__ */ (0, import_mithril16.default)("span", { role: "button", class: "link", onclick: () => vnode.attrs.controller.page_messages() }, "\u2190")), /* @__PURE__ */ (0, import_mithril16.default)("span", { class: "bold text-lg" }, "GroupSettings for ", controller2.group.name))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril16.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril16.default)("label", { for: "idGroupName" }, "Group Name"), /* @__PURE__ */ (0, import_mithril16.default)(
         "input",
         {
           id: "idGroupName",
@@ -17257,7 +16695,7 @@
           value: vnode.state.name,
           oninput: (event) => this.setName(vnode, event)
         }
-      ))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("label", { for: "idGroupTags" }, "Tags"), /* @__PURE__ */ (0, import_mithril17.default)(
+      ))), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril16.default)("label", { for: "idGroupTags" }, "Tags"), /* @__PURE__ */ (0, import_mithril16.default)(
         "input",
         {
           id: "idGroupTags",
@@ -17265,7 +16703,7 @@
           value: vnode.state.tags,
           oninput: (event) => this.setTags(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-xs text-gray" }, "#hashtags (separated by spaces) help you organize conversations.")))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")))), /* @__PURE__ */ (0, import_mithril17.default)("hr", { class: "margin-vertical-xl" }), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-vertical bold" }, "Danger Zone"), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { class: "text-red", onclick: () => this.delete(vnode) }, "Leave Group"), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-sm text-gray" }, "Remove yourself from this group and delete all messages from your devices.", /* @__PURE__ */ (0, import_mithril17.default)("br", null), "Other group members will still have access to the conversation and its history."))));
+      ), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "text-xs text-gray" }, "#hashtags (separated by spaces) help you organize conversations.")))), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril16.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")))), /* @__PURE__ */ (0, import_mithril16.default)("hr", { class: "margin-vertical-xl" }), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "margin-vertical bold" }, "Danger Zone"), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril16.default)("button", { class: "text-red", onclick: () => this.delete(vnode) }, "Leave Group"), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "text-sm text-gray" }, "Remove yourself from this group and delete all messages from your devices.", /* @__PURE__ */ (0, import_mithril16.default)("br", null), "Other group members will still have access to the conversation and its history."))));
     }
     setName(vnode, event) {
       const target = event.target;
@@ -17302,10 +16740,10 @@
   };
 
   // src/view/empty.tsx
-  var import_mithril19 = __toESM(require_mithril(), 1);
+  var import_mithril18 = __toESM(require_mithril(), 1);
   var Empty = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, "Messages will appear here when you"), /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "Start a Conversation")));
+      return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, "Messages will appear here when you"), /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "Start a Conversation")));
     }
   };
 
@@ -17318,17 +16756,17 @@
       var page;
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-SETTINGS":
-          page = /* @__PURE__ */ (0, import_mithril20.default)(GroupSettings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+          page = /* @__PURE__ */ (0, import_mithril19.default)(GroupSettings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
           break;
         default:
           const groups = vnode.attrs.controller.groups;
           if (groups.length == 0) {
-            page = /* @__PURE__ */ (0, import_mithril20.default)(Empty, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril19.default)(Empty, { controller: vnode.attrs.controller });
           } else {
-            page = /* @__PURE__ */ (0, import_mithril20.default)(Messages, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril19.default)(Messages, { controller: vnode.attrs.controller });
           }
       }
-      return /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril20.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
+      return /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril19.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
     }
     viewGroups(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -17337,7 +16775,7 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " selected";
         }
-        return /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril20.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
+        return /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
       });
     }
     // viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
@@ -17345,9 +16783,7 @@
       const modalView = vnode.attrs.controller.modalView;
       switch (modalView) {
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril20.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
-        case "DEBUG":
-          return /* @__PURE__ */ (0, import_mithril20.default)(Debug, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril19.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -17356,7 +16792,7 @@
       document.getElementById("modal")?.classList.remove("ready");
       window.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril20.default.redraw();
+        import_mithril19.default.redraw();
       }, 240);
     }
   };
@@ -17369,12 +16805,12 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       if (!controller2.config.ready) {
-        return /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "app-content" }, "Loading...");
+        return /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "app-content" }, "Loading...");
       }
       if (!controller2.config.welcome) {
-        return /* @__PURE__ */ (0, import_mithril22.default)(Welcome, { controller: controller2 });
+        return /* @__PURE__ */ (0, import_mithril21.default)(Welcome, { controller: controller2 });
       }
-      return /* @__PURE__ */ (0, import_mithril22.default)(Index, { controller: controller2 });
+      return /* @__PURE__ */ (0, import_mithril21.default)(Index, { controller: controller2 });
     }
   };
 
@@ -17392,16 +16828,19 @@
       throw new Error(`Actor does not support MLS API.`);
     }
     const indexedDB2 = await NewIndexedDB(actorID);
-    const database = new Database(indexedDB2, defaultClientConfig);
+    const database = new Database(indexedDB2);
     const delivery = new Delivery(actor.id(), actor.outbox());
     const directory = new Directory(actor.id(), actor.outbox());
     const receiver = new Receiver(actor.id(), url);
-    controller = new Controller(actor, database, delivery, directory, receiver, plaintext, defaultClientConfig);
-    import_mithril24.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril24.default)(Main, { controller }) });
+    controller = new Controller(actor, database, delivery, directory, receiver, plaintext);
+    import_mithril23.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril23.default)(Main, { controller }) });
   }
   startup();
 })();
 /*! Bundled license information:
+
+@noble/ciphers/utils.js:
+  (*! noble-ciphers - MIT License (c) 2023 Paul Miller (paulmillr.com) *)
 
 @noble/hashes/utils.js:
   (*! noble-hashes - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
@@ -17419,8 +16858,5 @@
 @hpke/common/esm/src/curve/modular.js:
 @hpke/common/esm/src/curve/montgomery.js:
   (*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
-
-@noble/ciphers/utils.js:
-  (*! noble-ciphers - MIT License (c) 2023 Paul Miller (paulmillr.com) *)
 */
 //# sourceMappingURL=app.js.map

@@ -1,5 +1,5 @@
 import m, {type Vnode} from "mithril"
-import type {Controller} from "../controller"
+import type {Controller} from "../service/controller"
 import {CreateKeys} from "./modal-createKeys"
 
 type WelcomeVnode = Vnode<WelcomeAttrs, WelcomeState>

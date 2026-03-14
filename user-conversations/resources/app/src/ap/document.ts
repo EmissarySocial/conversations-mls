@@ -1,17 +1,11 @@
-import {loadActor} from "./actor"
-import {Object} from "./object"
+import { loadActor } from "./actor"
+import { Object } from "./object"
 import * as vocab from "./vocab"
+
+type map = { [key: string]: any }
 
 // Document is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Document extends Object {
-	//
-	///////////////////////////////////
-	// Setters
-
-	// setContext sets the context property (NOT @context) on the Document struct
-	setContext = (context: string) => {
-		this.set(vocab.PropertyContext, context)
-	}
 
 	///////////////////////////////////
 	// Property accessors
@@ -30,11 +24,6 @@ export class Document extends Object {
 	// content returns the value of the "content" property
 	content = () => {
 		return this.getString("as", "content")
-	}
-
-	// context returns the value of the "context" property (NOT @context)
-	context = () => {
-		return this.getString("as", "context")
 	}
 
 	// icon returns the value of the "icon" property
@@ -97,7 +86,10 @@ export class Document extends Object {
 export async function loadDocument(value: any): Promise<Document> {
 	switch (typeof value) {
 		case "string":
-			return await new Document().fromURL(value)
+			if (value.startsWith("http://") || value.startsWith("https://")) {
+				return await new Document().fromURL(value)
+			}
+			return new Document()
 
 		case "object":
 			if (Array.isArray(value)) {

@@ -1,6 +1,6 @@
-import {Object} from "./object"
-import {loadActivity} from "./activity"
-import {loadDocument} from "./document"
+import { Object } from "./object"
+import { loadActivity } from "./activity"
+import { loadDocument } from "./document"
 
 export class Collection extends Object {
 	//

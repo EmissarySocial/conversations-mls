@@ -9,9 +9,9 @@
 
 		// Environment Settings
 		// See also https://aka.ms/tsconfig/module
-		"module": "es2020",
+		"module": "esnext",
 		"moduleResolution": "bundler",
-		"target": "es2020",
+		"target": "es2022",
 		"types": [],
 		"lib": ["dom", "dom.iterable", "esnext"],
 

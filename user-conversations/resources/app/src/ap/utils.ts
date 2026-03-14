@@ -43,3 +43,23 @@ export function toString(value: any): string {
 
 	return ""
 }
+
+
+export function isString(value: any): value is string {
+	return typeof value === "string"
+}
+
+export function isInteger(value: any): value is number {
+	if (typeof value === "number") {
+		return Number.isInteger(value)
+	}
+	return false
+}
+
+export function isArray(value: any): value is any[] {
+	return Array.isArray(value)
+}
+
+export function isObject(value: any): value is object {
+	return value !== null && typeof value === "object" && !Array.isArray(value)
+}

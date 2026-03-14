@@ -1,5 +1,5 @@
 import m from "mithril"
-import {Controller} from "../controller"
+import {Controller} from "../service/controller"
 import {type Group} from "../model/group"
 import {type Vnode, type VnodeDOM, type Component} from "mithril"
 

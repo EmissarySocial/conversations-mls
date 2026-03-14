@@ -1,50 +1,49 @@
 // MLS functions
-import {bytesToBase64} from "ts-mls"
-import {createApplicationMessage} from "ts-mls"
-import {createCommit} from "ts-mls"
-import {createGroup} from "ts-mls"
-import {decode} from "ts-mls"
-import {defaultProposalTypes} from "ts-mls"
-import {encode} from "ts-mls"
-import {getGroupMembers} from "ts-mls"
-import {joinGroup} from "ts-mls"
-import {mlsMessageDecoder} from "ts-mls"
-import {mlsMessageEncoder} from "ts-mls"
-import {processMessage} from "ts-mls"
-import {unsafeTestingAuthenticationService} from "ts-mls"
-import {wireformats} from "ts-mls"
-import {zeroOutUint8Array} from "ts-mls"
+import { bytesToBase64 } from "ts-mls"
+import { createApplicationMessage } from "ts-mls"
+import { createCommit } from "ts-mls"
+import { createGroup } from "ts-mls"
+import { decode } from "ts-mls"
+import { defaultProposalTypes } from "ts-mls"
+import { encode } from "ts-mls"
+import { getGroupMembers } from "ts-mls"
+import { joinGroup } from "ts-mls"
+import { mlsMessageDecoder } from "ts-mls"
+import { mlsMessageEncoder } from "ts-mls"
+import { processMessage } from "ts-mls"
+import { unsafeTestingAuthenticationService } from "ts-mls"
+import { wireformats } from "ts-mls"
+import { zeroOutUint8Array } from "ts-mls"
 
 // MLS Types
-import {type MlsMessageProtocol} from "ts-mls"
-import {type CredentialBasic} from "ts-mls"
-import {type Proposal} from "ts-mls"
-import {type PrivateKeyPackage} from "ts-mls"
-import {type KeyPackage} from "ts-mls"
-import {type MlsContext} from "ts-mls"
-import {type MlsPrivateMessage} from "ts-mls"
-import {type MlsWelcomeMessage} from "ts-mls"
-import {type MlsGroupInfo} from "ts-mls"
-import {type CiphersuiteImpl} from "ts-mls"
-import {type MlsFramedMessage} from "ts-mls"
+import { type CredentialBasic } from "ts-mls"
+import { type Proposal } from "ts-mls"
+import { type PrivateKeyPackage } from "ts-mls"
+import { type KeyPackage } from "ts-mls"
+import { type MlsContext } from "ts-mls"
+import { type MlsPrivateMessage } from "ts-mls"
+import { type MlsWelcomeMessage } from "ts-mls"
+import { type MlsGroupInfo } from "ts-mls"
+import { type CiphersuiteImpl } from "ts-mls"
+import { type MlsFramedMessage } from "ts-mls"
 
 // ActivityPub Types
-import {Actor} from "../ap/actor"
-import {Activity} from "../ap/activity"
+import { Actor } from "../ap/actor"
+import { Activity } from "../ap/activity"
 import * as vocab from "../ap/vocab"
 
 // Application Types
-import {type Group, type EncryptedGroup, groupIsEncrypted} from "../model/group"
-import {type APKeyPackage} from "../model/ap-keypackage"
-import {type Message} from "../model/message"
-import {type DBKeyPackage} from "../model/db-keypackage"
-import {base64ToUint8Array, newId} from "./utils"
+import { type Group, type EncryptedGroup, groupIsEncrypted } from "../model/group"
+import { type APKeyPackage } from "../model/ap-keypackage"
+import { type Message } from "../model/message"
+import { type DBKeyPackage } from "../model/db-keypackage"
+import { base64ToUint8Array, newId } from "./utils"
 
 // IDatabase wraps all of the methods that the MLS service
 // uses to store group state.
 interface IDatabase {
 	// load methods
-	loadGroup(groupID: string): Promise<Group | EncryptedGroup>
+	loadGroup(groupID: string): Promise<Group | EncryptedGroup | undefined>
 	loadMessage(messageID: string): Promise<Message>
 
 	// save methods
@@ -240,7 +239,7 @@ export class MLS {
 
 		// Create a new activity that wraps the MLS-encrypted content
 		const result = new Activity({
-			"@context": [vocab.ContextActivityStreams, {mls: vocab.ContextMLS}],
+			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
 			id: newId(),
 			actor: this.#actor.id(),
 			type: vocab.ActivityTypeCreate,
@@ -333,10 +332,16 @@ export class MLS {
 	// onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
-	async #onMessage_PrivateMessage(mlsMessage: MlsPrivateMessage & MlsMessageProtocol): Promise<Activity | null> {
+	async #onMessage_PrivateMessage(mlsMessage: MlsPrivateMessage): Promise<Activity | null> {
+
 		// Load the group from the database so we can get the current client state for decryption
 		const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId)
 		const group = await this.#database.loadGroup(groupId)
+
+		if (group == undefined) {
+			console.error("Received message for unknown group", groupId)
+			return null
+		}
 
 		if (!groupIsEncrypted(group)) {
 			throw new Error("Group client state is undefined")
@@ -363,11 +368,9 @@ export class MLS {
 
 		// Create a result object and embed additional context data
 		var result = new Activity().fromJSON(plaintext)
-		var object = await result.object()
 
-		if (object.context() == "") {
-			object.setContext(groupId)
-			result.setObject(object)
+		if (result.context() == "") {
+			result.setContext(groupId)
 		}
 
 		return result

@@ -1,4 +1,4 @@
-import type {Actor} from "../ap/actor"
+import type { Actor } from "../ap/actor"
 
 // Contact represents an ActivityPub actor that the user has interacted with.
 export type Contact = {

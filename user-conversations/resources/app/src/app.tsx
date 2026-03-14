@@ -1,12 +1,11 @@
 import m from "mithril"
 
 import {Actor} from "./ap/actor"
-import {defaultClientConfig} from "ts-mls/clientConfig.js"
 import {Database, NewIndexedDB} from "./service/database"
 import {Delivery} from "./service/delivery"
 import {Directory} from "./service/directory"
 import {Receiver} from "./service/receiver"
-import {Controller} from "./controller"
+import {Controller} from "./service/controller"
 import {Main} from "./view/main"
 
 // Global controller instance
@@ -33,13 +32,13 @@ async function startup() {
 
 	// Build dependencies
 	const indexedDB = await NewIndexedDB(actorID)
-	const database = new Database(indexedDB, defaultClientConfig)
+	const database = new Database(indexedDB)
 	const delivery = new Delivery(actor.id(), actor.outbox())
 	const directory = new Directory(actor.id(), actor.outbox())
 	const receiver = new Receiver(actor.id(), url)
 
 	// Build the controller
-	controller = new Controller(actor, database, delivery, directory, receiver, plaintext, defaultClientConfig)
+	controller = new Controller(actor, database, delivery, directory, receiver, plaintext)
 
 	// Pass the controller to the Main component and mount the main application
 	m.mount(root, {view: () => <Main controller={controller} />})

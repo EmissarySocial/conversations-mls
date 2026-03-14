@@ -1,6 +1,5 @@
-import type {CiphersuiteImpl} from "ts-mls"
-import type {KeyPackage} from "ts-mls"
-import type {PrivateKeyPackage} from "ts-mls"
+import type { KeyPackage } from "ts-mls"
+import type { PrivateKeyPackage } from "ts-mls"
 
 export type DBKeyPackage = {
 	id: string

@@ -1,5 +1,5 @@
 import m from "mithril"
-import type {Controller} from "../controller"
+import type {Controller} from "../service/controller"
 
 type EmptyVnode = m.Vnode<EmptyAttrs, EmptyState>
 

@@ -1,5 +1,5 @@
-import {Activity} from "../ap/activity"
-import {Collection, rangeActivities} from "../ap/collection"
+import { Activity } from "../ap/activity"
+import { Collection, rangeActivities } from "../ap/collection"
 
 // IActivityHandler is a function that takes an MlsPrivateMessage and returns void.
 // The Receiver service will call the registered ActivityHandler when a new message
@@ -23,7 +23,7 @@ export class Receiver {
 	constructor(actorId: string, messagesUrl: string) {
 		this.#actorId = actorId
 		this.#messagesUrl = messagesUrl
-		this.#handler = async function (activity: Activity) {}
+		this.#handler = async function (activity: Activity) { }
 		this.#polling = false
 		this.#pollAgain = false
 	}
@@ -43,7 +43,7 @@ export class Receiver {
 		const sseEndpoint = collection.eventStream()
 
 		if (sseEndpoint != "") {
-			this.#eventSource = new EventSource(sseEndpoint, {withCredentials: true})
+			this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true })
 			this.#eventSource.onmessage = (event) => {
 				this.poll()
 			}
@@ -65,7 +65,7 @@ export class Receiver {
 
 		// Fetch NEW messages from the server
 		const lastUrl = localStorage.getItem("lastUrl") || ""
-		const activities = rangeActivities(this.#messagesUrl, lastUrl, {credentials: "include"})
+		const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" })
 
 		// Process each activity sequentially
 		for await (const activity of activities) {
