@@ -1,12 +1,17 @@
 import m from "mithril"
 
-import {Actor} from "./ap/actor"
+// ActivityStreams objects
+import {Actor} from "./as/actor"
+
+// Services
 import {Database, NewIndexedDB} from "./service/database"
 import {Delivery} from "./service/delivery"
 import {Directory} from "./service/directory"
 import {Receiver} from "./service/receiver"
 import {Controller} from "./service/controller"
-import {Main} from "./view/main"
+
+// Views
+import {App} from "./view/app"
 
 // Global controller instance
 var controller: Controller
@@ -40,8 +45,8 @@ async function startup() {
 	// Build the controller
 	controller = new Controller(actor, database, delivery, directory, receiver, plaintext)
 
-	// Pass the controller to the Main component and mount the main application
-	m.mount(root, {view: () => <Main controller={controller} />})
+	// Pass the controller to the App component and mount the main application
+	m.mount(root, {view: () => <App controller={controller} />})
 }
 
 // 3..2..1.. Go!

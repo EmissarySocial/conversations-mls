@@ -9,8 +9,8 @@ import { mlsMessageEncoder } from "ts-mls"
 import { mlsMessageDecoder } from "ts-mls"
 
 import { MLS } from "./mls"
-import { Activity } from "../ap/activity"
-import * as vocab from "../ap/vocab"
+import { Activity } from "../as/activity"
+import * as vocab from "../as/vocab"
 import { groupIsEncrypted, type Group } from "../model/group"
 
 // Delivery service sends messages via ActivityPub

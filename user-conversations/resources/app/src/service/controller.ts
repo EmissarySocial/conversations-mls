@@ -2,9 +2,9 @@
 import m from "mithril"
 
 // ActivityPub objects
-import { Actor } from "../ap/actor"
-import { Activity } from "../ap/activity"
-import * as vocab from "../ap/vocab"
+import { Actor } from "../as/actor"
+import { Activity } from "../as/activity"
+import * as vocab from "../as/vocab"
 
 // Model objects
 import { type Config } from "../model/config"

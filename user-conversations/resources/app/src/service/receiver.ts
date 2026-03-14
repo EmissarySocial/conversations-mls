@@ -1,5 +1,5 @@
-import { Activity } from "../ap/activity"
-import { Collection, rangeActivities } from "../ap/collection"
+import { Activity } from "../as/activity"
+import { Collection, rangeActivities } from "../as/collection"
 
 // IActivityHandler is a function that takes an MlsPrivateMessage and returns void.
 // The Receiver service will call the registered ActivityHandler when a new message

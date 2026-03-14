@@ -7239,7 +7239,7 @@
   // src/app.tsx
   var import_mithril23 = __toESM(require_mithril(), 1);
 
-  // src/ap/utils.ts
+  // src/as/utils.ts
   function toString(value) {
     if (value == void 0) {
       return "";
@@ -7275,7 +7275,7 @@
     return "";
   }
 
-  // src/ap/object.ts
+  // src/as/object.ts
   var Object2 = class {
     #value;
     constructor(value) {
@@ -7381,7 +7381,7 @@
     };
   };
 
-  // src/ap/actor.ts
+  // src/as/actor.ts
   var Actor = class extends Object2 {
     //
     ///////////////////////////////////
@@ -14909,7 +14909,7 @@
     };
   };
 
-  // src/ap/vocab.ts
+  // src/as/vocab.ts
   var ActivityTypeCreate = "Create";
   var ActivityTypeDelete = "Delete";
   var ActivityTypeLike = "Like";
@@ -14927,7 +14927,7 @@
   var PropertyTarget = "target";
   var PropertyTo = "to";
 
-  // src/ap/document.ts
+  // src/as/document.ts
   var Document = class extends Object2 {
     ///////////////////////////////////
     // Property accessors
@@ -15009,7 +15009,7 @@
     return new Document();
   }
 
-  // src/ap/activity.ts
+  // src/as/activity.ts
   var Activity = class extends Object2 {
     ///////////////////////////////////
     // Property getters
@@ -15418,7 +15418,7 @@
     };
   };
 
-  // src/ap/collection.ts
+  // src/as/collection.ts
   var Collection = class extends Object2 {
     //
     // eventStream returns the value of the "eventStream" property
@@ -16108,7 +16108,7 @@
     };
   };
 
-  // src/view/main.tsx
+  // src/view/app.tsx
   var import_mithril21 = __toESM(require_mithril(), 1);
   var import_mithril22 = __toESM(require_mithril(), 1);
 
@@ -16797,8 +16797,8 @@
     }
   };
 
-  // src/view/main.tsx
-  var Main = class {
+  // src/view/app.tsx
+  var App = class {
     oninit(vnode) {
       vnode.state.modal = "";
     }
@@ -16833,7 +16833,7 @@
     const directory = new Directory(actor.id(), actor.outbox());
     const receiver = new Receiver(actor.id(), url);
     controller = new Controller(actor, database, delivery, directory, receiver, plaintext);
-    import_mithril23.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril23.default)(Main, { controller }) });
+    import_mithril23.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril23.default)(App, { controller }) });
   }
   startup();
 })();

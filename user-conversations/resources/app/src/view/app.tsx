@@ -5,23 +5,23 @@ import type {Config} from "../model/config"
 import {Welcome} from "./welcome"
 import {Index} from "."
 
-type MainVnode = Vnode<MainAttrs, MainState>
+type AppVnode = Vnode<AppAttrs, AppState>
 
-type MainAttrs = {
+type AppAttrs = {
 	controller: Controller
 }
 
-type MainState = {
+type AppState = {
 	modal: string
 	config: Config
 }
 
-export class Main {
-	oninit(vnode: MainVnode) {
+export class App {
+	oninit(vnode: AppVnode) {
 		vnode.state.modal = ""
 	}
 
-	view(vnode: MainVnode) {
+	view(vnode: AppVnode) {
 		const controller = vnode.attrs.controller
 
 		if (!controller.config.ready) {

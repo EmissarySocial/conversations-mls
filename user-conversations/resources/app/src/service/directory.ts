@@ -9,8 +9,8 @@ import { type APKeyPackage } from "../model/ap-keypackage"
 import { ContactFromActor, type Contact } from "../model/contact"
 
 // ActivityPub objects
-import { rangeDocuments } from "../ap/collection"
-import { Actor } from "../ap/actor"
+import { rangeDocuments } from "../as/collection"
+import { Actor } from "../as/actor"
 import { base64ToUint8Array } from "./utils"
 
 export class Directory {

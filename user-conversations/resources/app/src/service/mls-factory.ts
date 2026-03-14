@@ -7,7 +7,7 @@ import type { Database } from "./database"
 import type { Delivery } from "./delivery"
 import type { Directory } from "./directory"
 import type { Receiver } from "./receiver"
-import { Actor } from "../ap/actor"
+import { Actor } from "../as/actor"
 import { MLS } from "./mls"
 import { NewAPKeyPackage } from "../model/ap-keypackage"
 

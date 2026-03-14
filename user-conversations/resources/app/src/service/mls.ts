@@ -28,9 +28,9 @@ import { type CiphersuiteImpl } from "ts-mls"
 import { type MlsFramedMessage } from "ts-mls"
 
 // ActivityPub Types
-import { Actor } from "../ap/actor"
-import { Activity } from "../ap/activity"
-import * as vocab from "../ap/vocab"
+import { Actor } from "../as/actor"
+import { Activity } from "../as/activity"
+import * as vocab from "../as/vocab"
 
 // Application Types
 import { type Group, type EncryptedGroup, groupIsEncrypted } from "../model/group"
