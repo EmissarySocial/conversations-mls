@@ -1,8 +1,8 @@
-import m, {request} from "mithril"
-import {type Vnode, type VnodeDOM, type Component} from "mithril"
-import {type APActor} from "../model/ap-actor"
-import {keyCode} from "./utils"
-import {type APCollectionHeader} from "../model/ap-collection"
+import m, { request } from "mithril"
+import { type Vnode, type VnodeDOM, type Component } from "mithril"
+import { type APActor } from "../model/ap-actor"
+import { keyCode } from "./utils"
+import { type APCollectionHeader } from "../model/ap-collection"
 
 type ActorSearchVnode = VnodeDOM<ActorSearchArgs, ActorSearchState>
 
@@ -17,7 +17,7 @@ interface ActorSearchState {
 	search: string
 	loading: boolean
 	actors: APActor[]
-	keyPackages: {[key: string]: number}
+	keyPackages: { [key: string]: number }
 	highlightedOption: number
 	encrypted: boolean
 }

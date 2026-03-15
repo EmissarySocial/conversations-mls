@@ -1,7 +1,7 @@
 import m from "mithril"
-import {Controller} from "../service/controller"
-import {type Group} from "../model/group"
-import {type Vnode, type VnodeDOM, type Component} from "mithril"
+import { Controller } from "../service/controller"
+import { type Group } from "../model/group"
+import { type Vnode, type VnodeDOM, type Component } from "mithril"
 
 type GroupSettingsVnode = Vnode<GroupSettingsArgs, GroupSettingsState>
 

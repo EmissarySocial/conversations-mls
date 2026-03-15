@@ -1,12 +1,12 @@
 import m from "mithril"
-import {type Vnode} from "mithril"
-import {type Group} from "../model/group"
-import {Controller} from "../service/controller"
-import {NewConversation} from "./modal-newConversation"
-import {Messages} from "./messages"
-import {Groups} from "./groups"
-import {GroupSettings} from "./group-settings"
-import {Empty} from "./empty"
+import { type Vnode } from "mithril"
+import { type Group } from "../model/group"
+import { Controller } from "../service/controller"
+import { NewConversation } from "./modal-newConversation"
+import { Messages } from "./messages"
+import { Groups } from "./groups"
+import { GroupSettings } from "./group-settings"
+import { Empty } from "./empty"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 

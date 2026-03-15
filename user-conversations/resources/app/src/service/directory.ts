@@ -14,20 +14,27 @@ import { Actor } from "../as/actor"
 import { base64ToUint8Array } from "./utils"
 
 export class Directory {
-	#actorID: string // ID of the local actor
-	#outboxURL: string // Outbox URL of the local actor
 
-	constructor(actorID: string, outboxURL: string) {
-		this.#actorID = actorID
-		this.#outboxURL = outboxURL
+	#actorId: string // ID of the local actor
+	#outboxUrl: string // Outbox URL of the local actor
+
+	constructor() {
+		this.#actorId = ""
+		this.#outboxUrl = ""
+	}
+
+	setActor(actor: Actor) {
+		this.#actorId = actor.id()
+		this.#outboxUrl = actor.outbox()
 	}
 
 	// getKeyPackage loads the KeyPackages published by a single actor
-	getKeyPackages = async (actorIDs: string[]): Promise<KeyPackage[]> => {
+	getKeyPackages = async (actorIds: string[]): Promise<KeyPackage[]> => {
+
 		var result: KeyPackage[] = []
 
-		for (const actorID of actorIDs) {
-			const actor = await new Actor().fromURL(actorID)
+		for (const actorId of actorIds) {
+			const actor = await new Actor().fromURL(actorId)
 			const keyPackages = rangeDocuments(actor.mlsKeyPackages())
 
 			for await (const keyPackage of keyPackages) {
@@ -60,10 +67,10 @@ export class Directory {
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
 	#createObject = async <T>(object: T) => {
-		return await this.#send(this.#outboxURL, {
+		return await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: "Create",
-			actor: this.#actorID,
+			actor: this.#actorId,
 			object: object,
 		})
 	}
@@ -85,7 +92,7 @@ export class Directory {
 		return response.headers.get("Location") || ""
 	}
 
-	getContact = async (id: string): Promise<Contact> => {
+	loadContact = async (id: string): Promise<Contact> => {
 		const response = await new Actor().fromURL(id)
 		return ContactFromActor(response)
 	}

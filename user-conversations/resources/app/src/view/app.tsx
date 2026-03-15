@@ -1,9 +1,9 @@
 import m from "mithril"
-import {type Vnode} from "mithril"
-import {Controller} from "../service/controller"
-import type {Config} from "../model/config"
-import {Welcome} from "./welcome"
-import {Index} from "."
+import { type Vnode } from "mithril"
+import { Controller } from "../service/controller"
+import type { Config } from "../model/config"
+import { Welcome } from "./welcome"
+import { Index } from "."
 
 type AppVnode = Vnode<AppAttrs, AppState>
 
@@ -24,14 +24,16 @@ export class App {
 	view(vnode: AppVnode) {
 		const controller = vnode.attrs.controller
 
-		if (!controller.config.ready) {
-			return <div class="app-content">Loading...</div>
-		}
+		switch (controller.pageView) {
 
-		if (!controller.config.welcome) {
-			return <Welcome controller={controller} />
-		}
+			case "LOADING":
+				return <div class="app-content">Loading...</div>
 
-		return <Index controller={controller} />
+			case "WELCOME":
+				return <Welcome controller={controller} />
+
+			default:
+				return <Index controller={controller} />
+		}
 	}
 }

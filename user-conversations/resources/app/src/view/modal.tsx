@@ -1,6 +1,6 @@
 import m from "mithril"
-import {type VnodeDOM} from "mithril"
-import {keyCode, getFocusElements} from "./utils"
+import { type VnodeDOM } from "mithril"
+import { keyCode, getFocusElements } from "./utils"
 
 interface ModalAttrs {
 	close: () => void

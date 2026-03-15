@@ -17,20 +17,22 @@ import { NewMessage } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
 
 // Services
-import { type Delivery } from "./delivery"
-import { type Directory } from "./directory"
-import { type Database } from "./database"
-import { type Receiver } from "./receiver"
+import { type IDelivery } from "./interfaces"
+import { type IDirectory } from "./interfaces"
+import { type IDatabase } from "./interfaces"
+import { type IReceiver } from "./interfaces"
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
 import { newId } from "./utils"
 
 export class Controller {
+
+	#actorId: string
 	#actor: Actor
-	#database: Database
-	#delivery: Delivery
-	#directory: Directory
-	#receiver: Receiver
+	#database: IDatabase
+	#delivery: IDelivery
+	#directory: IDirectory
+	#receiver: IReceiver
 	#mls?: MLS
 	#allowPlaintextMessages: boolean
 
@@ -44,20 +46,20 @@ export class Controller {
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
-		actor: Actor,
-		database: Database,
-		delivery: Delivery,
-		directory: Directory,
-		receiver: Receiver,
-		allowPlaintextMessages: boolean,
+		actorId: string,
+		database: IDatabase,
+		delivery: IDelivery,
+		directory: IDirectory,
+		receiver: IReceiver,
 	) {
 		// Dependencies
-		this.#actor = actor
+		this.#actorId = actorId
+		this.#actor = new Actor()
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
 		this.#receiver = receiver
-		this.#allowPlaintextMessages = allowPlaintextMessages
+		this.#allowPlaintextMessages = false
 
 		// Application State
 		this.groups = []
@@ -66,13 +68,13 @@ export class Controller {
 		this.contacts = new Map<string, Contact>()
 
 		// UX state
-		this.pageView = ""
+		this.pageView = "LOADING"
 		this.modalView = ""
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
 		this.#receiver.registerHandler(this.receiveActivity) // Connect onActivity handler
-		this.loadConfig()
+		this.start()
 		this.loadGroups()
 	}
 
@@ -82,22 +84,33 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	loadConfig = async () => {
+	start = async () => {
+
+		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
 
-		if (this.config.hasEncryptionKeys) {
-			this.#startMLS()
-		}
-		m.redraw()
-	}
+		console.log(this.config)
 
-	// startMLS initializes the MLS service IF the configuration includes encryption keys
-	#startMLS = async () => {
-		//
-		// Guarantee dependency
-		if (this.config.hasEncryptionKeys == false) {
-			throw new Error("Cannot start MLS without encryption keys")
+		if (!this.config.ready) {
+			this.pageView = "WELCOME"
+			m.redraw()
+			return
 		}
+
+		// Load the actor object from the network and locate their messages collection
+		this.#actor = await new Actor().fromURL(this.#actorId)
+		const { url, plaintext } = this.#actor.messages()
+
+		if (url == "") {
+			throw new Error(`Actor does not support MLS API.`)
+		}
+
+		console.log("Loaded actor:", this.#actor)
+
+		this.#allowPlaintextMessages = plaintext
+		this.#delivery.setActor(this.#actor)
+		this.#directory.setActor(this.#actor)
+		this.#receiver.setActor(this.#actor)
 
 		// Create the MLS instance
 		this.#mls = await MLSFactory(
@@ -115,40 +128,27 @@ export class Controller {
 			await this.loadMessages()
 			await this.loadContacts()
 		})
+
+		// Update view once everything is initialized
+		this.pageView = "GROUPS"
+		m.redraw()
 	}
 
-	// createEncryptionKeys creates a new set of encryption keys
-	// for this user on this device
-	createEncryptionKeys = async (clientName: string, password: string, passwordHint: string) => {
-		//
-		// Initialize the config
-		this.config.ready = true
-		this.config.welcome = true
-		this.config.hasEncryptionKeys = true
-		this.config.clientName = clientName
-		this.config.password = password
-		this.config.passwordHint = passwordHint
+	// startupConfiguration is called when the user submits their options from the initial welcome screen
+	startupConfiguration = async (clientName: string, passcode: string, desktopNotifications: boolean, notificationSounds: boolean) => {
 
-		// Save the config to IndexedDB
+		this.config.ready = true
+		this.config.clientName = clientName
+		this.config.passcode = passcode
+		this.config.isDesktopNotifications = desktopNotifications
+		this.config.isNotificationSounds = notificationSounds
+
 		await this.#database.saveConfig(this.config)
 
 		// Start the MLS service
-		this.#startMLS()
+		// this.#startMLS()
 
-		// Redraw the UX
-		m.redraw()
-	}
-
-	// skipEncryptionKeys is called when the user just wants to
-	// use "direct messages" and does not want to create encryption keys (yet)
-	skipEncryptionKeys = async () => {
-		//
-		// Initialize the config
-		this.config.welcome = true
-		await this.#database.saveConfig(this.config)
-
-		// Redraw the UX
-		m.redraw()
+		await this.start()
 	}
 
 	//////////////////////////////////////////
@@ -213,14 +213,14 @@ export class Controller {
 	loadContact = async (actorId: string) => {
 		//
 		// Try to get the contact from the database first
-		var result = await this.#database.getContact(actorId)
+		var result = await this.#database.loadContact(actorId)
 
 		if (result !== undefined) {
 			return result
 		}
 
 		// Otherwise, load from the directory
-		return await this.#directory.getContact(actorId)
+		return await this.#directory.loadContact(actorId)
 	}
 
 	//////////////////////////////////////////
@@ -315,7 +315,7 @@ export class Controller {
 	}
 
 	// deleteGroup deletes the specified group from the database
-	deleteGroup = async (group: string) => {
+	deleteGroup = async (groupId: string) => {
 		//
 		// Guarantee dependency
 		if (this.#database == undefined) {
@@ -323,7 +323,8 @@ export class Controller {
 		}
 
 		// Delete the group
-		await this.#database.deleteGroup(group)
+		await this.#database.deleteGroup(groupId)
+		await this.#database.deleteMessagesByGroup(groupId)
 		await this.loadGroups()
 	}
 
@@ -358,14 +359,18 @@ export class Controller {
 		this.group.lastMessage = content
 		await this.saveGroup(this.group)
 
+		// Create an ActivityPub activity and message
+		const activityId = newId()
+		const messageId = newId()
+
 		var activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
-			id: newId(),
+			id: activityId,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
 			to: this.group.members,
 			object: {
-				id: newId(),
+				id: messageId,
 				attributedTo: this.actorId(),
 				type: vocab.ObjectTypeNote,
 				to: this.group.members,
@@ -375,14 +380,13 @@ export class Controller {
 			},
 		})
 
-		console.log("Created activity:", activity)
-
 		// (asynchronously) Send the activity through the delivery service
 		this.#sendActivity(this.group, activity)
 
 		// Create a new Message record for the database
 		var message = NewMessage()
-		message.group = this.group.id
+		message.id = messageId
+		message.groupId = this.group.id
 		message.sender = this.#actor.id()
 		message.plaintext = content
 
@@ -391,6 +395,7 @@ export class Controller {
 		await this.loadMessages()
 	}
 
+	// like_message adds a "like" from the current actor to the specified message
 	like_message = async (messageId: string) => {
 
 		// Mark the message as "liked" in the database
@@ -402,7 +407,7 @@ export class Controller {
 		}
 
 		// Load the group that this message belongs to (for addressing info)
-		var group = await this.#database.loadGroup(message.group)
+		var group = await this.#database.loadGroup(message.groupId)
 		if (group == undefined) {
 			console.log("Error: cannot like message with missing group")
 			return
@@ -425,12 +430,11 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-
+	// undo_like_message removes a "like" from the specified message
 	undo_like_message = async (messageId: string) => {
 
 		// Undo Mark the message as "liked" in the database
 		const message = await this.#database.undoLikeMessage(this.actorId(), messageId)
-
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
@@ -438,9 +442,9 @@ export class Controller {
 		}
 
 		// Load the group that this message belongs to (for addressing info)
-		var group = await this.#database.loadGroup(message.group)
+		var group = await this.#database.loadGroup(message.groupId)
 		if (group == undefined) {
-			console.log("Error: cannot like message with missing group")
+			console.log("Error: cannot undo like from message with missing group")
 			return
 		}
 
@@ -454,7 +458,7 @@ export class Controller {
 			object: {
 				type: vocab.ActivityTypeLike,
 				actor: this.actorId(),
-				object: message.id,
+				object: messageId,
 			}
 		})
 
@@ -551,7 +555,6 @@ export class Controller {
 
 			case vocab.ActivityTypeUndo:
 				await this.#receiveActivity_Undo(activity)
-
 				return
 
 			default:
@@ -571,9 +574,9 @@ export class Controller {
 
 		// Create a new message record in the database for this incoming message
 		const message = {
-			id: activity.id(),
-			group: activity.context(),
-			sender: activity.actorId(),
+			id: object.id(),
+			groupId: activity.context(),
+			sender: object.attributedToId(),
 			plaintext: object.content(),
 			likes: [],
 			inReplyTo: object.inReplyToId(),
@@ -582,6 +585,24 @@ export class Controller {
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
+
+		// Send desktop notifications (if requested)
+		if (this.config.isDesktopNotifications) {
+			if (Notification.permission === "granted") {
+				new Notification(message.sender, {
+					body: message.plaintext,
+				})
+			}
+		}
+
+		// Play notification sounds (if requested)
+		if (this.config.isNotificationSounds) {
+			if (document.hidden) {
+				// notification sound from: https://mixkit.co/free-sound-effects/notification/
+				const audio = new Audio("/.templates/user-conversations/resources/notification.wav")
+				audio.play()
+			}
+		}
 	}
 
 	#receiveActivity_UpdateDocument = async (activity: Activity) => {
@@ -596,7 +617,7 @@ export class Controller {
 		// Create a new message record in the database for this incoming message
 		const message = {
 			id: activity.id(),
-			group: activity.context(),
+			groupId: activity.context(),
 			sender: activity.actorId(),
 			plaintext: object.content(),
 			likes: [],
@@ -626,21 +647,37 @@ export class Controller {
 		}
 
 		// Reload messages to refresh the UX
-		if (message.group == this.selectedGroupId()) {
+		if (message.groupId == this.selectedGroupId()) {
 			this.loadMessages()
 		}
 	}
 
 	#receiveActivity_Undo = async (activity: Activity) => {
 
+		console.log("Processing Undo activity:", activity.toJSON())
+
+		const object = await activity.objectAsActivity()
+
+		// RULE: Actors can only "Undo" their own activities.
+		if (activity.actorId() != object.actorId()) {
+			console.log("Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId())
+			return
+		}
+
+		// RULE: For now, we only support "Undo" of "Like" activities.
+		if (object.type() != vocab.ActivityTypeLike) {
+			console.log("Received Undo activity with unsupported object type:", object.type())
+			return
+		}
+
 		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
-		const message = await this.#database.undoLikeMessage(activity.actorId(), activity.objectId())
+		const message = await this.#database.undoLikeMessage(activity.actorId(), object.objectId())
 		if (message == undefined) {
 			return
 		}
 
 		// Reload messages to refresh the UX
-		if (message.group == this.selectedGroupId()) {
+		if (message.groupId == this.selectedGroupId()) {
 			this.loadMessages()
 		}
 	}

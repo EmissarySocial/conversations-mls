@@ -12,20 +12,22 @@ import { MLS } from "./mls"
 import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 import { groupIsEncrypted, type Group } from "../model/group"
+import type { Actor } from "../as/actor"
 
 // Delivery service sends messages via ActivityPub
 export class Delivery {
-	//
 
-	// actorId is the ID of the user sending messages
-	#actorId: string
+	#actorId: string // actorId is the ID of the user sending messages
+	#outboxUrl: string // outboxUrl is the URL of the user's outbox
 
-	// outboxUrl is the URL of the user's outbox
-	#outboxUrl: string
+	constructor() {
+		this.#actorId = ""
+		this.#outboxUrl = ""
+	}
 
-	constructor(actorId: string, outboxUrl: string) {
-		this.#actorId = actorId
-		this.#outboxUrl = outboxUrl
+	setActor(actor: Actor) {
+		this.#actorId = actor.id()
+		this.#outboxUrl = actor.outbox()
 	}
 
 	/**

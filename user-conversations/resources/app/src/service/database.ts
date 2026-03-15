@@ -57,7 +57,7 @@ interface Schema extends DBSchema {
 		value: Message
 		indexes: {
 			id: string
-			group: string
+			groupId: string
 		}
 	}
 }
@@ -65,22 +65,20 @@ interface Schema extends DBSchema {
 type callbackFunction = () => void
 
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
-	return await openDB<Schema>("mls-" + actorId, 2, {
-		upgrade(db, oldVersion, newVersion) {
-			//
-			// Version 1
+	return await openDB<Schema>(actorId, 1, {
+		upgrade(db, oldVersion, newVersion, transaction) {
+
 			if (oldVersion < 1) {
+
+				// Create object stores for each record
 				db.createObjectStore("config", { keyPath: "id" })
+				db.createObjectStore("contact", { keyPath: "id" })
 				db.createObjectStore("group", { keyPath: "id" })
 				db.createObjectStore("keyPackage", { keyPath: "id" })
+				db.createObjectStore("message", { keyPath: "id" })
 
-				const messages = db.createObjectStore("message", { keyPath: "id" })
-				messages.createIndex("group", "group", { unique: false })
-			}
-
-			// Version 2 - Add "contact" store
-			if (oldVersion < 2) {
-				db.createObjectStore("contact", { keyPath: "id" })
+				// Create indexes for efficient queries
+				transaction.objectStore("message").createIndex("groupId", "groupId", { unique: false })
 			}
 		},
 	})
@@ -107,13 +105,10 @@ export class Database {
 	// loadConfig retrieves the config record from the database
 	loadConfig = async () => {
 		var result = await this.#db.get("config", ConfigID)
-		if (result == undefined) {
-			result = NewConfig()
+		if (result != undefined) {
+			return result
 		}
-
-		// Mark this configuration as "loaded from the db"
-		result.ready = true
-		return result
+		return NewConfig()
 	}
 
 	// saveConfig saves the config record to the database
@@ -132,8 +127,8 @@ export class Database {
 		return await this.#db.getAll("contact")
 	}
 
-	// getContact retrieves a single contact from the database by ID
-	getContact = async (id: string) => {
+	// loadContact retrieves a single contact from the database by ID
+	loadContact = async (id: string) => {
 		return this.#db.get("contact", id)
 	}
 
@@ -155,12 +150,6 @@ export class Database {
 		return groups
 	}
 
-	// saveGroup saves a group to the database
-	saveGroup = async (group: Group) => {
-		await this.#db.put("group", group)
-		this.#onchange()
-	}
-
 	// loadGroup retrieves a group from the database
 	loadGroup = async (groupID: string): Promise<Group | EncryptedGroup | undefined> => {
 		//
@@ -175,11 +164,17 @@ export class Database {
 		return group
 	}
 
+	// saveGroup saves a group to the database
+	saveGroup = async (group: Group) => {
+		await this.#db.put("group", group)
+		this.#onchange()
+	}
+
 	// deleteGroup removes a group from the database
-	deleteGroup = async (group: string) => {
+	deleteGroup = async (groupId: string) => {
 		//
 		// List all messages in the group
-		const messages = await this.#db.getAllKeysFromIndex("message", "group", group)
+		const messages = await this.#db.getAllKeysFromIndex("message", "groupId", groupId)
 
 		// Delete messages in the group
 		for (const message of messages) {
@@ -187,7 +182,7 @@ export class Database {
 		}
 
 		// Delete the group itself
-		await this.#db.delete("group", group)
+		await this.#db.delete("group", groupId)
 		this.#onchange()
 	}
 
@@ -210,8 +205,8 @@ export class Database {
 
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
 	// TODO: This will need to be limited or pagincated for long discussions.
-	allMessages = async (group: string) => {
-		var messages = await this.#db.getAllFromIndex("message", "group", group)
+	allMessages = async (groupId: string) => {
+		var messages = await this.#db.getAllFromIndex("message", "groupId", groupId)
 		messages.sort((a, b) => a.createDate - b.createDate)
 		return messages
 	}
@@ -237,6 +232,20 @@ export class Database {
 		this.#onchange()
 	}
 
+	// deleteMessagesByGroup removes all messages that belong to a group
+	deleteMessagesByGroup = async (groupId: string) => {
+
+		// List all messages in the group
+		const messages = await this.#db.getAllKeysFromIndex("message", "groupId", groupId)
+
+		// Delete messages in the group
+		for (const message of messages) {
+			await this.#db.delete("message", message)
+		}
+
+		this.#onchange()
+	}
+
 	// likeMessage adds a "like" from the specified actor to the specified message
 	likeMessage = async (actorId: string, messageId: string) => {
 
@@ -247,11 +256,6 @@ export class Database {
 		if (message == undefined) {
 			console.log("Error: cannot like message that doesn't exist")
 			return
-		}
-
-		// Guarantee that "likes" data exists
-		if (message.likes == undefined) {
-			message.likes = []
 		}
 
 		// RULE: If this actor has already liked this message, then don't like it again
@@ -277,17 +281,24 @@ export class Database {
 			return undefined
 		}
 
-		// Guarantee that "likes" data exists
-		if (message.likes == undefined) {
-			message.likes = []
-		}
+		console.log("removing like from", message)
+		console.log("actor: ", actorId)
 
-		if (!message.likes.includes(actorId)) {
+		// Search for a "like" from this actor
+		const removeIndex = message.likes.indexOf(actorId)
+
+		console.log("removeIndex: ", removeIndex)
+
+		// If not found, exit
+		if (removeIndex == -1) {
 			return undefined
 		}
 
-		// Remove the "like" from our local message record and save to the database.
-		message.likes = message.likes.filter((id) => id !== actorId)
+		// If found, remove the "like" from the message and save
+		message.likes.splice(removeIndex, 1)
+
+		console.log("updated likes", message.likes)
+		console.log("saving message: ", message)
 		await this.saveMessage(message)
 
 		return message

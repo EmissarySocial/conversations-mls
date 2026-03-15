@@ -1,6 +1,6 @@
 import m from "mithril"
-import {type Vnode} from "mithril"
-import {Controller} from "../service/controller"
+import { type Vnode } from "mithril"
+import { Controller } from "../service/controller"
 
 type GroupsVnode = Vnode<GroupsAttrs, GroupsState>
 

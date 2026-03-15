@@ -10,20 +10,25 @@ export class Activity extends Object {
 	// Property getters
 	///////////////////////////////////
 
+	// actorId returns the string value of the "actor" property (which may be a URL or an embedded object)
+	actorId = () => {
+		return this.getString("as", vocab.PropertyActor)
+	}
+
 	// actor returns the value of the "actor" property
 	actor = async () => {
 		const actor = this.get("as", vocab.PropertyActor)
 		return await loadActor(actor)
 	}
 
-	// actorId returns the string value of the "actor" property (which may be a URL or an embedded object)
-	actorId = () => {
-		return this.getString("as", vocab.PropertyActor)
-	}
-
 	// context returns the message context (not @context) property for this activity
 	context = () => {
 		return this.getString("as", vocab.PropertyContext)
+	}
+
+	// objectId returns the string value of the "object" property (which may be a URL or an embedded object)
+	objectId = () => {
+		return this.getString("as", vocab.PropertyObject)
 	}
 
 	// object returns the value of the "object" property, which may be either a string URL or an embedded object
@@ -32,8 +37,11 @@ export class Activity extends Object {
 		return await loadDocument(object)
 	}
 
-	objectId = () => {
-		return this.getString("as", vocab.PropertyObject)
+	// objectAsActivity returns the value of the "object" property as an Activity-typed object.
+	// this is useful for "Undo" activities, whose "object" is itself an activity that should be undone.
+	objectAsActivity = async () => {
+		const object = this.get("as", vocab.PropertyObject)
+		return await loadActivity(object)
 	}
 
 	// target returns the value of the "target" property

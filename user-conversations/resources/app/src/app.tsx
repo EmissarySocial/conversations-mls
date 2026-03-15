@@ -1,23 +1,21 @@
 import m from "mithril"
 
-// ActivityStreams objects
-import {Actor} from "./as/actor"
-
 // Services
-import {Database, NewIndexedDB} from "./service/database"
-import {Delivery} from "./service/delivery"
-import {Directory} from "./service/directory"
-import {Receiver} from "./service/receiver"
-import {Controller} from "./service/controller"
+import { Database, NewIndexedDB } from "./service/database"
+import { Delivery } from "./service/delivery"
+import { Directory } from "./service/directory"
+import { Receiver } from "./service/receiver"
+import { Controller } from "./service/controller"
 
 // Views
-import {App} from "./view/app"
+import { App } from "./view/app"
 
 // Global controller instance
 var controller: Controller
 
 // startup initializes the application and mounts the Mithril components.
 async function startup() {
+
 	// Collect arguments from the DOM
 	const root = document.getElementById("mls")!
 	const actorID = root.dataset["actor-id"] || ""
@@ -27,26 +25,18 @@ async function startup() {
 		throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`)
 	}
 
-	// Load the actor object from the network and locate their messages collection
-	const actor = await new Actor().fromURL(actorID)
-	const {url, plaintext} = actor.messages()
-
-	if (url == "") {
-		throw new Error(`Actor does not support MLS API.`)
-	}
-
 	// Build dependencies
 	const indexedDB = await NewIndexedDB(actorID)
 	const database = new Database(indexedDB)
-	const delivery = new Delivery(actor.id(), actor.outbox())
-	const directory = new Directory(actor.id(), actor.outbox())
-	const receiver = new Receiver(actor.id(), url)
+	const delivery = new Delivery()
+	const directory = new Directory()
+	const receiver = new Receiver()
 
 	// Build the controller
-	controller = new Controller(actor, database, delivery, directory, receiver, plaintext)
+	controller = new Controller(actorID, database, delivery, directory, receiver)
 
 	// Pass the controller to the App component and mount the main application
-	m.mount(root, {view: () => <App controller={controller} />})
+	m.mount(root, { view: () => <App controller={controller} /> })
 }
 
 // 3..2..1.. Go!

@@ -1,23 +1,31 @@
-import { defaultCredentialTypes, defaultLifetime, type CiphersuiteName } from "ts-mls"
+// ts-mls imports
+import { type CiphersuiteName } from "ts-mls"
+import { type Credential } from "ts-mls"
+import { defaultCredentialTypes } from "ts-mls"
+import { defaultLifetime } from "ts-mls"
 import { getCiphersuiteImpl } from "ts-mls"
 import { generateKeyPackage } from "ts-mls"
-import { type Credential } from "ts-mls"
 
-import type { Database } from "./database"
-import type { Delivery } from "./delivery"
-import type { Directory } from "./directory"
-import type { Receiver } from "./receiver"
+// Interfaces
+import type { IDatabase } from "./interfaces"
+import type { IDelivery } from "./interfaces"
+import type { IDirectory } from "./interfaces"
+import type { IReceiver } from "./interfaces"
+
+// Model objects
 import { Actor } from "../as/actor"
-import { MLS } from "./mls"
 import { NewAPKeyPackage } from "../model/ap-keypackage"
+
+// Services
+import { MLS } from "./mls"
 
 // makeMLS loads the required dependencies for the MLS service,
 // and returns a fully populated MLS instance once everything is ready.
 export async function MLSFactory(
-	database: Database,
-	delivery: Delivery,
-	directory: Directory,
-	receiver: Receiver,
+	database: IDatabase,
+	delivery: IDelivery,
+	directory: IDirectory,
+	receiver: IReceiver,
 	actor: Actor,
 	clientName: string,
 ): Promise<MLS> {
@@ -47,6 +55,9 @@ export async function MLSFactory(
 		})
 
 		// Publish the KeyPackage to the server
+
+		console.log("creating keypackage:", clientName, actor)
+
 		const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage)
 		const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage)
 

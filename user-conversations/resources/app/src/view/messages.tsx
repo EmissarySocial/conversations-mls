@@ -1,9 +1,9 @@
 import m from "mithril"
-import {type Vnode} from "mithril"
-import {type Message} from "../model/message"
-import {NewContact, type Contact} from "../model/contact"
-import {Controller} from "../service/controller"
-import {WidgetMessageCreate} from "./widget-message-create"
+import { type Vnode } from "mithril"
+import { type Message } from "../model/message"
+import { NewContact, type Contact } from "../model/contact"
+import { Controller } from "../service/controller"
+import { WidgetMessageCreate } from "./widget-message-create"
 
 type MessagesVnode = Vnode<MessagesAttrs, MessagesState>
 
@@ -14,7 +14,7 @@ type MessagesAttrs = {
 type MessagesState = {}
 
 export class Messages {
-	oninit(vnode: MessagesVnode) {}
+	oninit(vnode: MessagesVnode) { }
 
 	// view returns the JSX for the messages within the selectedGroup.
 	// If there is no selected group, then a welcome message is shown instead.
@@ -103,7 +103,7 @@ export class Messages {
 			return (
 				<span class="clickable" onclick={() => vnode.attrs.controller.undo_like_message(message.id)}>
 					<i class="bi bi-heart-fill text-red margin-right-xs" hint={vnode.attrs.controller.actorId()}></i>
-					{message.likes.length}
+					{(message.likes.length) > 1 ? message.likes.length : ""}
 				</span>
 			)
 		}
@@ -111,7 +111,7 @@ export class Messages {
 		return (
 			<span class="clickable" onclick={() => vnode.attrs.controller.like_message(message.id)}>
 				<i class="bi bi-heart-fill margin-right-xs" hint={vnode.attrs.controller.actorId()}></i>
-				{message.likes.length}
+				{(message.likes.length) > 1 ? message.likes.length : ""}
 			</span>
 		)
 	}

@@ -23,9 +23,7 @@ import { type KeyPackage } from "ts-mls"
 import { type MlsContext } from "ts-mls"
 import { type MlsPrivateMessage } from "ts-mls"
 import { type MlsWelcomeMessage } from "ts-mls"
-import { type MlsGroupInfo } from "ts-mls"
 import { type CiphersuiteImpl } from "ts-mls"
-import { type MlsFramedMessage } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -33,42 +31,14 @@ import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 
 // Application Types
-import { type Group, type EncryptedGroup, groupIsEncrypted } from "../model/group"
-import { type APKeyPackage } from "../model/ap-keypackage"
-import { type Message } from "../model/message"
-import { type DBKeyPackage } from "../model/db-keypackage"
+import { type EncryptedGroup } from "../model/group"
+import { type IDatabase } from "./interfaces"
+import { type IDelivery } from "./interfaces"
+import { type IDirectory } from "./interfaces"
+
+import { groupIsEncrypted } from "../model/group"
+
 import { base64ToUint8Array, newId } from "./utils"
-
-// IDatabase wraps all of the methods that the MLS service
-// uses to store group state.
-interface IDatabase {
-	// load methods
-	loadGroup(groupID: string): Promise<Group | EncryptedGroup | undefined>
-	loadMessage(messageID: string): Promise<Message>
-
-	// save methods
-	saveGroup(group: Group): Promise<void>
-	saveMessage(message: Message): Promise<void>
-
-	loadKeyPackage(): Promise<DBKeyPackage | undefined>
-	saveKeyPackage(keyPackage: DBKeyPackage): Promise<void>
-}
-
-// IDelivery wraps all of the methods that the MLS service
-// uses to send messages.
-interface IDelivery {
-	sendFramedMessage(recipients: string[], message: MlsFramedMessage): void
-	sendGroupInfo(recipients: string[], message: MlsGroupInfo): void
-	sendPrivateMessage(recipients: string[], message: MlsFramedMessage): void
-	sendWelcome(recipients: string[], welcome: MlsWelcomeMessage): void
-}
-
-// IDirectory wraps all of the methods that the MLS service
-// uses to look up users' KeyPackages.
-interface IDirectory {
-	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
-	createKeyPackage(keyPackage: APKeyPackage): Promise<string>
-}
 
 interface IReceiver {
 	poll(): void

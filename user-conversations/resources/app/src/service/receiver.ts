@@ -1,34 +1,36 @@
+import { type Actor } from "../as/actor"
 import { Activity } from "../as/activity"
-import { Collection, rangeActivities } from "../as/collection"
-
-// IActivityHandler is a function that takes an MlsPrivateMessage and returns void.
-// The Receiver service will call the registered ActivityHandler when a new message
-// is received.
-type IActivityHandler = (activity: Activity) => Promise<void>
+import { Collection } from "../as/collection"
+import { rangeActivities } from "../as/collection"
+import { type IActivityHandler } from "./interfaces"
 
 // Receiver service receives messages from an ActivityPub actor and forwards them
 // to the MLS client
 export class Receiver {
-	//
 
-	#actorId: string // ID of the user receiving messages
 	#messagesUrl: string // endpoint for the actor's mls:messages collection
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#handler: IActivityHandler // list of registered message handlers
-
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
-	constructor(actorId: string, messagesUrl: string) {
-		this.#actorId = actorId
-		this.#messagesUrl = messagesUrl
+	constructor() {
+		this.#messagesUrl = ""
 		this.#handler = async function (activity: Activity) { }
 		this.#polling = false
 		this.#pollAgain = false
 	}
 
+	// setActor configures the Receiver with the given Actor's information,
+	// once it has been loaded from the network.
+	setActor(actor: Actor) {
+		const { url, plaintext } = actor.messages()
+		this.#messagesUrl = url
+	}
+
 	// registerHandler adds a new MessageHandler to the list of handlers that will be called
+	// when a new message is received.
 	registerHandler = (handler: IActivityHandler) => {
 		this.#handler = handler
 	}
@@ -44,7 +46,7 @@ export class Receiver {
 
 		if (sseEndpoint != "") {
 			this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true })
-			this.#eventSource.onmessage = (event) => {
+			this.#eventSource.onmessage = () => {
 				this.poll()
 			}
 		}

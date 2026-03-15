@@ -1,9 +1,9 @@
 import m from "mithril"
-import {type Vnode} from "mithril"
-import {Controller} from "../service/controller"
-import {type APActor} from "../model/ap-actor"
-import {Modal} from "./modal"
-import {ActorSearch} from "./actorSearch"
+import { type Vnode } from "mithril"
+import { Controller } from "../service/controller"
+import { type APActor } from "../model/ap-actor"
+import { Modal } from "./modal"
+import { ActorSearch } from "./actorSearch"
 
 type NewConversationVnode = Vnode<NewConversationArgs, NewConversationState>
 
