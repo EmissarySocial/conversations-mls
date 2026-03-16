@@ -2,9 +2,18 @@ import { Object } from "./object"
 import { loadDocument } from "./document"
 import { loadActor } from "./actor"
 import * as vocab from "./vocab"
+import { newId } from "../service/utils"
 
 // Activity is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Activity extends Object {
+
+	constructor(value?: { [key: string]: any }) {
+		super(value)
+
+		if (this.get("as", "id") == undefined) {
+			this.set("id", newId())
+		}
+	}
 
 	///////////////////////////////////
 	// Property getters

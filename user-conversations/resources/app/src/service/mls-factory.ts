@@ -55,9 +55,6 @@ export async function MLSFactory(
 		})
 
 		// Publish the KeyPackage to the server
-
-		console.log("creating keypackage:", clientName, actor)
-
 		const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage)
 		const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage)
 

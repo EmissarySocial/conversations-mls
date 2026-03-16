@@ -7,6 +7,8 @@ import { Messages } from "./messages"
 import { Groups } from "./groups"
 import { GroupSettings } from "./group-settings"
 import { Empty } from "./empty"
+import { EditMessage } from "./modal-editMessage"
+import { MessageHistory } from "./modal-messageHistory"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -84,8 +86,14 @@ export class Index {
 		switch (modalView) {
 			case "NEW-CONVERSATION":
 				return (
-					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)}></NewConversation>
+					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
 				)
+
+			case "EDIT-MESSAGE":
+				return <EditMessage controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+
+			case "MESSAGE-HISTORY":
+				return <MessageHistory controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
 		}
 
 		return undefined

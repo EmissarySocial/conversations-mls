@@ -25,8 +25,6 @@ export class GroupSettings {
 			vnode.attrs.group.tags = []
 		}
 		vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ")
-		console.log(vnode.state.tags)
-		console.log(vnode.attrs.group.tags)
 	}
 
 	view(vnode: GroupSettingsVnode) {

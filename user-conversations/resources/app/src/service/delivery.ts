@@ -111,8 +111,6 @@ export class Delivery {
 			},
 		})
 
-		console.log("Sending activity:", activity.toJSON())
-
 		// Send the Activity to the server
 		const response = await fetch(this.#outboxUrl, {
 			method: "POST",
@@ -130,7 +128,6 @@ export class Delivery {
 
 		// If necessary, encrypt the activity using MLS before sending
 		// Send the Activity to the server
-		console.log("Sending activity:", activity.toJSON())
 		const response = await fetch(this.#outboxUrl, {
 			method: "POST",
 			body: activity.toJSON(),

@@ -281,13 +281,8 @@ export class Database {
 			return undefined
 		}
 
-		console.log("removing like from", message)
-		console.log("actor: ", actorId)
-
 		// Search for a "like" from this actor
 		const removeIndex = message.likes.indexOf(actorId)
-
-		console.log("removeIndex: ", removeIndex)
 
 		// If not found, exit
 		if (removeIndex == -1) {
@@ -296,9 +291,6 @@ export class Database {
 
 		// If found, remove the "like" from the message and save
 		message.likes.splice(removeIndex, 1)
-
-		console.log("updated likes", message.likes)
-		console.log("saving message: ", message)
 		await this.saveMessage(message)
 
 		return message

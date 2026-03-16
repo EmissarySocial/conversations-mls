@@ -58,6 +58,10 @@ export class Messages {
 										<div>{message.plaintext}</div>
 										<div class="text-xs text-light-gray">{new Date(message.createDate).toLocaleString()}</div>
 										<div class="pos-absolute-top-right text-sm">
+											<i class="bi bi-pencil-square margin-right hover-show clickable"
+												onclick={() => controller.modal_editMessage(message.id)}></i>
+											<i class="bi bi-trash margin-right hover-show clickable"
+												onclick={() => { if (confirm("Are you sure you want to delete this message?")) { vnode.attrs.controller.delete_message(message.id) } }}></i>
 											{this.likes(vnode, message)}
 										</div>
 									</div>
@@ -67,7 +71,13 @@ export class Messages {
 								<div class="message pos-relative hover-trigger">
 									<div class="bold flex-grow">{contact.name}</div>
 									<div>{message.plaintext}</div>
-									<div class="text-xs text-light-gray">{new Date(message.createDate).toLocaleString()}</div>
+									<div class="text-xs text-light-gray">
+										{
+											(message.history.length > 0)
+												? <span class="clickable" onclick={() => controller.modal_messageHistory(message.id)}><span class="text-underline">Edited</span> {new Date(message.updateDate).toLocaleString()}</span>
+												: new Date(message.updateDate).toLocaleString()
+										}
+									</div>
 									<div class="pos-absolute-top-right text-sm">
 										{this.likes(vnode, message)}
 									</div>
@@ -93,7 +103,7 @@ export class Messages {
 
 		if (message.likes.length == 0) {
 			return (
-				<span class="hover-show clickable" onclick={() => vnode.attrs.controller.like_message(message.id)}>
+				<span class="hover-show clickable margin-right-xs" onclick={() => vnode.attrs.controller.like_message(message.id)}>
 					<i class="bi bi-heart"></i>
 				</span>
 			)

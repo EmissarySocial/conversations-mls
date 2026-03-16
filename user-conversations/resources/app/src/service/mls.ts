@@ -17,6 +17,7 @@ import { zeroOutUint8Array } from "ts-mls"
 
 // MLS Types
 import { type CredentialBasic } from "ts-mls"
+import { type ClientState } from "ts-mls"
 import { type Proposal } from "ts-mls"
 import { type PrivateKeyPackage } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
@@ -35,9 +36,9 @@ import { type EncryptedGroup } from "../model/group"
 import { type IDatabase } from "./interfaces"
 import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
-
 import { groupIsEncrypted } from "../model/group"
 
+import { uint8ArrayEqual } from "./utils"
 import { base64ToUint8Array, newId } from "./utils"
 
 interface IReceiver {
@@ -118,11 +119,16 @@ export class MLS {
 	// addGroupMembers updates the group state.  It sends a Commit
 	// message to existing members, and a Welcome message to new members,
 	addGroupMembers = async (group: EncryptedGroup, newMembers: string[]): Promise<EncryptedGroup> => {
-		//
 
 		// Look up all KeyPackages for the new Members
 		const currentMembers = group.members
-		const keyPackages = await this.#directory.getKeyPackages(newMembers)
+		var keyPackages = await this.#directory.getKeyPackages(newMembers)
+
+		// Filter out the KeyPackage for THIS device
+		keyPackages = keyPackages.filter((keyPackage) => {
+			const match = !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature)
+			return match
+		})
 
 		// Create add proposals for each key package
 		const addProposals: Proposal[] = keyPackages.map((keyPackage) => ({
@@ -164,7 +170,7 @@ export class MLS {
 
 	// getGroupMembers returns the list of member IDs for a given group
 	getGroupMembers = async (group: EncryptedGroup): Promise<string[]> => {
-		//
+
 		// Find all current members of this group
 		const leafNodes = await getGroupMembers(group.clientState)
 		const members = leafNodes
@@ -181,7 +187,6 @@ export class MLS {
 	}
 
 	encodeActivity = async (group: EncryptedGroup, activity: Activity): Promise<Activity> => {
-		//
 
 		// Encrypt the message using MLS
 		const messageText = activity.toJSON()
@@ -264,15 +269,31 @@ export class MLS {
 
 	// onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
 	async #onMessage_Welcome(message: MlsWelcomeMessage): Promise<null> {
-		//
 
-		// Join the new group
-		const clientState = await joinGroup({
-			context: this.#context(),
-			welcome: message.welcome,
-			keyPackage: this.#publicKeyPackage,
-			privateKeys: this.#privateKeyPackage,
-		})
+		var clientState: ClientState
+
+		try {
+
+			// Try to join the new group
+			clientState = await joinGroup({
+				context: this.#context(),
+				welcome: message.welcome,
+				keyPackage: this.#publicKeyPackage,
+				privateKeys: this.#privateKeyPackage,
+			})
+
+		} catch (e) {
+			// Errors mean that the private keys probably don't match, so
+			// this welcome wasn't intended for this device, so just quit.
+			console.error("Error joining group from welcome message", e)
+			return null
+		}
+
+		// RULE: Require that the private key signatures match before proceeding.
+		// This guarantees that the welcome message was encrypted for THIS device.
+		if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
+			return null
+		}
 
 		// Create a new group record
 		const groupId = new TextDecoder().decode(clientState.groupContext.groupId)
@@ -295,7 +316,8 @@ export class MLS {
 		// Save the group to the database
 		await this.#database.saveGroup(group)
 
-		// Returning `null` means that the controller won't take any additional actions to process this message.
+		// Returning `null` means that the controller won't take 
+		// any additional actions to process this message.
 		return null
 	}
 

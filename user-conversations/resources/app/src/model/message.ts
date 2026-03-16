@@ -6,7 +6,9 @@ export type Message = {
 	sender: string
 	plaintext: string
 	likes: string[]
+	history: string[]
 	createDate: number
+	updateDate: number
 }
 
 export function NewMessage(): Message {
@@ -16,6 +18,8 @@ export function NewMessage(): Message {
 		sender: "",
 		plaintext: "",
 		likes: [],
+		history: [],
 		createDate: Date.now(),
+		updateDate: Date.now(),
 	}
 }

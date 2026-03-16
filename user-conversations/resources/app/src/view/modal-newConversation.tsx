@@ -5,16 +5,16 @@ import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
 import { ActorSearch } from "./actorSearch"
 
-type NewConversationVnode = Vnode<NewConversationArgs, NewConversationState>
+type NewConversationVnode = Vnode<NewConversationAttrs, NewConversationState>
 
-interface NewConversationArgs {
+interface NewConversationAttrs {
 	controller: Controller
 	close: () => void
 }
 
 interface NewConversationState {
 	actors: APActor[]
-	message: string
+	plaintext: string
 	encrypted: boolean
 }
 
@@ -23,7 +23,7 @@ export class NewConversation {
 
 	oninit(vnode: NewConversationVnode) {
 		vnode.state.actors = []
-		vnode.state.message = ""
+		vnode.state.plaintext = ""
 		vnode.state.encrypted = false
 	}
 
@@ -44,7 +44,7 @@ export class NewConversation {
 							</div>
 							<div class="layout-element">
 								<label>Message</label>
-								<textarea rows="8" onchange={(event: Event) => this.setMessage(vnode, event)}></textarea>
+								<textarea rows="8" onchange={(event: Event) => this.setPlaintext(vnode, event)}></textarea>
 								<div class="text-sm text-gray">{this.description(vnode)}</div>
 							</div>
 						</div>
@@ -140,9 +140,9 @@ export class NewConversation {
 		}
 	}
 
-	setMessage(vnode: NewConversationVnode, event: Event) {
+	setPlaintext(vnode: NewConversationVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
-		vnode.state.message = target.value
+		vnode.state.plaintext = target.value
 	}
 
 	async onsubmit(event: SubmitEvent, vnode: NewConversationVnode) {
@@ -158,18 +158,18 @@ export class NewConversation {
 		// Create a new group and send an encrypted message
 		if (vnode.state.encrypted) {
 			const group = await controller.createGroup(participants)
-			await controller.sendMessage(vnode.state.message)
+			await controller.sendMessage(vnode.state.plaintext)
 			return this.close(vnode)
 		}
 
 		// Create a new conversation and send plaintext message
-		await controller.newConversation(participants, vnode.state.message)
+		await controller.newConversation(participants, vnode.state.plaintext)
 		return this.close(vnode)
 	}
 
 	close(vnode: NewConversationVnode) {
 		vnode.state.actors = []
-		vnode.state.message = ""
+		vnode.state.plaintext = ""
 		vnode.attrs.close()
 	}
 }

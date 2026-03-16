@@ -23,7 +23,7 @@ import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
-import { newId } from "./utils"
+import { messageToActivityStream, newId } from "./utils"
 
 export class Controller {
 
@@ -38,9 +38,12 @@ export class Controller {
 
 	config: Config
 	groups: Group[]
-	group: Group
 	messages: Message[]
 	contacts: Map<string, Contact>
+
+	group: Group
+	message: Message
+
 	pageView: string
 	modalView: string
 
@@ -63,9 +66,10 @@ export class Controller {
 
 		// Application State
 		this.groups = []
-		this.group = NewGroup()
 		this.messages = []
 		this.contacts = new Map<string, Contact>()
+		this.group = NewGroup()
+		this.message = NewMessage()
 
 		// UX state
 		this.pageView = "LOADING"
@@ -89,8 +93,6 @@ export class Controller {
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
 
-		console.log(this.config)
-
 		if (!this.config.ready) {
 			this.pageView = "WELCOME"
 			m.redraw()
@@ -105,8 +107,7 @@ export class Controller {
 			throw new Error(`Actor does not support MLS API.`)
 		}
 
-		console.log("Loaded actor:", this.#actor)
-
+		// Apply the freshly loaded actor to all of the dependencies
 		this.#allowPlaintextMessages = plaintext
 		this.#delivery.setActor(this.#actor)
 		this.#directory.setActor(this.#actor)
@@ -230,7 +231,7 @@ export class Controller {
 	// createGroup creates a new MLS-encrypted
 	// group message with the specified recipients
 	createGroup = async (recipients: string[]) => {
-		//
+
 		// Guarantee dependency
 		if (this.#mls == undefined) {
 			throw new Error("MLS service is not initialized")
@@ -238,6 +239,9 @@ export class Controller {
 
 		// Create a new group
 		var group = await this.#mls.createGroup()
+
+		// Add "me" to the members list
+		recipients.push(this.actorId())
 
 		// Add initial members to the group
 		this.group = await this.#mls.addGroupMembers(group, recipients)
@@ -359,39 +363,99 @@ export class Controller {
 		this.group.lastMessage = content
 		await this.saveGroup(this.group)
 
-		// Create an ActivityPub activity and message
-		const activityId = newId()
-		const messageId = newId()
+		// Create a new Message record for the database
+		var message = NewMessage()
+		message.groupId = this.group.id
+		message.sender = this.#actor.id()
+		message.plaintext = content
 
+		// Create an ActivityPub activity 
 		var activity = new Activity({
-			"@context": vocab.ContextActivityStreams,
-			id: activityId,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
 			to: this.group.members,
-			object: {
-				id: messageId,
-				attributedTo: this.actorId(),
-				type: vocab.ObjectTypeNote,
-				to: this.group.members,
-				context: this.selectedGroupId,
-				content: content,
-				published: new Date().toISOString(),
-			},
+			object: messageToActivityStream(this.group, message),
 		})
 
 		// (asynchronously) Send the activity through the delivery service
 		this.#sendActivity(this.group, activity)
 
-		// Create a new Message record for the database
-		var message = NewMessage()
-		message.id = messageId
-		message.groupId = this.group.id
-		message.sender = this.#actor.id()
-		message.plaintext = content
-
 		// Save the message to the database, and reload to refresh the UX
 		await this.#database.saveMessage(message)
+		await this.loadMessages()
+	}
+
+	update_message = async (message: Message) => {
+
+		// RULE: Only the original sender can update a message
+		if (message.sender != this.actorId()) {
+			console.log("Error: cannot edit message sent by another actor")
+			return
+		}
+
+		// RULE: Can only update messages in the current group.
+		if (message.groupId != this.group.id) {
+			console.log("Error: cannot edit message that doesn't belong to the current group")
+			return
+		}
+
+		// Create an "Update" activity
+		const activity = new Activity({
+			actor: this.actorId(),
+			type: vocab.ActivityTypeUpdate,
+			to: this.group.members,
+			object: messageToActivityStream(this.group, message),
+		})
+
+		// Send the activity
+		this.#sendActivity(this.group, activity)
+
+		// Update the message in the database, and reload to refresh the UX
+		await this.#database.saveMessage(message)
+		await this.loadMessages()
+	}
+
+	clear_message = () => {
+		this.message = NewMessage()
+	}
+
+	delete_message = async (messageId: string) => {
+
+		// Load the message from the data store
+		const message = await this.loadMessage(messageId)
+
+		// RULE: If the message doesn't exist, then exit
+		if (message == undefined) {
+			console.log("Error: cannot delete message that doesn't exist")
+			return
+		}
+
+		// RULE: Only the sender of a message can delete it.
+		if (message.sender != this.actorId()) {
+			console.log("Error: cannot delete message sent by another actor")
+			return
+		}
+
+		// RULE: Can only delete messages in the current group.
+		if (message.groupId != this.group.id) {
+			console.log("Error: cannot delete message that doesn't belong to the current group")
+			return
+		}
+
+		// Send the "delete" activity to all group members
+		const activity = new Activity({
+			"@context": vocab.ContextActivityStreams,
+			"id": newId(),
+			"to": this.group.members,
+			"actor": this.actorId(),
+			"type": vocab.ActivityTypeDelete,
+			"object": message.id,
+		})
+
+		this.#sendActivity(this.group, activity)
+
+		// Delete the message
+		await this.#database.deleteMessage(messageId)
 		await this.loadMessages()
 	}
 
@@ -470,30 +534,10 @@ export class Controller {
 	}
 
 	//////////////////////////////////////////
-	// Pages
-	//////////////////////////////////////////
-
-	page_groups = () => {
-		this.pageView = "GROUPS"
-		m.redraw()
-	}
-
-	page_messages = () => {
-		this.pageView = "MESSAGES"
-		m.redraw()
-	}
-
-	page_group_settings = () => {
-		this.pageView = "GROUP-SETTINGS"
-		m.redraw()
-	}
-
-	//////////////////////////////////////////
 	// Receiving Activities
 	//////////////////////////////////////////
 
 	receiveActivity = async (activity: Activity) => {
-		//
 
 		console.log("Received activity:", activity.toJSON())
 
@@ -520,7 +564,6 @@ export class Controller {
 
 			// If the activity is null, then there's nothing more to do. Exit.
 			if (decodedActivity == null) {
-				console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)")
 				return
 			}
 
@@ -532,7 +575,6 @@ export class Controller {
 
 			// Update activity and object to continue processing using the decoded values.
 			activity = decodedActivity
-			console.log("successfully decoded object:", activity.toJSON())
 		}
 
 		switch (activity.type()) {
@@ -579,8 +621,10 @@ export class Controller {
 			sender: object.attributedToId(),
 			plaintext: object.content(),
 			likes: [],
+			history: [],
 			inReplyTo: object.inReplyToId(),
 			createDate: Date.now(),
+			updateDate: Date.now(),
 		}
 
 		// Save the message to the database
@@ -610,20 +654,35 @@ export class Controller {
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
 
+		// RULE: only the original sender can update a message
 		if (object.attributedToId() != activity.actorId()) {
 			throw new Error("Decrypted activity actor must match object's attributedTo")
 		}
 
-		// Create a new message record in the database for this incoming message
-		const message = {
-			id: activity.id(),
-			groupId: activity.context(),
-			sender: activity.actorId(),
-			plaintext: object.content(),
-			likes: [],
-			inReplyTo: object.inReplyToId(),
-			createDate: Date.now(),
+		// Load the message from the database
+		var message = await this.#database.loadMessage(object.id())
+
+		// RULE: Don't make new messages.  If not found, then ignore.
+		if (message == undefined) {
+			console.log("Error: cannot update message that doesn't exist")
+			return
 		}
+
+		// RULE: original sender must also match the activity actor
+		if (message.sender != activity.actorId()) {
+			console.log("Error: cannot edit message sent by another actor")
+			return
+		}
+
+		// temporary hack to ensure that the message hisory has been initialized.
+		if (message.history == undefined) {
+			message.history = []
+		}
+
+		// Update the message content
+		message.history.push(message.plaintext)
+		message.plaintext = object.content()
+		message.updateDate = Date.now()
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
@@ -631,8 +690,23 @@ export class Controller {
 
 	#receiveActivity_DeleteDocument = async (activity: Activity) => {
 
+		// Find the message referred in the activity
+		const message = await this.#database.loadMessage(activity.objectId())
+
+		// RULE: Verify that the message exists before trying to delete it
+		if (message == undefined) {
+			console.log("Error: cannot delete message that doesn't exist")
+			return
+		}
+
+		// RULE: Only the sender of a message can delete it.
+		if (message.sender != activity.actorId()) {
+			console.log("Error: cannot delete message if actor is not the sender")
+			return
+		}
+
 		// Delete the message from the database
-		await this.#database.deleteMessage(activity.objectId())
+		await this.#database.deleteMessage(message.id)
 
 		// Reload messages to refresh the UX
 		this.loadMessages()
@@ -660,13 +734,13 @@ export class Controller {
 
 		// RULE: Actors can only "Undo" their own activities.
 		if (activity.actorId() != object.actorId()) {
-			console.log("Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId())
+			console.log("Error: Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId())
 			return
 		}
 
 		// RULE: For now, we only support "Undo" of "Like" activities.
 		if (object.type() != vocab.ActivityTypeLike) {
-			console.log("Received Undo activity with unsupported object type:", object.type())
+			console.log("Error: Received Undo activity with unsupported object type:", object.type())
 			return
 		}
 
@@ -683,6 +757,25 @@ export class Controller {
 	}
 
 	//////////////////////////////////////////
+	// Pages
+	//////////////////////////////////////////
+
+	page_groups = () => {
+		this.pageView = "GROUPS"
+		m.redraw()
+	}
+
+	page_messages = () => {
+		this.pageView = "MESSAGES"
+		m.redraw()
+	}
+
+	page_group_settings = () => {
+		this.pageView = "GROUP-SETTINGS"
+		m.redraw()
+	}
+
+	//////////////////////////////////////////
 	// Modal Dialogs
 	//////////////////////////////////////////
 
@@ -694,6 +787,34 @@ export class Controller {
 		this.modalView = "NEW-CONVERSATION"
 	}
 
+	modal_editMessage = async (messageId: string) => {
+
+		this.message = await this.loadMessage(messageId)
+
+		if (this.message == undefined) {
+			console.log("Error: cannot edit message that doesn't exist")
+			return
+		}
+
+		if (this.message.sender != this.actorId()) {
+			console.log("Error: cannot edit message sent by another actor")
+			return
+		}
+
+		this.modalView = "EDIT-MESSAGE"
+	}
+
+	modal_messageHistory = async (messageId: string) => {
+
+		this.message = await this.loadMessage(messageId)
+
+		if (this.message == undefined) {
+			console.log("Error: cannot view message history for a message that doesn't exist")
+			return
+		}
+
+		this.modalView = "MESSAGE-HISTORY"
+	}
 
 	//////////////////////////////////////////
 	// Network Stuff

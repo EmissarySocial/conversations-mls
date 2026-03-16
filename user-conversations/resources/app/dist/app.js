@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m14, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m16, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m14;
+          if (params[key] == null) return m16;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m14, key, extra) {
-            if (key == null) return "\\" + m14;
+          function(m16, key, extra) {
+            if (key == null) return "\\" + m16;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request2 = require_request2();
       var router = require_route();
-      var m14 = function m15() {
+      var m16 = function m17() {
         return hyperscript.apply(this, arguments);
       };
-      m14.m = hyperscript;
-      m14.trust = hyperscript.trust;
-      m14.fragment = hyperscript.fragment;
-      m14.Fragment = "[";
-      m14.mount = mountRedraw.mount;
-      m14.route = router;
-      m14.render = require_render2();
-      m14.redraw = mountRedraw.redraw;
-      m14.request = request2.request;
-      m14.parseQueryString = require_parse();
-      m14.buildQueryString = require_build();
-      m14.parsePathname = require_parse2();
-      m14.buildPathname = require_build2();
-      m14.vnode = require_vnode();
-      m14.censor = require_censor();
-      m14.domFor = require_domFor();
-      module.exports = m14;
+      m16.m = hyperscript;
+      m16.trust = hyperscript.trust;
+      m16.fragment = hyperscript.fragment;
+      m16.Fragment = "[";
+      m16.mount = mountRedraw.mount;
+      m16.route = router;
+      m16.render = require_render2();
+      m16.redraw = mountRedraw.redraw;
+      m16.request = request2.request;
+      m16.parseQueryString = require_parse();
+      m16.buildQueryString = require_build();
+      m16.parsePathname = require_parse2();
+      m16.buildPathname = require_build2();
+      m16.vnode = require_vnode();
+      m16.censor = require_censor();
+      m16.domFor = require_domFor();
+      module.exports = m16;
     }
   });
 
@@ -3426,9 +3426,9 @@
     while (a !== _0n3) {
       const q = b / a;
       const r = b % a;
-      const m14 = x - u * q;
+      const m16 = x - u * q;
       const n = y - v * q;
-      b = a, a = r, x = u, y = v, u = m14, v = n;
+      b = a, a = r, x = u, y = v, u = m16, v = n;
     }
     const gcd = b;
     if (gcd !== _1n3)
@@ -4659,13 +4659,13 @@
       k: "number",
       hash: "function"
     });
-    const { p, k, m: m14, hash, expand, DST } = options;
+    const { p, k, m: m16, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes3(msg);
     asafenumber(count);
     const log2p = p.toString(2).length;
     const L = Math.ceil((log2p + k) / 8);
-    const len_in_bytes = count * m14 * L;
+    const len_in_bytes = count * m16 * L;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -4678,9 +4678,9 @@
     }
     const u = new Array(count);
     for (let i = 0; i < count; i++) {
-      const e = new Array(m14);
-      for (let j = 0; j < m14; j++) {
-        const elm_offset = L * (j + i * m14);
+      const e = new Array(m16);
+      for (let j = 0; j < m16; j++) {
+        const elm_offset = L * (j + i * m16);
         const tv = prb.subarray(elm_offset, elm_offset + L);
         e[j] = mod2(os2ip(tv), p);
       }
@@ -5042,8 +5042,8 @@
       evaluate: (secretKey, input) => evaluate(ctxVOPRF, secretKey, input)
     };
     const poprf = (info) => {
-      const m14 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T = Point.BASE.multiply(m14);
+      const m16 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T = Point.BASE.multiply(m16);
       return {
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -5067,7 +5067,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn3.fromBytes(secretKey);
-          const t = Fn3.add(skS, m14);
+          const t = Fn3.add(skS, m16);
           const invT = Fn3.inv(t);
           const blindedPoints = blinded.map(Point.fromBytes);
           const evalPoints = blindedPoints.map((i) => i.multiply(invT));
@@ -5098,7 +5098,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t = Fn3.add(skS, m14);
+          const t = Fn3.add(skS, m16);
           const invT = Fn3.inv(t);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -6909,7 +6909,7 @@
         seedArgs.push(abytes3(e, void 0, "extraEntropy"));
       }
       const seed = concatBytes2(...seedArgs);
-      const m14 = h1int;
+      const m16 = h1int;
       function k2sig(kBytes) {
         const k = bits2int(kBytes);
         if (!Fn3.isValidNot0(k))
@@ -6919,7 +6919,7 @@
         const r = Fn3.create(q.x);
         if (r === _0n9)
           return;
-        const s = Fn3.create(ik * Fn3.create(m14 + r * d));
+        const s = Fn3.create(ik * Fn3.create(m16 + r * d));
         if (s === _0n9)
           return;
         let recovery = (q.x === r ? 0 : 2) | Number(q.y & _1n10);
@@ -6995,8 +6995,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m14 = "") {
-          super(m14);
+        constructor(m16 = "") {
+          super(m16);
         }
       };
       DER = {
@@ -7237,7 +7237,7 @@
   });
 
   // src/app.tsx
-  var import_mithril21 = __toESM(require_mithril(), 1);
+  var import_mithril25 = __toESM(require_mithril(), 1);
 
   // node_modules/ts-mls/dist/src/codec/number.js
   var uint8Encoder = (n) => [
@@ -10775,11 +10775,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m14) => [m14.applicationData, m14.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m16) => [m16.applicationData, m16.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m14) => [m14.proposal, m14.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m16) => [m16.proposal, m16.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m14) => [m14.commit, m14.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m16) => [m16.commit, m16.auth]), config)(msg);
       }
     };
   }
@@ -14519,7 +14519,9 @@
       sender: "",
       plaintext: "",
       likes: [],
-      createDate: Date.now()
+      history: [],
+      createDate: Date.now(),
+      updateDate: Date.now()
     };
   }
 
@@ -14679,16 +14681,11 @@
         console.log("Error: cannot undo like on message that doesn't exist");
         return void 0;
       }
-      console.log("removing like from", message);
-      console.log("actor: ", actorId);
       const removeIndex = message.likes.indexOf(actorId);
-      console.log("removeIndex: ", removeIndex);
       if (removeIndex == -1) {
         return void 0;
       }
       message.likes.splice(removeIndex, 1);
-      console.log("updated likes", message.likes);
-      console.log("saving message: ", message);
       await this.saveMessage(message);
       return message;
     };
@@ -14730,6 +14727,24 @@
     return "";
   }
 
+  // src/as/vocab.ts
+  var ActivityTypeCreate = "Create";
+  var ActivityTypeDelete = "Delete";
+  var ActivityTypeLike = "Like";
+  var ActivityTypeUndo = "Undo";
+  var ActivityTypeUpdate = "Update";
+  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
+  var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var EncodingTypeBase64 = "base64";
+  var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeNote = "Note";
+  var ObjectTypeMLSPrivateMessage = "mls:PrivateMessage";
+  var PropertyActor = "actor";
+  var PropertyContext = "context";
+  var PropertyObject = "object";
+  var PropertyTarget = "target";
+  var PropertyTo = "to";
+
   // src/as/object.ts
   var Object2 = class {
     #value;
@@ -14738,6 +14753,9 @@
         this.#value = value;
       } else {
         this.#value = {};
+      }
+      if (this.#value["@context"] == void 0) {
+        this.#value["@context"] = ContextActivityStreams;
       }
     }
     ///////////////////////////////////
@@ -14913,24 +14931,6 @@
     return new Actor();
   }
 
-  // src/as/vocab.ts
-  var ActivityTypeCreate = "Create";
-  var ActivityTypeDelete = "Delete";
-  var ActivityTypeLike = "Like";
-  var ActivityTypeUndo = "Undo";
-  var ActivityTypeUpdate = "Update";
-  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
-  var ContextMLS = "https://purl.archive.org/socialweb/mls";
-  var EncodingTypeBase64 = "base64";
-  var MediaTypeMLSMessage = "message/mls";
-  var ObjectTypeNote = "Note";
-  var ObjectTypeMLSPrivateMessage = "mls:PrivateMessage";
-  var PropertyActor = "actor";
-  var PropertyContext = "context";
-  var PropertyObject = "object";
-  var PropertyTarget = "target";
-  var PropertyTo = "to";
-
   // src/as/document.ts
   var Document = class extends Object2 {
     ///////////////////////////////////
@@ -15013,8 +15013,50 @@
     return new Document();
   }
 
+  // src/service/utils.ts
+  function base64ToUint8Array(base64) {
+    const binary_string = window.atob(base64);
+    const len = binary_string.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes;
+  }
+  function newId2() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
+  function uint8ArrayEqual(a, b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function messageToActivityStream(group, message) {
+    return {
+      id: message.id,
+      attributedTo: message.sender,
+      type: ObjectTypeNote,
+      to: group.members,
+      context: group.id,
+      content: message.plaintext,
+      published: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+
   // src/as/activity.ts
   var Activity = class extends Object2 {
+    constructor(value) {
+      super(value);
+      if (this.get("as", "id") == void 0) {
+        this.set("id", newId2());
+      }
+    }
     ///////////////////////////////////
     // Property getters
     ///////////////////////////////////
@@ -15109,21 +15151,6 @@
     };
   }
 
-  // src/service/utils.ts
-  function base64ToUint8Array(base64) {
-    console.log("base64ToUint8Array: Converting base64 string to Uint8Array", base64);
-    const binary_string = window.atob(base64);
-    const len = binary_string.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binary_string.charCodeAt(i);
-    }
-    return bytes;
-  }
-  function newId2() {
-    return "uri:uuid:" + crypto.randomUUID();
-  }
-
   // src/service/mls.ts
   var MLS = class {
     #database;
@@ -15172,7 +15199,11 @@
     // message to existing members, and a Welcome message to new members,
     addGroupMembers = async (group, newMembers) => {
       const currentMembers = group.members;
-      const keyPackages = await this.#directory.getKeyPackages(newMembers);
+      var keyPackages = await this.#directory.getKeyPackages(newMembers);
+      keyPackages = keyPackages.filter((keyPackage) => {
+        const match = !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature);
+        return match;
+      });
       const addProposals = keyPackages.map((keyPackage) => ({
         proposalType: defaultProposalTypes.add,
         add: {
@@ -15269,12 +15300,21 @@
     }
     // onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
     async #onMessage_Welcome(message) {
-      const clientState = await joinGroup({
-        context: this.#context(),
-        welcome: message.welcome,
-        keyPackage: this.#publicKeyPackage,
-        privateKeys: this.#privateKeyPackage
-      });
+      var clientState;
+      try {
+        clientState = await joinGroup({
+          context: this.#context(),
+          welcome: message.welcome,
+          keyPackage: this.#publicKeyPackage,
+          privateKeys: this.#privateKeyPackage
+        });
+      } catch (e) {
+        console.error("Error joining group from welcome message", e);
+        return null;
+      }
+      if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
+        return null;
+      }
       const groupId = new TextDecoder().decode(clientState.groupContext.groupId);
       const group = {
         id: groupId,
@@ -15408,7 +15448,6 @@
           "mls:encoding": "base64"
         }
       });
-      console.log("Sending activity:", activity.toJSON());
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         body: activity.toJSON(),
@@ -15420,7 +15459,6 @@
     };
     // sendActivity sends an activity to the Actor's outbox
     sendActivity = async (activity) => {
-      console.log("Sending activity:", activity.toJSON());
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         body: activity.toJSON(),
@@ -15507,7 +15545,7 @@
       try {
         page = await new Collection().fromURL(pageUrl, options);
       } catch (error) {
-        console.log("Error fetching collection page:", pageUrl, error);
+        console.log("Unable to fetch collection page:", pageUrl, error);
         return;
       }
       for await (const item of page.items()) {
@@ -15670,7 +15708,6 @@
         cipherSuite,
         lifetime: defaultLifetime()
       });
-      console.log("creating keypackage:", clientName, actor);
       const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage);
       const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage);
       if (apKeyPackageURL == "") {
@@ -15711,9 +15748,10 @@
     #allowPlaintextMessages;
     config;
     groups;
-    group;
     messages;
     contacts;
+    group;
+    message;
     pageView;
     modalView;
     // constructor initializes the Controller with its dependencies
@@ -15726,9 +15764,10 @@
       this.#receiver = receiver;
       this.#allowPlaintextMessages = false;
       this.groups = [];
-      this.group = NewGroup();
       this.messages = [];
       this.contacts = /* @__PURE__ */ new Map();
+      this.group = NewGroup();
+      this.message = NewMessage();
       this.pageView = "LOADING";
       this.modalView = "";
       this.config = NewConfig();
@@ -15743,7 +15782,6 @@
     // database and starts the MLS service (if encryption keys are present)
     start = async () => {
       this.config = await this.#database.loadConfig();
-      console.log(this.config);
       if (!this.config.ready) {
         this.pageView = "WELCOME";
         import_mithril.default.redraw();
@@ -15754,7 +15792,6 @@
       if (url == "") {
         throw new Error(`Actor does not support MLS API.`);
       }
-      console.log("Loaded actor:", this.#actor);
       this.#allowPlaintextMessages = plaintext;
       this.#delivery.setActor(this.#actor);
       this.#directory.setActor(this.#actor);
@@ -15846,6 +15883,7 @@
         throw new Error("MLS service is not initialized");
       }
       var group = await this.#mls.createGroup();
+      recipients.push(this.actorId());
       this.group = await this.#mls.addGroupMembers(group, recipients);
       await this.#database.saveGroup(this.group);
       await this.loadGroups();
@@ -15920,31 +15958,66 @@
       }
       this.group.lastMessage = content;
       await this.saveGroup(this.group);
-      const activityId = newId2();
-      const messageId = newId2();
-      var activity = new Activity({
-        "@context": ContextActivityStreams,
-        id: activityId,
-        actor: this.actorId(),
-        type: ActivityTypeCreate,
-        to: this.group.members,
-        object: {
-          id: messageId,
-          attributedTo: this.actorId(),
-          type: ObjectTypeNote,
-          to: this.group.members,
-          context: this.selectedGroupId,
-          content,
-          published: (/* @__PURE__ */ new Date()).toISOString()
-        }
-      });
-      this.#sendActivity(this.group, activity);
       var message = NewMessage();
-      message.id = messageId;
       message.groupId = this.group.id;
       message.sender = this.#actor.id();
       message.plaintext = content;
+      var activity = new Activity({
+        actor: this.actorId(),
+        type: ActivityTypeCreate,
+        to: this.group.members,
+        object: messageToActivityStream(this.group, message)
+      });
+      this.#sendActivity(this.group, activity);
       await this.#database.saveMessage(message);
+      await this.loadMessages();
+    };
+    update_message = async (message) => {
+      if (message.sender != this.actorId()) {
+        console.log("Error: cannot edit message sent by another actor");
+        return;
+      }
+      if (message.groupId != this.group.id) {
+        console.log("Error: cannot edit message that doesn't belong to the current group");
+        return;
+      }
+      const activity = new Activity({
+        actor: this.actorId(),
+        type: ActivityTypeUpdate,
+        to: this.group.members,
+        object: messageToActivityStream(this.group, message)
+      });
+      this.#sendActivity(this.group, activity);
+      await this.#database.saveMessage(message);
+      await this.loadMessages();
+    };
+    clear_message = () => {
+      this.message = NewMessage();
+    };
+    delete_message = async (messageId) => {
+      const message = await this.loadMessage(messageId);
+      if (message == void 0) {
+        console.log("Error: cannot delete message that doesn't exist");
+        return;
+      }
+      if (message.sender != this.actorId()) {
+        console.log("Error: cannot delete message sent by another actor");
+        return;
+      }
+      if (message.groupId != this.group.id) {
+        console.log("Error: cannot delete message that doesn't belong to the current group");
+        return;
+      }
+      const activity = new Activity({
+        "@context": ContextActivityStreams,
+        "id": newId2(),
+        "to": this.group.members,
+        "actor": this.actorId(),
+        "type": ActivityTypeDelete,
+        "object": message.id
+      });
+      this.#sendActivity(this.group, activity);
+      await this.#database.deleteMessage(messageId);
       await this.loadMessages();
     };
     // like_message adds a "like" from the current actor to the specified message
@@ -15997,21 +16070,6 @@
       await this.loadMessages();
     };
     //////////////////////////////////////////
-    // Pages
-    //////////////////////////////////////////
-    page_groups = () => {
-      this.pageView = "GROUPS";
-      import_mithril.default.redraw();
-    };
-    page_messages = () => {
-      this.pageView = "MESSAGES";
-      import_mithril.default.redraw();
-    };
-    page_group_settings = () => {
-      this.pageView = "GROUP-SETTINGS";
-      import_mithril.default.redraw();
-    };
-    //////////////////////////////////////////
     // Receiving Activities
     //////////////////////////////////////////
     receiveActivity = async (activity) => {
@@ -16027,14 +16085,12 @@
         }
         const decodedActivity = await this.#mls.decodeMessage(object.content());
         if (decodedActivity == null) {
-          console.log("Received MLS message that did not require additional processing (probably a mls:Welcome)");
           return;
         }
         if (decodedActivity.actorId() != activity.actorId()) {
           throw new Error("Decrypted activity actor must match outer activity actor");
         }
         activity = decodedActivity;
-        console.log("successfully decoded object:", activity.toJSON());
       }
       switch (activity.type()) {
         case ActivityTypeCreate:
@@ -16068,8 +16124,10 @@
         sender: object.attributedToId(),
         plaintext: object.content(),
         likes: [],
+        history: [],
         inReplyTo: object.inReplyToId(),
-        createDate: Date.now()
+        createDate: Date.now(),
+        updateDate: Date.now()
       };
       await this.#database.saveMessage(message);
       if (this.config.isDesktopNotifications) {
@@ -16091,19 +16149,34 @@
       if (object.attributedToId() != activity.actorId()) {
         throw new Error("Decrypted activity actor must match object's attributedTo");
       }
-      const message = {
-        id: activity.id(),
-        groupId: activity.context(),
-        sender: activity.actorId(),
-        plaintext: object.content(),
-        likes: [],
-        inReplyTo: object.inReplyToId(),
-        createDate: Date.now()
-      };
+      var message = await this.#database.loadMessage(object.id());
+      if (message == void 0) {
+        console.log("Error: cannot update message that doesn't exist");
+        return;
+      }
+      if (message.sender != activity.actorId()) {
+        console.log("Error: cannot edit message sent by another actor");
+        return;
+      }
+      if (message.history == void 0) {
+        message.history = [];
+      }
+      message.history.push(message.plaintext);
+      message.plaintext = object.content();
+      message.updateDate = Date.now();
       await this.#database.saveMessage(message);
     };
     #receiveActivity_DeleteDocument = async (activity) => {
-      await this.#database.deleteMessage(activity.objectId());
+      const message = await this.#database.loadMessage(activity.objectId());
+      if (message == void 0) {
+        console.log("Error: cannot delete message that doesn't exist");
+        return;
+      }
+      if (message.sender != activity.actorId()) {
+        console.log("Error: cannot delete message if actor is not the sender");
+        return;
+      }
+      await this.#database.deleteMessage(message.id);
       this.loadMessages();
     };
     #receiveActivity_Like = async (activity) => {
@@ -16119,11 +16192,11 @@
       console.log("Processing Undo activity:", activity.toJSON());
       const object = await activity.objectAsActivity();
       if (activity.actorId() != object.actorId()) {
-        console.log("Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId());
+        console.log("Error: Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId());
         return;
       }
       if (object.type() != ActivityTypeLike) {
-        console.log("Received Undo activity with unsupported object type:", object.type());
+        console.log("Error: Received Undo activity with unsupported object type:", object.type());
         return;
       }
       const message = await this.#database.undoLikeMessage(activity.actorId(), object.objectId());
@@ -16135,6 +16208,21 @@
       }
     };
     //////////////////////////////////////////
+    // Pages
+    //////////////////////////////////////////
+    page_groups = () => {
+      this.pageView = "GROUPS";
+      import_mithril.default.redraw();
+    };
+    page_messages = () => {
+      this.pageView = "MESSAGES";
+      import_mithril.default.redraw();
+    };
+    page_group_settings = () => {
+      this.pageView = "GROUP-SETTINGS";
+      import_mithril.default.redraw();
+    };
+    //////////////////////////////////////////
     // Modal Dialogs
     //////////////////////////////////////////
     modal_close = () => {
@@ -16142,6 +16230,26 @@
     };
     modal_newConversation = () => {
       this.modalView = "NEW-CONVERSATION";
+    };
+    modal_editMessage = async (messageId) => {
+      this.message = await this.loadMessage(messageId);
+      if (this.message == void 0) {
+        console.log("Error: cannot edit message that doesn't exist");
+        return;
+      }
+      if (this.message.sender != this.actorId()) {
+        console.log("Error: cannot edit message sent by another actor");
+        return;
+      }
+      this.modalView = "EDIT-MESSAGE";
+    };
+    modal_messageHistory = async (messageId) => {
+      this.message = await this.loadMessage(messageId);
+      if (this.message == void 0) {
+        console.log("Error: cannot view message history for a message that doesn't exist");
+        return;
+      }
+      this.modalView = "MESSAGE-HISTORY";
     };
     //////////////////////////////////////////
     // Network Stuff
@@ -16159,8 +16267,8 @@
   };
 
   // src/view/app.tsx
-  var import_mithril19 = __toESM(require_mithril(), 1);
-  var import_mithril20 = __toESM(require_mithril(), 1);
+  var import_mithril23 = __toESM(require_mithril(), 1);
+  var import_mithril24 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
@@ -16173,7 +16281,7 @@
       vnode.state.isNotificationSounds = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center", style: "font-size:80px; color:var(--blue60)" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", "Messages can be sent to any Fediverse account, but only some accounts can receive encrypted messages.", " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted messages ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-box-arrow-up-right" })), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Encrypted Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When every participant supports encryption. (Server dependent)")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-envelope-open" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Clear Text Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When one or more participants can't receive encrypted messages."))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Set a Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "text", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " Protects messages on this device. If you lose this passcode, message history will be lost.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isNotificationSounds", checked: vnode.state.isNotificationSounds, onchange: (event) => this.setNotificationSounds(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isNotificationSounds" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Play Notification Sounds"))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary" }, "Continue to Conversations \u2192"))));
+      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center", style: "font-size:80px; color:var(--blue60)" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", "Messages can be sent to any Fediverse account, but only some accounts can receive encrypted messages.", " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted messages ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-box-arrow-up-right" })), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Encrypted Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When every participant supports encryption. (Server dependent)")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-envelope-open" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Clear Text Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When one or more participants can't receive encrypted messages."))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Set a Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "text", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " Protects messages on this device. If you lose this passcode, message history will be lost.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isNotificationSounds", checked: vnode.state.isNotificationSounds, onchange: (event) => this.setNotificationSounds(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isNotificationSounds" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Play Notification Sounds"))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary" }, "Continue to Conversations \u2192")))));
     }
     setClientName(vnode, event) {
       const target = event.target;
@@ -16246,8 +16354,8 @@
   };
 
   // src/view/index.tsx
-  var import_mithril17 = __toESM(require_mithril(), 1);
-  var import_mithril18 = __toESM(require_mithril(), 1);
+  var import_mithril21 = __toESM(require_mithril(), 1);
+  var import_mithril22 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
   var import_mithril7 = __toESM(require_mithril(), 1);
@@ -16490,7 +16598,7 @@
     //
     oninit(vnode) {
       vnode.state.actors = [];
-      vnode.state.message = "";
+      vnode.state.plaintext = "";
       vnode.state.encrypted = false;
     }
     view(vnode) {
@@ -16502,7 +16610,7 @@
           endpoint: "/.api/actors",
           onselect: (actors) => this.selectActors(vnode, actors)
         }
-      )), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril7.default)("textarea", { rows: "8", onchange: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril7.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      )), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril7.default)("textarea", { rows: "8", onchange: (event) => this.setPlaintext(vnode, event) }), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril7.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     header(vnode) {
       if (vnode.state.actors.length == 0) {
@@ -16539,9 +16647,9 @@
         vnode.state.encrypted = true;
       }
     }
-    setMessage(vnode, event) {
+    setPlaintext(vnode, event) {
       const target = event.target;
-      vnode.state.message = target.value;
+      vnode.state.plaintext = target.value;
     }
     async onsubmit(event, vnode) {
       const participants = vnode.state.actors.map((actor) => actor.id);
@@ -16550,15 +16658,15 @@
       event.stopPropagation();
       if (vnode.state.encrypted) {
         const group = await controller2.createGroup(participants);
-        await controller2.sendMessage(vnode.state.message);
+        await controller2.sendMessage(vnode.state.plaintext);
         return this.close(vnode);
       }
-      await controller2.newConversation(participants, vnode.state.message);
+      await controller2.newConversation(participants, vnode.state.plaintext);
       return this.close(vnode);
     }
     close(vnode) {
       vnode.state.actors = [];
-      vnode.state.message = "";
+      vnode.state.plaintext = "";
       vnode.attrs.close();
     }
   };
@@ -16621,9 +16729,25 @@
         const contact = controller2.contacts.get(message.sender) || NewContact();
         const isMe = message.sender == controller2.actorId();
         if (isMe) {
-          return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "message me pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril10.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "pos-absolute-top-right text-sm" }, this.likes(vnode, message)));
+          return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "message me pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold" }, isMe ? "" : contact.name), /* @__PURE__ */ (0, import_mithril10.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "pos-absolute-top-right text-sm" }, /* @__PURE__ */ (0, import_mithril10.default)(
+            "i",
+            {
+              class: "bi bi-pencil-square margin-right hover-show clickable",
+              onclick: () => controller2.modal_editMessage(message.id)
+            }
+          ), /* @__PURE__ */ (0, import_mithril10.default)(
+            "i",
+            {
+              class: "bi bi-trash margin-right hover-show clickable",
+              onclick: () => {
+                if (confirm("Are you sure you want to delete this message?")) {
+                  vnode.attrs.controller.delete_message(message.id);
+                }
+              }
+            }
+          ), this.likes(vnode, message)));
         }
-        return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "message pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold flex-grow" }, contact.name), /* @__PURE__ */ (0, import_mithril10.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray" }, new Date(message.createDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "pos-absolute-top-right text-sm" }, this.likes(vnode, message)));
+        return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "message pos-relative hover-trigger" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold flex-grow" }, contact.name), /* @__PURE__ */ (0, import_mithril10.default)("div", null, message.plaintext), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "clickable", onclick: () => controller2.modal_messageHistory(message.id) }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "text-underline" }, "Edited"), " ", new Date(message.updateDate).toLocaleString()) : new Date(message.updateDate).toLocaleString()), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "pos-absolute-top-right text-sm" }, this.likes(vnode, message)));
       }))), /* @__PURE__ */ (0, import_mithril10.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril10.default)(WidgetMessageCreate, { controller: vnode.attrs.controller }))));
     }
     likes(vnode, message) {
@@ -16631,7 +16755,7 @@
         message.likes = [];
       }
       if (message.likes.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "hover-show clickable", onclick: () => vnode.attrs.controller.like_message(message.id) }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-heart" }));
+        return /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "hover-show clickable margin-right-xs", onclick: () => vnode.attrs.controller.like_message(message.id) }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-heart" }));
       }
       if (message.likes.includes(vnode.attrs.controller.actorId())) {
         return /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "clickable", onclick: () => vnode.attrs.controller.undo_like_message(message.id) }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-heart-fill text-red margin-right-xs", hint: vnode.attrs.controller.actorId() }), message.likes.length > 1 ? message.likes.length : "");
@@ -16676,8 +16800,6 @@
         vnode.attrs.group.tags = [];
       }
       vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ");
-      console.log(vnode.state.tags);
-      console.log(vnode.attrs.group.tags);
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -16741,6 +16863,52 @@
     }
   };
 
+  // src/view/modal-editMessage.tsx
+  var import_mithril17 = __toESM(require_mithril(), 1);
+  var import_mithril18 = __toESM(require_mithril(), 1);
+  var EditMessage = class {
+    oninit(vnode) {
+      vnode.state.plaintext = vnode.attrs.controller.message.plaintext;
+    }
+    view(vnode) {
+      return /* @__PURE__ */ (0, import_mithril17.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril17.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril17.default)("i", { class: "bi bi-pencil-square" }), " Edit Message"), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril17.default)("textarea", { rows: "8", value: vnode.state.plaintext, oninput: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-sm text-gray" }, "Changes will be sent to all participants, but may not be visible in some apps.")))), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril17.default)("button", { class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril17.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+    }
+    setMessage(vnode, event) {
+      const target = event.target;
+      vnode.state.plaintext = target.value;
+    }
+    async onsubmit(event, vnode) {
+      event.preventDefault();
+      event.stopPropagation();
+      const controller2 = vnode.attrs.controller;
+      var message = controller2.message;
+      message.plaintext = vnode.state.plaintext;
+      await controller2.update_message(message);
+      return this.close(vnode);
+    }
+    close(vnode) {
+      vnode.attrs.controller.clear_message();
+      vnode.attrs.close();
+    }
+  };
+
+  // src/view/modal-messageHistory.tsx
+  var import_mithril19 = __toESM(require_mithril(), 1);
+  var import_mithril20 = __toESM(require_mithril(), 1);
+  var MessageHistory = class {
+    oninit(vnode) {
+      vnode.state.plaintext = vnode.attrs.controller.message.plaintext;
+    }
+    view(vnode) {
+      const message = vnode.attrs.controller.message;
+      return /* @__PURE__ */ (0, import_mithril19.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril19.default)("h1", null, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-clock-history" }), " Message History"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "table scroll-vertical margin-bottom", style: "max-height:600px;" }, message.history.map((content, index) => /* @__PURE__ */ (0, import_mithril19.default)("div", null, index + 1, ". ", content)), /* @__PURE__ */ (0, import_mithril19.default)("div", null, message.history.length + 1, ". ", message.plaintext)), /* @__PURE__ */ (0, import_mithril19.default)("button", { onclick: () => this.close(vnode), tabIndex: "0" }, "Close"));
+    }
+    close(vnode) {
+      vnode.attrs.controller.clear_message();
+      vnode.attrs.close();
+    }
+  };
+
   // src/view/index.tsx
   var Index = class {
     oninit(vnode) {
@@ -16750,17 +16918,17 @@
       var page;
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-SETTINGS":
-          page = /* @__PURE__ */ (0, import_mithril17.default)(GroupSettings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+          page = /* @__PURE__ */ (0, import_mithril21.default)(GroupSettings, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
           break;
         default:
           const groups = vnode.attrs.controller.groups;
           if (groups.length == 0) {
-            page = /* @__PURE__ */ (0, import_mithril17.default)(Empty, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril21.default)(Empty, { controller: vnode.attrs.controller });
           } else {
-            page = /* @__PURE__ */ (0, import_mithril17.default)(Messages, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril21.default)(Messages, { controller: vnode.attrs.controller });
           }
       }
-      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril17.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
+      return /* @__PURE__ */ (0, import_mithril21.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril21.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril21.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
     }
     viewGroups(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -16769,7 +16937,7 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " selected";
         }
-        return /* @__PURE__ */ (0, import_mithril17.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril17.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril17.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
+        return /* @__PURE__ */ (0, import_mithril21.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "width-32 circle flex-center" }, /* @__PURE__ */ (0, import_mithril21.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril21.default)("div", null, group.name), /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
       });
     }
     // viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
@@ -16777,7 +16945,11 @@
       const modalView = vnode.attrs.controller.modalView;
       switch (modalView) {
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril17.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril21.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+        case "EDIT-MESSAGE":
+          return /* @__PURE__ */ (0, import_mithril21.default)(EditMessage, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+        case "MESSAGE-HISTORY":
+          return /* @__PURE__ */ (0, import_mithril21.default)(MessageHistory, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -16786,7 +16958,7 @@
       document.getElementById("modal")?.classList.remove("ready");
       window.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril17.default.redraw();
+        import_mithril21.default.redraw();
       }, 240);
     }
   };
@@ -16800,11 +16972,11 @@
       const controller2 = vnode.attrs.controller;
       switch (controller2.pageView) {
         case "LOADING":
-          return /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "app-content" }, "Loading...");
+          return /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "app-content" }, "Loading...");
         case "WELCOME":
-          return /* @__PURE__ */ (0, import_mithril19.default)(Welcome, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril23.default)(Welcome, { controller: controller2 });
         default:
-          return /* @__PURE__ */ (0, import_mithril19.default)(Index, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril23.default)(Index, { controller: controller2 });
       }
     }
   };
@@ -16823,7 +16995,7 @@
     const directory = new Directory();
     const receiver = new Receiver();
     controller = new Controller(actorID, database, delivery, directory, receiver);
-    import_mithril21.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril21.default)(App, { controller }) });
+    import_mithril25.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril25.default)(App, { controller }) });
   }
   startup();
 })();

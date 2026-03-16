@@ -4,6 +4,7 @@ import { Controller } from "../service/controller"
 import type { Config } from "../model/config"
 import { Welcome } from "./welcome"
 import { Index } from "."
+import { EditMessage } from "./modal-editMessage"
 
 type AppVnode = Vnode<AppAttrs, AppState>
 

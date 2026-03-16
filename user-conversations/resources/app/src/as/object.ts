@@ -1,4 +1,5 @@
 import { toString } from "./utils"
+import * as vocab from "./vocab"
 
 type map = { [key: string]: any }
 
@@ -12,6 +13,11 @@ export class Object {
 			this.#value = value
 		} else {
 			this.#value = {}
+		}
+
+		// Default @context to ActivityStreams if not provided
+		if (this.#value["@context"] == undefined) {
+			this.#value["@context"] = vocab.ContextActivityStreams
 		}
 	}
 
