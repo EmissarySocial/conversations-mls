@@ -468,13 +468,14 @@ export class Controller {
 	// groupName returns an intelligent name for the group based on its member count.
 	groupName = (group: Group = this.group) => {
 
-
 		// If the group has a custom name, then use that.
 		if (group.name != "") {
 			return group.name
 		}
 
-		const contacts = group.contacts
+		const contacts = group.members
+			.map(actorId => this.contacts.get(actorId))
+			.filter(contact => contact != undefined)
 			.filter(contact => contact.id != this.actorId())
 			.map(contact => contact.name)
 

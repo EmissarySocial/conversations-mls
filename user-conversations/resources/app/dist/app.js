@@ -16114,7 +16114,7 @@
       if (group.name != "") {
         return group.name;
       }
-      const contacts = group.contacts.filter((contact) => contact.id != this.actorId()).map((contact) => contact.name);
+      const contacts = group.members.map((actorId) => this.contacts.get(actorId)).filter((contact) => contact != void 0).filter((contact) => contact.id != this.actorId()).map((contact) => contact.name);
       switch (contacts.length) {
         // This should never happen, but just in case...
         case 0:
