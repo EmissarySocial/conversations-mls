@@ -1,12 +1,16 @@
 import { type ClientState } from "ts-mls"
+import type { Contact } from "./contact"
 
 // Group represents a group record in memory
 export type Group = {
 	id: string
+	stateId: "IMPORTANT" | "ACTIVE" | "ARCHIVED" | "CLOSED"
 	name: string
+	description: string
 	tags: string[]
 	lastMessage: string
 	members: string[]
+	contacts: Contact[]
 	createDate: number
 	updateDate: number
 	readDate: number
@@ -19,13 +23,16 @@ export type EncryptedGroup = Group & {
 
 export function NewGroup(): Group {
 	return {
-		id: "",
+		id: "uri:uuid:" + crypto.randomUUID(),
+		stateId: "ACTIVE",
 		name: "",
+		description: "",
 		tags: [],
 		lastMessage: "",
 		members: [],
-		createDate: 0,
-		updateDate: 0,
+		contacts: [],
+		createDate: Date.now(),
+		updateDate: Date.now(),
 		readDate: 0,
 	}
 }

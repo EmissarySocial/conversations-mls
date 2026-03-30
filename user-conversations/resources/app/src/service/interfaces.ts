@@ -32,6 +32,7 @@ export interface IDatabase {
 	saveConfig(config: Config): Promise<void>
 
 	// Contact methods
+	allContacts(): Promise<Contact[]>
 	loadContact(actorId: string): Promise<Contact | undefined>
 	saveContact(contact: Contact): Promise<void>
 
@@ -68,7 +69,7 @@ export interface IDelivery {
 	setActor(actor: Actor): void
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
-	sendActivity(activity: Activity): Promise<void>
+	sendActivity(activity: Activity | { [key: string]: any }): Promise<Activity>
 
 	// Legacy methods to be refactored
 	sendFramedMessage(recipients: string[], message: MlsFramedMessage): void

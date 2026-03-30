@@ -29,6 +29,10 @@ export function toString(value: any): string {
 					return value.id
 				}
 
+				if (typeof value.url === "string") {
+					return value.url
+				}
+
 				if (typeof value.href === "string") {
 					return value.href
 				}

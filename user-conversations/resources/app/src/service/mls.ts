@@ -1,5 +1,5 @@
 // MLS functions
-import { bytesToBase64 } from "ts-mls"
+import { bytesToBase64, defaultCredentialTypes, getOwnLeafNode, processPrivateMessage, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage } from "ts-mls"
 import { createApplicationMessage } from "ts-mls"
 import { createCommit } from "ts-mls"
 import { createGroup } from "ts-mls"
@@ -16,15 +16,16 @@ import { wireformats } from "ts-mls"
 import { zeroOutUint8Array } from "ts-mls"
 
 // MLS Types
-import { type CredentialBasic } from "ts-mls"
+import { type CiphersuiteImpl } from "ts-mls"
 import { type ClientState } from "ts-mls"
-import { type Proposal } from "ts-mls"
-import { type PrivateKeyPackage } from "ts-mls"
+import { type CredentialBasic } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
+import { type LeafNode } from "ts-mls"
 import { type MlsContext } from "ts-mls"
 import { type MlsPrivateMessage } from "ts-mls"
 import { type MlsWelcomeMessage } from "ts-mls"
-import { type CiphersuiteImpl } from "ts-mls"
+import { type Proposal } from "ts-mls"
+import { type PrivateKeyPackage } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -33,12 +34,15 @@ import * as vocab from "../as/vocab"
 
 // Application Types
 import { type EncryptedGroup } from "../model/group"
+import { type Group } from "../model/group"
+import { NewGroup } from "../model/group"
+
 import { type IDatabase } from "./interfaces"
 import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { groupIsEncrypted } from "../model/group"
 
-import { uint8ArrayEqual } from "./utils"
+import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array, newId } from "./utils"
 
 interface IReceiver {
@@ -79,41 +83,59 @@ export class MLS {
 		this.#privateKeyPackage = privateKeyPackage
 	}
 
-	/// Sending Messages
+	/////////////////////////////
+	// Group Management
+	/////////////////////////////
 
-	// createGroup creates a new MLS group and saves it to the database
-	createGroup = async () => {
-		//
-		const context = this.#context()
-		const groupID = "uri:uuid:" + crypto.randomUUID()
-		const groupIDBytes = new TextEncoder().encode(groupID)
+	// encodeGroup adds an MLS clientState to a regular group to make it an EncryptedGroup
+	encodeGroup = async (group: Group): Promise<EncryptedGroup> => {
 
-		// Create group using ts-mls
+		// Generate a new clientState for this group
 		const clientState = await createGroup({
-			context: context,
-			groupId: groupIDBytes,
+			context: this.#context(),
+			groupId: encodeText(group.id),
 			keyPackage: this.#publicKeyPackage,
 			privateKeyPackage: this.#privateKeyPackage,
 		})
 
-		// Populate a Group record
-		const group: EncryptedGroup = {
-			id: groupID,
-			members: [],
-			name: "New Group",
-			tags: [],
-			lastMessage: "",
-			clientState: clientState,
-			createDate: Date.now(),
-			updateDate: Date.now(),
-			readDate: Date.now(),
-		}
+		// make an EncryptedGroup using the clientState
+		const encryptedGroup = addClientState(group, clientState)
 
-		// Save the Group
-		await this.#database.saveGroup(group)
+		// reset the group members based on the clientState
+		await this.addGroupMembers(encryptedGroup, [this.#actor.id()])
 
-		// Success
-		return group
+		// Save the EncryptedGroup
+		await this.#database.saveGroup(encryptedGroup)
+
+		// Success!
+		return encryptedGroup
+	}
+
+	// getGroupMembers returns the list of member IDs for a given group
+	getGroupMembers = (group: EncryptedGroup): string[] => {
+
+		// Find all current clients in this group
+		const leafNodes = getGroupMembers(group.clientState)
+
+		// Extract the client's identity for each leaf node
+		const members = leafNodes
+			.map(leaf => {
+				const credential = leaf.credential as CredentialBasic
+				if (credential.identity != undefined) {
+					return decodeText(credential.identity)
+				}
+				return ""
+			})
+			.filter((identity) => identity != "")
+
+		// Remove duplicates (many users will have multiple clients)
+		return [...new Set(members)]
+	}
+
+	#getGroupSignatures = (group: EncryptedGroup): Uint8Array<ArrayBufferLike>[] => {
+		const leafNodes = getGroupMembers(group.clientState)
+		const keyPackages = leafNodes.map(leafNode => leafNode.signature)
+		return keyPackages.filter(keyPackage => keyPackage !== undefined)
 	}
 
 	// addGroupMembers updates the group state.  It sends a Commit
@@ -122,19 +144,26 @@ export class MLS {
 
 		// Look up all KeyPackages for the new Members
 		const currentMembers = group.members
-		var keyPackages = await this.#directory.getKeyPackages(newMembers)
+		var addKeyPackages = await this.#directory.getKeyPackages(newMembers)
 
 		// Filter out the KeyPackage for THIS device
-		keyPackages = keyPackages.filter((keyPackage) => {
-			const match = !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature)
-			return match
-		})
+		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
+
+		// Filter out KeyPackages that are already in the group state (e.g. from another device of the same user)
+		const signatures = this.#getGroupSignatures(group)
+		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
+
+
+		// RULE: Must have at least one valid KeyPackage to add
+		if (addKeyPackages.length == 0) {
+			return group
+		}
 
 		// Create add proposals for each key package
-		const addProposals: Proposal[] = keyPackages.map((keyPackage) => ({
+		const addProposals: Proposal[] = addKeyPackages.map(newKeyPackage => ({
 			proposalType: defaultProposalTypes.add,
 			add: {
-				keyPackage: keyPackage,
+				keyPackage: newKeyPackage,
 			},
 		}))
 
@@ -146,51 +175,132 @@ export class MLS {
 			ratchetTreeExtension: true,
 		})
 
+
 		// Zero out the keys used to encrypt the commit message
 		commitResult.consumed.forEach(zeroOutUint8Array)
 
 		// Update the group with new state and new list of members
 		group.clientState = commitResult.newState
-		group.members = currentMembers.concat(newMembers)
+		group.members = this.getGroupMembers(group)
 		await this.#database.saveGroup(group)
 
 		// Send welcome to new members
 		if (commitResult.welcome != undefined) {
-			this.#delivery.sendWelcome(newMembers, commitResult.welcome)
+			this.#sendMlsMessage(
+				vocab.ObjectTypeMlsWelcome,
+				newMembers,
+				commitResult.welcome,
+			)
 		}
 
 		// (async) Send commit to existing members
 		if (currentMembers.length > 0) {
-			this.#delivery.sendFramedMessage(currentMembers, commitResult.commit)
+			this.#sendMlsMessage(
+				vocab.ObjectTypeMlsGroupInfo,
+				currentMembers,
+				commitResult.commit,
+			)
 		}
 
 		// Return the newly updated group
 		return group
 	}
 
-	// getGroupMembers returns the list of member IDs for a given group
-	getGroupMembers = async (group: EncryptedGroup): Promise<string[]> => {
+	async removeGroupMember(group: EncryptedGroup, actorId: string): Promise<EncryptedGroup> {
 
-		// Find all current members of this group
-		const leafNodes = await getGroupMembers(group.clientState)
-		const members = leafNodes
-			.map((leaf) => {
-				const credential = leaf.credential as CredentialBasic
-				if (credential.identity != undefined) {
-					return new TextDecoder().decode(credential.identity)
-				}
-				return ""
+		// Find all current clients in this group 
+		const leafNodes = getGroupMembers(group.clientState)
+
+		while (true) {
+
+			// Find the first leaf node that matches the specified actorId
+			const removeIndex = leafNodes.findIndex(leafNodeMatches(actorId))
+
+			// If there are no more matching nodes to remove, then we're done.
+			if (removeIndex === -1) {
+				break
+			}
+
+			// Create a commit with remove proposals
+			const commitResult = await createCommit({
+				context: this.#context(),
+				state: group.clientState,
+				extraProposals: [{
+					proposalType: defaultProposalTypes.remove,
+					remove: { removed: removeIndex },
+				}],
+				ratchetTreeExtension: true,
 			})
-			.filter((identity) => identity != "")
 
-		return members
+			// Zero out the keys used to encrypt the commit message
+			commitResult.consumed.forEach(zeroOutUint8Array)
+
+			// Send commit to all members
+			await this.#sendMlsMessage(
+				vocab.ObjectTypeMlsGroupInfo,
+				group.members,
+				commitResult.commit,
+			)
+
+			// Update the group with new state and new list of members
+			group.clientState = commitResult.newState
+			group.members = group.members.filter((member) => member !== actorId)
+			await this.#database.saveGroup(group)
+		}
+
+		// Return the updated group (sans-actor)
+		return group
 	}
 
-	encodeActivity = async (group: EncryptedGroup, activity: Activity): Promise<Activity> => {
+	// leaveGroup removes ALL CLIENTS for this user from this group and generates
+	// a new commit that is sent to the remaining members of the group.
+	async leaveGroup(group: EncryptedGroup): Promise<void> {
+
+		// Find all clients for this user in the group
+		const proposals = getGroupMembers(group.clientState)
+			.filter(leafNodeMatches(this.#actor.id()))
+			.map((_client, index) => {
+				return {
+					proposalType: defaultProposalTypes.remove,
+					remove: { removed: index },
+				} as Proposal
+			})
+
+		// Commit the remove proposals to generate a new group state.
+		const commitResult = await createCommit({
+			context: this.#context(),
+			state: group.clientState,
+			extraProposals: proposals,
+			ratchetTreeExtension: true,
+		})
+
+		// Save the group with the new state
+		await this.#database.saveGroup(group)
+
+		// Send a message to the group members
+		await this.#sendMlsMessage(
+			vocab.ObjectTypeMlsGroupInfo,
+			group.members,
+			commitResult.commit,
+		)
+	}
+
+	/////////////////////////////
+	// Sending Messages
+	/////////////////////////////
+
+	// sendActivity encodes an Activity as an MLS message and sends it to 
+	// all group members using the delivery service. Group state may be
+	// updated as a result of this message.
+	sendActivity = async (group: EncryptedGroup, activity: Activity | { [key: string]: any }) => {
+
+		if (!(activity instanceof Activity)) {
+			activity = new Activity(activity)
+		}
 
 		// Encrypt the message using MLS
 		const messageText = activity.toJSON()
-		const messageBytes = new TextEncoder().encode(messageText)
+		const messageBytes = encodeText(messageText)
 		const applicationMessage = await createApplicationMessage({
 			context: this.#context(),
 			state: group.clientState,
@@ -203,63 +313,87 @@ export class MLS {
 		// update the Group with the new group state
 		group.clientState = applicationMessage.newState
 		group.updateDate = Date.now()
+
+		// save the updated group
 		await this.#database.saveGroup(group)
 
+		// send the activity to all group members
+		return await this.#sendMlsMessage(
+			vocab.ObjectTypeMlsPrivateMessage,
+			activity.getArray("as", vocab.PropertyTo),
+			applicationMessage.message,
+		)
+	}
+
+	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+	#sendMlsMessage = async (type: string, recipients: string[], message: MlsMessage) => {
+
+
+		// If there are no recipients to send to, just return early
+		if (recipients.length === 0) {
+			return
+		}
+
+
 		// Encode the private message as bytes, then to base64
-		const contentBytes = encode(mlsMessageEncoder, applicationMessage.message)
+		const contentBytes = encode(mlsMessageEncoder, message)
 		const contentBase64 = bytesToBase64(contentBytes)
 
-		// Calculate recipients (excluding "me")
-		const recipients = group.members.filter((member) => member !== this.#actor.id())
-
-		// Create a new activity that wraps the MLS-encrypted content
-		const result = new Activity({
+		// Create an ActivityPub activity for the private message
+		const activity = new Activity({
 			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
-			id: newId(),
-			actor: this.#actor.id(),
 			type: vocab.ActivityTypeCreate,
+			actor: this.#actor.id(),
 			to: recipients,
 			object: {
-				type: vocab.ObjectTypeMLSPrivateMessage,
+				type: type,
 				attributedTo: this.#actor.id(),
 				to: recipients,
 				content: contentBase64,
-				mediaType: "message/mls",
-				"mls:encoding": "base64",
+				mediaType: vocab.MediaTypeMLSMessage,
+				"mls:encoding": vocab.EncodingTypeBase64,
 			},
 		})
 
-		return result
+		this.#delivery.sendActivity(activity)
+
+		return activity
 	}
 
-	/// Receiving Activities
+	/////////////////////////////
+	// Receiving Messages
+	/////////////////////////////
+
 	// use arrow function to preserve "this" context when passing as a callback
 	async decodeMessage(message: string): Promise<Activity | null> {
-		const context = this.#context()
+
 		const uintArray = base64ToUint8Array(message)
 		const content = decode(mlsMessageDecoder, uintArray)!
 
 		// Require that the we have a valid decoded message before proceeding
 		if (content == undefined) {
 			console.error("Unable to decode MLS message", message)
+			// TODO: Here's where we send a "Failure" message to the group.
 			return null
 		}
 
+
 		switch (content.wireformat) {
+
 			case wireformats.mls_group_info:
-				return null
+				return await this.#decodeMessage_GroupInfo(content)
 
 			case wireformats.mls_key_package:
 				return null
 
 			case wireformats.mls_private_message:
-				return await this.#onMessage_PrivateMessage(content)
+				return await this.#decodeMessage_PrivateMessage(content)
 
 			case wireformats.mls_public_message:
-				return null
+				return await this.#decodeMessage_PublicMessage(content)
 
 			case wireformats.mls_welcome:
-				return await this.#onMessage_Welcome(content)
+				return await this.#decodeMessage_Welcome(content)
 
 			default:
 				console.error("Unknown MLS message type:")
@@ -267,10 +401,11 @@ export class MLS {
 		}
 	}
 
-	// onMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-	async #onMessage_Welcome(message: MlsWelcomeMessage): Promise<null> {
+	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
+	async #decodeMessage_Welcome(message: MlsWelcomeMessage) {
 
 		var clientState: ClientState
+
 
 		try {
 
@@ -285,7 +420,6 @@ export class MLS {
 		} catch (e) {
 			// Errors mean that the private keys probably don't match, so
 			// this welcome wasn't intended for this device, so just quit.
-			console.error("Error joining group from welcome message", e)
 			return null
 		}
 
@@ -296,38 +430,50 @@ export class MLS {
 		}
 
 		// Create a new group record
-		const groupId = new TextDecoder().decode(clientState.groupContext.groupId)
+		const groupId = decodeText(clientState.groupContext.groupId)
 
-		const group: EncryptedGroup = {
-			id: groupId,
-			members: [],
-			name: "Received Group.",
-			tags: [],
-			lastMessage: "",
-			clientState: clientState,
-			createDate: Date.now(),
-			updateDate: Date.now(),
-			readDate: Date.now(),
+		// Guarantee that we don't already have this group in our database.
+		const previousGroup = await this.#database.loadGroup(groupId)
+		if (previousGroup != undefined) {
+			console.warn("Received welcome message for a group that already exists locally.")
+			return null
 		}
 
-		// Compute members from the clientState
-		group.members = await this.getGroupMembers(group)
+		// Create a new EncryptedGroup
+		const group = NewGroup()
+		group.id = groupId
+
+		var encryptedGroup = addClientState(group, clientState)
+		encryptedGroup.members = await this.getGroupMembers(encryptedGroup)
 
 		// Save the group to the database
-		await this.#database.saveGroup(group)
+		await this.#database.saveGroup(encryptedGroup)
 
 		// Returning `null` means that the controller won't take 
 		// any additional actions to process this message.
 		return null
 	}
 
-	// onMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
+
+	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
+	async #decodeMessage_GroupInfo(message: MlsGroupInfo) {
+
+		var clientState: ClientState
+
+
+
+		// Returning `null` means that the controller won't take 
+		// any additional actions to process this message.
+		return null
+	}
+
+	// decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
-	async #onMessage_PrivateMessage(mlsMessage: MlsPrivateMessage): Promise<Activity | null> {
+	async #decodeMessage_PrivateMessage(mlsMessage: MlsPrivateMessage): Promise<Activity | null> {
 
 		// Load the group from the database so we can get the current client state for decryption
-		const groupId = new TextDecoder().decode(mlsMessage.privateMessage.groupId)
+		const groupId = decodeText(mlsMessage.privateMessage.groupId)
 		const group = await this.#database.loadGroup(groupId)
 
 		if (group == undefined) {
@@ -339,42 +485,140 @@ export class MLS {
 			throw new Error("Group client state is undefined")
 		}
 
+		// Decode the message using ts-mls
 		const decodedMessage = await processMessage({
 			context: this.#context(),
 			state: group.clientState,
 			message: mlsMessage,
 		})
 
+
+		// Parse application messages and return an Activity to the caller
+		if (decodedMessage.kind == "applicationMessage") {
+
+			// Parse the plaintext message
+			const plaintext = decodeText(decodedMessage.message)
+
+			// Create a result object and embed additional context data
+			return new Activity().fromJSON(plaintext)
+		}
+
+		// Zero out the keys used to decrypt the message
+		decodedMessage.consumed.forEach(zeroOutUint8Array)
+
+		// Update the group state
+		group.clientState = decodedMessage.newState
+		group.updateDate = Date.now()
+		group.members = await this.getGroupMembers(group)
+
+		// Save the updated group to the database
+		await this.#database.saveGroup(group)
+
+		// Return `null` means there are no further actions for the controller to take.
+		return null
+	}
+
+	// decodeMessage_PublicMessage processes incoming MLS "Public Messages" that contain encrypted
+	// application messages for this user.  These messages are decrypted and then processes as
+	// ActivityStreams messages.
+	async #decodeMessage_PublicMessage(mlsMessage: MlsPublicMessage): Promise<Activity | null> {
+
+		// Load the group from the database so we can get the current client state for decryption
+		const groupId = decodeText(mlsMessage.publicMessage.content.groupId)
+		const group = await this.#database.loadGroup(groupId)
+
+		if (group == undefined) {
+			console.error("Received message for unknown group", groupId)
+			return null
+		}
+
+		if (!groupIsEncrypted(group)) {
+			throw new Error("Group client state is undefined")
+		}
+
+		// Decode the message using ts-mls
+		const decodedMessage = await processMessage({
+			context: this.#context(),
+			state: group.clientState,
+			message: mlsMessage,
+		})
+
+		// If this is an "applicationMessage", then parse the plaintext and return
+		if (decodedMessage.kind == "applicationMessage") {
+
+			// Parse the plaintext message 
+			const plaintext = decodeText(decodedMessage.message)
+
+			// Create a result object and embed additional context data
+			return new Activity().fromJSON(plaintext)
+		}
+
 		// Update the group state in the database
 		decodedMessage.consumed.forEach(zeroOutUint8Array)
 		group.clientState = decodedMessage.newState
 		group.updateDate = Date.now()
+		group.members = await this.getGroupMembers(group)
+
+		// Save the group to the database
 		await this.#database.saveGroup(group)
 
-		if (decodedMessage.kind != "applicationMessage") {
-			return null
-		}
-
-		// Parse the plaintext message and return it as a new Activity
-		const plaintext = new TextDecoder().decode(decodedMessage.message)
-
-		// Create a result object and embed additional context data
-		var result = new Activity().fromJSON(plaintext)
-
-		if (result.context() == "") {
-			result.setContext(groupId)
-		}
-
-		return result
+		// Return `null` means there are no further actions for the controller to take.
+		return null
 	}
 
-	/// Helper methods
+	/////////////////////////////
+	// Helpers
+	/////////////////////////////
 
-	// Use arrow function to preserve "this" context when passing as a callback
+	// #context returns an MlsContext with the current cipher suite and authentication service.
 	#context = (): MlsContext => {
 		return {
 			cipherSuite: this.#cipherSuite,
 			authService: unsafeTestingAuthenticationService,
 		}
+	}
+}
+
+/////////////////////////////
+// Helpers
+/////////////////////////////
+
+// leafNodeMatches returns a unary function that returns TRUE if the 
+// provided actorId matches the identity in the leaf node's credential.
+function leafNodeMatches(actorId: string | string[]) {
+	return (member: LeafNode) => {
+
+		// Guarantee that we're working with a basic credential (not X.509 or something else)
+		if (member.credential.credentialType != defaultCredentialTypes.basic) {
+			return false
+		}
+
+		if (!Array.isArray(actorId)) {
+			actorId = [actorId]
+		}
+
+		return actorId.some((id) => {
+			const credential = member.credential as CredentialBasic
+			return decodeText(credential.identity) == id
+		})
+	}
+}
+
+
+// encodeText is a shorthand for using the ts-mls TextEncoder
+function encodeText(text: string) {
+	return new TextEncoder().encode(text)
+}
+
+// decodeText is a shorthand for using the ts-mls TextDecoder
+function decodeText(bytes: Uint8Array) {
+	return new TextDecoder().decode(bytes)
+}
+
+// addClientState is a shorthand to map a Group -> EncryptedGroup
+function addClientState(group: Group, clientState: ClientState): EncryptedGroup {
+	return {
+		...group,
+		clientState: clientState,
 	}
 }

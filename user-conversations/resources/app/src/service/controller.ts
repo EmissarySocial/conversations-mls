@@ -10,7 +10,7 @@ import * as vocab from "../as/vocab"
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
 import { type Message } from "../model/message"
-import { type Group } from "../model/group"
+import { type EncryptedGroup, type Group } from "../model/group"
 import { NewConfig } from "../model/config"
 import { NewGroup } from "../model/group"
 import { NewMessage } from "../model/message"
@@ -21,9 +21,14 @@ import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
+
+// MLS Services
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
-import { messageToActivityStream, newId } from "./utils"
+
+// Other utility functions
+import { messageToActivityStream } from "./utils"
+import { newId } from "./utils"
 
 export class Controller {
 
@@ -41,7 +46,7 @@ export class Controller {
 	messages: Message[]
 	contacts: Map<string, Contact>
 
-	group: Group
+	group: Group | EncryptedGroup
 	message: Message
 
 	pageView: string
@@ -78,8 +83,9 @@ export class Controller {
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
 		this.#receiver.registerHandler(this.receiveActivity) // Connect onActivity handler
-		this.start()
+		this.#start()
 		this.loadGroups()
+		this.#refreshContacts()
 	}
 
 	//////////////////////////////////////////
@@ -88,7 +94,7 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	start = async () => {
+	#start = async () => {
 
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
@@ -149,7 +155,7 @@ export class Controller {
 		// Start the MLS service
 		// this.#startMLS()
 
-		await this.start()
+		await this.#start()
 	}
 
 	//////////////////////////////////////////
@@ -160,33 +166,6 @@ export class Controller {
 		return this.#actor.id()
 	}
 
-	//////////////////////////////////////////
-	// Conversations (Plaintext)
-	//////////////////////////////////////////
-
-	// newConversation creates a new plaintext ActivityPub conversation
-	// with the specified recipients
-	newConversation = async (to: string[], message: string) => {
-		//
-		// Create an ActivityPub activity
-		const activity = {
-			"@context": "https://www.w3.org/ns/activitystreams",
-			type: "Create",
-			actor: this.#actor.id(),
-			to: to,
-			object: {
-				type: "Note",
-				content: message,
-			},
-		}
-
-		// POST to the actor's outbox
-		const response = await fetch(this.#actor.outbox(), {
-			method: "POST",
-			headers: { "Content-Type": "application/activity+json" },
-			body: JSON.stringify(activity),
-		})
-	}
 
 	//////////////////////////////////////////
 	// Contacts
@@ -224,27 +203,19 @@ export class Controller {
 		return await this.#directory.loadContact(actorId)
 	}
 
-	//////////////////////////////////////////
-	// Groups (Encrypted)
-	//////////////////////////////////////////
-
-	// createGroup creates a new MLS-encrypted
-	// group message with the specified recipients
-	createGroup = async (recipients: string[]) => {
+	addContacts = async (actorIds: string[]) => {
 
 		// Guarantee dependency
 		if (this.#mls == undefined) {
 			throw new Error("MLS service is not initialized")
 		}
 
-		// Create a new group
-		var group = await this.#mls.createGroup()
-
-		// Add "me" to the members list
-		recipients.push(this.actorId())
+		if (!groupIsEncrypted(this.group)) {
+			throw new Error("Not Implemented")
+		}
 
 		// Add initial members to the group
-		this.group = await this.#mls.addGroupMembers(group, recipients)
+		this.group = await this.#mls.addGroupMembers(this.group, actorIds)
 
 		// Save the group to the database
 		await this.#database.saveGroup(this.group)
@@ -253,19 +224,200 @@ export class Controller {
 		await this.loadGroups()
 	}
 
-	// loadGroups retrieves all groups from the database and
-	// updates the "groups" and "messages" streams.
+	removeContact = async (actorId: string) => {
+
+		// Guarantee dependency
+		if (this.#mls == undefined) {
+			throw new Error("MLS service is not initialized")
+		}
+
+		if (!groupIsEncrypted(this.group)) {
+			throw new Error("Not Implemented")
+		}
+
+		// Remove the member from the group
+		this.group = await this.#mls.removeGroupMember(this.group, actorId)
+
+		// Save the group to the database
+		await this.#database.saveGroup(this.group)
+
+		// Reload groups and messages to refresh the UX
+		await this.loadGroups()
+	}
+
+	#refreshContacts = async () => {
+
+		const contacts = await this.#database.allContacts()
+
+		for (const contact of contacts) {
+
+			const updated = await this.#directory.loadContact(contact.id)
+
+			if (updated == undefined) {
+				return
+			}
+
+			if (updated != contact) {
+				await this.#database.saveContact(updated)
+			}
+		}
+	}
+
+	//////////////////////////////////////////
+	// Groups
+	//////////////////////////////////////////
+
+	// createGroup creates a new group and initial message
+	createGroup = async (recipients: string[], initialMessage: string, encrypted: boolean) => {
+
+		// TODO: Make this optional
+		encrypted = true
+
+		// Add "me" to the members list
+		recipients.push(this.actorId())
+
+		// Create a new Group record
+		var group = NewGroup()
+
+		// Extra handling for encrypted groups
+		if (encrypted == true) {
+
+			// Guarantee dependency
+			if (this.#mls == undefined) {
+				throw new Error("MLS service is not initialized")
+			}
+
+			// Add MLS clientState
+			group = await this.#mls.encodeGroup(group)
+		}
+
+		// Save the group to the database
+		this.saveGroup(group)
+
+		// Add initial members to the group (this also saves the group)
+		this.group = await this.addGroupMembers(group, recipients)
+
+		// Send the initial message
+		await this.sendMessage(initialMessage)
+
+		// Move the view to the messages for this group
+		this.pageView = "GROUP-MESSAGES"
+	}
+
+	// loadGroups retrieves all groups from the database
 	loadGroups = async () => {
-		//
+
 		// load groups from the database
 		this.groups = await this.#database.allGroups()
 
+		// Find/set the selected group
 		this.selectGroup(this.selectedGroupId())
+	}
+
+	// saveGroup saves the specified group to the database
+	saveGroup = async (group: Group) => {
+
+		// RULE: Truncate lastMessage to 100 characters for display purposes
+		group.lastMessage = group.lastMessage.slice(0, 100)
+		group.contacts = await this.calcGroupContacts(group)
+
+		// Save the group to the database
+		await this.#database.saveGroup(group)
+
+		// Reload the group to refresh the UX
+		await this.loadGroups()
+	}
+
+	saveGroupAndSync = async (group: Group) => {
+
+		console.log("saveGroupAndSync", group)
+
+		// Save the group in the database
+		this.saveGroup(group)
+
+		// Send a "Group:Update" activity to my other devices
+		var activity = new Activity({
+			"to": [this.actorId()],
+			"actor": this.actorId(),
+			"type": vocab.ActivityTypeUpdate,
+			"object": {
+				"id": group.id,
+				"type": vocab.ObjectTypeEmissaryContext,
+				"name": group.name,
+				"description": group.description,
+				"stateId": group.stateId,
+				"tag": group.tags,
+			}
+		})
+
+		// Send a private message to my other devices
+		this.#sendActivity(group, activity)
+	}
+
+	// addGroupMember adds a new actorId to the group
+	addGroupMembers = async (group: Group, actorIds: string[]) => {
+
+		// RULE: Remove actors that are already in the group
+		actorIds = actorIds.filter(actorId => !group.members.includes(actorId))
+
+		// If there are no additional actors to add, then exit early
+		if (actorIds.length == 0) {
+			return group
+		}
+
+		// Add the members to the group
+		group.members.push(...actorIds)
+
+		// Special handling for encrypted groups
+		if (groupIsEncrypted(group)) {
+
+			if (this.#mls == undefined) {
+				throw new Error("MLS service is not initialized")
+			}
+
+			group = await this.#mls.addGroupMembers(group, actorIds)
+		}
+
+		// Save group  also recalculates Contacts and updates the UX
+		await this.saveGroup(group)
+
+		return group
+	}
+
+	// leaveGroup leaves/deletes the specified group from the database
+	leaveGroup = async (groupId: string) => {
+
+		// Guarantee dependency
+		if (this.#database == undefined) {
+			throw new Error("Database service is not initialized")
+		}
+
+		// Locate the group to leave
+		const group = await this.#database.loadGroup(groupId)
+
+		// RULE: If we don't have the group locally, then just exit
+		if (group == undefined) {
+			return
+		}
+
+		// Encrypted groups then we need to send an MLS "leave" message
+		if (groupIsEncrypted(group)) {
+
+			if (this.#mls == undefined) {
+				throw new Error("MLS service is not initialized")
+			}
+
+			// await this.#mls.leaveGroup(group)
+		}
+
+		// Delete the group
+		await this.#database.deleteGroup(groupId)
+		await this.#database.deleteMessagesByGroup(groupId)
+		await this.loadGroups()
 	}
 
 	// selectGroup updates the "selectedGroupId" and reloads messages for that group
 	selectGroup = (groupId: string) => {
-		//
 
 		// If there are no groups, then clear values and exit.
 		if (this.groups.length == 0) {
@@ -278,13 +430,12 @@ export class Controller {
 		// Find the group with the specified ID
 		const group = this.groups.find((group) => group.id == groupId)
 
-		// If the group can't be found, then clear values
+		// If the group can't be found, update the selected group and reload related records
 		if (group != undefined) {
-			// Update the selected group, and reload related records
 			this.group = group
 			this.loadMessages()
 			this.loadContacts()
-			this.page_messages()
+			this.page_group_messages()
 			return
 		}
 
@@ -293,7 +444,7 @@ export class Controller {
 		this.group = this.groups[0]!
 		this.loadMessages()
 		this.loadContacts()
-		this.page_messages()
+		this.page_group_messages()
 	}
 
 	selectedGroupId = () => {
@@ -304,32 +455,62 @@ export class Controller {
 		return ""
 	}
 
-	// saveGroup saves the specified group to the database and reloads groups
-	saveGroup = async (group: Group) => {
-		//
+	// calcGroupContacts calculates all contacts within a group
+	calcGroupContacts = async (group: Group): Promise<Contact[]> => {
 
-		// RULE: Truncate lastMessage to 100 characters for display purposes
-		group.lastMessage = group.lastMessage.slice(0, 100)
+		// Look up Contact info for each member in the group
+		const contacts = await Promise.all(group.members.map(member => this.#directory.loadContact(member)))
 
-		// Save the group to the database
-		await this.#database.saveGroup(group)
-
-		// Reload the group to refresh the UX
-		await this.loadGroups()
+		// Remove null results
+		return contacts.filter(contact => contact != undefined)
 	}
 
-	// deleteGroup deletes the specified group from the database
-	deleteGroup = async (groupId: string) => {
-		//
-		// Guarantee dependency
-		if (this.#database == undefined) {
-			throw new Error("Database service is not initialized")
+	// groupName returns an intelligent name for the group based on its member count.
+	groupName = (group: Group = this.group) => {
+
+
+		// If the group has a custom name, then use that.
+		if (group.name != "") {
+			return group.name
 		}
 
-		// Delete the group
-		await this.#database.deleteGroup(groupId)
-		await this.#database.deleteMessagesByGroup(groupId)
-		await this.loadGroups()
+		const contacts = group.contacts
+			.filter(contact => contact.id != this.actorId())
+			.map(contact => contact.name)
+
+		// Fancy default name based on the number of members (excluding "me")
+		switch (contacts.length) {
+
+			// This should never happen, but just in case...
+			case 0:
+				return "Empty Group"
+
+			// For small sets, display all names
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				return contacts.join(", ")
+		}
+
+		// For larger groups, display the first 3 names + the remaining count
+		return contacts
+			.slice(0, 3)
+			.join(", ") + `, +${contacts.length - 3} others`
+	}
+
+	setGroupState(group: Group, stateId: string) {
+
+		switch (stateId) {
+			case "IMPORTANT":
+			case "ACTIVE":
+			case "ARCHIVED":
+			case "CLOSED":
+				group.stateId = stateId
+				break
+
+			default:
+		}
 	}
 
 	//////////////////////////////////////////
@@ -350,10 +531,6 @@ export class Controller {
 	// sendMessage sends a message to the specified group
 	sendMessage = async (content: string) => {
 		//
-		// Guarantee dependencies
-		if (this.#mls == undefined) {
-			throw new Error("MLS service is not initialized")
-		}
 
 		if (this.group == undefined) {
 			throw new Error("No group selected")
@@ -363,14 +540,17 @@ export class Controller {
 		this.group.lastMessage = content
 		await this.saveGroup(this.group)
 
-		// Create a new Message record for the database
+		// Create a new Message record and save to the database
 		var message = NewMessage()
 		message.groupId = this.group.id
 		message.sender = this.#actor.id()
 		message.plaintext = content
 
+		await this.#database.saveMessage(message)
+
 		// Create an ActivityPub activity 
 		var activity = new Activity({
+			context: this.group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
 			to: this.group.members,
@@ -380,22 +560,19 @@ export class Controller {
 		// (asynchronously) Send the activity through the delivery service
 		this.#sendActivity(this.group, activity)
 
-		// Save the message to the database, and reload to refresh the UX
-		await this.#database.saveMessage(message)
+		// Reload to refresh the UX
 		await this.loadMessages()
 	}
 
-	update_message = async (message: Message) => {
+	updateMessage = async (message: Message) => {
 
 		// RULE: Only the original sender can update a message
 		if (message.sender != this.actorId()) {
-			console.log("Error: cannot edit message sent by another actor")
 			return
 		}
 
 		// RULE: Can only update messages in the current group.
 		if (message.groupId != this.group.id) {
-			console.log("Error: cannot edit message that doesn't belong to the current group")
 			return
 		}
 
@@ -415,30 +592,29 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	clear_message = () => {
+	// clearMessage resets the "message" stream to an empty state for composing new messages
+	clearMessage = () => {
 		this.message = NewMessage()
 	}
 
-	delete_message = async (messageId: string) => {
+	// deleteMessage removes a message (sent by the current actor) from the current group
+	deleteMessage = async (messageId: string) => {
 
 		// Load the message from the data store
 		const message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
-			console.log("Error: cannot delete message that doesn't exist")
 			return
 		}
 
 		// RULE: Only the sender of a message can delete it.
 		if (message.sender != this.actorId()) {
-			console.log("Error: cannot delete message sent by another actor")
 			return
 		}
 
 		// RULE: Can only delete messages in the current group.
 		if (message.groupId != this.group.id) {
-			console.log("Error: cannot delete message that doesn't belong to the current group")
 			return
 		}
 
@@ -459,21 +635,19 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	// like_message adds a "like" from the current actor to the specified message
-	like_message = async (messageId: string) => {
+	// likeMessage adds a "like" from the current actor to the specified message
+	likeMessage = async (messageId: string) => {
 
 		// Mark the message as "liked" in the database
 		const message = await this.#database.likeMessage(this.actorId(), messageId)
 
 		if (message == undefined) {
-			console.log("Unable to like message: " + messageId)
 			return
 		}
 
 		// Load the group that this message belongs to (for addressing info)
 		var group = await this.#database.loadGroup(message.groupId)
 		if (group == undefined) {
-			console.log("Error: cannot like message with missing group")
 			return
 		}
 
@@ -494,8 +668,8 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	// undo_like_message removes a "like" from the specified message
-	undo_like_message = async (messageId: string) => {
+	// undoLikeMessage removes a "like" from the specified message
+	undoLikeMessage = async (messageId: string) => {
 
 		// Undo Mark the message as "liked" in the database
 		const message = await this.#database.undoLikeMessage(this.actorId(), messageId)
@@ -508,7 +682,6 @@ export class Controller {
 		// Load the group that this message belongs to (for addressing info)
 		var group = await this.#database.loadGroup(message.groupId)
 		if (group == undefined) {
-			console.log("Error: cannot undo like from message with missing group")
 			return
 		}
 
@@ -539,73 +712,92 @@ export class Controller {
 
 	receiveActivity = async (activity: Activity) => {
 
-		console.log("Received activity:", activity.toJSON())
+		try {
 
-		// Retrieve the object from the activity. This should be embedded,
-		// but we can load from the network if needed.
-		var object = await activity.object()
+			// Retrieve the object from the activity. This should be embedded,
+			// but we can load from the network if needed.
+			var object = await activity.object()
 
-		// RULE: Activities must match the object that they contain
-		if (activity.actorId() != object.attributedToId()) {
-			console.log("Error processing activity:", activity)
-			throw new Error("Activity actor must match object actor")
-		}
-
-		// Decode MLS-encrypted messages
-		if (object.isMLSMessage()) {
-			//
-			// Guarantee dependency
-			if (this.#mls == undefined) {
-				throw new Error("MLS service is not initialized")
+			// RULE: Activities must match the object that they contain
+			if (activity.actorId() != object.attributedToId()) {
+				throw new Error("Activity actor must match object actor")
 			}
 
-			// Decode the message embedded in the object.content.
-			const decodedActivity = await this.#mls.decodeMessage(object.content())
+			// Decode MLS-encrypted messages
+			if (object.isMLSMessage()) {
+				//
+				// Guarantee dependency
+				if (this.#mls == undefined) {
+					throw new Error("MLS service is not initialized")
+				}
 
-			// If the activity is null, then there's nothing more to do. Exit.
-			if (decodedActivity == null) {
-				return
+				// Decode the message embedded in the object.content.
+				const decodedActivity = await this.#mls.decodeMessage(object.content())
+
+				// If the activity is null, then the MLS decoder has done all of the work.
+				// There's nothing more to do, so exit.
+				if (decodedActivity == null) {
+					return
+				}
+
+				// RULE: guarantee that the actorIds match the encrypted content
+				if (decodedActivity.actorId() != activity.actorId()) {
+					throw new Error("Decrypted activity actor must match outer activity actor")
+				}
+
+				// Update activity and object to continue processing using the decoded values.
+				activity = decodedActivity
+				object = await activity.object()
 			}
 
-			// RULE: guarantee that the actorIds match the encrypted content
-			if (decodedActivity.actorId() != activity.actorId()) {
-				throw new Error("Decrypted activity actor must match outer activity actor")
+			console.log("Received activity:", activity.toObject())
+
+			switch (activity.type()) {
+
+				case vocab.ActivityTypeCreate:
+
+					// All other document types (Note, Article, Document, etc.)
+					await this.#receiveActivity_CreateMessage(activity)
+					return
+
+				case vocab.ActivityTypeUpdate:
+
+					switch (object.type()) {
+
+						// Group updates are handled differently than message updates, so we need to check the object type to route properly.
+						case vocab.ObjectTypeEmissaryContext:
+							return await this.#receiveActivity_UpdateContext(activity)
+
+						default:
+							return await this.#receiveActivity_UpdateMessage(activity)
+					}
+
+				case vocab.ActivityTypeDelete:
+					return await this.#receiveActivity_DeleteMessage(activity)
+
+				case vocab.ActivityTypeLike:
+					return await this.#receiveActivity_Like(activity)
+
+				case vocab.ActivityTypeUndo:
+					return await this.#receiveActivity_Undo(activity)
+
+				default:
+					return
 			}
 
+		} catch (error) {
 
-			// Update activity and object to continue processing using the decoded values.
-			activity = decodedActivity
-		}
-
-		switch (activity.type()) {
-
-			case vocab.ActivityTypeCreate:
-				await this.#receiveActivity_CreateDocument(activity)
-				return
-
-			case vocab.ActivityTypeUpdate:
-				await this.#receiveActivity_UpdateDocument(activity)
-				return
-
-			case vocab.ActivityTypeDelete:
-				await this.#receiveActivity_DeleteDocument(activity)
-				return
-
-			case vocab.ActivityTypeLike:
-				await this.#receiveActivity_Like(activity)
-				return
-
-			case vocab.ActivityTypeUndo:
-				await this.#receiveActivity_Undo(activity)
-				return
-
-			default:
-				console.log("Received unrecognized activity:", activity)
-				return
+			/*
+				this.#delivery.sendActivity({
+				actor: this.actorId(),
+				type: vocab.ActivityTypeReject,
+				object: activity.id(),
+			})
+			*/
 		}
 	}
 
-	#receiveActivity_CreateDocument = async (activity: Activity) => {
+	#receiveActivity_CreateMessage = async (activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -614,10 +806,18 @@ export class Controller {
 			throw new Error("Decrypted activity actor must match object's attributedTo")
 		}
 
+		// Locate the group assigned to this activity
+		const groupId = activity.context()
+		const group = await this.#database.loadGroup(groupId)
+
+		if (group == undefined) {
+			return
+		}
+
 		// Create a new message record in the database for this incoming message
 		const message = {
 			id: object.id(),
-			groupId: activity.context(),
+			groupId: groupId,
 			sender: object.attributedToId(),
 			plaintext: object.content(),
 			likes: [],
@@ -639,17 +839,48 @@ export class Controller {
 			}
 		}
 
-		// Play notification sounds (if requested)
+		/*/ Play notification sounds (if requested)
+		// This won't work until the whole thing is put into a service worker
 		if (this.config.isNotificationSounds) {
 			if (document.hidden) {
 				// notification sound from: https://mixkit.co/free-sound-effects/notification/
 				const audio = new Audio("/.templates/user-conversations/resources/notification.wav")
 				audio.play()
 			}
-		}
+		}*/
+
+		this.#sendActivity(group, {
+			actor: this.actorId(),
+			type: vocab.ActivityTypeAccept,
+			to: [message.sender],
+			object: messageToActivityStream(group, message),
+			context: group.id,
+		})
 	}
 
-	#receiveActivity_UpdateDocument = async (activity: Activity) => {
+	#receiveActivity_UpdateContext = async (activity: Activity) => {
+
+		console.log("receiveActivity_UpdateContext", activity)
+		const object = await activity.object()
+
+		var group = await this.#database.loadGroup(object.id())
+
+		if (group == undefined) {
+			console.log("Group not found")
+			return
+		}
+
+		console.log("Group found", group)
+		group.name = object.name()
+		group.description = object.description()
+		group.tags = object.getArray("as", "tag")
+		this.setGroupState(group, object.getString("emissary", "stateId"))
+
+		await this.saveGroup(group)
+		console.log("Group updated", group)
+	}
+
+	#receiveActivity_UpdateMessage = async (activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -664,13 +895,11 @@ export class Controller {
 
 		// RULE: Don't make new messages.  If not found, then ignore.
 		if (message == undefined) {
-			console.log("Error: cannot update message that doesn't exist")
 			return
 		}
 
 		// RULE: original sender must also match the activity actor
 		if (message.sender != activity.actorId()) {
-			console.log("Error: cannot edit message sent by another actor")
 			return
 		}
 
@@ -688,20 +917,18 @@ export class Controller {
 		await this.#database.saveMessage(message)
 	}
 
-	#receiveActivity_DeleteDocument = async (activity: Activity) => {
+	#receiveActivity_DeleteMessage = async (activity: Activity) => {
 
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
 
 		// RULE: Verify that the message exists before trying to delete it
 		if (message == undefined) {
-			console.log("Error: cannot delete message that doesn't exist")
 			return
 		}
 
 		// RULE: Only the sender of a message can delete it.
 		if (message.sender != activity.actorId()) {
-			console.log("Error: cannot delete message if actor is not the sender")
 			return
 		}
 
@@ -728,19 +955,16 @@ export class Controller {
 
 	#receiveActivity_Undo = async (activity: Activity) => {
 
-		console.log("Processing Undo activity:", activity.toJSON())
 
 		const object = await activity.objectAsActivity()
 
 		// RULE: Actors can only "Undo" their own activities.
 		if (activity.actorId() != object.actorId()) {
-			console.log("Error: Received Undo activity where actor does not match object.actor:", activity.actorId(), object.actorId())
 			return
 		}
 
 		// RULE: For now, we only support "Undo" of "Like" activities.
 		if (object.type() != vocab.ActivityTypeLike) {
-			console.log("Error: Received Undo activity with unsupported object type:", object.type())
 			return
 		}
 
@@ -765,19 +989,33 @@ export class Controller {
 		m.redraw()
 	}
 
-	page_messages = () => {
-		this.pageView = "MESSAGES"
+	page_group_messages = () => {
+		this.pageView = "GROUP-MESSAGES"
 		m.redraw()
 	}
 
-	page_group_settings = () => {
-		this.pageView = "GROUP-SETTINGS"
+	page_group_members = () => {
+		this.pageView = "GROUP-MEMBERS"
+		m.redraw()
+	}
+
+	page_group_notes = () => {
+		this.pageView = "GROUP-NOTES"
+		m.redraw()
+	}
+
+	page_group_leave = () => {
+		this.pageView = "GROUP-LEAVE"
 		m.redraw()
 	}
 
 	//////////////////////////////////////////
 	// Modal Dialogs
 	//////////////////////////////////////////
+
+	modal_addContact = () => {
+		this.modalView = "ADD-CONTACT"
+	}
 
 	modal_close = () => {
 		this.modalView = ""
@@ -792,12 +1030,10 @@ export class Controller {
 		this.message = await this.loadMessage(messageId)
 
 		if (this.message == undefined) {
-			console.log("Error: cannot edit message that doesn't exist")
 			return
 		}
 
 		if (this.message.sender != this.actorId()) {
-			console.log("Error: cannot edit message sent by another actor")
 			return
 		}
 
@@ -809,7 +1045,6 @@ export class Controller {
 		this.message = await this.loadMessage(messageId)
 
 		if (this.message == undefined) {
-			console.log("Error: cannot view message history for a message that doesn't exist")
 			return
 		}
 
@@ -820,20 +1055,30 @@ export class Controller {
 	// Network Stuff
 	//////////////////////////////////////////
 
-
 	// sendActivity sends an activity to the Actor's outbox
-	#sendActivity = async (group: Group, activity: Activity) => {
+	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }) => {
+
+		console.log("sendActivity:", activity)
+
+		// RULE: If the activity is not already an Activity object, convert it to one
+		if (!(activity instanceof Activity)) {
+			activity = new Activity(activity)
+		}
+
+		// If this is a plaintext group, then just send the message without any more processing.
+		if (!groupIsEncrypted(group)) {
+			return this.#delivery.sendActivity(activity)
+		}
+
+		// Fallthrough: this is an encrypted group. Require MLS encoding.
 
 		// RULE: Guarantee that MLS service is initialized.
 		if (this.#mls == undefined) {
 			throw new Error("MLS service is not initialized")
 		}
 
-		// If necessary, encrypt the activity using MLS before sending
-		if (groupIsEncrypted(group)) {
-			activity = await this.#mls.encodeActivity(group, activity)
-		}
-
-		return this.#delivery.sendActivity(activity)
+		// Send the activity MLS service
+		console.log("Sending activity via MLS service:", activity)
+		return await this.#mls.sendActivity(group, activity)
 	}
 }

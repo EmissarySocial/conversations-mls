@@ -40,6 +40,7 @@ export function base64ToUint8Array(base64: string): Uint8Array {
 	return bytes
 }
 
+// newId generates a new unique identifier in the form of a URI with a UUID
 export function newId(): string {
 	return "uri:uuid:" + crypto.randomUUID()
 }
@@ -60,7 +61,19 @@ export function uint8ArrayEqual(a: Uint8Array, b: Uint8Array): boolean {
 	return true
 }
 
+// uint8ArraysContain returns TRUE if the target Uint8Array is found within the array of Uint8Arrays.
+export function uint8ArraysContain(arrays: Uint8Array[], target: Uint8Array): boolean {
 
+	for (const array of arrays) {
+		if (uint8ArrayEqual(array, target)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// messageToActivityStream converts a Message to an ActivityStream object for sending via ActivityPub
 export function messageToActivityStream(group: Group, message: Message): { [key: string]: any } {
 	return {
 		id: message.id,

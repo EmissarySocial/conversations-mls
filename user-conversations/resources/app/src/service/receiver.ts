@@ -71,7 +71,6 @@ export class Receiver {
 
 		// Process each activity sequentially
 		for await (const activity of activities) {
-			console.log("Received activity:", activity.toJSON())
 			localStorage.setItem("lastUrl", activity.id())
 			await this.#handler(activity)
 		}

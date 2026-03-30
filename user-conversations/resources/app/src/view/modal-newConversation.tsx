@@ -3,7 +3,7 @@ import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
 import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
-import { ActorSearch } from "./actorSearch"
+import { ActorSearch } from "./widget-actorSearch"
 
 type NewConversationVnode = Vnode<NewConversationAttrs, NewConversationState>
 
@@ -130,6 +130,7 @@ export class NewConversation {
 		)
 	}
 
+	// selectActors updates the selected actors in the component state when the user selects participants from the ActorSearch component
 	selectActors(vnode: NewConversationVnode, actors: APActor[]) {
 		vnode.state.actors = actors
 
@@ -140,13 +141,15 @@ export class NewConversation {
 		}
 	}
 
+	// setPlaintext updates the plaintext message in the component state as the user types
 	setPlaintext(vnode: NewConversationVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
 		vnode.state.plaintext = target.value
 	}
 
+	// onsubmit creates a new group with the selected participants, sends the plaintext message, and closes the dialog
 	async onsubmit(event: SubmitEvent, vnode: NewConversationVnode) {
-		//
+
 		// Collect variables
 		const participants = vnode.state.actors.map((actor) => actor.id)
 		const controller = vnode.attrs.controller
@@ -156,17 +159,11 @@ export class NewConversation {
 		event.stopPropagation()
 
 		// Create a new group and send an encrypted message
-		if (vnode.state.encrypted) {
-			const group = await controller.createGroup(participants)
-			await controller.sendMessage(vnode.state.plaintext)
-			return this.close(vnode)
-		}
-
-		// Create a new conversation and send plaintext message
-		await controller.newConversation(participants, vnode.state.plaintext)
+		const group = await controller.createGroup(participants, vnode.state.plaintext)
 		return this.close(vnode)
 	}
 
+	// close resets the component state and closes the modal dialog
 	close(vnode: NewConversationVnode) {
 		vnode.state.actors = []
 		vnode.state.plaintext = ""

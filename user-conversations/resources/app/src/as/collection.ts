@@ -123,7 +123,7 @@ async function* range(url: string, after: string = "", options: RequestInit = {}
 		try {
 			page = await new Collection().fromURL(pageUrl, options)
 		} catch (error) {
-			console.log("Unable to fetch collection page:", pageUrl, error)
+			console.error("Unable to fetch collection page:", pageUrl, error)
 			return
 		}
 

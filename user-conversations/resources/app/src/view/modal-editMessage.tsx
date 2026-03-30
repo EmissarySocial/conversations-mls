@@ -64,12 +64,12 @@ export class EditMessage {
 		message.plaintext = vnode.state.plaintext
 
 		// Save the message (and send Updates to participants)
-		await controller.update_message(message)
+		await controller.updateMessage(message)
 		return this.close(vnode)
 	}
 
 	close(vnode: EditMessageVnode) {
-		vnode.attrs.controller.clear_message()
+		vnode.attrs.controller.clearMessage()
 		vnode.attrs.close()
 	}
 }

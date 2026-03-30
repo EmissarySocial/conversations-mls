@@ -10,6 +10,7 @@ interface ActorSearchArgs {
 	name: string
 	value: APActor[]
 	endpoint: string
+	position?: string
 	onselect: (actors: APActor[]) => void
 }
 
@@ -32,6 +33,7 @@ export class ActorSearch {
 	}
 
 	view(vnode: ActorSearchVnode) {
+
 		return (
 			<div class="autocomplete">
 				<div class="input">
@@ -40,7 +42,7 @@ export class ActorSearch {
 						const isSecure = keyPackageCount != undefined && keyPackageCount > 0
 						return (
 							<span class={isSecure ? "tag blue" : "tag gray"}>
-								<span style="display:inline-flex; align-items:center; margin-right:8px;">
+								<span style="align-items:center; margin-right:8px;">
 									<img src={actor.icon} class="circle" style="height:1em; margin:0px 4px;" />
 									<span class="bold">{actor.name}</span>
 									&nbsp;
@@ -70,7 +72,7 @@ export class ActorSearch {
 						onblur={() => this.onblur(vnode)}></input>
 				</div>
 				{vnode.state.actors.length ? (
-					<div class="options">
+					<div class="options" style={`position:${vnode.attrs.position || "absolute"};`}>
 						<div role="menu" class="menu">
 							{vnode.state.actors.map((actor, index) => {
 								const keyPackageCount = vnode.state.keyPackages[actor.id]

@@ -26,6 +26,10 @@ export class Document extends Object {
 		return this.getString("as", "content")
 	}
 
+	description = () => {
+		return this.getString("as", "description")
+	}
+
 	// icon returns the value of the "icon" property
 	icon = () => {
 		return this.getString("as", "icon")

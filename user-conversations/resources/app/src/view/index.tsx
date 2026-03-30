@@ -3,10 +3,13 @@ import { type Vnode } from "mithril"
 import { type Group } from "../model/group"
 import { Controller } from "../service/controller"
 import { NewConversation } from "./modal-newConversation"
-import { Messages } from "./messages"
 import { Groups } from "./groups"
-import { GroupSettings } from "./group-settings"
+import { GroupMessages } from "./group-messages"
+import { GroupNotes } from "./group-notes"
+import { GroupMembers } from "./group-members"
+import { GroupLeave } from "./group-leave"
 import { Empty } from "./empty"
+import { AddContact } from "./modal-addContact"
 import { EditMessage } from "./modal-editMessage"
 import { MessageHistory } from "./modal-messageHistory"
 
@@ -30,8 +33,17 @@ export class Index {
 		var page: JSX.Element
 
 		switch (vnode.attrs.controller.pageView) {
-			case "GROUP-SETTINGS":
-				page = <GroupSettings controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+
+			case "GROUP-MEMBERS":
+				page = <GroupMembers controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+				break
+
+			case "GROUP-NOTES":
+				page = <GroupNotes controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+				break
+
+			case "GROUP-LEAVE":
+				page = <GroupLeave controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
 				break
 
 			default:
@@ -39,7 +51,7 @@ export class Index {
 				if (groups.length == 0) {
 					page = <Empty controller={vnode.attrs.controller} />
 				} else {
-					page = <Messages controller={vnode.attrs.controller} />
+					page = <GroupMessages controller={vnode.attrs.controller} />
 				}
 		}
 
@@ -84,16 +96,19 @@ export class Index {
 		const modalView = vnode.attrs.controller.modalView
 
 		switch (modalView) {
-			case "NEW-CONVERSATION":
-				return (
-					<NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
-				)
+
+			case "ADD-CONTACT":
+				return <AddContact controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
 
 			case "EDIT-MESSAGE":
 				return <EditMessage controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
 
 			case "MESSAGE-HISTORY":
 				return <MessageHistory controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+
+			case "NEW-CONVERSATION":
+				return <NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+
 		}
 
 		return undefined

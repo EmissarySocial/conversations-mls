@@ -143,7 +143,7 @@ export class Database {
 
 	// allGroups returns all groups from the database, sorted by updateDate descending
 	async allGroups(): Promise<Group[]> {
-		//
+
 		// List all groups, sorted by updateDate descending
 		var groups = await this.#db.getAll("group")
 		groups.sort((a, b) => b.updateDate - a.updateDate)
@@ -152,7 +152,6 @@ export class Database {
 
 	// loadGroup retrieves a group from the database
 	loadGroup = async (groupID: string): Promise<Group | EncryptedGroup | undefined> => {
-		//
 
 		// Load the group record
 		const group = await this.#db.get("group", groupID)
@@ -172,7 +171,7 @@ export class Database {
 
 	// deleteGroup removes a group from the database
 	deleteGroup = async (groupId: string) => {
-		//
+
 		// List all messages in the group
 		const messages = await this.#db.getAllKeysFromIndex("message", "groupId", groupId)
 
@@ -254,7 +253,7 @@ export class Database {
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
-			console.log("Error: cannot like message that doesn't exist")
+			console.error("Cannot find message to 'like'")
 			return
 		}
 
@@ -277,7 +276,7 @@ export class Database {
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
-			console.log("Error: cannot undo like on message that doesn't exist")
+			console.error("Cannot find 'like' message to undo")
 			return undefined
 		}
 

@@ -38,7 +38,7 @@ export class Directory {
 			const keyPackages = rangeDocuments(actor.mlsKeyPackages())
 
 			for await (const keyPackage of keyPackages) {
-				//
+
 				const contentBytes = base64ToUint8Array(keyPackage.content())
 				const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
 

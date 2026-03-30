@@ -38,7 +38,7 @@ export class MessageHistory {
 	}
 
 	close(vnode: MessageHistoryVnode) {
-		vnode.attrs.controller.clear_message()
+		vnode.attrs.controller.clearMessage()
 		vnode.attrs.close()
 	}
 }

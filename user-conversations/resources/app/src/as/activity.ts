@@ -61,7 +61,7 @@ export class Activity extends Object {
 
 	// to returns the value of the "to" property
 	to = async () => {
-		const result = await this.getArray("as", vocab.PropertyTo)
+		const result = this.getArray("as", vocab.PropertyTo)
 		return result.map(async (actor: any) => await loadActor(actor))
 	}
 

@@ -54,7 +54,7 @@ export class Groups {
 								<i class="bi bi-lock-fill"></i>
 							</div>
 							<div class="flex-grow nowrap ellipsis">
-								<div>{group.name}</div>
+								<div>{controller.groupName(group)}</div>
 								<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
 							</div>
 						</div>
