@@ -492,7 +492,6 @@ export class MLS {
 			message: mlsMessage,
 		})
 
-
 		// Parse application messages and return an Activity to the caller
 		if (decodedMessage.kind == "applicationMessage") {
 
@@ -509,7 +508,12 @@ export class MLS {
 		// Update the group state
 		group.clientState = decodedMessage.newState
 		group.updateDate = Date.now()
-		group.members = await this.getGroupMembers(group)
+		group.members = this.getGroupMembers(group)
+
+		// If the current actor has been removed from the group, then close it permanently.
+		if (!group.members.includes(this.#actor.id())) {
+			group.stateId = "CLOSED"
+		}
 
 		// Save the updated group to the database
 		await this.#database.saveGroup(group)

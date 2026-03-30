@@ -15453,7 +15453,10 @@
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
       group.updateDate = Date.now();
-      group.members = await this.getGroupMembers(group);
+      group.members = this.getGroupMembers(group);
+      if (!group.members.includes(this.#actor.id())) {
+        group.stateId = "CLOSED";
+      }
       await this.#database.saveGroup(group);
       return null;
     }
@@ -16948,6 +16951,9 @@
       vnode.state.message = "";
     }
     view(vnode) {
+      if (vnode.attrs.controller.group.stateId === "CLOSED") {
+        return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding align-center" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "start a new conversation"), ".");
+      }
       const enabled = vnode.state.message.trim() !== "";
       const disabled = !enabled;
       const color = enabled ? "var(--blue50)" : "var(--gray30)";
