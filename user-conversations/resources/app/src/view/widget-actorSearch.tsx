@@ -24,6 +24,7 @@ interface ActorSearchState {
 }
 
 export class ActorSearch {
+
 	oninit(vnode: ActorSearchVnode) {
 		vnode.state.search = ""
 		vnode.state.loading = false
@@ -215,6 +216,7 @@ export class ActorSearch {
 		vnode.attrs.value.push(selected)
 		vnode.state.actors = []
 		vnode.state.search = ""
+		vnode.state.highlightedOption = -1
 		vnode.attrs.onselect(vnode.attrs.value)
 	}
 
@@ -222,5 +224,6 @@ export class ActorSearch {
 		vnode.attrs.value.splice(index, 1)
 		vnode.attrs.onselect(vnode.attrs.value)
 		requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus())
+		vnode.state.highlightedOption = -1
 	}
 }

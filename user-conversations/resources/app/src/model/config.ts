@@ -4,7 +4,7 @@ export type Config = {
 	clientName: string // Name of this client/device
 	passcode: string // TODO: TEMPORARY: TO BE REMOVED.
 	isDesktopNotifications: boolean // TRUE when desktop notifications are enabled
-	isNotificationSounds: boolean // TRUE when notification sounds are enabled
+	isHideOnBlur: boolean // TRUE when the app should hide when it loses focus (desktop only)
 }
 
 export const ConfigID = "config"
@@ -13,9 +13,9 @@ export function NewConfig(): Config {
 	return {
 		id: ConfigID,
 		ready: false,
+		clientName: "Unknown Device",
 		passcode: "",
 		isDesktopNotifications: false,
-		isNotificationSounds: false,
-		clientName: "Unknown Device",
+		isHideOnBlur: false,
 	}
 }

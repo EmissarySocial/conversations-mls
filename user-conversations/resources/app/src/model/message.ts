@@ -7,6 +7,7 @@ export type Message = {
 	plaintext: string
 	likes: string[]
 	history: string[]
+	received: string[] // List of actor IDs that have received this message
 	createDate: number
 	updateDate: number
 }
@@ -19,6 +20,7 @@ export function NewMessage(): Message {
 		plaintext: "",
 		likes: [],
 		history: [],
+		received: [],
 		createDate: Date.now(),
 		updateDate: Date.now(),
 	}

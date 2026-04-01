@@ -159,7 +159,7 @@ export class NewConversation {
 		event.stopPropagation()
 
 		// Create a new group and send an encrypted message
-		const group = await controller.createGroup(participants, vnode.state.plaintext)
+		const group = await controller.createGroup(participants, vnode.state.plaintext, vnode.state.encrypted)
 		return this.close(vnode)
 	}
 

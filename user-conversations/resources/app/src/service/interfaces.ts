@@ -27,6 +27,9 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 // uses to store group state.
 export interface IDatabase {
 
+	// Lifecycle methods
+	stop(): void
+
 	// Config methods
 	loadConfig(): Promise<Config>
 	saveConfig(config: Config): Promise<void>
@@ -66,6 +69,9 @@ export interface IDatabase {
 export interface IDelivery {
 
 	// Lifecycle methods
+	stop(): void
+
+	// Lifecycle methods
 	setActor(actor: Actor): void
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
@@ -83,6 +89,9 @@ export interface IDelivery {
 export interface IDirectory {
 
 	// Lifecycle methods
+	stop(): void
+
+	// Lifecycle methods
 	setActor(actor: Actor): void
 
 	// KeyPackage methods
@@ -98,9 +107,12 @@ export interface IDirectory {
 export interface IReceiver {
 
 	// Lifecycle methods
+	stop(): void
+
+	// Lifecycle methods
 	setActor(actor: Actor): void
-	registerHandler(handler: IActivityHandler): void
-	start(): void
+	start(handler: IActivityHandler): void
+	stop(): void
 }
 
 // IActivityHandler is a function that takes an MlsPrivateMessage and returns void.

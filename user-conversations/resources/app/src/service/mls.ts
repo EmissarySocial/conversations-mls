@@ -83,6 +83,12 @@ export class MLS {
 		this.#privateKeyPackage = privateKeyPackage
 	}
 
+	stop = () => {
+		this.#publicKeyPackage = null as any
+		this.#privateKeyPackage = null as any
+		this.#actor = null as any
+	}
+
 	/////////////////////////////
 	// Group Management
 	/////////////////////////////

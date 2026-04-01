@@ -4,7 +4,9 @@ import { Controller } from "../service/controller"
 import type { Config } from "../model/config"
 import { Welcome } from "./welcome"
 import { Index } from "."
-import { EditMessage } from "./modal-editMessage"
+import { AppBlurred } from "./app-blurred"
+import { AppSettings } from "./app-settings"
+import { AppStopped } from "./app-stopped"
 
 type AppVnode = Vnode<AppAttrs, AppState>
 
@@ -25,6 +27,16 @@ export class App {
 	view(vnode: AppVnode) {
 		const controller = vnode.attrs.controller
 
+		if (!controller.isApplicationRunning) {
+			return <AppStopped />
+		}
+
+		if (!controller.isWindowFocused) {
+			if (controller.config.isHideOnBlur) {
+				return <AppBlurred />
+			}
+		}
+
 		switch (controller.pageView) {
 
 			case "LOADING":
@@ -32,6 +44,9 @@ export class App {
 
 			case "WELCOME":
 				return <Welcome controller={controller} />
+
+			case "SETTINGS":
+				return <AppSettings controller={controller} />
 
 			default:
 				return <Index controller={controller} />

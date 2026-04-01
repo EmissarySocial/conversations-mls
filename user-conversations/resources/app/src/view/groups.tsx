@@ -17,7 +17,12 @@ export class Groups {
 		return (
 			<div>
 				<div class="flex-row flex-align-center padding-horizontal">
-					<div class="bold text-lg margin-none flex-grow">Conversations</div>
+					<div class="flex-row flex-align-center clickable hover-trigger" tabIndex="0" onclick={() => controller.page_settings()}>
+						<div class="circle width-32 hover-show text-lg margin-none align-center"><i class="bi bi-gear"></i></div>
+						<img src={controller.actorIcon()} class="width-32 circle hover-hide" />
+						<div class="bold text-lg margin-none">Conversations</div>
+					</div>
+					<div class="flex-grow"></div>
 					<div class="link text-lg margin-none" onclick={() => controller.modal_newConversation()} tabindex="0">
 						<i class="bi bi-plus-circle-fill"></i>
 					</div>

@@ -29,14 +29,12 @@ export class Receiver {
 		this.#messagesUrl = url
 	}
 
-	// registerHandler adds a new MessageHandler to the list of handlers that will be called
-	// when a new message is received.
-	registerHandler = (handler: IActivityHandler) => {
-		this.#handler = handler
-	}
-
 	// start begins polling for new messages and processing them with the registered handlers
-	start = async () => {
+	start = async (handler: IActivityHandler) => {
+
+		// Set the handler function to be called with each new message
+		this.#handler = handler
+
 		// Poll the server on start
 		this.poll()
 
@@ -49,6 +47,12 @@ export class Receiver {
 			this.#eventSource.onmessage = () => {
 				this.poll()
 			}
+		}
+	}
+
+	stop = () => {
+		if (this.#eventSource) {
+			this.#eventSource.close()
 		}
 	}
 

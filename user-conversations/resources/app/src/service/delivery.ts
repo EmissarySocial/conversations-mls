@@ -25,6 +25,11 @@ export class Delivery {
 		this.#outboxUrl = ""
 	}
 
+	stop = () => {
+		this.#actorId = ""
+		this.#outboxUrl = ""
+	}
+
 	setActor(actor: Actor) {
 		this.#actorId = actor.id()
 		this.#outboxUrl = actor.outbox()

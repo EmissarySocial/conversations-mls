@@ -1,6 +1,6 @@
 // Activity types
 
-export const ActivityTypeAccept = "Accept"
+export const ActivityTypeAcknowledge = "Acknowledge"
 
 export const ActivityTypeCreate = "Create"
 
@@ -8,7 +8,7 @@ export const ActivityTypeDelete = "Delete"
 
 export const ActivityTypeLike = "Like"
 
-export const ActivityTypeReject = "Reject"
+export const ActivityTypeFailure = "Failure"
 
 export const ActivityTypeUndo = "Undo"
 

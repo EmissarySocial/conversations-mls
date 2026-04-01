@@ -51,6 +51,9 @@ export class Controller {
 
 	pageView: string
 	modalView: string
+	originalCookie: string
+	isWindowFocused: boolean
+	isApplicationRunning: boolean
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
@@ -80,12 +83,14 @@ export class Controller {
 		this.pageView = "LOADING"
 		this.modalView = ""
 
+		// Other Application State
+		this.originalCookie = document.cookie
+		this.isWindowFocused = true
+		this.isApplicationRunning = true
+
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
-		this.#receiver.registerHandler(this.receiveActivity) // Connect onActivity handler
 		this.#start()
-		this.loadGroups()
-		this.#refreshContacts()
 	}
 
 	//////////////////////////////////////////
@@ -129,6 +134,9 @@ export class Controller {
 			this.config.clientName,
 		)
 
+		// Start the realtime message receiver
+		this.#receiver.start(this.receiveActivity)
+
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {
 			await this.loadGroups()
@@ -136,26 +144,54 @@ export class Controller {
 			await this.loadContacts()
 		})
 
+		// Listen for application state changes
+		cookieStore.addEventListener("change", async () => {
+			this.stop()
+		})
+
+		window.addEventListener("focus", async () => {
+			this.#focusWindow()
+		})
+
+		window.addEventListener("blur", async () => {
+			this.#blurWindow()
+		})
+
+		// Refresh Data for the UX
+		this.loadGroups()
+		this.#refreshContacts()
+
 		// Update view once everything is initialized
 		this.pageView = "GROUPS"
 		m.redraw()
 	}
 
 	// startupConfiguration is called when the user submits their options from the initial welcome screen
-	startupConfiguration = async (clientName: string, passcode: string, desktopNotifications: boolean, notificationSounds: boolean) => {
+	startupConfiguration = async (clientName: string, passcode: string, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
+		this.saveConfiguration(clientName, passcode, isDesktopNotifications, isHideOnBlur)
+		await this.#start()
+	}
+
+	// saveConfiguration is called when the user submits their options from the initial welcome screen
+	saveConfiguration = async (clientName: string, passcode: string, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
 
 		this.config.ready = true
 		this.config.clientName = clientName
 		this.config.passcode = passcode
-		this.config.isDesktopNotifications = desktopNotifications
-		this.config.isNotificationSounds = notificationSounds
+		this.config.isDesktopNotifications = isDesktopNotifications
+		this.config.isHideOnBlur = isHideOnBlur
 
 		await this.#database.saveConfig(this.config)
+	}
 
-		// Start the MLS service
-		// this.#startMLS()
+	stop = () => {
+		this.#database.stop()
+		this.#delivery.stop()
+		this.#receiver.stop()
+		this.#directory.stop()
 
-		await this.#start()
+		this.isApplicationRunning = false
+		m.redraw()
 	}
 
 	//////////////////////////////////////////
@@ -166,6 +202,9 @@ export class Controller {
 		return this.#actor.id()
 	}
 
+	actorIcon = (): string => {
+		return this.#actor.icon()
+	}
 
 	//////////////////////////////////////////
 	// Contacts
@@ -755,11 +794,26 @@ export class Controller {
 
 			switch (activity.type()) {
 
+				case vocab.ActivityTypeAcknowledge:
+					return await this.#receiveActivity_Acknowledge(activity)
+
 				case vocab.ActivityTypeCreate:
 
 					// All other document types (Note, Article, Document, etc.)
 					await this.#receiveActivity_CreateMessage(activity)
 					return
+
+				case vocab.ActivityTypeDelete:
+					return await this.#receiveActivity_DeleteMessage(activity)
+
+				case vocab.ActivityTypeFailure:
+					return await this.#receiveActivity_Failure(activity)
+
+				case vocab.ActivityTypeLike:
+					return await this.#receiveActivity_Like(activity)
+
+				case vocab.ActivityTypeUndo:
+					return await this.#receiveActivity_Undo(activity)
 
 				case vocab.ActivityTypeUpdate:
 
@@ -772,15 +826,6 @@ export class Controller {
 						default:
 							return await this.#receiveActivity_UpdateMessage(activity)
 					}
-
-				case vocab.ActivityTypeDelete:
-					return await this.#receiveActivity_DeleteMessage(activity)
-
-				case vocab.ActivityTypeLike:
-					return await this.#receiveActivity_Like(activity)
-
-				case vocab.ActivityTypeUndo:
-					return await this.#receiveActivity_Undo(activity)
 
 				default:
 					return
@@ -795,6 +840,27 @@ export class Controller {
 				object: activity.id(),
 			})
 			*/
+		}
+	}
+
+	#receiveActivity_Acknowledge = async (activity: Activity) => {
+
+		console.log("Acknowledge")
+
+		// Find the message referred in the activity
+		const message = await this.#database.loadMessage(activity.objectId())
+
+		// RULE: Verify that the message exists before trying to delete it
+		if (message == undefined) {
+			return
+		}
+
+		console.log(message.received, activity.actorId())
+
+		if (!message.received.includes(activity.actorId())) {
+			message.received.push(activity.actorId())
+			await this.#database.saveMessage(message)
+			await this.loadMessages()
 		}
 	}
 
@@ -823,6 +889,7 @@ export class Controller {
 			plaintext: object.content(),
 			likes: [],
 			history: [],
+			received: [],
 			inReplyTo: object.inReplyToId(),
 			createDate: Date.now(),
 			updateDate: Date.now(),
@@ -830,6 +897,10 @@ export class Controller {
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
+
+		// Update the group with the message content
+		group.lastMessage = object.content()
+		await this.saveGroup(group)
 
 		// Send desktop notifications (if requested)
 		if (this.config.isDesktopNotifications) {
@@ -840,23 +911,80 @@ export class Controller {
 			}
 		}
 
-		/*/ Play notification sounds (if requested)
-		// This won't work until the whole thing is put into a service worker
-		if (this.config.isNotificationSounds) {
-			if (document.hidden) {
-				// notification sound from: https://mixkit.co/free-sound-effects/notification/
-				const audio = new Audio("/.templates/user-conversations/resources/notification.wav")
-				audio.play()
-			}
-		}*/
-
 		this.#sendActivity(group, {
 			actor: this.actorId(),
-			type: vocab.ActivityTypeAccept,
+			type: vocab.ActivityTypeAcknowledge,
 			to: [message.sender],
 			object: messageToActivityStream(group, message),
 			context: group.id,
 		})
+	}
+
+
+	#receiveActivity_Failure = async (activity: Activity) => {
+	}
+
+
+	#receiveActivity_DeleteMessage = async (activity: Activity) => {
+
+		// Find the message referred in the activity
+		const message = await this.#database.loadMessage(activity.objectId())
+
+		// RULE: Verify that the message exists before trying to delete it
+		if (message == undefined) {
+			return
+		}
+
+		// RULE: Only the sender of a message can delete it.
+		if (message.sender != activity.actorId()) {
+			return
+		}
+
+		// Delete the message from the database
+		await this.#database.deleteMessage(message.id)
+
+		// Reload messages to refresh the UX
+		this.loadMessages()
+	}
+
+	#receiveActivity_Like = async (activity: Activity) => {
+
+		// Add a "like" to the message in the database
+		const message = await this.#database.likeMessage(activity.actorId(), activity.objectId())
+		if (message == undefined) {
+			return
+		}
+
+		// Reload messages to refresh the UX
+		if (message.groupId == this.selectedGroupId()) {
+			this.loadMessages()
+		}
+	}
+
+	#receiveActivity_Undo = async (activity: Activity) => {
+
+		const object = await activity.objectAsActivity()
+
+		// RULE: Actors can only "Undo" their own activities.
+		if (activity.actorId() != object.actorId()) {
+			return
+		}
+
+		// RULE: For now, we only support "Undo" of "Like" activities.
+		if (object.type() != vocab.ActivityTypeLike) {
+			return
+		}
+
+		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
+		const message = await this.#database.undoLikeMessage(activity.actorId(), object.objectId())
+		if (message == undefined) {
+			return
+		}
+
+		// Reload messages to refresh the UX
+		if (message.groupId == this.selectedGroupId()) {
+			this.loadMessages()
+		}
 	}
 
 	#receiveActivity_UpdateContext = async (activity: Activity) => {
@@ -918,72 +1046,20 @@ export class Controller {
 		await this.#database.saveMessage(message)
 	}
 
-	#receiveActivity_DeleteMessage = async (activity: Activity) => {
-
-		// Find the message referred in the activity
-		const message = await this.#database.loadMessage(activity.objectId())
-
-		// RULE: Verify that the message exists before trying to delete it
-		if (message == undefined) {
-			return
-		}
-
-		// RULE: Only the sender of a message can delete it.
-		if (message.sender != activity.actorId()) {
-			return
-		}
-
-		// Delete the message from the database
-		await this.#database.deleteMessage(message.id)
-
-		// Reload messages to refresh the UX
-		this.loadMessages()
-	}
-
-	#receiveActivity_Like = async (activity: Activity) => {
-
-		// Add a "like" to the message in the database
-		const message = await this.#database.likeMessage(activity.actorId(), activity.objectId())
-		if (message == undefined) {
-			return
-		}
-
-		// Reload messages to refresh the UX
-		if (message.groupId == this.selectedGroupId()) {
-			this.loadMessages()
-		}
-	}
-
-	#receiveActivity_Undo = async (activity: Activity) => {
-
-
-		const object = await activity.objectAsActivity()
-
-		// RULE: Actors can only "Undo" their own activities.
-		if (activity.actorId() != object.actorId()) {
-			return
-		}
-
-		// RULE: For now, we only support "Undo" of "Like" activities.
-		if (object.type() != vocab.ActivityTypeLike) {
-			return
-		}
-
-		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
-		const message = await this.#database.undoLikeMessage(activity.actorId(), object.objectId())
-		if (message == undefined) {
-			return
-		}
-
-		// Reload messages to refresh the UX
-		if (message.groupId == this.selectedGroupId()) {
-			this.loadMessages()
-		}
-	}
 
 	//////////////////////////////////////////
 	// Pages
 	//////////////////////////////////////////
+
+	page_index = () => {
+		this.pageView = "INDEX"
+		m.redraw()
+	}
+
+	page_settings = () => {
+		this.pageView = "SETTINGS"
+		m.redraw()
+	}
 
 	page_groups = () => {
 		this.pageView = "GROUPS"
@@ -1050,6 +1126,20 @@ export class Controller {
 		}
 
 		this.modalView = "MESSAGE-HISTORY"
+	}
+
+	//////////////////////////////////////////
+	// Window Focus/Blur
+	//////////////////////////////////////////
+
+	#focusWindow = () => {
+		this.isWindowFocused = true
+		m.redraw()
+	}
+
+	#blurWindow = () => {
+		this.isWindowFocused = false
+		m.redraw()
 	}
 
 	//////////////////////////////////////////

@@ -45,7 +45,11 @@ export class GroupMessages {
 								return (
 									<div class="message me pos-relative hover-trigger">
 										<div>{message.plaintext}</div>
-										<div class="text-xs text-light-gray">{new Date(message.createDate).toLocaleString()}</div>
+										<div class="flex-row text-xs text-light-gray">
+											{new Date(message.createDate).toLocaleString()}
+											&nbsp;
+											{(message.received).map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
+										</div>
 										<div class="pos-absolute-top-right text-sm">
 											<i class="bi bi-pencil-square margin-right hover-show clickable"
 												onclick={() => controller.modal_editMessage(message.id)}></i>
@@ -64,12 +68,14 @@ export class GroupMessages {
 									<div class="flex-grow">
 										<div class="flex-grow bold">{contact.name}</div>
 										<div>{message.plaintext}</div>
-										<div class="text-xs text-light-gray">
+										<div class="flex-row text-xs text-light-gray">
 											{
 												(message.history.length > 0)
 													? <span class="clickable" onclick={() => controller.modal_messageHistory(message.id)}><span class="text-underline">Edited</span> {new Date(message.updateDate).toLocaleString()}</span>
 													: new Date(message.updateDate).toLocaleString()
 											}
+											&nbsp;
+											{(message.received).map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
 										</div>
 										<div class="pos-absolute-top-right text-sm">
 											{this.likes(vnode, message)}
@@ -106,7 +112,7 @@ export class GroupMessages {
 		if (message.likes.includes(vnode.attrs.controller.actorId())) {
 			return (
 				<span class="clickable" onclick={() => vnode.attrs.controller.undoLikeMessage(message.id)}>
-					<i class="bi bi-heart-fill text-red margin-right-xs" hint={vnode.attrs.controller.actorId()}></i>
+					<i class="bi bi-heart-fill text-red margin-right-xs"></i>
 					{(message.likes.length) > 1 ? message.likes.length : ""}
 				</span>
 			)
@@ -114,7 +120,7 @@ export class GroupMessages {
 
 		return (
 			<span class="clickable" onclick={() => vnode.attrs.controller.likeMessage(message.id)}>
-				<i class="bi bi-heart-fill margin-right-xs" hint={vnode.attrs.controller.actorId()}></i>
+				<i class="bi bi-heart-fill margin-right-xs"></i>
 				{(message.likes.length) > 1 ? message.likes.length : ""}
 			</span>
 		)

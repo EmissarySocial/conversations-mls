@@ -12,7 +12,7 @@ type WelcomeState = {
 	passcode: string
 	isDesktopNotifications: boolean
 	isDesktopNotificationsPermission: "granted" | "denied" | "default"
-	isNotificationSounds: boolean
+	isHideOnBlur: boolean
 }
 
 export class Welcome {
@@ -22,7 +22,7 @@ export class Welcome {
 		vnode.state.passcode = ""
 		vnode.state.isDesktopNotifications = false
 		vnode.state.isDesktopNotificationsPermission = Notification.permission
-		vnode.state.isNotificationSounds = false
+		vnode.state.isHideOnBlur = false
 	}
 
 	view(vnode: WelcomeVnode) {
@@ -93,9 +93,9 @@ export class Welcome {
 									</div>
 
 									<div class="layout-element flex-row">
-										<input type="checkbox" id="isNotificationSounds" checked={vnode.state.isNotificationSounds} onchange={(event: Event) => this.setNotificationSounds(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isNotificationSounds">
-											<div>Play Notification Sounds</div>
+										<input type="checkbox" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
+										<label for="isHideOnBlur">
+											<div>Hide content when window loses focus</div>
 										</label>
 									</div>
 								</div>
@@ -111,17 +111,22 @@ export class Welcome {
 		)
 	}
 
-	setClientName(vnode: WelcomeVnode, event: Event) {
+	setClientName = (vnode: WelcomeVnode, event: Event) => {
 		const target = event.target as HTMLInputElement
 		vnode.state.clientName = target.value
 	}
 
-	setPasscode(vnode: WelcomeVnode, event: Event) {
+	setPasscode = (vnode: WelcomeVnode, event: Event) => {
 		const target = event.target as HTMLInputElement
 		vnode.state.passcode = target.value
 	}
 
-	async setDesktopNotifications(vnode: WelcomeVnode, event: Event) {
+	setHideOnBlur = (vnode: WelcomeVnode, event: Event) => {
+		const target = event.target as HTMLInputElement
+		vnode.state.isHideOnBlur = target.checked
+	}
+
+	setDesktopNotifications = async (vnode: WelcomeVnode, event: Event) => {
 		const target = event.target as HTMLInputElement
 
 		if (target.checked) {
@@ -138,11 +143,6 @@ export class Welcome {
 		vnode.state.isDesktopNotifications = false
 	}
 
-	setNotificationSounds(vnode: WelcomeVnode, event: Event) {
-		const target = event.target as HTMLInputElement
-		vnode.state.isNotificationSounds = target.checked
-	}
-
 	async submit(event: SubmitEvent, vnode: WelcomeVnode) {
 
 		// Halt form submission and page reload
@@ -154,7 +154,7 @@ export class Welcome {
 			vnode.state.clientName,
 			vnode.state.passcode,
 			vnode.state.isDesktopNotifications,
-			vnode.state.isNotificationSounds,
+			vnode.state.isHideOnBlur,
 		)
 
 		// Woot.

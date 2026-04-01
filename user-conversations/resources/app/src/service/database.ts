@@ -93,6 +93,10 @@ export class Database {
 		this.#onchange = () => { }
 	}
 
+	stop = () => {
+		this.#db.close()
+	}
+
 	// setChange allows the caller to provide a redraw function that will be called after database operations
 	onchange = (callback: callbackFunction) => {
 		this.#onchange = callback

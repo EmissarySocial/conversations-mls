@@ -86,8 +86,6 @@ export async function MLSFactory(
 		actor,
 	)
 
-	// Start the receiver
-	receiver.start()
-
+	// Hoo-rah!
 	return result
 }
