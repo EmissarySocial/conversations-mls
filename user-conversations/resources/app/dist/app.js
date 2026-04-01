@@ -16368,12 +16368,10 @@
       }
     };
     #receiveActivity_Acknowledge = async (activity) => {
-      console.log("Acknowledge");
       const message = await this.#database.loadMessage(activity.objectId());
       if (message == void 0) {
         return;
       }
-      console.log(message.received, activity.actorId());
       if (!message.received.includes(activity.actorId())) {
         message.received.push(activity.actorId());
         await this.#database.saveMessage(message);
@@ -16397,7 +16395,7 @@
         plaintext: object.content(),
         likes: [],
         history: [],
-        received: [],
+        received: [this.actorId()],
         inReplyTo: object.inReplyToId(),
         createDate: Date.now(),
         updateDate: Date.now()
@@ -16407,9 +16405,13 @@
       await this.saveGroup(group);
       if (this.config.isDesktopNotifications) {
         if (Notification.permission === "granted") {
-          new Notification(message.sender, {
-            body: message.plaintext
-          });
+          if (message.sender != this.actorId()) {
+            if (this.isWindowFocused == false) {
+              new Notification(message.sender, {
+                body: message.plaintext
+              });
+            }
+          }
         }
       }
       this.#sendActivity(group, {

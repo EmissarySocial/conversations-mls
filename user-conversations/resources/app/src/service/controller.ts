@@ -845,8 +845,6 @@ export class Controller {
 
 	#receiveActivity_Acknowledge = async (activity: Activity) => {
 
-		console.log("Acknowledge")
-
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
 
@@ -854,8 +852,6 @@ export class Controller {
 		if (message == undefined) {
 			return
 		}
-
-		console.log(message.received, activity.actorId())
 
 		if (!message.received.includes(activity.actorId())) {
 			message.received.push(activity.actorId())
@@ -889,7 +885,7 @@ export class Controller {
 			plaintext: object.content(),
 			likes: [],
 			history: [],
-			received: [],
+			received: [this.actorId()],
 			inReplyTo: object.inReplyToId(),
 			createDate: Date.now(),
 			updateDate: Date.now(),
@@ -905,9 +901,13 @@ export class Controller {
 		// Send desktop notifications (if requested)
 		if (this.config.isDesktopNotifications) {
 			if (Notification.permission === "granted") {
-				new Notification(message.sender, {
-					body: message.plaintext,
-				})
+				if (message.sender != this.actorId()) {
+					if (this.isWindowFocused == false) {
+						new Notification(message.sender, {
+							body: message.plaintext,
+						})
+					}
+				}
 			}
 		}
 

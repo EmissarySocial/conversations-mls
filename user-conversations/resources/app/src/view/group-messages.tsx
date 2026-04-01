@@ -48,7 +48,7 @@ export class GroupMessages {
 										<div class="flex-row text-xs text-light-gray">
 											{new Date(message.createDate).toLocaleString()}
 											&nbsp;
-											{(message.received).map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
+											{message.received.map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
 										</div>
 										<div class="pos-absolute-top-right text-sm">
 											<i class="bi bi-pencil-square margin-right hover-show clickable"
@@ -75,7 +75,7 @@ export class GroupMessages {
 													: new Date(message.updateDate).toLocaleString()
 											}
 											&nbsp;
-											{(message.received).map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
+											{message.received.map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
 										</div>
 										<div class="pos-absolute-top-right text-sm">
 											{this.likes(vnode, message)}
