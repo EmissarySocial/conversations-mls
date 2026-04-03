@@ -16329,7 +16329,6 @@
     message;
     pageView;
     modalView;
-    originalCookie;
     isWindowFocused;
     isApplicationRunning;
     // constructor initializes the Controller with its dependencies
@@ -16348,7 +16347,6 @@
       this.message = NewMessage();
       this.pageView = "LOADING";
       this.modalView = "";
-      this.originalCookie = document.cookie;
       this.isWindowFocused = true;
       this.isApplicationRunning = true;
       this.config = NewConfig();
@@ -16540,7 +16538,7 @@
     // loadGroups retrieves all groups from the database
     loadGroups = async () => {
       this.groups = await this.#database.allGroups();
-      this.selectGroup(this.selectedGroupId());
+      await this.selectGroup(this.selectedGroupId());
     };
     saveGroupAndSync = async (group) => {
       console.log("saveGroupAndSync", group);
@@ -16686,13 +16684,13 @@
       if (this.group == void 0) {
         throw new Error("No group selected");
       }
-      this.group.lastMessage = content;
-      await this.saveGroup(this.group);
       var message = NewMessage();
       message.groupId = this.group.id;
       message.sender = this.#actor.id();
       message.plaintext = content;
       await this.#database.saveMessage(message);
+      this.group.lastMessage = content;
+      await this.saveGroup(this.group);
       var activity = new Activity({
         context: this.group.id,
         actor: this.actorId(),

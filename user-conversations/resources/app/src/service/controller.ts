@@ -22,7 +22,7 @@ import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
 
-import { type Emoji, emojiKey, keyPackageEmojiKey } from "./emojikeys"
+import { type Emoji, keyPackageEmojiKey } from "./emojikeys"
 
 // MLS Services
 import { MLSFactory } from "./mls-factory"
@@ -32,7 +32,6 @@ import { MLS } from "./mls"
 import { generateAESKey } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
-import type { KeyPackage } from "ts-mls"
 
 export class Controller {
 
@@ -57,7 +56,6 @@ export class Controller {
 
 	pageView: string
 	modalView: string
-	originalCookie: string
 	isWindowFocused: boolean
 	isApplicationRunning: boolean
 
@@ -90,7 +88,6 @@ export class Controller {
 		this.modalView = ""
 
 		// Other Application State
-		this.originalCookie = document.cookie
 		this.isWindowFocused = true
 		this.isApplicationRunning = true
 
@@ -110,6 +107,8 @@ export class Controller {
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
 
+		// If the app has not been configured yet, then display the "WELCOME"
+		// page first, before initializing anything else.
 		if (!this.config.ready) {
 			this.pageView = "WELCOME"
 			m.redraw()
@@ -189,6 +188,8 @@ export class Controller {
 		this.config.isHideOnBlur = isHideOnBlur
 
 		await this.#database.saveConfig(this.config)
+
+		// Call start again.  Since we've set config.ready to true, this will skip the welcome screen and initialize the app.
 		await this.#start()
 	}
 
@@ -401,7 +402,7 @@ export class Controller {
 		this.groups = await this.#database.allGroups()
 
 		// Find/set the selected group
-		this.selectGroup(this.selectedGroupId())
+		await this.selectGroup(this.selectedGroupId())
 	}
 
 	saveGroupAndSync = async (group: Group) => {
@@ -638,10 +639,6 @@ export class Controller {
 			throw new Error("No group selected")
 		}
 
-		// Update the group with the message content
-		this.group.lastMessage = content
-		await this.saveGroup(this.group)
-
 		// Create a new Message record and save to the database
 		var message = NewMessage()
 		message.groupId = this.group.id
@@ -649,6 +646,10 @@ export class Controller {
 		message.plaintext = content
 
 		await this.#database.saveMessage(message)
+
+		// Update the group with the message content
+		this.group.lastMessage = content
+		await this.saveGroup(this.group)
 
 		// Create an ActivityPub activity 
 		var activity = new Activity({
@@ -989,10 +990,8 @@ export class Controller {
 		})
 	}
 
-
 	#receiveActivity_Failure = async (activity: Activity) => {
 	}
-
 
 	#receiveActivity_DeleteMessage = async (activity: Activity) => {
 
