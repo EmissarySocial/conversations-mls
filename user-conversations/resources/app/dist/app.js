@@ -14461,7 +14461,10 @@
       id: ConfigID,
       ready: false,
       clientName: "Unknown Device",
-      passcode: "",
+      encryptionKeyIV: new Uint8Array(),
+      encryptionKey: "",
+      lastMessageId: "",
+      isEncryptedMessages: false,
       isDesktopNotifications: false,
       isHideOnBlur: false
     };
@@ -14480,7 +14483,8 @@
       contacts: [],
       createDate: Date.now(),
       updateDate: Date.now(),
-      readDate: 0
+      readDate: 0,
+      unread: false
     };
   }
   function groupIsEncrypted(group) {
@@ -14554,6 +14558,10 @@
     }
     stop = () => {
       this.#db.close();
+    };
+    erase = () => {
+      this.#db.close();
+      window.indexedDB.deleteDatabase(this.#db.name);
     };
     // setChange allows the caller to provide a redraw function that will be called after database operations
     onchange = (callback) => {
@@ -14848,6 +14856,19 @@
           }
       }
       return 0;
+    };
+    getBoolean = (namespace, property) => {
+      const result = this.get(namespace, property);
+      if (result == void 0) {
+        return false;
+      }
+      switch (typeof result) {
+        case "boolean":
+          return result;
+        case "string":
+          return result.toLowerCase() === "true";
+      }
+      return false;
     };
     getArray = (namespace, property) => {
       const result = this.get(namespace, property);
@@ -15157,13 +15178,7 @@
 
   // src/model/ap-keypackage.ts
   function NewAPKeyPackage(generator, actorID, publicPackage) {
-    const keyPackageMessage = encode(mlsMessageEncoder, {
-      keyPackage: publicPackage,
-      wireformat: wireformats.mls_key_package,
-      version: protocolVersions.mls10
-    });
-    const keyPackageAsBase64 = bytesToBase64(keyPackageMessage);
-    const decodedMessage = decode(mlsMessageDecoder, base64ToBytes(keyPackageAsBase64));
+    const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
     return {
       id: "",
       // This will be appened by the server
@@ -15176,6 +15191,14 @@
       content: keyPackageAsBase64
     };
   }
+  function encodeKeyPackage(keyPackage) {
+    const keyPackageMessage = encode(mlsMessageEncoder, {
+      keyPackage,
+      wireformat: wireformats.mls_key_package,
+      version: protocolVersions.mls10
+    });
+    return bytesToBase64(keyPackageMessage);
+  }
 
   // src/service/mls.ts
   var MLS = class {
@@ -15183,20 +15206,20 @@
     #delivery;
     #directory;
     #cipherSuite;
-    #publicKeyPackage;
     #privateKeyPackage;
     #actor;
+    publicKeyPackage;
     constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
       this.#actor = actor;
       this.#cipherSuite = cipherSuite;
-      this.#publicKeyPackage = publicKeyPackage;
+      this.publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
     }
     stop = () => {
-      this.#publicKeyPackage = null;
+      this.publicKeyPackage = null;
       this.#privateKeyPackage = null;
       this.#actor = null;
     };
@@ -15208,7 +15231,7 @@
       const clientState = await createGroup({
         context: this.#context(),
         groupId: encodeText(group.id),
-        keyPackage: this.#publicKeyPackage,
+        keyPackage: this.publicKeyPackage,
         privateKeyPackage: this.#privateKeyPackage
       });
       const encryptedGroup = addClientState(group, clientState);
@@ -15238,7 +15261,7 @@
     addGroupMembers = async (group, newMembers) => {
       const currentMembers = group.members;
       var addKeyPackages = await this.#directory.getKeyPackages(newMembers);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
+      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.publicKeyPackage.signature));
       const signatures = this.#getGroupSignatures(group);
       addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
       if (addKeyPackages.length == 0) {
@@ -15411,7 +15434,7 @@
         clientState = await joinGroup({
           context: this.#context(),
           welcome: message.welcome,
-          keyPackage: this.#publicKeyPackage,
+          keyPackage: this.publicKeyPackage,
           privateKeys: this.#privateKeyPackage
         });
       } catch (e) {
@@ -15725,12 +15748,38 @@
     createKeyPackage = async (keyPackage) => {
       return await this.#createObject(keyPackage);
     };
+    updateKeyPackage = async (keyPackage) => {
+      return await this.#updateObject(keyPackage);
+    };
+    deleteKeyPackage = async (keyPackageUrl) => {
+      return await this.#deleteObject(keyPackageUrl);
+    };
     // createObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #createObject = async (object) => {
       return await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
         type: "Create",
+        actor: this.#actorId,
+        object
+      });
+    };
+    // updateObject POSTs an ActivityPub object to the user's outbox
+    // and returns the Location header from the response
+    #updateObject = async (object) => {
+      return await this.#send(this.#outboxUrl, {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        type: "Update",
+        actor: this.#actorId,
+        object
+      });
+    };
+    // deleteObject POSTs an ActivityPub object to the user's outbox
+    // and returns the Location header from the response
+    #deleteObject = async (object) => {
+      return await this.#send(this.#outboxUrl, {
+        "@context": "https://www.w3.org/ns/activitystreams",
+        type: "Delete",
         actor: this.#actorId,
         object
       });
@@ -15760,8 +15809,10 @@
     // endpoint for the actor's mls:messages collection
     #eventSource;
     // EventSource for listening to server-sent events (SSE)
-    #handler;
+    #activityHandler;
     // list of registered message handlers
+    #lastMessage;
+    // handler function for getting/setting the last message ID
     #polling;
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
@@ -15769,7 +15820,10 @@
     // constructor initializes the Receiver with the actor's ID and messages URL
     constructor() {
       this.#messagesUrl = "";
-      this.#handler = async function(activity) {
+      this.#activityHandler = async (activity) => {
+      };
+      this.#lastMessage = async (messageId) => {
+        return "";
       };
       this.#polling = false;
       this.#pollAgain = false;
@@ -15781,8 +15835,9 @@
       this.#messagesUrl = url;
     }
     // start begins polling for new messages and processing them with the registered handlers
-    start = async (handler) => {
-      this.#handler = handler;
+    start = async (activityHandler, lastMessage) => {
+      this.#activityHandler = activityHandler;
+      this.#lastMessage = lastMessage;
       this.poll();
       const collection = await new Collection().fromURL(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
@@ -15806,12 +15861,13 @@
         return;
       }
       this.#polling = true;
-      const lastUrl = localStorage.getItem("lastUrl") || "";
-      const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" });
+      var lastMessageId = await this.#lastMessage();
+      const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" });
       for await (const activity of activities) {
-        localStorage.setItem("lastUrl", activity.id());
-        await this.#handler(activity);
+        lastMessageId = activity.id();
+        await this.#activityHandler(activity);
       }
+      await this.#lastMessage(lastMessageId);
       this.#polling = false;
       if (this.#pollAgain) {
         this.#pollAgain = false;
@@ -15822,6 +15878,381 @@
 
   // src/service/controller.ts
   var import_mithril = __toESM(require_mithril(), 1);
+
+  // src/service/emojikeys.ts
+  async function keyPackageEmojiKey(keyPackage) {
+    const keyPackageAsBase64 = encodeKeyPackage(keyPackage);
+    const signature = new TextEncoder().encode(keyPackageAsBase64);
+    return await emojiKey(signature);
+  }
+  async function emojiKey(signature) {
+    const checksum = await crypto.subtle.digest("SHA-256", signature.slice(0));
+    const checksumHash = new Uint8Array(checksum);
+    if (checksumHash.length != 32) {
+      throw new Error("Checksum must be 32 characters long");
+    }
+    var result = new Array(5);
+    for (var i = 0; i < 5; i++) {
+      const first = checksumHash[i * 2];
+      const second = checksumHash[i * 2 + 1];
+      const combined = first << 8 | second;
+      const index = combined % emojiSet.length;
+      result[i] = emojiSet[index];
+    }
+    return result;
+  }
+  var emojiSet = [
+    ["\u{1F436}", "Dog"],
+    ["\u{1F431}", "Cat"],
+    ["\u{1F981}", "Lion"],
+    ["\u{1F40E}", "Horse"],
+    ["\u{1F984}", "Unicorn"],
+    ["\u{1F437}", "Pig"],
+    ["\u{1F418}", "Elephant"],
+    ["\u{1F430}", "Rabbit"],
+    ["\u{1F43C}", "Panda"],
+    ["\u{1F413}", "Rooster"],
+    ["\u{1F427}", "Penguin"],
+    ["\u{1F422}", "Turtle"],
+    ["\u{1F41F}", "Fish"],
+    ["\u{1F419}", "Octopus"],
+    ["\u{1F98B}", "Butterfly"],
+    ["\u{1F337}", "Flower"],
+    ["\u{1F333}", "Tree"],
+    ["\u{1F335}", "Cactus"],
+    ["\u{1F344}", "Mushroom"],
+    ["\u{1F30F}", "Globe"],
+    ["\u{1F319}", "Moon"],
+    ["\u2601\uFE0F", "Cloud"],
+    ["\u{1F525}", "Fire"],
+    ["\u{1F34C}", "Banana"],
+    ["\u{1F34E}", "Apple"],
+    ["\u{1F353}", "Strawberry"],
+    ["\u{1F33D}", "Corn"],
+    ["\u{1F355}", "Pizza"],
+    ["\u{1F382}", "Cake"],
+    ["\u2764\uFE0F", "Heart"],
+    ["\u{1F600}", "Smiley"],
+    ["\u{1F916}", "Robot"],
+    ["\u{1F3A9}", "Hat"],
+    ["\u{1F453}", "Glasses"],
+    ["\u{1F527}", "Spanner"],
+    ["\u{1F385}", "Santa"],
+    ["\u{1F44D}", "Thumbs Up"],
+    ["\u2602\uFE0F", "Umbrella"],
+    ["\u231B", "Hourglass"],
+    ["\u23F0", "Clock"],
+    ["\u{1F381}", "Gift"],
+    ["\u{1F4A1}", "Light Bulb"],
+    ["\u{1F4D5}", "Book"],
+    ["\u270F\uFE0F", "Pencil"],
+    ["\u{1F4CE}", "Paperclip"],
+    ["\u2702\uFE0F", "Scissors"],
+    ["\u{1F512}", "Lock"],
+    ["\u{1F511}", "Key"],
+    ["\u{1F528}", "Hammer"],
+    ["\u260E\uFE0F", "Telephone"],
+    ["\u{1F3C1}", "Flag"],
+    ["\u{1F682}", "Train"],
+    ["\u{1F6B2}", "Bicycle"],
+    ["\u2708\uFE0F", "Aeroplane"],
+    ["\u{1F680}", "Rocket"],
+    ["\u{1F3C6}", "Trophy"],
+    ["\u26BD", "Ball"],
+    ["\u{1F3B8}", "Guitar"],
+    ["\u{1F3BA}", "Trumpet"],
+    ["\u{1F514}", "Bell"],
+    ["\u2693", "Anchor"],
+    ["\u{1F3A7}", "Headphones"],
+    ["\u{1F4C1}", "Folder"],
+    ["\u{1F4CC}", "Pin"],
+    ["0\uFE0F\u20E3", "Zero"],
+    ["1\uFE0F\u20E3", "One"],
+    ["2\uFE0F\u20E3", "Two"],
+    ["3\uFE0F\u20E3", "Three"],
+    ["4\uFE0F\u20E3", "Four"],
+    ["5\uFE0F\u20E3", "Five"],
+    ["6\uFE0F\u20E3", "Six"],
+    ["7\uFE0F\u20E3", "Seven"],
+    ["8\uFE0F\u20E3", "Eight"],
+    ["9\uFE0F\u20E3", "Nine"],
+    ["\u267B\uFE0F", "Recycle"],
+    ["\u26A1", "Lightning"],
+    ["\u{1F48E}", "Diamond"],
+    ["\u{1F308}", "Rainbow"],
+    ["\u2744\uFE0F", "Snowflake"],
+    ["\u{1F30A}", "Wave"],
+    ["\u{1F3B2}", "Dice"],
+    ["\u{1F9F2}", "Magnet"],
+    ["\u{1FA90}", "Saturn"],
+    ["\u{1F30B}", "Volcano"],
+    ["\u2B50", "Star"],
+    ["\u{1F42C}", "Dolphin"],
+    ["\u{1F98A}", "Fox"],
+    ["\u{1F989}", "Owl"],
+    ["\u{1F3D4}\uFE0F", "Mountain"],
+    ["\u{1F9CA}", "Ice"],
+    ["\u{1F3AF}", "Target"],
+    ["\u{1F6E1}\uFE0F", "Shield"],
+    ["\u2699\uFE0F", "Gear"],
+    ["\u{1F531}", "Trident"],
+    ["\u{1F980}", "Crab"],
+    ["\u{1F988}", "Shark"],
+    ["\u{1F438}", "Frog"],
+    ["\u{1F9A9}", "Flamingo"],
+    ["\u{1F99C}", "Parrot"],
+    ["\u{1F40D}", "Snake"],
+    ["\u{1F99E}", "Lobster"],
+    ["\u{1F42A}", "Camel"],
+    ["\u{1F992}", "Giraffe"],
+    ["\u{1F40A}", "Crocodile"],
+    ["\u{1F349}", "Watermelon"],
+    ["\u{1F347}", "Grapes"],
+    ["\u{1F352}", "Cherry"],
+    ["\u{1F965}", "Coconut"],
+    ["\u{1F336}\uFE0F", "Chilli"],
+    ["\u{1F9C0}", "Cheese"],
+    ["\u{1F369}", "Donut"],
+    ["\u{1F9C1}", "Cupcake"],
+    ["\u{1F37F}", "Popcorn"],
+    ["\u{1F3E0}", "House"],
+    ["\u{1F3F0}", "Castle"],
+    ["\u26F5", "Sailboat"],
+    ["\u{1F681}", "Helicopter"],
+    ["\u{1F6F8}", "UFO"],
+    ["\u{1F3AD}", "Theatre"],
+    ["\u{1F3AA}", "Circus"],
+    ["\u{1F388}", "Balloon"],
+    ["\u{1F9E9}", "Puzzle"],
+    ["\u{1FA81}", "Kite"],
+    ["\u{1F3F9}", "Bow"],
+    ["\u{1FAB4}", "Plant"],
+    ["\u{1F33B}", "Sunflower"],
+    ["\u{1F334}", "Palm"],
+    ["\u{1F342}", "Leaf"],
+    ["\u{1F41A}", "Shell"],
+    ["\u{1F98E}", "Lizard"],
+    ["\u{1F9AD}", "Seal"],
+    ["\u{1F994}", "Hedgehog"],
+    ["\u{1F99A}", "Peacock"],
+    ["\u{1F41E}", "Ladybug"],
+    ["\u{1F577}\uFE0F", "Spider"],
+    ["\u{1F3B1}", "Billiards"],
+    ["\u{1F6F6}", "Canoe"],
+    ["\u{1F3BB}", "Violin"],
+    ["\u{1F941}", "Drum"],
+    ["\u{1F3A4}", "Microphone"],
+    ["\u{1F52D}", "Telescope"],
+    ["\u{1F52C}", "Microscope"],
+    ["\u{1F48A}", "Pill"],
+    ["\u{1F9EC}", "DNA"],
+    ["\u{1F9EA}", "Test Tube"],
+    ["\u{1F56F}\uFE0F", "Candle"],
+    ["\u{1F4B0}", "Money Bag"],
+    ["\u{1F451}", "Crown"],
+    ["\u{1FAB6}", "Feather"],
+    ["\u26CF\uFE0F", "Pickaxe"],
+    ["\u{1FAA8}", "Rock"],
+    ["\u{1F3EE}", "Lantern"],
+    ["\u{1F380}", "Ribbon"],
+    ["\u{1FAB5}", "Log"],
+    ["\u{1F6DE}", "Wheel"],
+    ["\u{1FA9C}", "Ladder"],
+    ["\u{1F9EF}", "Extinguisher"],
+    ["\u{1F393}", "Graduation"],
+    ["\u{1F48D}", "Ring"],
+    ["\u{1FA7A}", "Stethoscope"],
+    ["\u{1FA83}", "Boomerang"],
+    ["\u{1F3FA}", "Amphora"],
+    ["\u{1F5FF}", "Moai"],
+    ["\u{1F5FD}", "Liberty"],
+    ["\u26E9\uFE0F", "Shrine"],
+    ["\u{1F54C}", "Mosque"],
+    ["\u{1F3A1}", "Ferris Wheel"],
+    ["\u{1F3A2}", "Roller Coaster"],
+    ["\u{1F6A2}", "Ship"],
+    ["\u{1F6F0}\uFE0F", "Satellite"],
+    ["\u{1F320}", "Shooting Star"],
+    ["\u{1F300}", "Cyclone"],
+    ["\u{1F52E}", "Crystal Ball"],
+    ["\u{1FAA9}", "Mirror Ball"],
+    ["\u{1F3B5}", "Music"],
+    ["\u{1F579}\uFE0F", "Joystick"],
+    ["\u{1F5A8}\uFE0F", "Printer"],
+    ["\u{1F4BE}", "Floppy"],
+    ["\u{1F50B}", "Battery"],
+    ["\u{1F4E1}", "Dish"],
+    ["\u{1F3CB}\uFE0F", "Weightlifter"],
+    ["\u{1F93F}", "Diving"],
+    ["\u{1F6F9}", "Skateboard"],
+    ["\u{1F9F3}", "Suitcase"],
+    ["\u{1FA9D}", "Hook"],
+    ["\u{1F9F8}", "Teddy Bear"],
+    ["\u{1F38F}", "Carp Streamer"],
+    ["\u{1F3D5}\uFE0F", "Camping"],
+    ["\u{1F5FA}\uFE0F", "World Map"],
+    ["\u{1F9F6}", "Yarn"],
+    ["\u{1F390}", "Wind Chime"],
+    ["\u{1F987}", "Bat"],
+    ["\u{1F6D2}", "Cart"],
+    ["\u{1F9B7}", "Tooth"],
+    ["\u{1FAC0}", "Heart Organ"],
+    ["\u{1F9E0}", "Brain"],
+    ["\u{1F441}\uFE0F", "Eye"],
+    ["\u{1F9B4}", "Bone"],
+    ["\u{1FAB8}", "Coral"],
+    ["\u{1F40C}", "Snail"],
+    ["\u{1F982}", "Scorpion"],
+    ["\u{1F54A}\uFE0F", "Dove"],
+    ["\u{1F999}", "Llama"],
+    ["\u{1F998}", "Kangaroo"],
+    ["\u{1F9AB}", "Beaver"],
+    ["\u{1F9A6}", "Otter"],
+    ["\u{1F9A5}", "Sloth"],
+    ["\u{1F351}", "Peach"],
+    ["\u{1F95D}", "Kiwi"],
+    ["\u{1F951}", "Avocado"],
+    ["\u{1F955}", "Carrot"],
+    ["\u{1F968}", "Pretzel"],
+    ["\u{1F950}", "Croissant"],
+    ["\u{1F36D}", "Lollipop"],
+    ["\u{1FAD0}", "Blueberry"],
+    ["\u{1F966}", "Broccoli"],
+    ["\u{1F330}", "Chestnut"],
+    ["\u{1F95C}", "Peanut"],
+    ["\u{1F36F}", "Honey"],
+    ["\u{1F9C2}", "Salt"],
+    ["\u{1FAD6}", "Teapot"],
+    ["\u{1F375}", "Tea"],
+    ["\u{1F9C3}", "Juice Box"],
+    ["\u{1FA98}", "Long Drum"],
+    ["\u{1F3B7}", "Saxophone"],
+    ["\u{1F3B9}", "Piano"],
+    ["\u{1FA97}", "Accordion"],
+    ["\u{1F3D7}\uFE0F", "Crane"],
+    ["\u{1F5FC}", "Tower"],
+    ["\u26F2", "Fountain"],
+    ["\u{1F3A0}", "Carousel"],
+    ["\u{1F6E5}\uFE0F", "Speedboat"],
+    ["\u{1F69C}", "Tractor"],
+    ["\u{1F692}", "Fire Engine"],
+    ["\u{1F691}", "Ambulance"],
+    ["\u{1F6F4}", "Scooter"],
+    ["\u{1FA82}", "Parachute"],
+    ["\u{1F3C4}", "Surfer"],
+    ["\u26F7\uFE0F", "Skier"],
+    ["\u{1F3CA}", "Swimmer"],
+    ["\u{1F6F7}", "Sled"],
+    ["\u{1F9E8}", "Firecracker"],
+    ["\u{1F383}", "Pumpkin"],
+    ["\u{1F3B3}", "Bowling"],
+    ["\u{1F3D3}", "Ping Pong"],
+    ["\u{1F94A}", "Boxing"],
+    ["\u{1F3D2}", "Hockey"],
+    ["\u{1F3BF}", "Ski"],
+    ["\u{1FA80}", "Yo-Yo"],
+    ["\u{1F6FC}", "Roller Skate"],
+    ["\u{1F9D7}", "Climber"],
+    ["\u{1F3C7}", "Jockey"],
+    ["\u{1FA88}", "Flute"],
+    ["\u{1F4EF}", "Horn"],
+    ["\u{1F399}\uFE0F", "Studio Mic"],
+    ["\u{1F4FB}", "Radio"],
+    ["\u{1F4FA}", "Television"],
+    ["\u{1F5A5}\uFE0F", "Desktop"],
+    ["\u{1F4BF}", "CD"],
+    ["\u{1F526}", "Flashlight"],
+    ["\u{1FAAB}", "Low Battery"],
+    ["\u{1F9F0}", "Toolbox"],
+    ["\u{1FA9A}", "Saw"],
+    ["\u{1F529}", "Nut & Bolt"],
+    ["\u{1F9F1}", "Brick"],
+    ["\u26D3\uFE0F", "Chain"],
+    ["\u{1FAA3}", "Bucket"],
+    ["\u{1FAA6}", "Headstone"],
+    ["\u{1F517}", "Link"],
+    ["\u{1FA9F}", "Window"],
+    ["\u{1F6AA}", "Door"],
+    ["\u{1F6CF}\uFE0F", "Bed"],
+    ["\u{1FA91}", "Chair"],
+    ["\u{1F6BF}", "Shower"],
+    ["\u{1F9F4}", "Lotion"],
+    ["\u{1F9FD}", "Sponge"],
+    ["\u{1F576}\uFE0F", "Sunglasses"],
+    ["\u{1F97E}", "Boot"],
+    ["\u{1F452}", "Sun Hat"],
+    ["\u{1F9E4}", "Gloves"],
+    ["\u{1F9E3}", "Scarf"],
+    ["\u{1F454}", "Necktie"],
+    ["\u{1F457}", "Dress"],
+    ["\u{1FA70}", "Ballet"],
+    ["\u{1FAAD}", "Fan"],
+    ["\u{1F484}", "Lipstick"],
+    ["\u{1F488}", "Barber Pole"],
+    ["\u{1F50D}", "Magnifier"],
+    ["\u{1F4FF}", "Prayer Beads"],
+    ["\u{1FAAC}", "Hamsa"],
+    ["\u265F\uFE0F", "Chess Pawn"],
+    ["\u{1F004}", "Mahjong"],
+    ["\u{1F0CF}", "Joker"],
+    ["\u{1F5BC}\uFE0F", "Frame"],
+    ["\u{1FA86}", "Nesting Doll"],
+    ["\u{1F3F7}\uFE0F", "Label"],
+    ["\u{1F4EE}", "Postbox"],
+    ["\u{1F5D1}\uFE0F", "Wastebasket"],
+    ["\u{1F6A9}", "Red Flag"],
+    ["\u{1F3F4}\u200D\u2620\uFE0F", "Pirate Flag"],
+    ["\u{1FAA7}", "Placard"],
+    ["\u{1F4EC}", "Mailbox"],
+    ["\u{1FA99}", "Coin"],
+    ["\u{1F4B3}", "Credit Card"],
+    ["\u{1F4D0}", "Triangle Ruler"],
+    ["\u{1F5D3}\uFE0F", "Calendar"],
+    ["\u{1F4CA}", "Bar Chart"],
+    ["\u{1F516}", "Bookmark"],
+    ["\u{1F3F5}\uFE0F", "Rosette"],
+    ["\u{1F397}\uFE0F", "Reminder Ribbon"],
+    ["\u{1FAA2}", "Knot"],
+    ["\u{1FA7B}", "X-Ray"],
+    ["\u{1FAAA}", "ID Card"],
+    ["\u{1F6D7}", "Elevator"],
+    ["\u{1F6A6}", "Traffic Light"],
+    ["\u26FD", "Fuel Pump"],
+    ["\u{1F6A7}", "Construction"],
+    ["\u{1F6DF}", "Ring Buoy"],
+    ["\u{1FA94}", "Diya Lamp"],
+    ["\u{1F391}", "Moon Viewing"],
+    ["\u{1F9E7}", "Red Envelope"],
+    ["\u{1F38D}", "Bamboo"],
+    ["\u{1FAB7}", "Lotus"],
+    ["\u{1F341}", "Maple Leaf"],
+    ["\u2618\uFE0F", "Shamrock"],
+    ["\u{1F9A0}", "Microbe"],
+    ["\u{1FABA}", "Nest"],
+    ["\u{1F9EE}", "Abacus"],
+    ["\u{1F4E3}", "Megaphone"],
+    ["\u{1F3C5}", "Medal"],
+    ["\u26FA", "Tent"],
+    ["\u{1FAE7}", "Soap Bubble"],
+    ["\u{1F3F3}\uFE0F\u200D\u{1F308}", "Pride Flag"],
+    ["\u{1F3F3}\uFE0F\u200D\u26A7\uFE0F", "Transgender Flag"],
+    ["\u{1F3F4}", "Black Flag"],
+    ["\u{1F1EF}\u{1F1F5}", "Japan"],
+    ["\u{1F1E7}\u{1F1F7}", "Brazil"],
+    ["\u{1F1E8}\u{1F1E6}", "Canada"],
+    ["\u2600\uFE0F", "Sun"],
+    ["\u{1F315}", "Full Moon"],
+    ["\u{1F530}", "Beginner"],
+    ["\u267E\uFE0F", "Infinity"],
+    ["\u{1F3DD}\uFE0F", "Island"],
+    ["\u{1F33E}", "Rice"],
+    ["\u{1FAF6}", "Heart Hands"],
+    ["\u{1F9A4}", "Dodo"],
+    ["\u{1FACF}", "Donkey"],
+    ["\u{1F409}", "Dragon"],
+    ["\u{1F9AC}", "Bison"],
+    ["\u{1FABB}", "Hyacinth"]
+  ];
 
   // src/service/mls-factory.ts
   async function MLSFactory(database, delivery, directory, receiver, actor, clientName) {
@@ -15849,7 +16280,8 @@
         clientName,
         publicKeyPackage: keyPackageResult.publicPackage,
         privateKeyPackage: keyPackageResult.privatePackage,
-        cipherSuiteName
+        cipherSuiteName,
+        createDate: Date.now()
       };
       await database.saveKeyPackage(dbKeyPackage);
     }
@@ -15865,6 +16297,18 @@
     return result;
   }
 
+  // src/service/cryptography.ts
+  async function generateAESKey() {
+    return await window.crypto.subtle.generateKey(
+      {
+        name: "AES-GCM",
+        length: 256
+      },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
   // src/service/controller.ts
   var Controller = class {
     #actorId;
@@ -15875,6 +16319,8 @@
     #receiver;
     #mls;
     #allowPlaintextMessages;
+    #encryptionKey;
+    emojiKey = [];
     config;
     groups;
     messages;
@@ -15937,6 +16383,7 @@
         this.#actor,
         this.config.clientName
       );
+      this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage);
       this.#receiver.start(this.receiveActivity);
       this.#database.onchange(async () => {
         await this.loadGroups();
@@ -15958,19 +16405,27 @@
       import_mithril.default.redraw();
     };
     // startupConfiguration is called when the user submits their options from the initial welcome screen
-    startupConfiguration = async (clientName, passcode, isDesktopNotifications, isHideOnBlur) => {
-      this.saveConfiguration(clientName, passcode, isDesktopNotifications, isHideOnBlur);
+    startupConfiguration = async (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => {
+      this.#encryptionKey = await generateAESKey();
+      this.config.ready = true;
+      this.config.clientName = clientName;
+      this.config.isEncryptedMessages = isEncryptedMessages;
+      this.config.isDesktopNotifications = isDesktopNotifications;
+      this.config.isHideOnBlur = isHideOnBlur;
+      await this.#database.saveConfig(this.config);
       await this.#start();
     };
     // saveConfiguration is called when the user submits their options from the initial welcome screen
-    saveConfiguration = async (clientName, passcode, isDesktopNotifications, isHideOnBlur) => {
+    saveConfiguration = async (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => {
       this.config.ready = true;
       this.config.clientName = clientName;
-      this.config.passcode = passcode;
+      this.config.isEncryptedMessages = isEncryptedMessages;
       this.config.isDesktopNotifications = isDesktopNotifications;
       this.config.isHideOnBlur = isHideOnBlur;
       await this.#database.saveConfig(this.config);
     };
+    // stop halts all services and listeners and clears local memory. It is like
+    // a "log out" feature, but does not remove encrypted data from the device.
     stop = () => {
       this.#database.stop();
       this.#delivery.stop();
@@ -15978,6 +16433,18 @@
       this.#directory.stop();
       this.isApplicationRunning = false;
       import_mithril.default.redraw();
+    };
+    // eraseDevice removes all locally stored data and reloads the application.
+    eraseDevice = async () => {
+      if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
+        return;
+      }
+      const keyPackage = await this.#database.loadKeyPackage();
+      if (keyPackage != void 0) {
+        await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL);
+      }
+      await this.#database.erase();
+      window.document.location.reload();
     };
     //////////////////////////////////////////
     // Getters
@@ -15987,6 +16454,13 @@
     };
     actorIcon = () => {
       return this.#actor.icon();
+    };
+    lastMessage = async (messageId) => {
+      if (messageId != void 0) {
+        this.config.lastMessageId = messageId;
+        await this.#database.saveConfig(this.config);
+      }
+      return this.config.lastMessageId;
     };
     //////////////////////////////////////////
     // Contacts
@@ -16038,7 +16512,7 @@
       for (const contact of contacts) {
         const updated = await this.#directory.loadContact(contact.id);
         if (updated == void 0) {
-          return;
+          continue;
         }
         if (updated != contact) {
           await this.#database.saveContact(updated);
@@ -16059,7 +16533,6 @@
         }
         group = await this.#mls.encodeGroup(group);
       }
-      this.saveGroup(group);
       this.group = await this.addGroupMembers(group, recipients);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
@@ -16069,6 +16542,11 @@
       this.groups = await this.#database.allGroups();
       this.selectGroup(this.selectedGroupId());
     };
+    saveGroupAndSync = async (group) => {
+      console.log("saveGroupAndSync", group);
+      await this.saveGroup(group);
+      this.syncGroup(group);
+    };
     // saveGroup saves the specified group to the database
     saveGroup = async (group) => {
       group.lastMessage = group.lastMessage.slice(0, 100);
@@ -16076,9 +16554,8 @@
       await this.#database.saveGroup(group);
       await this.loadGroups();
     };
-    saveGroupAndSync = async (group) => {
-      console.log("saveGroupAndSync", group);
-      this.saveGroup(group);
+    syncGroup = async (group) => {
+      console.log("syncGroup", group);
       var activity = new Activity({
         "to": [this.actorId()],
         "actor": this.actorId(),
@@ -16089,7 +16566,8 @@
           "name": group.name,
           "description": group.description,
           "stateId": group.stateId,
-          "tag": group.tags
+          "tag": group.tags,
+          "unread": group.unread
         }
       });
       this.#sendActivity(group, activity);
@@ -16129,24 +16607,25 @@
       await this.loadGroups();
     };
     // selectGroup updates the "selectedGroupId" and reloads messages for that group
-    selectGroup = (groupId) => {
+    selectGroup = async (groupId) => {
       if (this.groups.length == 0) {
         this.group = NewGroup();
         this.messages = [];
         this.contacts = /* @__PURE__ */ new Map();
         return;
       }
-      const group = this.groups.find((group2) => group2.id == groupId);
-      if (group != void 0) {
-        this.group = group;
-        this.loadMessages();
-        this.loadContacts();
-        this.page_group_messages();
-        return;
+      var group = this.groups.find((group2) => group2.id == groupId);
+      if (group == void 0) {
+        group = this.groups[0];
       }
-      this.group = this.groups[0];
-      this.loadMessages();
-      this.loadContacts();
+      if (group.unread) {
+        group.unread = false;
+        await this.saveGroup(group);
+        this.syncGroup(group);
+      }
+      this.group = group;
+      await this.loadMessages();
+      await this.loadContacts();
       this.page_group_messages();
     };
     selectedGroupId = () => {
@@ -16365,6 +16844,12 @@
             return;
         }
       } catch (error) {
+        console.error("Error receiving activity:", error);
+        this.#delivery.sendActivity({
+          actor: this.actorId(),
+          type: ActivityTypeFailure,
+          object: activity.id()
+        });
       }
     };
     #receiveActivity_Acknowledge = async (activity) => {
@@ -16402,6 +16887,9 @@
       };
       await this.#database.saveMessage(message);
       group.lastMessage = object.content();
+      if (groupId != this.selectedGroupId()) {
+        group.unread = true;
+      }
       await this.saveGroup(group);
       if (this.config.isDesktopNotifications) {
         if (Notification.permission === "granted") {
@@ -16433,7 +16921,7 @@
         return;
       }
       await this.#database.deleteMessage(message.id);
-      this.loadMessages();
+      await this.loadMessages();
     };
     #receiveActivity_Like = async (activity) => {
       const message = await this.#database.likeMessage(activity.actorId(), activity.objectId());
@@ -16472,6 +16960,7 @@
       group.name = object.name();
       group.description = object.description();
       group.tags = object.getArray("as", "tag");
+      group.unread = object.getBoolean("emissary", "unread");
       this.setGroupState(group, object.getString("emissary", "stateId"));
       await this.saveGroup(group);
       console.log("Group updated", group);
@@ -16540,20 +17029,22 @@
       this.modalView = "NEW-CONVERSATION";
     };
     modal_editMessage = async (messageId) => {
-      this.message = await this.loadMessage(messageId);
-      if (this.message == void 0) {
+      const message = await this.loadMessage(messageId);
+      if (message == void 0) {
         return;
       }
-      if (this.message.sender != this.actorId()) {
+      if (message.sender != this.actorId()) {
         return;
       }
+      this.message = message;
       this.modalView = "EDIT-MESSAGE";
     };
     modal_messageHistory = async (messageId) => {
-      this.message = await this.loadMessage(messageId);
-      if (this.message == void 0) {
+      const message = await this.loadMessage(messageId);
+      if (message == void 0) {
         return;
       }
+      this.message = message;
       this.modalView = "MESSAGE-HISTORY";
     };
     //////////////////////////////////////////
@@ -16602,7 +17093,7 @@
       vnode.state.isHideOnBlur = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center", style: "font-size:80px; color:var(--blue60)" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", "Messages can be sent to any Fediverse account, but only some accounts can receive encrypted messages.", " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted messages ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-box-arrow-up-right" })), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Encrypted Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When every participant supports encryption. (Server dependent)")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "flex-row margin-bottom" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xl margin-none" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-envelope-open" })), /* @__PURE__ */ (0, import_mithril2.default)("div", null, /* @__PURE__ */ (0, import_mithril2.default)("b", null, "Send Clear Text Messages"), /* @__PURE__ */ (0, import_mithril2.default)("br", null), "When one or more participants can't receive encrypted messages."))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Set a Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "text", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " Protects messages on this device. If you lose this passcode, message history will be lost.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide content when window loses focus"))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary" }, "Continue to Conversations \u2192")))));
+      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Device Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "text", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "(REQUIRED) If you lose this passcode, encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
     }
     setClientName = (vnode, event) => {
       const target = event.target;
@@ -16615,6 +17106,10 @@
     setHideOnBlur = (vnode, event) => {
       const target = event.target;
       vnode.state.isHideOnBlur = target.checked;
+    };
+    setEncryptedMessages = (vnode, event) => {
+      const target = event.target;
+      vnode.state.isEncryptedMessages = target.checked;
     };
     setDesktopNotifications = async (vnode, event) => {
       const target = event.target;
@@ -16634,6 +17129,7 @@
       await vnode.attrs.controller.startupConfiguration(
         vnode.state.clientName,
         vnode.state.passcode,
+        vnode.state.isEncryptedMessages,
         vnode.state.isDesktopNotifications,
         vnode.state.isHideOnBlur
       );
@@ -17028,7 +17524,7 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow nowrap ellipsis" }, /* @__PURE__ */ (0, import_mithril9.default)("div", null, controller2.groupName(group)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)));
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row" }, controller2.groupName(group)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-red text-sm" }, group.unread && /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }))));
       }));
     }
   };
@@ -17050,14 +17546,14 @@
       const enabled = vnode.state.message.trim() !== "";
       const disabled = !enabled;
       const color = enabled ? "var(--blue50)" : "var(--gray30)";
-      return /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "input", class: "flex-row" }, /* @__PURE__ */ (0, import_mithril11.default)(
+      return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-justify" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "input", class: "flex-grow flex-row" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril11.default)(
         "textarea",
         {
           value: vnode.state.message,
-          style: "border:none; min-height:3em; field-sizing:content; resize:none;",
+          style: "border:none; min-height:1em; field-sizing:content; resize:none;",
           oninput: (e) => this.oninput(vnode, e)
         }
-      ), /* @__PURE__ */ (0, import_mithril11.default)(
+      )), /* @__PURE__ */ (0, import_mithril11.default)(
         "button",
         {
           tabIndex: "0",
@@ -17066,7 +17562,7 @@
           style: `background-color:${color}; color:white; font-size:24px;`
         },
         /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-arrow-up-circle-fill" })
-      ));
+      ), /* @__PURE__ */ (0, import_mithril11.default)("label", { for: "fileInput", class: "button link", style: "font-size:24px;" }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-image" })), /* @__PURE__ */ (0, import_mithril11.default)("input", { type: "file", id: "fileInput", style: "display:none;" })));
     }
     oninput(vnode, event) {
       const target = event.target;
@@ -17515,14 +18011,18 @@
     oninit(vnode) {
       const controller2 = vnode.attrs.controller;
       vnode.state.name = controller2.config.clientName;
-      vnode.state.passcode = controller2.config.passcode;
       vnode.state.isHideOnBlur = controller2.config.isHideOnBlur;
+      vnode.state.isEncryptedMessages = controller2.config.isEncryptedMessages;
       vnode.state.isDesktopNotifications = controller2.config.isDesktopNotifications;
       vnode.state.isDesktopNotificationsPermission = Notification.permission;
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril30.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, "Hide When Window Loses Focus"))))), /* @__PURE__ */ (0, import_mithril30.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril30.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril30.default)("button", { class: "text-red", onclick: () => controller2.stop() }, "Sign Out"))));
+      return /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril30.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril30.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril30.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. This EmojiKey represents the encryption keys used by this device. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. ", " ", /* @__PURE__ */ (0, import_mithril30.default)("a", { href: "/@me/settings/keyPackages" }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril30.default)("button", { class: "text-red", onclick: () => controller2.stop() }, "Sign Out")), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril30.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device"))));
+    }
+    setEncryptedMessages(vnode, event) {
+      const target = event.target;
+      vnode.state.isEncryptedMessages = target.checked;
     }
     async setDesktopNotifications(vnode, event) {
       const target = event.target;
@@ -17546,6 +18046,7 @@
       controller2.saveConfiguration(
         vnode.state.name,
         vnode.state.passcode,
+        vnode.state.isEncryptedMessages,
         vnode.state.isDesktopNotifications,
         vnode.state.isHideOnBlur
       );

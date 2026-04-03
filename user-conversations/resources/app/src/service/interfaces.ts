@@ -29,6 +29,7 @@ export interface IDatabase {
 
 	// Lifecycle methods
 	stop(): void
+	erase(): Promise<void>
 
 	// Config methods
 	loadConfig(): Promise<Config>
@@ -90,6 +91,7 @@ export interface IDirectory {
 
 	// Lifecycle methods
 	stop(): void
+	erase(): Promise<void>
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
@@ -97,6 +99,8 @@ export interface IDirectory {
 	// KeyPackage methods
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
 	createKeyPackage(keyPackage: APKeyPackage): Promise<string>
+	updateKeyPackage(keyPackage: APKeyPackage): Promise<string>
+	deleteKeyPackage(keyPackageUrl: string): Promise<void>
 
 	// Contact methods
 	loadContact(actorID: string): Promise<Contact | undefined>
@@ -120,3 +124,8 @@ export interface IReceiver {
 // is received.
 export type IActivityHandler = (activity: Activity) => Promise<void>
 
+
+// ILastMessageHandler is a function that gets or sets the last message ID.
+// The Receiver service will call the registered LastMessageHandler to get the ID
+// of the last message received, and to update it when new messages are received.
+export type ILastMessageGetterSetter = (messageId?: string) => Promise<string>

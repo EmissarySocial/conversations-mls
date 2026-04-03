@@ -66,7 +66,15 @@ export class Directory {
 
 	// createKeyPackage publishes a new KeyPackage to the User's outbox.
 	createKeyPackage = async (keyPackage: APKeyPackage) => {
-		return await this.#createObject<APKeyPackage>(keyPackage)
+		return await this.#createObject(keyPackage)
+	}
+
+	updateKeyPackage = async (keyPackage: APKeyPackage) => {
+		return await this.#updateObject(keyPackage)
+	}
+
+	deleteKeyPackage = async (keyPackageUrl: string) => {
+		return await this.#deleteObject(keyPackageUrl)
 	}
 
 	// createObject POSTs an ActivityPub object to the user's outbox
@@ -75,6 +83,28 @@ export class Directory {
 		return await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: "Create",
+			actor: this.#actorId,
+			object: object,
+		})
+	}
+
+	// updateObject POSTs an ActivityPub object to the user's outbox
+	// and returns the Location header from the response
+	#updateObject = async <T>(object: T) => {
+		return await this.#send(this.#outboxUrl, {
+			"@context": "https://www.w3.org/ns/activitystreams",
+			type: "Update",
+			actor: this.#actorId,
+			object: object,
+		})
+	}
+
+	// deleteObject POSTs an ActivityPub object to the user's outbox
+	// and returns the Location header from the response
+	#deleteObject = async <T>(object: T) => {
+		return await this.#send(this.#outboxUrl, {
+			"@context": "https://www.w3.org/ns/activitystreams",
+			type: "Delete",
 			actor: this.#actorId,
 			object: object,
 		})

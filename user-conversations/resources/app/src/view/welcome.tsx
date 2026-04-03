@@ -10,6 +10,7 @@ type WelcomeAttrs = {
 type WelcomeState = {
 	clientName: string
 	passcode: string
+	isEncryptedMessages: boolean
 	isDesktopNotifications: boolean
 	isDesktopNotificationsPermission: "granted" | "denied" | "default"
 	isHideOnBlur: boolean
@@ -30,38 +31,17 @@ export class Welcome {
 			<div class="app-content">
 				<div class="margin-top-xl width-100%">
 					<div class="card padding-lg width-100% max-width-800 margin-horizontal-auto">
-						<div class="align-center" style="font-size:80px; color:var(--blue60)"><i class="bi bi-chat"></i></div>
+						<div class="align-center text-light-gray" style="font-size:80px;"><i class="bi bi-chat"></i></div>
 						<div class="align-center text-2xl">
 							Welcome to Conversations
 						</div>
 						<hr />
 						<div class="margin-vertical-lg">
 							Conversations collect all of your personal messages into a single place.{" "}
-							Messages can be sent to any Fediverse account, but only some accounts can receive encrypted messages.{" "}
+							You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.{" "}
 							<a href="https://emissary.dev/conversations" class="nowrap">
-								Learn more about encrypted messages <i class="bi bi-box-arrow-up-right"></i>
+								Learn more about encrypted conversations <i class="bi bi-arrow-up-right-square"></i>
 							</a>
-							<br />
-							<br />
-							<div class="flex-row margin-bottom">
-								<div class="text-xl margin-none">
-									<i class="bi bi-lock-fill"></i>
-								</div>
-								<div>
-									<b>Send Encrypted Messages</b><br />
-									When every participant supports encryption. (Server dependent)
-								</div>
-							</div>
-
-							<div class="flex-row margin-bottom">
-								<div class="text-xl margin-none">
-									<i class="bi bi-envelope-open"></i>
-								</div>
-								<div>
-									<b>Send Clear Text Messages</b><br />
-									When one or more participants can't receive encrypted messages.
-								</div>
-							</div>
 
 						</div>
 
@@ -70,39 +50,47 @@ export class Welcome {
 								<div class="layout-elements">
 									<div class="layout-element">
 										<label for="clientName">Device Name</label>
-										<input id="clientName" type="text" value={vnode.state.clientName} oninput={(event: Event) => this.setClientName(vnode, event)} autofocus required />
+										<input id="clientName" type="text" tabIndex="0" value={vnode.state.clientName} oninput={(event: Event) => this.setClientName(vnode, event)} autofocus required />
 										<div class="text-xs text-gray margin-right-xs">
 											You can have conversations on multiple devices. Choose a unique name for this one.
 										</div>
 									</div>
 
 									<div class="layout-element">
-										<label for="passcode">Set a Passcode</label>
-										<input id="passcode" type="text" value={vnode.state.passcode} oninput={(event: Event) => this.setPasscode(vnode, event)} required />
+										<label for="passcode">Device Passcode</label>
+										<input id="passcode" type="text" tabIndex="0" value={vnode.state.passcode} oninput={(event: Event) => this.setPasscode(vnode, event)} required />
 										<div class="text-xs text-gray margin-right-xs">
-											<i class="bi bi-exclamation-triangle-fill"></i> Protects messages on this device. If you lose this passcode, message history will be lost.
+											(REQUIRED) If you lose this passcode, encrypted messages cannot be recovered.
 										</div>
 									</div>
 
 									<div class="layout-element flex-row">
-										<input type="checkbox" id="isDesktopNotifications" checked={vnode.state.isDesktopNotifications} disabled={vnode.state.isDesktopNotificationsPermission === "denied"} onchange={(event: Event) => this.setDesktopNotifications(vnode, event)} style="height:1em; width:1em;" />
+										<input type="checkbox" tabIndex="0" id="isEncryptedMessages" checked={vnode.state.isEncryptedMessages} onchange={(event: Event) => this.setEncryptedMessages(vnode, event)} style="height:1em; width:1em;" />
+										<label for="isEncryptedMessages">
+											<div>Send Encrypted Messages When Possible</div>
+										</label>
+									</div>
+
+									<div class="layout-element flex-row">
+										<input type="checkbox" tabIndex="0" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
+										<label for="isHideOnBlur">
+											<div>Hide Conversations When You Leave This Window</div>
+										</label>
+									</div>
+
+									<div class="layout-element flex-row">
+										<input type="checkbox" tabIndex="0" id="isDesktopNotifications" checked={vnode.state.isDesktopNotifications} disabled={vnode.state.isDesktopNotificationsPermission === "denied"} onchange={(event: Event) => this.setDesktopNotifications(vnode, event)} style="height:1em; width:1em;" />
 										<label for="isDesktopNotifications">
 											<div>{(vnode.state.isDesktopNotificationsPermission != "denied") ? "Allow Desktop Notifications" : "Desktop Notifications Denied"}</div>
 											{vnode.state.isDesktopNotificationsPermission === "denied" && <div class="text-xs text-gray margin-right-xs">To re-enable desktop notifications, go to your browser settings.</div>}
 										</label>
 									</div>
 
-									<div class="layout-element flex-row">
-										<input type="checkbox" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isHideOnBlur">
-											<div>Hide content when window loses focus</div>
-										</label>
-									</div>
 								</div>
 							</div>
 
 							<br />
-							<button type="submit" class="primary">Continue to Conversations &rarr;</button>
+							<button type="submit" class="primary" tabIndex="0">Continue to Conversations &rarr;</button>
 						</form>
 
 					</div>
@@ -124,6 +112,11 @@ export class Welcome {
 	setHideOnBlur = (vnode: WelcomeVnode, event: Event) => {
 		const target = event.target as HTMLInputElement
 		vnode.state.isHideOnBlur = target.checked
+	}
+
+	setEncryptedMessages = (vnode: WelcomeVnode, event: Event) => {
+		const target = event.target as HTMLInputElement
+		vnode.state.isEncryptedMessages = target.checked
 	}
 
 	setDesktopNotifications = async (vnode: WelcomeVnode, event: Event) => {
@@ -153,6 +146,7 @@ export class Welcome {
 		await vnode.attrs.controller.startupConfiguration(
 			vnode.state.clientName,
 			vnode.state.passcode,
+			vnode.state.isEncryptedMessages,
 			vnode.state.isDesktopNotifications,
 			vnode.state.isHideOnBlur,
 		)

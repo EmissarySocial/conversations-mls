@@ -25,17 +25,9 @@ export interface APKeyPackage {
 // NewAPKeyPackage creates a fully initialized KeyPackage object
 // using the provided actorID and public KeyPackage.
 export function NewAPKeyPackage(generator: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
-	//
-	// Encode the KeyPackage as an MLS message
-	const keyPackageMessage = encode(mlsMessageEncoder, {
-		keyPackage: publicPackage,
-		wireformat: wireformats.mls_key_package,
-		version: protocolVersions.mls10,
-	})
 
-	// TEST: Verify that we can decode the message we just encoded
-	const keyPackageAsBase64 = bytesToBase64(keyPackageMessage)
-	const decodedMessage = decode(mlsMessageDecoder, base64ToBytes(keyPackageAsBase64))
+	// Encode the KeyPackage as an MLS message
+	const keyPackageAsBase64 = encodeKeyPackage(publicPackage)
 
 	return {
 		id: "", // This will be appened by the server
@@ -47,4 +39,18 @@ export function NewAPKeyPackage(generator: string, actorID: string, publicPackag
 		generator: generator,
 		content: keyPackageAsBase64,
 	}
+}
+
+// encodeKeyPackage represents a KeyPackage as a base64-encoded MLS message
+export function encodeKeyPackage(keyPackage: KeyPackage): string {
+
+	// Encode the KeyPackage as an MLS message
+	const keyPackageMessage = encode(mlsMessageEncoder, {
+		keyPackage: keyPackage,
+		wireformat: wireformats.mls_key_package,
+		version: protocolVersions.mls10,
+	})
+
+	// Encode the messag to base64 for transport
+	return bytesToBase64(keyPackageMessage)
 }

@@ -58,9 +58,14 @@ export class Groups {
 							<div class="width-48 circle flex-center">
 								<i class="bi bi-lock-fill"></i>
 							</div>
-							<div class="flex-grow nowrap ellipsis">
-								<div>{controller.groupName(group)}</div>
-								<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
+							<div class="flex-row flex-grow nowrap ellipsis pos-relative">
+								<div class="flex-grow">
+									<div class="flex-row">{controller.groupName(group)}</div>
+									<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
+								</div>
+								<div class="text-red text-sm">
+									{group.unread && <i class="bi bi-circle-fill"></i>}
+								</div>
 							</div>
 						</div>
 					)

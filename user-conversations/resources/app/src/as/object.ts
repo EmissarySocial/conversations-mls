@@ -126,6 +126,24 @@ export class Object {
 		return 0
 	}
 
+	getBoolean = (namespace: string, property: string) => {
+		const result = this.get(namespace, property)
+
+		if (result == undefined) {
+			return false
+		}
+
+		switch (typeof result) {
+			case "boolean":
+				return result
+
+			case "string":
+				return result.toLowerCase() === "true"
+		}
+
+		return false
+	}
+
 	getArray = (namespace: string, property: string) => {
 		const result = this.get(namespace, property)
 

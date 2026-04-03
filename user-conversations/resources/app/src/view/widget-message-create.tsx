@@ -32,18 +32,26 @@ export class WidgetMessageCreate {
 		const color = enabled ? "var(--blue50)" : "var(--gray30)"
 
 		return (
-			<div role="input" class="flex-row">
-				<textarea
-					value={vnode.state.message}
-					style="border:none; min-height:3em; field-sizing:content; resize:none;"
-					oninput={(e: Event) => this.oninput(vnode, e)}></textarea>
-				<button
-					tabIndex="0"
-					onclick={() => this.sendMessage(vnode)}
-					disabled={disabled}
-					style={`background-color:${color}; color:white; font-size:24px;`}>
-					<i class="bi bi-arrow-up-circle-fill"></i>
-				</button>
+			<div class="flex-row flex-justify">
+				<div role="input" class="flex-grow flex-row">
+					<div class="flex-grow">
+						<textarea
+							value={vnode.state.message}
+							style="border:none; min-height:1em; field-sizing:content; resize:none;"
+							oninput={(e: Event) => this.oninput(vnode, e)}></textarea>
+					</div>
+					<button
+						tabIndex="0"
+						onclick={() => this.sendMessage(vnode)}
+						disabled={disabled}
+						style={`background-color:${color}; color:white; font-size:24px;`}>
+						<i class="bi bi-arrow-up-circle-fill"></i>
+					</button>
+					<label for="fileInput" class="button link" style="font-size:24px;">
+						<i class="bi bi-image"></i>
+					</label>
+					<input type="file" id="fileInput" style="display:none;" />
+				</div>
 			</div>
 		)
 	}

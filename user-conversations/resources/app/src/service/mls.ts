@@ -59,9 +59,10 @@ export class MLS {
 	#delivery: IDelivery
 	#directory: IDirectory
 	#cipherSuite: CiphersuiteImpl
-	#publicKeyPackage: KeyPackage
 	#privateKeyPackage: PrivateKeyPackage
 	#actor: Actor
+
+	publicKeyPackage: KeyPackage
 
 	constructor(
 		database: IDatabase,
@@ -79,12 +80,12 @@ export class MLS {
 
 		this.#actor = actor
 		this.#cipherSuite = cipherSuite
-		this.#publicKeyPackage = publicKeyPackage
+		this.publicKeyPackage = publicKeyPackage
 		this.#privateKeyPackage = privateKeyPackage
 	}
 
 	stop = () => {
-		this.#publicKeyPackage = null as any
+		this.publicKeyPackage = null as any
 		this.#privateKeyPackage = null as any
 		this.#actor = null as any
 	}
@@ -100,7 +101,7 @@ export class MLS {
 		const clientState = await createGroup({
 			context: this.#context(),
 			groupId: encodeText(group.id),
-			keyPackage: this.#publicKeyPackage,
+			keyPackage: this.publicKeyPackage,
 			privateKeyPackage: this.#privateKeyPackage,
 		})
 
@@ -153,7 +154,7 @@ export class MLS {
 		var addKeyPackages = await this.#directory.getKeyPackages(newMembers)
 
 		// Filter out the KeyPackage for THIS device
-		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
+		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.publicKeyPackage.signature))
 
 		// Filter out KeyPackages that are already in the group state (e.g. from another device of the same user)
 		const signatures = this.#getGroupSignatures(group)
@@ -419,7 +420,7 @@ export class MLS {
 			clientState = await joinGroup({
 				context: this.#context(),
 				welcome: message.welcome,
-				keyPackage: this.#publicKeyPackage,
+				keyPackage: this.publicKeyPackage,
 				privateKeys: this.#privateKeyPackage,
 			})
 

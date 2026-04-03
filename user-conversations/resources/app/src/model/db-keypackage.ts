@@ -8,4 +8,5 @@ export type DBKeyPackage = {
 	publicKeyPackage: KeyPackage
 	privateKeyPackage: PrivateKeyPackage
 	cipherSuiteName: "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+	createDate: number
 }

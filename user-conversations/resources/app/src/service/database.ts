@@ -97,6 +97,11 @@ export class Database {
 		this.#db.close()
 	}
 
+	erase = () => {
+		this.#db.close()
+		window.indexedDB.deleteDatabase(this.#db.name)
+	}
+
 	// setChange allows the caller to provide a redraw function that will be called after database operations
 	onchange = (callback: callbackFunction) => {
 		this.#onchange = callback

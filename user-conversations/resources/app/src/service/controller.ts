@@ -22,13 +22,17 @@ import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
 
+import { type Emoji, emojiKey, keyPackageEmojiKey } from "./emojikeys"
+
 // MLS Services
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
 
 // Other utility functions
+import { generateAESKey } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
+import type { KeyPackage } from "ts-mls"
 
 export class Controller {
 
@@ -40,6 +44,8 @@ export class Controller {
 	#receiver: IReceiver
 	#mls?: MLS
 	#allowPlaintextMessages: boolean
+	#encryptionKey?: CryptoKey
+	emojiKey: Emoji[] = []
 
 	config: Config
 	groups: Group[]
@@ -134,6 +140,9 @@ export class Controller {
 			this.config.clientName,
 		)
 
+		// Calculate EmojiKey
+		this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage)
+
 		// Start the realtime message receiver
 		this.#receiver.start(this.receiveActivity)
 
@@ -167,23 +176,36 @@ export class Controller {
 	}
 
 	// startupConfiguration is called when the user submits their options from the initial welcome screen
-	startupConfiguration = async (clientName: string, passcode: string, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
-		this.saveConfiguration(clientName, passcode, isDesktopNotifications, isHideOnBlur)
+	startupConfiguration = async (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
+
+		// Create encryption key for database encryption
+		this.#encryptionKey = await generateAESKey()
+
+		// Set up the initial configuration
+		this.config.ready = true
+		this.config.clientName = clientName
+		this.config.isEncryptedMessages = isEncryptedMessages
+		this.config.isDesktopNotifications = isDesktopNotifications
+		this.config.isHideOnBlur = isHideOnBlur
+
+		await this.#database.saveConfig(this.config)
 		await this.#start()
 	}
 
 	// saveConfiguration is called when the user submits their options from the initial welcome screen
-	saveConfiguration = async (clientName: string, passcode: string, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
+	saveConfiguration = async (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
 
 		this.config.ready = true
 		this.config.clientName = clientName
-		this.config.passcode = passcode
+		this.config.isEncryptedMessages = isEncryptedMessages
 		this.config.isDesktopNotifications = isDesktopNotifications
 		this.config.isHideOnBlur = isHideOnBlur
 
 		await this.#database.saveConfig(this.config)
 	}
 
+	// stop halts all services and listeners and clears local memory. It is like
+	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = () => {
 		this.#database.stop()
 		this.#delivery.stop()
@@ -192,6 +214,26 @@ export class Controller {
 
 		this.isApplicationRunning = false
 		m.redraw()
+	}
+
+	// eraseDevice removes all locally stored data and reloads the application.
+	eraseDevice = async () => {
+
+		if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
+			return
+		}
+
+		// Remove the KeyPackage from the server
+		const keyPackage = await this.#database.loadKeyPackage()
+		if (keyPackage != undefined) {
+			await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL)
+		}
+
+		// Erase all local data
+		await this.#database.erase()
+
+		// Reload the application
+		window.document.location.reload()
 	}
 
 	//////////////////////////////////////////
@@ -204,6 +246,18 @@ export class Controller {
 
 	actorIcon = (): string => {
 		return this.#actor.icon()
+	}
+
+	lastMessage = async (messageId?: string): Promise<string> => {
+
+		// If a new messageId has been provided, then update the configuration
+		if (messageId != undefined) {
+			this.config.lastMessageId = messageId
+			await this.#database.saveConfig(this.config)
+		}
+
+		// Return the current value of lastMessageId
+		return this.config.lastMessageId
 	}
 
 	//////////////////////////////////////////
@@ -293,7 +347,7 @@ export class Controller {
 			const updated = await this.#directory.loadContact(contact.id)
 
 			if (updated == undefined) {
-				return
+				continue
 			}
 
 			if (updated != contact) {
@@ -330,9 +384,6 @@ export class Controller {
 			group = await this.#mls.encodeGroup(group)
 		}
 
-		// Save the group to the database
-		this.saveGroup(group)
-
 		// Add initial members to the group (this also saves the group)
 		this.group = await this.addGroupMembers(group, recipients)
 
@@ -353,6 +404,17 @@ export class Controller {
 		this.selectGroup(this.selectedGroupId())
 	}
 
+	saveGroupAndSync = async (group: Group) => {
+
+		console.log("saveGroupAndSync", group)
+
+		// Save the group in the database
+		await this.saveGroup(group)
+
+		// Synchronize with the server
+		this.syncGroup(group)
+	}
+
 	// saveGroup saves the specified group to the database
 	saveGroup = async (group: Group) => {
 
@@ -367,12 +429,9 @@ export class Controller {
 		await this.loadGroups()
 	}
 
-	saveGroupAndSync = async (group: Group) => {
+	syncGroup = async (group: Group) => {
 
-		console.log("saveGroupAndSync", group)
-
-		// Save the group in the database
-		this.saveGroup(group)
+		console.log("syncGroup", group)
 
 		// Send a "Group:Update" activity to my other devices
 		var activity = new Activity({
@@ -386,10 +445,11 @@ export class Controller {
 				"description": group.description,
 				"stateId": group.stateId,
 				"tag": group.tags,
+				"unread": group.unread,
 			}
 		})
 
-		// Send a private message to my other devices
+		// Asynchronously send a private message to my other devices
 		this.#sendActivity(group, activity)
 	}
 
@@ -456,7 +516,7 @@ export class Controller {
 	}
 
 	// selectGroup updates the "selectedGroupId" and reloads messages for that group
-	selectGroup = (groupId: string) => {
+	selectGroup = async (groupId: string) => {
 
 		// If there are no groups, then clear values and exit.
 		if (this.groups.length == 0) {
@@ -467,22 +527,24 @@ export class Controller {
 		}
 
 		// Find the group with the specified ID
-		const group = this.groups.find((group) => group.id == groupId)
+		var group = this.groups.find((group) => group.id == groupId)
 
-		// If the group can't be found, update the selected group and reload related records
-		if (group != undefined) {
-			this.group = group
-			this.loadMessages()
-			this.loadContacts()
-			this.page_group_messages()
-			return
+		// If the group can't be found, then just use the first group in the list
+		if (group == undefined) {
+			group = this.groups[0]!
 		}
 
-		// Fall through means we have at least one group, but
-		// the specified groupId wasn't found, so just select the first one.
-		this.group = this.groups[0]!
-		this.loadMessages()
-		this.loadContacts()
+		// Remove "unread" marker, if it exists
+		if (group.unread) {
+			group.unread = false
+			await this.saveGroup(group) // Run this HTTP call asynchronously
+			this.syncGroup(group) // Run this HTTP call asynchronously
+		}
+
+		this.group = group
+		await this.loadMessages()
+		await this.loadContacts()
+
 		this.page_group_messages()
 	}
 
@@ -833,13 +895,13 @@ export class Controller {
 
 		} catch (error) {
 
-			/*
-				this.#delivery.sendActivity({
+			console.error("Error receiving activity:", error)
+
+			this.#delivery.sendActivity({
 				actor: this.actorId(),
-				type: vocab.ActivityTypeReject,
+				type: vocab.ActivityTypeFailure,
 				object: activity.id(),
 			})
-			*/
 		}
 	}
 
@@ -894,8 +956,15 @@ export class Controller {
 		// Save the message to the database
 		await this.#database.saveMessage(message)
 
-		// Update the group with the message content
+		// Mark the group with the lastMessage content
 		group.lastMessage = object.content()
+
+		// Mark the group as "unread"
+		if (groupId != this.selectedGroupId()) {
+			group.unread = true
+		}
+
+		// Update the group
 		await this.saveGroup(group)
 
 		// Send desktop notifications (if requested)
@@ -944,7 +1013,7 @@ export class Controller {
 		await this.#database.deleteMessage(message.id)
 
 		// Reload messages to refresh the UX
-		this.loadMessages()
+		await this.loadMessages()
 	}
 
 	#receiveActivity_Like = async (activity: Activity) => {
@@ -1003,6 +1072,7 @@ export class Controller {
 		group.name = object.name()
 		group.description = object.description()
 		group.tags = object.getArray("as", "tag")
+		group.unread = object.getBoolean("emissary", "unread")
 		this.setGroupState(group, object.getString("emissary", "stateId"))
 
 		await this.saveGroup(group)
@@ -1104,27 +1174,29 @@ export class Controller {
 
 	modal_editMessage = async (messageId: string) => {
 
-		this.message = await this.loadMessage(messageId)
+		const message = await this.loadMessage(messageId)
 
-		if (this.message == undefined) {
+		if (message == undefined) {
 			return
 		}
 
-		if (this.message.sender != this.actorId()) {
+		if (message.sender != this.actorId()) {
 			return
 		}
 
+		this.message = message
 		this.modalView = "EDIT-MESSAGE"
 	}
 
 	modal_messageHistory = async (messageId: string) => {
 
-		this.message = await this.loadMessage(messageId)
+		const message = await this.loadMessage(messageId)
 
-		if (this.message == undefined) {
+		if (message == undefined) {
 			return
 		}
 
+		this.message = message
 		this.modalView = "MESSAGE-HISTORY"
 	}
 

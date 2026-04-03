@@ -14,6 +14,7 @@ export type Group = {
 	createDate: number
 	updateDate: number
 	readDate: number
+	unread: boolean
 }
 
 // EncryptedGroup extends Group with additional properties related to encryption state
@@ -34,6 +35,7 @@ export function NewGroup(): Group {
 		createDate: Date.now(),
 		updateDate: Date.now(),
 		readDate: 0,
+		unread: false,
 	}
 }
 

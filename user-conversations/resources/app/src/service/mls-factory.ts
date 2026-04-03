@@ -70,6 +70,7 @@ export async function MLSFactory(
 			publicKeyPackage: keyPackageResult.publicPackage,
 			privateKeyPackage: keyPackageResult.privatePackage,
 			cipherSuiteName: cipherSuiteName,
+			createDate: Date.now(),
 		}
 
 		await database.saveKeyPackage(dbKeyPackage)

@@ -2,7 +2,7 @@ import { type Actor } from "../as/actor"
 import { Activity } from "../as/activity"
 import { Collection } from "../as/collection"
 import { rangeActivities } from "../as/collection"
-import { type IActivityHandler } from "./interfaces"
+import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfaces"
 
 // Receiver service receives messages from an ActivityPub actor and forwards them
 // to the MLS client
@@ -10,14 +10,16 @@ export class Receiver {
 
 	#messagesUrl: string // endpoint for the actor's mls:messages collection
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
-	#handler: IActivityHandler // list of registered message handlers
+	#activityHandler: IActivityHandler // list of registered message handlers
+	#lastMessage: ILastMessageGetterSetter // handler function for getting/setting the last message ID
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor() {
 		this.#messagesUrl = ""
-		this.#handler = async function (activity: Activity) { }
+		this.#activityHandler = async (activity: Activity) => { }
+		this.#lastMessage = async (messageId?: string) => { return "" }
 		this.#polling = false
 		this.#pollAgain = false
 	}
@@ -30,10 +32,11 @@ export class Receiver {
 	}
 
 	// start begins polling for new messages and processing them with the registered handlers
-	start = async (handler: IActivityHandler) => {
+	start = async (activityHandler: IActivityHandler, lastMessage: ILastMessageGetterSetter) => {
 
 		// Set the handler function to be called with each new message
-		this.#handler = handler
+		this.#activityHandler = activityHandler
+		this.#lastMessage = lastMessage
 
 		// Poll the server on start
 		this.poll()
@@ -70,14 +73,17 @@ export class Receiver {
 		this.#polling = true
 
 		// Fetch NEW messages from the server
-		const lastUrl = localStorage.getItem("lastUrl") || ""
-		const activities = rangeActivities(this.#messagesUrl, lastUrl, { credentials: "include" })
+		var lastMessageId = await this.#lastMessage()
+		const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" })
 
 		// Process each activity sequentially
 		for await (const activity of activities) {
-			localStorage.setItem("lastUrl", activity.id())
-			await this.#handler(activity)
+			lastMessageId = activity.id()
+			await this.#activityHandler(activity)
 		}
+
+		// Update the last message ID after processing all messages
+		await this.#lastMessage(lastMessageId)
 
 		// Release the "lock"
 		this.#polling = false
