@@ -37,7 +37,7 @@ export class AppSettings {
 		const controller = vnode.attrs.controller
 
 		return (
-			<div id="conversations">
+			<div id="conversations" class="app-content">
 				<div class="padding width-800">
 					<div class="card padding">
 						<div class="text-lg bold margin-bottom">Conversation Settings</div>
@@ -120,6 +120,8 @@ export class AppSettings {
 
 						<button class="text-red" onclick={() => controller.eraseDevice()}>Erase Device</button>
 					</div>
+
+					<div class="padding-vertical-xl"></div>
 				</div>
 			</div>
 		)

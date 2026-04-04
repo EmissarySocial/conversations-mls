@@ -143,7 +143,7 @@ export class Controller {
 		this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage)
 
 		// Start the realtime message receiver
-		this.#receiver.start(this.receiveActivity)
+		this.#receiver.start(this.receiveActivity, this.lastMessage)
 
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {

@@ -111,11 +111,8 @@ export interface IDirectory {
 export interface IReceiver {
 
 	// Lifecycle methods
-	stop(): void
-
-	// Lifecycle methods
 	setActor(actor: Actor): void
-	start(handler: IActivityHandler): void
+	start(handler: IActivityHandler, lastMessageGetterSetter: ILastMessageGetterSetter): void
 	stop(): void
 }
 
