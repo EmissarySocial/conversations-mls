@@ -1,9 +1,12 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { type Message } from "../model/message"
-import { NewContact, type Contact } from "../model/contact"
 import { Controller } from "../service/controller"
 import { WidgetMessageCreate } from "./widget-message-create"
+import { ViewMessage } from "./message"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+
+dayjs.extend(relativeTime)
 
 type GroupMessagesVnode = Vnode<GroupMessagesAttrs, GroupMessagesState>
 
@@ -23,6 +26,8 @@ export class GroupMessages {
 		//
 		// List the messages in the selected group
 		const controller = vnode.attrs.controller
+		var lastSender = ""
+		var lastDate = ""
 
 		// Display messages
 		return (
@@ -37,92 +42,30 @@ export class GroupMessages {
 				</div>
 				<div id="conversation-messages">
 					<div class="flex-grow padding-sm padding-bottom-lg">
-						{controller.messages.map((message) => {
-							const contact = controller.contacts.get(message.sender) || NewContact()
-							const isMe = message.sender == controller.actorId()
+						{controller.messages.map(message => {
 
-							if (isMe) {
-								return (
-									<div class="message me pos-relative hover-trigger">
-										<div>{message.plaintext}</div>
-										<div class="flex-row text-xs text-light-gray">
-											{new Date(message.createDate).toLocaleString()}
-											&nbsp;
-											{message.received.map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
-										</div>
-										<div class="pos-absolute-top-right text-sm">
-											<i class="bi bi-pencil-square margin-right hover-show clickable"
-												onclick={() => controller.modal_editMessage(message.id)}></i>
-											<i class="bi bi-trash margin-right hover-show clickable"
-												onclick={() => { if (confirm("Are you sure you want to delete this message?")) { vnode.attrs.controller.deleteMessage(message.id) } }}></i>
-											{this.likes(vnode, message)}
-										</div>
-									</div>
-								)
+							const showSender = (message.sender != lastSender)
+
+							/* HIDING THIS FOR NOW...
+							var showDate = dayjs(message.createDate).fromNow()
+							if (showDate == lastDate) {
+								showDate = ""
+							} else {
+								lastDate = showDate
 							}
-							return (
-								<div class="message pos-relative hover-trigger flex-row">
-									<div class="width-32">
-										<img src={contact.icon} class="circle width-32" />
-									</div>
-									<div class="flex-grow">
-										<div class="flex-grow bold">{contact.name}</div>
-										<div>{message.plaintext}</div>
-										<div class="flex-row text-xs text-light-gray">
-											{
-												(message.history.length > 0)
-													? <span class="clickable" onclick={() => controller.modal_messageHistory(message.id)}><span class="text-underline">Edited</span> {new Date(message.updateDate).toLocaleString()}</span>
-													: new Date(message.updateDate).toLocaleString()
-											}
-											&nbsp;
-											{message.received.map(actorId => <i class="bi bi-check-circle" title={`Received by ${actorId}`}></i>)}
-										</div>
-										<div class="pos-absolute-top-right text-sm">
-											{this.likes(vnode, message)}
-										</div>
-									</div>
-								</div>
-							)
+							*/
+							const showDate = ""
+
+							return <ViewMessage controller={controller} message={message} showSender={showSender} showDate={showDate} />
 						})}
 					</div>
 				</div>
 				<div id="conversation-create-widget">
 					<div class="padding-sm">
-						<WidgetMessageCreate controller={vnode.attrs.controller} />
+						<WidgetMessageCreate controller={vnode.attrs.controller} inReplyTo={vnode.attrs.controller.inReplyTo} />
 					</div>
 				</div>
 			</div>
-		)
-	}
-
-	likes(vnode: GroupMessagesVnode, message: Message): JSX.Element {
-
-		if (message.likes == undefined) {
-			message.likes = []
-		}
-
-		if (message.likes.length == 0) {
-			return (
-				<span class="hover-show clickable margin-right-xs" onclick={() => vnode.attrs.controller.likeMessage(message.id)}>
-					<i class="bi bi-heart"></i>
-				</span>
-			)
-		}
-
-		if (message.likes.includes(vnode.attrs.controller.actorId())) {
-			return (
-				<span class="clickable" onclick={() => vnode.attrs.controller.undoLikeMessage(message.id)}>
-					<i class="bi bi-heart-fill text-red margin-right-xs"></i>
-					{(message.likes.length) > 1 ? message.likes.length : ""}
-				</span>
-			)
-		}
-
-		return (
-			<span class="clickable" onclick={() => vnode.attrs.controller.likeMessage(message.id)}>
-				<i class="bi bi-heart-fill margin-right-xs"></i>
-				{(message.likes.length) > 1 ? message.likes.length : ""}
-			</span>
 		)
 	}
 }

@@ -81,7 +81,7 @@ export function messageToActivityStream(group: Group, message: Message): { [key:
 		type: vocab.ObjectTypeNote,
 		to: group.members,
 		context: group.id,
-		content: message.plaintext,
+		content: message.content,
 		published: new Date().toISOString(),
 	}
 }

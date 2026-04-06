@@ -30,6 +30,12 @@ export class Activity extends Object {
 		return await loadActor(actor)
 	}
 
+	// content returns the string value of the "content" property.
+	// Rarely used, except for "Like" activities with emoji content.
+	content = () => {
+		return this.getString("as", "content")
+	}
+
 	// context returns the message context (not @context) property for this activity
 	context = () => {
 		return this.getString("as", vocab.PropertyContext)

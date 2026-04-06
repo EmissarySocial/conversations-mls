@@ -12,13 +12,13 @@ interface EditMessageAttrs {
 }
 
 interface EditMessageState {
-	plaintext: string
+	content: string
 }
 
 export class EditMessage {
 
 	oninit(vnode: EditMessageVnode) {
-		vnode.state.plaintext = vnode.attrs.controller.message.plaintext
+		vnode.state.content = vnode.attrs.controller.message.content
 	}
 
 	view(vnode: EditMessageVnode) {
@@ -31,7 +31,7 @@ export class EditMessage {
 						</div>
 						<div class="layout-elements">
 							<div class="layout-element">
-								<textarea rows="8" value={vnode.state.plaintext} oninput={(event: Event) => this.setMessage(vnode, event)}></textarea>
+								<textarea rows="8" value={vnode.state.content} oninput={(event: Event) => this.setMessage(vnode, event)}></textarea>
 								<div class="text-sm text-gray">Changes will be sent to all participants, but may not be visible in some apps.</div>
 							</div>
 						</div>
@@ -47,7 +47,7 @@ export class EditMessage {
 
 	setMessage(vnode: EditMessageVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
-		vnode.state.plaintext = target.value
+		vnode.state.content = target.value
 	}
 
 	async onsubmit(event: SubmitEvent, vnode: EditMessageVnode) {
@@ -61,7 +61,7 @@ export class EditMessage {
 		var message = controller.message
 
 		// Update the message content
-		message.plaintext = vnode.state.plaintext
+		message.content = vnode.state.content
 
 		// Save the message (and send Updates to participants)
 		await controller.updateMessage(message)

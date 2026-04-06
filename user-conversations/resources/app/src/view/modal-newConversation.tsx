@@ -14,7 +14,7 @@ interface NewConversationAttrs {
 
 interface NewConversationState {
 	actors: APActor[]
-	plaintext: string
+	content: string
 	encrypted: boolean
 }
 
@@ -23,7 +23,7 @@ export class NewConversation {
 
 	oninit(vnode: NewConversationVnode) {
 		vnode.state.actors = []
-		vnode.state.plaintext = ""
+		vnode.state.content = ""
 		vnode.state.encrypted = false
 	}
 
@@ -51,7 +51,7 @@ export class NewConversation {
 					</div>
 					<div class="margin-top">
 						{this.submitButton(vnode)}
-						<button onclick={vnode.attrs.close} tabIndex="0">
+						<button type="button" onclick={vnode.attrs.close} tabIndex="0">
 							Close
 						</button>
 					</div>
@@ -109,7 +109,7 @@ export class NewConversation {
 	submitButton(vnode: NewConversationVnode): JSX.Element {
 		if (vnode.state.actors.length == 0) {
 			return (
-				<button class="primary" disabled>
+				<button type="submit" class="primary" disabled>
 					Start a Conversation
 				</button>
 			)
@@ -117,14 +117,14 @@ export class NewConversation {
 
 		if (vnode.state.encrypted) {
 			return (
-				<button class="primary" tabindex="0">
+				<button type="submit" class="primary" tabIndex="0">
 					<i class="bi bi-lock"></i> Send Encrypted
 				</button>
 			)
 		}
 
 		return (
-			<button class="selected" disabled>
+			<button type="submit" class="selected" disabled>
 				Send Direct Message
 			</button>
 		)
@@ -141,13 +141,13 @@ export class NewConversation {
 		}
 	}
 
-	// setPlaintext updates the plaintext message in the component state as the user types
+	// setPlaintext updates the content message in the component state as the user types
 	setPlaintext(vnode: NewConversationVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
-		vnode.state.plaintext = target.value
+		vnode.state.content = target.value
 	}
 
-	// onsubmit creates a new group with the selected participants, sends the plaintext message, and closes the dialog
+	// onsubmit creates a new group with the selected participants, sends the content message, and closes the dialog
 	async onsubmit(event: SubmitEvent, vnode: NewConversationVnode) {
 
 		// Collect variables
@@ -159,14 +159,14 @@ export class NewConversation {
 		event.stopPropagation()
 
 		// Create a new group and send an encrypted message
-		const group = await controller.createGroup(participants, vnode.state.plaintext, vnode.state.encrypted)
+		const group = await controller.createGroup(participants, vnode.state.content, vnode.state.encrypted)
 		return this.close(vnode)
 	}
 
 	// close resets the component state and closes the modal dialog
 	close(vnode: NewConversationVnode) {
 		vnode.state.actors = []
-		vnode.state.plaintext = ""
+		vnode.state.content = ""
 		vnode.attrs.close()
 	}
 }

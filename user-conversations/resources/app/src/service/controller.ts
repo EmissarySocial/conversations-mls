@@ -9,11 +9,10 @@ import * as vocab from "../as/vocab"
 // Model objects
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
-import { type Message } from "../model/message"
 import { type EncryptedGroup, type Group } from "../model/group"
 import { NewConfig } from "../model/config"
 import { NewGroup } from "../model/group"
-import { NewMessage } from "../model/message"
+import { Message, NewMessage } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
 
 // Services
@@ -53,6 +52,7 @@ export class Controller {
 
 	group: Group | EncryptedGroup
 	message: Message
+	inReplyTo: Message | undefined
 
 	pageView: string
 	modalView: string
@@ -81,7 +81,8 @@ export class Controller {
 		this.messages = []
 		this.contacts = new Map<string, Contact>()
 		this.group = NewGroup()
-		this.message = NewMessage()
+		this.message = new Message()
+		this.inReplyTo = undefined
 
 		// UX state
 		this.pageView = "LOADING"
@@ -631,6 +632,16 @@ export class Controller {
 		return await this.#database.loadMessage(messageId)
 	}
 
+	startReply = (message: Message) => {
+		this.inReplyTo = message
+		m.redraw()
+	}
+
+	removeReply = () => {
+		this.inReplyTo = undefined
+		m.redraw()
+	}
+
 	// sendMessage sends a message to the specified group
 	sendMessage = async (content: string) => {
 		//
@@ -643,7 +654,8 @@ export class Controller {
 		var message = NewMessage()
 		message.groupId = this.group.id
 		message.sender = this.#actor.id()
-		message.plaintext = content
+		message.content = content
+		message.type = "SENT"
 
 		await this.#database.saveMessage(message)
 
@@ -665,6 +677,9 @@ export class Controller {
 
 		// Reload to refresh the UX
 		await this.loadMessages()
+
+		// Cancel the "reply" state
+		this.removeReply()
 	}
 
 	updateMessage = async (message: Message) => {
@@ -703,6 +718,10 @@ export class Controller {
 	// deleteMessage removes a message (sent by the current actor) from the current group
 	deleteMessage = async (messageId: string) => {
 
+		if (!confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
+			return
+		}
+
 		// Load the message from the data store
 		const message = await this.loadMessage(messageId)
 
@@ -738,13 +757,14 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	// likeMessage adds a "like" from the current actor to the specified message
-	likeMessage = async (messageId: string) => {
+	// reactToMessage adds a "reaction" from the current actor to the specified message
+	reactToMessage = async (messageId: string, content: string = "❤️") => {
 
-		// Mark the message as "liked" in the database
-		const message = await this.#database.likeMessage(this.actorId(), messageId)
+		// Load the message from the database
+		const message = await this.loadMessage(messageId)
 
 		if (message == undefined) {
+			console.error("Message not found:", messageId)
 			return
 		}
 
@@ -754,12 +774,17 @@ export class Controller {
 			return
 		}
 
+		// Add the reaction and save to the database
+		message.setReaction(this.actorId(), content)
+		await this.#database.saveMessage(message)
+
 		// Send a "like" activity to the actor's outbox
 		var activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
 			id: newId(),
 			actor: this.actorId(),
 			type: vocab.ActivityTypeLike,
+			content: content,
 			to: group.members,
 			object: message.id,
 		})
@@ -769,18 +794,32 @@ export class Controller {
 
 		// Reload messages to refresh the UX
 		await this.loadMessages()
+
+		m.redraw()
 	}
 
-	// undoLikeMessage removes a "like" from the specified message
-	undoLikeMessage = async (messageId: string) => {
+	// undoReaction removes a "reaction" from the specified message
+	undoReaction = async (messageId: string) => {
 
 		// Undo Mark the message as "liked" in the database
-		const message = await this.#database.undoLikeMessage(this.actorId(), messageId)
+		const message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
 			return
 		}
+
+		// Try to remove the reaction. If no change required, then exit.
+		if (!message.removeReaction(this.actorId())) {
+			return
+		}
+
+		// Save the changes to the database
+		await this.#database.saveMessage(message)
+
+		// Reload messages to refresh the UX
+		await this.loadMessages()
+		m.redraw()
 
 		// Load the group that this message belongs to (for addressing info)
 		var group = await this.#database.loadGroup(message.groupId)
@@ -788,7 +827,7 @@ export class Controller {
 			return
 		}
 
-		// Send a "like" activity to the actor's outbox
+		// Send an "undo" activity to the actor's outbox
 		var activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
 			id: newId(),
@@ -802,11 +841,8 @@ export class Controller {
 			}
 		})
 
-		// Send the activity to the outbox
+		// (asynchronously) send the activity to the outbox
 		this.#sendActivity(group, activity)
-
-		// Reload messages to refresh the UX
-		await this.loadMessages()
 	}
 
 	//////////////////////////////////////////
@@ -932,6 +968,8 @@ export class Controller {
 			throw new Error("Decrypted activity actor must match object's attributedTo")
 		}
 
+		const sentByMe = (object.attributedToId() == this.actorId())
+
 		// Locate the group assigned to this activity
 		const groupId = activity.context()
 		const group = await this.#database.loadGroup(groupId)
@@ -941,18 +979,22 @@ export class Controller {
 		}
 
 		// Create a new message record in the database for this incoming message
-		const message = {
+		const message = NewMessage({
 			id: object.id(),
 			groupId: groupId,
+			type: (sentByMe ? "SENT" : "RECEIVED"),
 			sender: object.attributedToId(),
-			plaintext: object.content(),
-			likes: [],
+			content: object.content(),
+			reactions: {},
 			history: [],
 			received: [this.actorId()],
 			inReplyTo: object.inReplyToId(),
 			createDate: Date.now(),
 			updateDate: Date.now(),
-		}
+		})
+
+
+		console.log("Received 'Create' message:", message)
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
@@ -961,8 +1003,10 @@ export class Controller {
 		group.lastMessage = object.content()
 
 		// Mark the group as "unread"
-		if (groupId != this.selectedGroupId()) {
-			group.unread = true
+		if (!sentByMe) {
+			if (groupId != this.selectedGroupId()) {
+				group.unread = true
+			}
 		}
 
 		// Update the group
@@ -971,16 +1015,17 @@ export class Controller {
 		// Send desktop notifications (if requested)
 		if (this.config.isDesktopNotifications) {
 			if (Notification.permission === "granted") {
-				if (message.sender != this.actorId()) {
+				if (!sentByMe) {
 					if (this.isWindowFocused == false) {
 						new Notification(message.sender, {
-							body: message.plaintext,
+							body: message.content,
 						})
 					}
 				}
 			}
 		}
 
+		// Send acknowledgement to the sender
 		this.#sendActivity(group, {
 			actor: this.actorId(),
 			type: vocab.ActivityTypeAcknowledge,
@@ -1017,11 +1062,20 @@ export class Controller {
 
 	#receiveActivity_Like = async (activity: Activity) => {
 
-		// Add a "like" to the message in the database
-		const message = await this.#database.likeMessage(activity.actorId(), activity.objectId())
+		const message = await this.#database.loadMessage(activity.objectId())
+
+		// RULE: Verify that the message exists before trying to add a reaction
 		if (message == undefined) {
+			console.error("#receiveActivity_Like: Message not found:", activity.objectId())
 			return
 		}
+
+		// Apply the reaction as a "like" (with optional content)
+		const content = activity.content() || "❤️"
+		message.setReaction(activity.actorId(), content)
+
+		// Save the message to the database
+		await this.#database.saveMessage(message)
 
 		// Reload messages to refresh the UX
 		if (message.groupId == this.selectedGroupId()) {
@@ -1031,25 +1085,29 @@ export class Controller {
 
 	#receiveActivity_Undo = async (activity: Activity) => {
 
-		const object = await activity.objectAsActivity()
+		const originalLike = await activity.objectAsActivity()
 
 		// RULE: Actors can only "Undo" their own activities.
-		if (activity.actorId() != object.actorId()) {
+		if (activity.actorId() != originalLike.actorId()) {
 			return
 		}
 
 		// RULE: For now, we only support "Undo" of "Like" activities.
-		if (object.type() != vocab.ActivityTypeLike) {
+		if (originalLike.type() != vocab.ActivityTypeLike) {
 			return
 		}
 
 		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
-		const message = await this.#database.undoLikeMessage(activity.actorId(), object.objectId())
+		var message = await this.#database.loadMessage(originalLike.objectId())
 		if (message == undefined) {
 			return
 		}
 
-		// Reload messages to refresh the UX
+		// Remove the reaction, then (asynchronously) save the message to the database
+		message.removeReaction(activity.actorId())
+		this.#database.saveMessage(message)
+
+		// (If this we're looking at this group right now, then Reload messages to refresh the UX
 		if (message.groupId == this.selectedGroupId()) {
 			this.loadMessages()
 		}
@@ -1107,8 +1165,8 @@ export class Controller {
 		}
 
 		// Update the message content
-		message.history.push(message.plaintext)
-		message.plaintext = object.content()
+		message.history.push(message.content)
+		message.content = object.content()
 		message.updateDate = Date.now()
 
 		// Save the message to the database
@@ -1176,15 +1234,18 @@ export class Controller {
 		const message = await this.loadMessage(messageId)
 
 		if (message == undefined) {
+			console.error("Message not found")
 			return
 		}
 
 		if (message.sender != this.actorId()) {
+			console.error("Only the sender can edit this message")
 			return
 		}
 
 		this.message = message
 		this.modalView = "EDIT-MESSAGE"
+		m.redraw()
 	}
 
 	modal_messageHistory = async (messageId: string) => {
@@ -1240,7 +1301,7 @@ export class Controller {
 		}
 
 		// Send the activity MLS service
-		console.log("Sending activity via MLS service:", activity)
+		console.log("Sending activity via MLS service:", activity.toObject())
 		return await this.#mls.sendActivity(group, activity)
 	}
 }

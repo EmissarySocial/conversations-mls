@@ -11,7 +11,7 @@ import { type Config } from "../model/config"
 import { type EncryptedGroup } from "../model/group"
 import { type Group } from "../model/group"
 import { type Contact } from "../model/contact"
-import { type Message } from "../model/message"
+import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
 // Model Objects
@@ -54,7 +54,7 @@ interface Schema extends DBSchema {
 
 	message: {
 		key: string
-		value: Message
+		value: MessageData
 		indexes: {
 			id: string
 			groupId: string
@@ -221,11 +221,11 @@ export class Database {
 
 	// loadMessage retrieves a message from the database
 	loadMessage = async (messageID: string) => {
-		const message = await this.#db.get("message", messageID)
-		if (message == undefined) {
+		const data = await this.#db.get("message", messageID)
+		if (data == undefined) {
 			throw new Error("Message not found: " + messageID)
 		}
-		return message
+		return NewMessage(data)
 	}
 
 	// saveMessage saves a message to the database
@@ -255,26 +255,22 @@ export class Database {
 	}
 
 	// likeMessage adds a "like" from the specified actor to the specified message
-	likeMessage = async (actorId: string, messageId: string) => {
+	likeMessage = async (actorId: string, messageId: string, content: string) => {
 
 		// Retrieve the message from the database
 		var message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
-			console.error("Cannot find message to 'like'")
+			console.error("Cannot find message: " + messageId)
 			return
 		}
 
-		// RULE: If this actor has already liked this message, then don't like it again
-		if (message.likes.includes(actorId)) {
-			return
-		}
-
-		// Add the "like" to our local message record and save to the database.
-		message.likes.push(actorId)
+		// Apply the reaction content and save the record
+		message.setReaction(actorId, content)
 		await this.saveMessage(message)
 
+		// Success
 		return message
 	}
 
@@ -285,22 +281,16 @@ export class Database {
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
-			console.error("Cannot find 'like' message to undo")
+			console.error("Cannot find 'like' message to undo: " + messageId)
 			return undefined
 		}
 
-		// Search for a "like" from this actor
-		const removeIndex = message.likes.indexOf(actorId)
-
-		// If not found, exit
-		if (removeIndex == -1) {
-			return undefined
+		// Remove the reaction and save the record
+		if (message.removeReaction(actorId)) {
+			await this.saveMessage(message)
 		}
 
-		// If found, remove the "like" from the message and save
-		message.likes.splice(removeIndex, 1)
-		await this.saveMessage(message)
-
+		// Success
 		return message
 	}
 }

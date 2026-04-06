@@ -12,13 +12,13 @@ interface MessageHistoryAttrs {
 }
 
 interface MessageHistoryState {
-	plaintext: string
+	content: string
 }
 
 export class MessageHistory {
 
 	oninit(vnode: MessageHistoryVnode) {
-		vnode.state.plaintext = vnode.attrs.controller.message.plaintext
+		vnode.state.content = vnode.attrs.controller.message.content
 	}
 
 	view(vnode: MessageHistoryVnode) {
@@ -30,7 +30,7 @@ export class MessageHistory {
 					{message.history.map((content, index) => (
 						<div>{index + 1}. {content}</div>
 					))}
-					<div>{message.history.length + 1}. {message.plaintext}</div>
+					<div>{message.history.length + 1}. {message.content}</div>
 				</div>
 				<button onclick={() => this.close(vnode)} tabIndex="0">Close</button>
 			</Modal>
