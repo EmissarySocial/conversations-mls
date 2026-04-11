@@ -13,7 +13,9 @@
 		}
 	}
 	roles: {}
-	bundles: {}
+	bundles: {
+		stylesheet:	{content-type:"text/css"}
+	}
 	actions: {
 		index: {
 			roles:["self"]

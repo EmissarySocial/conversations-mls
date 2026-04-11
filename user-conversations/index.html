@@ -1,147 +1,22 @@
 <div class="app" script="init send SelectNav(id:'conversations')">
 
-	<div id="mls" class="width-100% flex-row" data-actor-id="{{.ActorURL}}"></div>
+	<!-- Metadata -->
+	<link rel="icon" href="{{.IconURL}}"/>
 
-	<style>
-		#conversations {
-			
-			display:flex;
-			flex-grow:1;
-			width:100%;
+	{{- if .IsMasquerading -}}
 
-			#app-sidebar {
-				flex-shrink:0;
-				font-size: 16px;
-				background-color: var(--gray10);
+		<div class="pos-absolute-four-corners bg-stripes flex-center">
+			<div class="card padding width-480 align-center">
+				Administrators cannot view private conversations.
+			</div>
+		</div>
 
-				[role="button"] {
-					padding: 8px;
-					border-radius: 8px;
+	{{- else -}}
 
-					&.highlight {
-						background-color: var(--gray20);
-					}
-				}
-			}
-			
-			#conversation-details {
-				display:flex;
-				flex-grow:1;
-				flex-direction:column;
-				height:100%;
-				background-color:var(--gray09);
+		<link rel="stylesheet" href="/.templates/user-conversations/stylesheet">
+		<div id="mls" class="width-100% flex-row" data-actor-id="{{.ActorURL}}"></div>
+		<script src="/.templates/user-conversations/resources/app/dist/app.js"></script>
 
-				#conversation-header {
-					padding: calc(var(--rhythm) * 2);
-					border-bottom: 1px solid var(--gray20);
-					background-color: var(--white);
-				}
+	{{- end -}}
 
-				#conversation-messages {
-					flex-grow:1;
-					width:100%;
-					overflow-y:scroll;
-
-					.message {
-
-						display:flex;
-						flex-direction:column;
-						margin-bottom:8px;
-
-						.bubble {
-							border-radius:16px;
-							padding:8px 16px 4px 16px;
-							min-width:320px;
-							width:75%;
-							max-width:600px;
-
-							button.circle {
-								border-radius:50%;
-								padding:6px;
-								margin:0px 1px;
-							}
-						}
-
-						&.sent {
-
-							align-items: flex-end;
-
-							.bubble {
-								background-color: var(--blue50);
-								color:white;
-
-								button {
-									background-color:rgba(0,0,0,0.1);
-									color:white;
-
-									&:hover {
-										background-color:rgba(0,0,0,0.2);
-									}
-
-									&.transparent {
-										background-color:transparent;
-									}
-
-									&.selected {
-										outline:solid 1px var(--blue60);
-									}
-								}
-							}
-						}
-
-						&.received {
-
-							align-items: flex-start;
-
-							.bubble {
-								background-color: var(--gray10);
-
-								button {
-									background-color:var(--gray15);
-
-									&:hover {
-										background-color:var(--gray20);
-									}
-
-									&.transparent {
-										background-color:transparent;
-									}
-
-									&.selected {
-										background-color:var(--gray20);
-										outline:solid 1px var(--gray40);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
-		#reply-panel {
-			display:flex;
-			flex-direction:row;
-			align-items:center;
-			padding:8px;
-			border-radius: calc(var(--rhythm) * 0.75);
-			line-height:1em;
-			font-size:16px;
-			height:32px;
-			background-color:var(--gray50);
-			color:var(--white);
-			margin-bottom:4px;
-			overflow:hidden;
-		}
-
-		.conversation-item {
-			display: flex;
-			padding: calc(var(--rhythm) * 2);
-			margin: calc(var(--rhythm) * 2) 0px;
-			background-color: var(--gray10);
-			border-radius: calc(var(--rhythm) * 2);
-		}
-	</style>
-
-	<script src="/.templates/user-conversations/resources/app/dist/app.js"></script>
 </div>
