@@ -44,7 +44,6 @@ export class GroupMessages {
 					<div class="flex-grow padding-sm padding-bottom-lg">
 						{controller.messages.map(message => {
 
-							const showSender = (message.sender != lastSender)
 
 							/* HIDING THIS FOR NOW...
 							var showDate = dayjs(message.createDate).fromNow()
@@ -55,6 +54,8 @@ export class GroupMessages {
 							}
 							*/
 							const showDate = ""
+							const showSender = (message.sender != lastSender)
+							lastSender = message.sender
 
 							return <ViewMessage controller={controller} message={message} showSender={showSender} showDate={showDate} />
 						})}

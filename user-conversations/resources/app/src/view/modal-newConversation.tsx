@@ -4,6 +4,7 @@ import { Controller } from "../service/controller"
 import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
+import { Actor } from "../as/actor"
 
 type NewConversationVnode = Vnode<NewConversationAttrs, NewConversationState>
 
@@ -13,13 +14,12 @@ interface NewConversationAttrs {
 }
 
 interface NewConversationState {
-	actors: APActor[]
+	actors: Actor[]
 	content: string
 	encrypted: boolean
 }
 
 export class NewConversation {
-	//
 
 	oninit(vnode: NewConversationVnode) {
 		vnode.state.actors = []
@@ -28,6 +28,7 @@ export class NewConversation {
 	}
 
 	view(vnode: NewConversationVnode) {
+
 		return (
 			<Modal close={vnode.attrs.close}>
 				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)}>
@@ -37,10 +38,11 @@ export class NewConversation {
 							<div class="layout-element">
 								<label for="">Participants</label>
 								<ActorSearch
+									controller={vnode.attrs.controller}
 									name="actorIds"
 									value={vnode.state.actors}
 									endpoint="/.api/actors"
-									onselect={(actors: APActor[]) => this.selectActors(vnode, actors)}></ActorSearch>
+									onselect={(actors: Actor[]) => this.selectActors(vnode, actors)}></ActorSearch>
 							</div>
 							<div class="layout-element">
 								<label>Message</label>
@@ -131,10 +133,10 @@ export class NewConversation {
 	}
 
 	// selectActors updates the selected actors in the component state when the user selects participants from the ActorSearch component
-	selectActors(vnode: NewConversationVnode, actors: APActor[]) {
+	selectActors(vnode: NewConversationVnode, actors: Actor[]) {
 		vnode.state.actors = actors
 
-		if (actors.some((actor) => actor["mls:keyPackages"] == "")) {
+		if (actors.some((actor) => actor.mlsKeyPackages() == "")) {
 			vnode.state.encrypted = false
 		} else {
 			vnode.state.encrypted = true
@@ -151,7 +153,7 @@ export class NewConversation {
 	async onsubmit(event: SubmitEvent, vnode: NewConversationVnode) {
 
 		// Collect variables
-		const participants = vnode.state.actors.map((actor) => actor.id)
+		const participants = vnode.state.actors.map((actor) => actor.id())
 		const controller = vnode.attrs.controller
 
 		// Swallow this event

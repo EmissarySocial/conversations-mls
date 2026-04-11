@@ -60,7 +60,7 @@ export class MessageOptions {
 		const isMe = (message.sender == controller.actorId())
 
 		return (
-			<div class="flex-row flex-align-center" style="font-size:12px;">
+			<div class="flex-row flex-align-center">
 
 				{(reactions.length > 0) &&
 					<div class="margin-top-sm">
@@ -73,9 +73,9 @@ export class MessageOptions {
 							}
 
 							if (hasReacted) {
-								return <button class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
+								return <button class="selected text-sm" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
 							}
-							return <button class="transparent" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
+							return <button class="transparent text-sm" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
 						})}
 					</div>
 				}
@@ -86,21 +86,21 @@ export class MessageOptions {
 							const hasReacted = message.reactions[emoji]?.includes(controller.actorId())
 
 							if (hasReacted) {
-								return <button class="selected circle" onclick={() => controller.undoReaction(message.id)}>{emoji}</button>
+								return <button class="selected circle text-sm" onclick={() => controller.undoReaction(message.id)}>{emoji}</button>
 							} else {
-								return <button class="circle" onclick={() => controller.reactToMessage(message.id, emoji)}>{emoji}</button>
+								return <button class="circle text-sm" onclick={() => controller.reactToMessage(message.id, emoji)}>{emoji}</button>
 							}
 						})}
-						<button class="circle" style="height:33px; width:33px; display:inline-flex; align-items:center; justify-content:center;" onclick={() => alert("Emoji picker coming soon!")}>&#183;&#183;&#183;</button>
+						<button class="circle text-sm" style="font-size:8px; height:33px; width:33px; display:inline-flex; align-items:center; justify-content:center;" onclick={() => alert("Emoji picker coming soon!")}>&#183;&#183;&#183;</button>
 					</div>
 				}
 
 				<div class="hover-show margin-top-sm margin-left">
-					<button onclick={() => controller.startReply(message)}><i class="bi bi-reply"></i> Reply</button>
+					<button class="text-sm" onclick={() => controller.startReply(message)}><i class="bi bi-reply"></i> Reply</button>
 
 					{isMe && [
-						<button onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>,
-						<button onclick={() => controller.deleteMessage(message.id)}><i class="bi bi-trash"></i></button>
+						<button class="text-sm" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>,
+						<button class="text-sm" onclick={() => controller.deleteMessage(message.id)}><i class="bi bi-trash"></i></button>
 					]}
 				</div>
 

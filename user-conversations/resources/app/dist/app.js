@@ -1595,7 +1595,7 @@
       "use strict";
       var hyperscript = require_hyperscript2();
       var mountRedraw = require_mount_redraw2();
-      var request2 = require_request2();
+      var request = require_request2();
       var router = require_route();
       var m24 = function m25() {
         return hyperscript.apply(this, arguments);
@@ -1608,7 +1608,7 @@
       m24.route = router;
       m24.render = require_render2();
       m24.redraw = mountRedraw.redraw;
-      m24.request = request2.request;
+      m24.request = request.request;
       m24.parseQueryString = require_parse();
       m24.buildQueryString = require_build();
       m24.parsePathname = require_parse2();
@@ -14568,24 +14568,24 @@
   var transactionDoneMap = /* @__PURE__ */ new WeakMap();
   var transformCache = /* @__PURE__ */ new WeakMap();
   var reverseTransformCache = /* @__PURE__ */ new WeakMap();
-  function promisifyRequest(request2) {
+  function promisifyRequest(request) {
     const promise = new Promise((resolve, reject) => {
       const unlisten = () => {
-        request2.removeEventListener("success", success);
-        request2.removeEventListener("error", error);
+        request.removeEventListener("success", success);
+        request.removeEventListener("error", error);
       };
       const success = () => {
-        resolve(wrap(request2.result));
+        resolve(wrap(request.result));
         unlisten();
       };
       const error = () => {
-        reject(request2.error);
+        reject(request.error);
         unlisten();
       };
-      request2.addEventListener("success", success);
-      request2.addEventListener("error", error);
+      request.addEventListener("success", success);
+      request.addEventListener("error", error);
     });
-    reverseTransformCache.set(promise, request2);
+    reverseTransformCache.set(promise, request);
     return promise;
   }
   function cacheDonePromiseForTransaction(tx) {
@@ -14670,15 +14670,15 @@
   }
   var unwrap = (value) => reverseTransformCache.get(value);
   function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
-    const request2 = indexedDB.open(name, version);
-    const openPromise = wrap(request2);
+    const request = indexedDB.open(name, version);
+    const openPromise = wrap(request);
     if (upgrade) {
-      request2.addEventListener("upgradeneeded", (event) => {
-        upgrade(wrap(request2.result), event.oldVersion, event.newVersion, wrap(request2.transaction), event);
+      request.addEventListener("upgradeneeded", (event) => {
+        upgrade(wrap(request.result), event.oldVersion, event.newVersion, wrap(request.transaction), event);
       });
     }
     if (blocked) {
-      request2.addEventListener("blocked", (event) => blocked(
+      request.addEventListener("blocked", (event) => blocked(
         // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
         event.oldVersion,
         event.newVersion,
@@ -15269,6 +15269,9 @@
     };
     type = () => {
       return this.getString("as", "type");
+    };
+    usernameOrId = () => {
+      return this.preferredUsername() || this.id();
     };
     ///////////////////////////////////
     // MLS-specific properties
@@ -16080,24 +16083,30 @@
     };
     // getKeyPackage loads the KeyPackages published by a single actor
     getKeyPackages = async (actorIds) => {
+      console.log("getKeyPackages", actorIds);
       var result = [];
       for (const actorId of actorIds) {
-        const actor = await new Actor().fromURL(actorId);
-        const keyPackages = rangeDocuments(actor.mlsKeyPackages());
-        for await (const keyPackage of keyPackages) {
-          const contentBytes = base64ToUint8Array(keyPackage.content());
-          const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
-          if (decodedKeyPackage == void 0) {
-            console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
-            continue;
+        try {
+          const actor = await new Actor().fromURL(actorId);
+          const keyPackages = rangeDocuments(actor.mlsKeyPackages());
+          for await (const keyPackage of keyPackages) {
+            const contentBytes = base64ToUint8Array(keyPackage.content());
+            const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
+            if (decodedKeyPackage == void 0) {
+              console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
+              continue;
+            }
+            if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
+              console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
+              continue;
+            }
+            result.push(decodedKeyPackage.keyPackage);
           }
-          if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-            console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
-            continue;
-          }
-          result.push(decodedKeyPackage.keyPackage);
+        } catch (error) {
+          console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error);
         }
       }
+      console.log("getKeyPackages result", result);
       return result;
     };
     // createKeyPackage publishes a new KeyPackage to the User's outbox.
@@ -16819,6 +16828,12 @@
       return this.config.lastMessageId;
     };
     //////////////////////////////////////////
+    // KeyPackages
+    //////////////////////////////////////////
+    loadKeyPackages = async (actorId) => {
+      return this.#directory.getKeyPackages([actorId]);
+    };
+    //////////////////////////////////////////
     // Contacts
     //////////////////////////////////////////
     loadContacts = async () => {
@@ -17224,11 +17239,6 @@
         }
       } catch (error) {
         console.error("Error receiving activity:", error);
-        this.#delivery.sendActivity({
-          actor: this.actorId(),
-          type: ActivityTypeFailure,
-          object: activity.id()
-        });
       }
     };
     #receiveActivity_Acknowledge = async (activity) => {
@@ -17676,9 +17686,8 @@
     }
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
-        const keyPackageCount = vnode.state.keyPackages[actor.id];
-        const isSecure = keyPackageCount != void 0 && keyPackageCount > 0;
-        return /* @__PURE__ */ (0, import_mithril5.default)("span", { class: isSecure ? "tag blue" : "tag gray" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { style: "align-items:center; margin-right:8px;" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon, class: "circle", style: "height:1em; margin:0px 4px;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name), "\xA0", isSecure ? /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) }));
+        const isSecure = vnode.state.keyPackages[actor.id()] != void 0;
+        return /* @__PURE__ */ (0, import_mithril5.default)("span", { class: isSecure ? "blue tag" : "gray tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) })));
       }), /* @__PURE__ */ (0, import_mithril5.default)(
         "input",
         {
@@ -17701,8 +17710,6 @@
           onblur: () => this.onblur(vnode)
         }
       )), vnode.state.actors.length ? /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "options", style: `position:${vnode.attrs.position || "absolute"};` }, /* @__PURE__ */ (0, import_mithril5.default)("div", { role: "menu", class: "menu" }, vnode.state.actors.map((actor, index) => {
-        const keyPackageCount = vnode.state.keyPackages[actor.id];
-        const isSecure = keyPackageCount != void 0 && keyPackageCount > 0;
         return /* @__PURE__ */ (0, import_mithril5.default)(
           "div",
           {
@@ -17711,8 +17718,8 @@
             onmousedown: () => this.selectActor(vnode, index),
             "aria-selected": index == vnode.state.highlightedOption ? "true" : null
           },
-          /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon, class: "width-32 circle" })),
-          /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name, " \xA0", isSecure ? /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "text-xs text-light-gray bi bi-lock-fill" }) : null), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "text-xs text-light-gray" }, actor.username))
+          /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), class: "width-32 circle" })),
+          /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.usernameOrId()))
         );
       }))) : null);
     }
@@ -17766,33 +17773,11 @@
         return;
       }
       vnode.state.loading = true;
-      vnode.state.actors = await import_mithril5.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
+      import_mithril5.default.redraw();
+      const actors = await import_mithril5.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
+      vnode.state.actors = actors.map((object) => new Actor(object));
       vnode.state.loading = false;
       vnode.state.highlightedOption = -1;
-      this.loadKeyPackages(vnode);
-    }
-    // (async) Maintains a cache that counts the keyPackages for each actor
-    loadKeyPackages(vnode) {
-      for (const actor of vnode.state.actors) {
-        if (vnode.state.keyPackages[actor.id] == void 0) {
-          if (actor["mls:keyPackages"] == null) {
-            continue;
-          }
-          if (actor["mls:keyPackages"] == "") {
-            continue;
-          }
-          import_mithril5.default.request(
-            "/.api/collectionHeader?url=" + encodeURIComponent(actor["mls:keyPackages"])
-          ).then((header) => {
-            if (header != void 0) {
-              if (header.totalItems != void 0) {
-                vnode.state.keyPackages[actor.id] = header.totalItems;
-                import_mithril5.default.redraw();
-              }
-            }
-          });
-        }
-      }
     }
     onblur(vnode) {
       requestAnimationFrame(() => {
@@ -17811,6 +17796,32 @@
       vnode.state.search = "";
       vnode.state.highlightedOption = -1;
       vnode.attrs.onselect(vnode.attrs.value);
+      this.loadKeyPackages(vnode, selected);
+    }
+    // (async) Maintains a cache that counts the keyPackages for each actor
+    async loadKeyPackages(vnode, actor) {
+      if (vnode.state.keyPackages[actor.id()] != void 0) {
+        console.log("A");
+        return;
+      }
+      const keyPackages = await vnode.attrs.controller.loadKeyPackages(actor.id());
+      if (vnode.state.keyPackages == void 0 || keyPackages.length == 0) {
+        console.log("C");
+        delete vnode.state.keyPackages[actor.id()];
+        import_mithril5.default.redraw();
+        return;
+      }
+      console.log("D");
+      vnode.state.keyPackages[actor.id()] = keyPackages;
+      import_mithril5.default.redraw();
+      console.log("final", vnode.state.keyPackages);
+    }
+    isActorMLS(vnode, actorId) {
+      const keyPackages = vnode.state.keyPackages[actorId];
+      if (keyPackages == void 0) {
+        return false;
+      }
+      return keyPackages.length > 0;
     }
     removeActor(vnode, index) {
       vnode.attrs.value.splice(index, 1);
@@ -17822,7 +17833,6 @@
 
   // src/view/modal-newConversation.tsx
   var NewConversation = class {
-    //
     oninit(vnode) {
       vnode.state.actors = [];
       vnode.state.content = "";
@@ -17832,6 +17842,7 @@
       return /* @__PURE__ */ (0, import_mithril7.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril7.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout layout-vertical" }, this.header(vnode), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "" }, "Participants"), /* @__PURE__ */ (0, import_mithril7.default)(
         ActorSearch,
         {
+          controller: vnode.attrs.controller,
           name: "actorIds",
           value: vnode.state.actors,
           endpoint: "/.api/actors",
@@ -17869,7 +17880,7 @@
     // selectActors updates the selected actors in the component state when the user selects participants from the ActorSearch component
     selectActors(vnode, actors) {
       vnode.state.actors = actors;
-      if (actors.some((actor) => actor["mls:keyPackages"] == "")) {
+      if (actors.some((actor) => actor.mlsKeyPackages() == "")) {
         vnode.state.encrypted = false;
       } else {
         vnode.state.encrypted = true;
@@ -17882,7 +17893,7 @@
     }
     // onsubmit creates a new group with the selected participants, sends the content message, and closes the dialog
     async onsubmit(event, vnode) {
-      const participants = vnode.state.actors.map((actor) => actor.id);
+      const participants = vnode.state.actors.map((actor) => actor.id());
       const controller2 = vnode.attrs.controller;
       event.preventDefault();
       event.stopPropagation();
@@ -18018,26 +18029,26 @@
       const message = vnode.attrs.message;
       const reactions = Object.entries(message.reactions);
       const isMe = message.sender == controller2.actorId();
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-row flex-align-center", style: "font-size:12px;" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-top-sm" }, reactions.map(([content, actors]) => {
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-row flex-align-center" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-top-sm" }, reactions.map(([content, actors]) => {
         const hasReacted = message.reactions[content]?.includes(controller2.actorId());
         const reactionCount = actors.length > 1 ? actors.length : "";
         if (isMe) {
           return /* @__PURE__ */ (0, import_mithril12.default)("button", null, content, " ", reactionCount);
         }
         if (hasReacted) {
-          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
+          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected text-sm", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
         }
-        return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "transparent", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
+        return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "transparent text-sm", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
       })), isMe || /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "hover-show margin-top-sm" }, defaultEmojis.map((emoji) => {
         const hasReacted = message.reactions[emoji]?.includes(controller2.actorId());
         if (hasReacted) {
-          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected circle", onclick: () => controller2.undoReaction(message.id) }, emoji);
+          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected circle text-sm", onclick: () => controller2.undoReaction(message.id) }, emoji);
         } else {
-          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "circle", onclick: () => controller2.reactToMessage(message.id, emoji) }, emoji);
+          return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "circle text-sm", onclick: () => controller2.reactToMessage(message.id, emoji) }, emoji);
         }
-      }), /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "circle", style: "height:33px; width:33px; display:inline-flex; align-items:center; justify-content:center;", onclick: () => alert("Emoji picker coming soon!") }, "\xB7\xB7\xB7")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "hover-show margin-top-sm margin-left" }, /* @__PURE__ */ (0, import_mithril12.default)("button", { onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isMe && [
-        /* @__PURE__ */ (0, import_mithril12.default)("button", { onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit"),
-        /* @__PURE__ */ (0, import_mithril12.default)("button", { onclick: () => controller2.deleteMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-trash" }))
+      }), /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "circle text-sm", style: "font-size:8px; height:33px; width:33px; display:inline-flex; align-items:center; justify-content:center;", onclick: () => alert("Emoji picker coming soon!") }, "\xB7\xB7\xB7")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "hover-show margin-top-sm margin-left" }, /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "text-sm", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isMe && [
+        /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "text-sm", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit"),
+        /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "text-sm", onclick: () => controller2.deleteMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-trash" }))
       ]));
     }
     editButtons(vnode) {
@@ -18092,7 +18103,7 @@
       const message = vnode.attrs.message;
       switch (message.type) {
         case "SENT":
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message sent" }, this.drawDate(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble hover-trigger pos-relative", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-start" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, message.content), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-center text-gray nowrap" }, message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "text-xs" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A")))), /* @__PURE__ */ (0, import_mithril14.default)(MessageOptions, { controller: controller2, message, open: vnode.attrs.showOptions })));
+          return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message sent" }, this.drawDate(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble hover-trigger pos-relative", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, this.drawAcknowledgements(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, message.content)), /* @__PURE__ */ (0, import_mithril14.default)(MessageOptions, { controller: controller2, message, open: vnode.attrs.showOptions })));
         case "RECEIVED":
           return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message received" }, this.drawDate(vnode), this.drawSender(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble hover-trigger pos-relative", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-start width-100% max-width-100%" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, message.content), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-align-center text-xs text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril14.default)(
             "span",
@@ -18114,6 +18125,15 @@
       }
       throw new Error(`Unknown message type: ${message.type}`);
     }
+    drawAcknowledgements(vnode) {
+      if (vnode.attrs.message.received.length == 0) {
+        return null;
+      }
+      if (vnode.attrs.message.received.length < 4) {
+        return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs" }, vnode.attrs.message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), (0, import_dayjs.default)(vnode.attrs.message.updateDate).format("hh:mm A"));
+      }
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;" }), " ", vnode.attrs.message.received.length, "\xA0", (0, import_dayjs.default)(vnode.attrs.message.updateDate).format("hh:mm A"));
+    }
     drawDate(vnode) {
       const showDate = vnode.attrs.showDate;
       if (showDate == "") {
@@ -18129,7 +18149,7 @@
         return /* @__PURE__ */ (0, import_mithril14.default)("div", null);
       }
       const contact = vnode.attrs.controller.contacts.get(vnode.attrs.message.sender) || NewContact();
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-left-sm" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, contact.name));
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-top margin-left-sm" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, contact.name));
     }
   };
 
@@ -18147,8 +18167,9 @@
       var lastSender = "";
       var lastDate = "";
       return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, controller2.groupName()), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.group.members.length, ")"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
-        const showSender = message.sender != lastSender;
         const showDate = "";
+        const showSender = message.sender != lastSender;
+        lastSender = message.sender;
         return /* @__PURE__ */ (0, import_mithril16.default)(ViewMessage, { controller: controller2, message, showSender, showDate });
       }))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril16.default)(WidgetMessageCreate, { controller: vnode.attrs.controller, inReplyTo: vnode.attrs.controller.inReplyTo }))));
     }
@@ -18365,9 +18386,10 @@
       vnode.state.encrypted = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril25.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril25.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout layout-vertical" }, this.header(vnode), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril25.default)("label", { for: "actorIds" }, "Add People"), /* @__PURE__ */ (0, import_mithril25.default)(
+      return /* @__PURE__ */ (0, import_mithril25.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril25.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout layout-vertical" }, this.header(vnode), this.description(vnode), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril25.default)("label", { for: "actorIds" }, "Add People"), /* @__PURE__ */ (0, import_mithril25.default)(
         ActorSearch,
         {
+          controller: vnode.attrs.controller,
           name: "actorIds",
           value: vnode.state.actors,
           endpoint: "/.api/actors",
@@ -18378,15 +18400,15 @@
     }
     header(vnode) {
       if (vnode.state.encrypted) {
-        return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-shield-lock" }), " Add People to this Encrypted Conversation");
+        return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-shield-lock" }), " Add People to this Conversation");
       }
       return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-envelope-open" }), " Add People to this Conversation");
     }
     description(vnode) {
       if (vnode.state.encrypted) {
-        return /* @__PURE__ */ (0, import_mithril25.default)("div", null, "To be added to this conversation, new recipients must be able to send and receive encrypted messages.");
+        return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "margin-bottom" }, "To be added to this conversation, new recipients must be able to send and receive encrypted messages.");
       }
-      return /* @__PURE__ */ (0, import_mithril25.default)("div", null, "Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted.");
+      return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "margin-bottom" }, "Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted.");
     }
     submitButton(vnode) {
       if (vnode.state.encrypted) {

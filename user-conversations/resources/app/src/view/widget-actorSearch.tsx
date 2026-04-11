@@ -1,24 +1,26 @@
-import m, { request } from "mithril"
-import { type Vnode, type VnodeDOM, type Component } from "mithril"
-import { type APActor } from "../model/ap-actor"
+import m from "mithril"
+import { type VnodeDOM } from "mithril"
+import { Actor } from "../as/actor"
 import { keyCode } from "./utils"
-import { type APCollectionHeader } from "../model/ap-collection"
+import type { Controller } from "../service/controller"
+import type { KeyPackage } from "ts-mls"
 
-type ActorSearchVnode = VnodeDOM<ActorSearchArgs, ActorSearchState>
+type ActorSearchVnode = VnodeDOM<ActorSearchAttrs, ActorSearchState>
 
-interface ActorSearchArgs {
+interface ActorSearchAttrs {
+	controller: Controller
 	name: string
-	value: APActor[]
+	value: Actor[]
 	endpoint: string
 	position?: string
-	onselect: (actors: APActor[]) => void
+	onselect: (actors: Actor[]) => void
 }
 
 interface ActorSearchState {
 	search: string
 	loading: boolean
-	actors: APActor[]
-	keyPackages: { [key: string]: number }
+	actors: Actor[]
+	keyPackages: { [key: string]: KeyPackage[] }
 	highlightedOption: number
 	encrypted: boolean
 }
@@ -39,17 +41,14 @@ export class ActorSearch {
 			<div class="autocomplete">
 				<div class="input">
 					{vnode.attrs.value.map((actor, index) => {
-						const keyPackageCount = vnode.state.keyPackages[actor.id]
-						const isSecure = keyPackageCount != undefined && keyPackageCount > 0
+						const isSecure = (vnode.state.keyPackages[actor.id()] != undefined)
 						return (
-							<span class={isSecure ? "tag blue" : "tag gray"}>
-								<span style="align-items:center; margin-right:8px;">
-									<img src={actor.icon} class="circle" style="height:1em; margin:0px 4px;" />
-									<span class="bold">{actor.name}</span>
-									&nbsp;
-									{isSecure ? <i class="bi bi-lock-fill"></i> : null}
+							<span class={isSecure ? "blue tag" : "gray tag"}>
+								<span class="flex-row flex-align-center">
+									<img src={actor.icon()} class="circle" style="height:1em;" />
+									<span class="bold">{actor.name()}</span>
+									<i class="margin-left-sm clickable bi bi-x-lg" onclick={() => this.removeActor(vnode, index)}></i>
 								</span>
-								<i class="clickable bi bi-x-lg" onclick={() => this.removeActor(vnode, index)}></i>
 							</span>
 						)
 					})}
@@ -76,8 +75,6 @@ export class ActorSearch {
 					<div class="options" style={`position:${vnode.attrs.position || "absolute"};`}>
 						<div role="menu" class="menu">
 							{vnode.state.actors.map((actor, index) => {
-								const keyPackageCount = vnode.state.keyPackages[actor.id]
-								const isSecure = keyPackageCount != undefined && keyPackageCount > 0
 								return (
 									<div
 										role="menuitem"
@@ -85,14 +82,11 @@ export class ActorSearch {
 										onmousedown={() => this.selectActor(vnode, index)}
 										aria-selected={index == vnode.state.highlightedOption ? "true" : null}>
 										<div class="width-32">
-											<img src={actor.icon} class="width-32 circle" />
+											<img src={actor.icon()} class="width-32 circle" />
 										</div>
 										<div>
-											<div>
-												{actor.name} &nbsp;
-												{isSecure ? <i class="text-xs text-light-gray bi bi-lock-fill"></i> : null}
-											</div>
-											<div class="text-xs text-light-gray">{actor.username}</div>
+											<div>{actor.name()}</div>
+											<div class="margin-none text-xs text-light-gray">{actor.usernameOrId()}</div>
 										</div>
 									</div>
 								)
@@ -163,39 +157,13 @@ export class ActorSearch {
 		}
 
 		vnode.state.loading = true
-		vnode.state.actors = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
+		m.redraw()
+
+		const actors: Object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
+		vnode.state.actors = actors.map(object => new Actor(object))
+
 		vnode.state.loading = false
 		vnode.state.highlightedOption = -1
-
-		this.loadKeyPackages(vnode)
-	}
-
-	// (async) Maintains a cache that counts the keyPackages for each actor
-	loadKeyPackages(vnode: ActorSearchVnode) {
-		//
-		//
-		for (const actor of vnode.state.actors) {
-			if (vnode.state.keyPackages[actor.id] == undefined) {
-				if (actor["mls:keyPackages"] == null) {
-					continue
-				}
-
-				if (actor["mls:keyPackages"] == "") {
-					continue
-				}
-
-				m.request<APCollectionHeader>(
-					"/.api/collectionHeader?url=" + encodeURIComponent(actor["mls:keyPackages"]),
-				).then((header: APCollectionHeader) => {
-					if (header != undefined) {
-						if (header.totalItems != undefined) {
-							vnode.state.keyPackages[actor.id] = header.totalItems
-							m.redraw()
-						}
-					}
-				})
-			}
-		}
 	}
 
 	onblur(vnode: ActorSearchVnode) {
@@ -213,11 +181,54 @@ export class ActorSearch {
 			return
 		}
 
+		// Add the actor to the selected list and clear the search results
 		vnode.attrs.value.push(selected)
 		vnode.state.actors = []
 		vnode.state.search = ""
 		vnode.state.highlightedOption = -1
 		vnode.attrs.onselect(vnode.attrs.value)
+
+		// Load KeyPackages AFTER selecting the actor from the search results
+		this.loadKeyPackages(vnode, selected)
+	}
+
+	// (async) Maintains a cache that counts the keyPackages for each actor
+	async loadKeyPackages(vnode: ActorSearchVnode, actor: Actor) {
+
+		// See if we already have keyPackages for this actor in the cache
+		if (vnode.state.keyPackages[actor.id()] != undefined) {
+			console.log("A")
+			return
+		}
+
+		// Load the actor's keyPackages collection
+		const keyPackages = await vnode.attrs.controller.loadKeyPackages(actor.id())
+
+		// Remove KeyPackages that can't be found
+		if ((vnode.state.keyPackages == undefined) || (keyPackages.length == 0)) {
+			console.log("C")
+			delete vnode.state.keyPackages[actor.id()]
+			m.redraw()
+			return
+		}
+
+		// Otherwise, add keyPackes to the widget's cache
+		console.log("D")
+		vnode.state.keyPackages[actor.id()] = keyPackages
+		m.redraw()
+
+		// Success!
+		console.log("final", vnode.state.keyPackages)
+	}
+
+	isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
+		const keyPackages = vnode.state.keyPackages[actorId]
+
+		if (keyPackages == undefined) {
+			return false
+		}
+
+		return (keyPackages.length > 0)
 	}
 
 	removeActor(vnode: ActorSearchVnode, index: number) {

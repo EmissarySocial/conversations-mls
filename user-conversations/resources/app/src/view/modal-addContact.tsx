@@ -31,10 +31,12 @@ export class AddContact {
 				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)}>
 					<div class="layout layout-vertical">
 						{this.header(vnode)}
+						{this.description(vnode)}
 						<div class="layout-elements">
 							<div class="layout-element">
 								<label for="actorIds">Add People</label>
 								<ActorSearch
+									controller={vnode.attrs.controller}
 									name="actorIds"
 									value={vnode.state.actors}
 									endpoint="/.api/actors"
@@ -60,7 +62,7 @@ export class AddContact {
 		if (vnode.state.encrypted) {
 			return (
 				<div class="layout-title">
-					<i class="bi bi-shield-lock"></i> Add People to this Encrypted Conversation
+					<i class="bi bi-shield-lock"></i> Add People to this Conversation
 				</div>
 			)
 		}
@@ -76,14 +78,14 @@ export class AddContact {
 
 		if (vnode.state.encrypted) {
 			return (
-				<div>
+				<div class="margin-bottom">
 					To be added to this conversation, new recipients must be able to send and receive encrypted messages.
 				</div>
 			)
 		}
 
 		return (
-			<div>
+			<div class="margin-bottom">
 				Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted.
 			</div>
 		)

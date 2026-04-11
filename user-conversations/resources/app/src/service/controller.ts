@@ -31,6 +31,8 @@ import { MLS } from "./mls"
 import { generateAESKey } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
+import type { APKeyPackage } from "../model/ap-keypackage"
+import type { KeyPackage } from "ts-mls"
 
 export class Controller {
 
@@ -260,6 +262,14 @@ export class Controller {
 
 		// Return the current value of lastMessageId
 		return this.config.lastMessageId
+	}
+
+	//////////////////////////////////////////
+	// KeyPackages
+	//////////////////////////////////////////
+
+	loadKeyPackages = async (actorId: string): Promise<KeyPackage[]> => {
+		return this.#directory.getKeyPackages([actorId])
 	}
 
 	//////////////////////////////////////////
@@ -933,12 +943,13 @@ export class Controller {
 		} catch (error) {
 
 			console.error("Error receiving activity:", error)
-
+			/*
 			this.#delivery.sendActivity({
 				actor: this.actorId(),
 				type: vocab.ActivityTypeFailure,
 				object: activity.id(),
 			})
+			*/
 		}
 	}
 

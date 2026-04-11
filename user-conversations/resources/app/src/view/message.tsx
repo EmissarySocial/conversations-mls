@@ -40,12 +40,9 @@ export class ViewMessage {
 					<div class="message sent">
 						{this.drawDate(vnode)}
 						<div class="bubble hover-trigger pos-relative" onclick={() => vnode.attrs.showOptions = true}>
-							<div class="flex-row flex-align-start">
+							<div>
+								{this.drawAcknowledgements(vnode)}
 								<div class="flex-grow">{message.content}</div>
-								<div class="flex-row flex-align-center text-gray nowrap">
-									{message.received.map(actorId => <i class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
-									<span class="text-xs">{dayjs(message.updateDate).format("hh:mm A")}</span>
-								</div>
 							</div>
 							<MessageOptions controller={controller} message={message} open={vnode.attrs.showOptions} />
 
@@ -96,6 +93,30 @@ export class ViewMessage {
 		throw new Error(`Unknown message type: ${message.type}`)
 	}
 
+	drawAcknowledgements(vnode: ViewMessageVnode): JSX.Element | null {
+
+		if (vnode.attrs.message.received.length == 0) {
+			return null
+		}
+
+		if (vnode.attrs.message.received.length < 4) {
+			return (
+				<div class="float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs">
+					{vnode.attrs.message.received.map(actorId => <i class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
+					{dayjs(vnode.attrs.message.updateDate).format("hh:mm A")}
+				</div>
+			)
+		}
+
+		return (
+			<div class="float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs">
+				<i class="bi bi-check-circle" style="margin-right:2px;"></i> {vnode.attrs.message.received.length}
+				&nbsp;
+				{dayjs(vnode.attrs.message.updateDate).format("hh:mm A")}
+			</div>
+		)
+	}
+
 	drawDate(vnode: ViewMessageVnode): JSX.Element {
 
 		const showDate = vnode.attrs.showDate
@@ -127,7 +148,7 @@ export class ViewMessage {
 		const contact = vnode.attrs.controller.contacts.get(vnode.attrs.message.sender) || NewContact()
 
 		return (
-			<div class="margin-left-sm">
+			<div class="margin-top margin-left-sm">
 				<div>{contact.name}</div>
 			</div>
 		)

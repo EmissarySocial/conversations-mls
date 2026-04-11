@@ -36,31 +36,39 @@ export class Directory {
 	// getKeyPackage loads the KeyPackages published by a single actor
 	getKeyPackages = async (actorIds: string[]): Promise<KeyPackage[]> => {
 
+		console.log("getKeyPackages", actorIds)
 		var result: KeyPackage[] = []
 
 		for (const actorId of actorIds) {
-			const actor = await new Actor().fromURL(actorId)
-			const keyPackages = rangeDocuments(actor.mlsKeyPackages())
 
-			for await (const keyPackage of keyPackages) {
+			try {
+				const actor = await new Actor().fromURL(actorId)
+				const keyPackages = rangeDocuments(actor.mlsKeyPackages())
 
-				const contentBytes = base64ToUint8Array(keyPackage.content())
-				const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
+				for await (const keyPackage of keyPackages) {
 
-				if (decodedKeyPackage == undefined) {
-					console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject())
-					continue
+					const contentBytes = base64ToUint8Array(keyPackage.content())
+					const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
+
+					if (decodedKeyPackage == undefined) {
+						console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject())
+						continue
+					}
+
+					if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
+						console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat)
+						continue
+					}
+
+					result.push(decodedKeyPackage.keyPackage)
 				}
 
-				if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-					console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat)
-					continue
-				}
-
-				result.push(decodedKeyPackage.keyPackage)
+			} catch (error) {
+				console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error)
 			}
 		}
 
+		console.log("getKeyPackages result", result)
 		return result
 	}
 

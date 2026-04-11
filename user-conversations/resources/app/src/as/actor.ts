@@ -38,6 +38,10 @@ export class Actor extends Object {
 		return this.getString("as", "type")
 	}
 
+	usernameOrId = () => {
+		return this.preferredUsername() || this.id()
+	}
+
 	///////////////////////////////////
 	// MLS-specific properties
 
