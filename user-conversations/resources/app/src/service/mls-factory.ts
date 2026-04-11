@@ -29,7 +29,7 @@ export async function MLSFactory(
 	actor: Actor,
 	clientName: string,
 ): Promise<MLS> {
-	//
+
 	// Use MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519 (ID: 1)
 	// Using nobleCryptoProvider for compatibility (pure JS implementation)
 	const cipherSuiteName: CiphersuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"

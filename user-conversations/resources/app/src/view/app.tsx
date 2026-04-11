@@ -28,7 +28,8 @@ export class App {
 		const controller = vnode.attrs.controller
 
 		if (!controller.isApplicationRunning) {
-			return <AppStopped />
+			console.error(controller)
+			return <AppStopped message={controller.stopReason} />
 		}
 
 		if (!controller.isWindowFocused) {

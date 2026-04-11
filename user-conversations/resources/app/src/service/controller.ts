@@ -62,10 +62,11 @@ export class Controller {
 	message: Message
 	inReplyTo: Message | undefined
 
-	pageView: string
-	modalView: string
-	isWindowFocused: boolean
-	isApplicationRunning: boolean
+	pageView: string = "LOADING"
+	modalView: string = ""
+	isWindowFocused: boolean = true
+	isApplicationRunning: boolean = true
+	stopReason: string = ""
 
 	// constructor initializes the Controller with its dependencies
 	constructor(
@@ -91,14 +92,6 @@ export class Controller {
 		this.messages = []
 		this.message = new Message()
 		this.inReplyTo = undefined
-
-		// UX state
-		this.pageView = "LOADING"
-		this.modalView = ""
-
-		// Other Application State
-		this.isWindowFocused = true
-		this.isApplicationRunning = true
 
 		// Reactive Streams
 		this.groupStream = Stream(NewGroup())
@@ -145,14 +138,20 @@ export class Controller {
 		this.#receiver.setActor(this.#actor)
 
 		// Create the MLS instance
-		this.#mls = await MLSFactory(
-			this.#database,
-			this.#delivery,
-			this.#directory,
-			this.#receiver,
-			this.#actor,
-			this.config.clientName,
-		)
+		try {
+			this.#mls = await MLSFactory(
+				this.#database,
+				this.#delivery,
+				this.#directory,
+				this.#receiver,
+				this.#actor,
+				this.config.clientName,
+			)
+		} catch (error) {
+			console.error("Failed to initialize MLS service", error)
+			this.stop("SERVER_DOWN")
+			return
+		}
 
 		// Calculate EmojiKey
 		this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage)
@@ -168,7 +167,7 @@ export class Controller {
 
 		// Listen for application state changes
 		cookieStore.addEventListener("change", async () => {
-			this.stop()
+			this.stop("COOKIES_CHANGED")
 		})
 
 		window.addEventListener("focus", async () => {
@@ -220,13 +219,14 @@ export class Controller {
 
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
-	stop = () => {
+	stop = (message: string) => {
 		this.#database.stop()
 		this.#delivery.stop()
 		this.#receiver.stop()
 		this.#directory.stop()
 
 		this.isApplicationRunning = false
+		this.stopReason = message
 		m.redraw()
 	}
 
@@ -244,7 +244,7 @@ export class Controller {
 		}
 
 		// Erase all local data
-		await this.#database.erase()
+		this.#database.erase()
 
 		// Reload the application
 		window.document.location.reload()

@@ -1,17 +1,61 @@
 import m from "mithril"
+import { type Vnode } from "mithril"
+
+
+
+type AppStoppedVnode = Vnode<AppStoppedArgs, AppStoppedState>
+
+interface AppStoppedArgs {
+	message: string
+}
+
+interface AppStoppedState { }
 
 export class AppStopped {
 
-	public view() {
+	public view(vnode: AppStoppedVnode) {
 
 		return (
 			<div class="pos-absolute-four-corners bg-stripes flex-center">
 				<div class="card padding-xl width-512 align-center">
-					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
-					It looks like you have signed in to a different account using another tab.
-					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
+					{this.message(vnode)}
 				</div>
 			</div>
 		)
 	}
+
+	message(vnode: AppStoppedVnode) {
+
+		switch (vnode.attrs.message) {
+
+			case "SERVER_DOWN":
+				return <div>
+					<h2><i class="bi bi-slash-circle"></i> Cannot Reach Server</h2>
+					Unable to reach the server and authenticate your session.
+					To continue with conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
+				</div>
+
+			case "SIGN_OUT":
+				return <div>
+					<h2><i class="bi bi-slash-circle"></i> Signed Out</h2>
+					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>,
+					then re-enter your password.
+				</div>
+
+			case "COOKIES_CHANGED":
+				return <div>
+					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
+					It looks like you have signed in to a different account using another tab.
+					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
+				</div>
+
+			default:
+				return <div>
+					<h2><i class="bi bi-slash-circle"></i> Unknown Error: {vnode.attrs.message}</h2>
+					An unrecognized error occurred.
+					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
+				</div>
+		}
+	}
 }
+

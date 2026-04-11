@@ -104,7 +104,7 @@ export class AppSettings {
 							</div>
 						</div>
 
-						<button class="text-red" onclick={() => controller.stop()}>Sign Out</button>
+						<button class="text-red" onclick={() => controller.stop("SIGN_OUT")}>Sign Out</button>
 					</div>
 
 					<div class="card padding margin-top">
