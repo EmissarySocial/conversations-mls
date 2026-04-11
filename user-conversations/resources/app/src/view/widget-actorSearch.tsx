@@ -86,7 +86,7 @@ export class ActorSearch {
 										</div>
 										<div>
 											<div>{actor.name()}</div>
-											<div class="margin-none text-xs text-light-gray">{actor.usernameOrId()}</div>
+											<div class="margin-none text-xs text-light-gray">{actor.computedUsername()}</div>
 										</div>
 									</div>
 								)

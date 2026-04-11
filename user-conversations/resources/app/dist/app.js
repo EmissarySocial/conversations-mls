@@ -7236,6 +7236,187 @@
     }
   });
 
+  // node_modules/mithril/stream/stream.js
+  var require_stream = __commonJS({
+    "node_modules/mithril/stream/stream.js"(exports, module) {
+      (function() {
+        "use strict";
+        Stream4.SKIP = {};
+        Stream4.lift = lift;
+        Stream4.scan = scan;
+        Stream4.merge = merge;
+        Stream4.combine = combine;
+        Stream4.scanMerge = scanMerge;
+        Stream4["fantasy-land/of"] = Stream4;
+        var warnedHalt = false;
+        Object.defineProperty(Stream4, "HALT", {
+          get: function() {
+            warnedHalt || console.log("HALT is deprecated and has been renamed to SKIP");
+            warnedHalt = true;
+            return Stream4.SKIP;
+          }
+        });
+        function Stream4(value) {
+          var dependentStreams = [];
+          var dependentFns = [];
+          function stream(v) {
+            if (arguments.length && v !== Stream4.SKIP) {
+              value = v;
+              if (open(stream)) {
+                stream._changing();
+                stream._state = "active";
+                dependentStreams.slice().forEach(function(s, i) {
+                  if (open(s)) s(this[i](value));
+                }, dependentFns.slice());
+              }
+            }
+            return value;
+          }
+          stream.constructor = Stream4;
+          stream._state = arguments.length && value !== Stream4.SKIP ? "active" : "pending";
+          stream._parents = [];
+          stream._changing = function() {
+            if (open(stream)) stream._state = "changing";
+            dependentStreams.forEach(function(s) {
+              s._changing();
+            });
+          };
+          stream._map = function(fn, ignoreInitial) {
+            var target = ignoreInitial ? Stream4() : Stream4(fn(value));
+            target._parents.push(stream);
+            dependentStreams.push(target);
+            dependentFns.push(fn);
+            return target;
+          };
+          stream.map = function(fn) {
+            return stream._map(fn, stream._state !== "active");
+          };
+          var end;
+          function createEnd() {
+            end = Stream4();
+            end.map(function(value2) {
+              if (value2 === true) {
+                stream._parents.forEach(function(p) {
+                  p._unregisterChild(stream);
+                });
+                stream._state = "ended";
+                stream._parents.length = dependentStreams.length = dependentFns.length = 0;
+              }
+              return value2;
+            });
+            return end;
+          }
+          stream.toJSON = function() {
+            return value != null && typeof value.toJSON === "function" ? value.toJSON() : value;
+          };
+          stream["fantasy-land/map"] = stream.map;
+          stream["fantasy-land/ap"] = function(x) {
+            return combine(function(s1, s2) {
+              return s1()(s2());
+            }, [x, stream]);
+          };
+          stream._unregisterChild = function(child) {
+            var childIndex = dependentStreams.indexOf(child);
+            if (childIndex !== -1) {
+              dependentStreams.splice(childIndex, 1);
+              dependentFns.splice(childIndex, 1);
+            }
+          };
+          Object.defineProperty(stream, "end", {
+            get: function() {
+              return end || createEnd();
+            }
+          });
+          return stream;
+        }
+        function combine(fn, streams) {
+          var ready = streams.every(function(s) {
+            if (s.constructor !== Stream4)
+              throw new Error("Ensure that each item passed to stream.combine/stream.merge/lift is a stream.");
+            return s._state === "active";
+          });
+          var stream = ready ? Stream4(fn.apply(null, streams.concat([streams]))) : Stream4();
+          var changed = [];
+          var mappers = streams.map(function(s) {
+            return s._map(function(value) {
+              changed.push(s);
+              if (ready || streams.every(function(s2) {
+                return s2._state !== "pending";
+              })) {
+                ready = true;
+                stream(fn.apply(null, streams.concat([changed])));
+                changed = [];
+              }
+              return value;
+            }, true);
+          });
+          var endStream = stream.end.map(function(value) {
+            if (value === true) {
+              mappers.forEach(function(mapper) {
+                mapper.end(true);
+              });
+              endStream.end(true);
+            }
+            return void 0;
+          });
+          return stream;
+        }
+        function merge(streams) {
+          return combine(function() {
+            return streams.map(function(s) {
+              return s();
+            });
+          }, streams);
+        }
+        function scan(fn, acc, origin) {
+          var stream = origin.map(function(v) {
+            var next = fn(acc, v);
+            if (next !== Stream4.SKIP) acc = next;
+            return next;
+          });
+          stream(acc);
+          return stream;
+        }
+        function scanMerge(tuples, seed) {
+          var streams = tuples.map(function(tuple) {
+            return tuple[0];
+          });
+          var stream = combine(function() {
+            var changed = arguments[arguments.length - 1];
+            streams.forEach(function(stream2, i) {
+              if (changed.indexOf(stream2) > -1)
+                seed = tuples[i][1](seed, stream2());
+            });
+            return seed;
+          }, streams);
+          stream(seed);
+          return stream;
+        }
+        function lift() {
+          var fn = arguments[0];
+          var streams = Array.prototype.slice.call(arguments, 1);
+          return merge(streams).map(function(streams2) {
+            return fn.apply(void 0, streams2);
+          });
+        }
+        function open(s) {
+          return s._state === "pending" || s._state === "active" || s._state === "changing";
+        }
+        if (typeof module !== "undefined") module["exports"] = Stream4;
+        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream4;
+        else window.m = { stream: Stream4 };
+      })();
+    }
+  });
+
+  // node_modules/mithril/stream.js
+  var require_stream2 = __commonJS({
+    "node_modules/mithril/stream.js"(exports, module) {
+      "use strict";
+      module.exports = require_stream();
+    }
+  });
+
   // node_modules/dayjs/dayjs.min.js
   var require_dayjs_min = __commonJS({
     "node_modules/dayjs/dayjs.min.js"(exports, module) {
@@ -14818,12 +14999,12 @@
   }
 
   // src/model/contact.ts
-  function NewContact() {
+  function NewContact(id) {
     return {
-      id: "",
+      id,
       name: "",
       icon: "",
-      preferredUsername: "",
+      username: "",
       known: false,
       updated: 0
     };
@@ -14833,9 +15014,9 @@
       id: actor.id(),
       name: actor.name(),
       icon: actor.icon(),
-      preferredUsername: actor.preferredUsername(),
+      username: actor.computedUsername(),
       known: false,
-      updated: Math.floor(Date.now() / 1e3)
+      updated: Date.now()
     };
   }
 
@@ -15003,9 +15184,9 @@
     // allMessages returns all messages in the specified group, sorted by createDate ascending
     // TODO: This will need to be limited or pagincated for long discussions.
     allMessages = async (groupId) => {
-      var messages = await this.#db.getAllFromIndex("message", "groupId", groupId);
-      messages.sort((a, b) => a.createDate - b.createDate);
-      return messages;
+      var messageData = await this.#db.getAllFromIndex("message", "groupId", groupId);
+      messageData.sort((a, b) => a.createDate - b.createDate);
+      return messageData.map((data) => NewMessage(data));
     };
     // loadMessage retrieves a message from the database
     loadMessage = async (messageID) => {
@@ -15304,6 +15485,17 @@
       }
       return { url: "", plaintext: false };
     };
+    ///////////////////////////////////
+    // Computed Properties
+    computedUsername = () => {
+      var username = this.preferredUsername();
+      if (username.charAt(0) == "@") {
+        username = username.substring(1);
+      }
+      username = username.split("@")[0];
+      const url = new URL(this.id());
+      return `@${username}@${url.hostname}`;
+    };
   };
   async function loadActor(value) {
     switch (typeof value) {
@@ -15534,6 +15726,9 @@
     }
     return new Activity();
   }
+
+  // src/service/interfaces.ts
+  var import_stream = __toESM(require_stream2(), 1);
 
   // src/model/ap-keypackage.ts
   function NewAPKeyPackage(generator, actorID, publicPackage) {
@@ -15962,19 +16157,22 @@
     };
     // sendActivity sends an activity to the Actor's outbox
     sendActivity = async (activity) => {
-      if (!(activity instanceof Activity)) {
-        activity = new Activity(activity);
+      var result;
+      if (activity instanceof Activity) {
+        result = activity;
+      } else {
+        result = new Activity(activity);
       }
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         headers: { "Content-Type": "application/activity+json" },
         credentials: "include",
-        body: activity.toJSON()
+        body: result.toJSON()
       });
       if (!response.ok) {
         throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
       }
-      return activity;
+      return result;
     };
   };
 
@@ -16142,7 +16340,7 @@
     // deleteObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #deleteObject = async (object) => {
-      return await this.#send(this.#outboxUrl, {
+      await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
         type: "Delete",
         actor: this.#actorId,
@@ -16161,10 +16359,6 @@
         throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
       }
       return response.headers.get("Location") || "";
-    };
-    loadContact = async (id) => {
-      const response = await new Actor().fromURL(id);
-      return ContactFromActor(response);
     };
   };
 
@@ -16675,6 +16869,7 @@
   }
 
   // src/service/controller.ts
+  var import_stream2 = __toESM(require_stream2(), 1);
   var Controller = class {
     #actorId;
     #actor;
@@ -16682,6 +16877,7 @@
     #delivery;
     #directory;
     #receiver;
+    #contacts;
     #mls;
     #allowPlaintextMessages;
     #encryptionKey;
@@ -16689,8 +16885,10 @@
     config;
     groups;
     messages;
-    contacts;
-    group;
+    groupStream;
+    groupNameStream;
+    groupMemberStream;
+    groupContactStream;
     message;
     inReplyTo;
     pageView;
@@ -16698,9 +16896,10 @@
     isWindowFocused;
     isApplicationRunning;
     // constructor initializes the Controller with its dependencies
-    constructor(actorId, database, delivery, directory, receiver) {
+    constructor(actorId, contacts, database, delivery, directory, receiver) {
       this.#actorId = actorId;
       this.#actor = new Actor();
+      this.#contacts = contacts;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
@@ -16708,14 +16907,16 @@
       this.#allowPlaintextMessages = false;
       this.groups = [];
       this.messages = [];
-      this.contacts = /* @__PURE__ */ new Map();
-      this.group = NewGroup();
       this.message = new Message();
       this.inReplyTo = void 0;
       this.pageView = "LOADING";
       this.modalView = "";
       this.isWindowFocused = true;
       this.isApplicationRunning = true;
+      this.groupStream = (0, import_stream2.default)(NewGroup());
+      this.groupMemberStream = this.groupStream.map((group) => group.members);
+      this.groupContactStream = this.groupMemberStream.map((members) => members.map((id) => this.#contacts.loadContact(id)));
+      this.groupNameStream = import_stream2.default.combine(calcGroupName, [this.groupStream, this.groupContactStream]);
       this.config = NewConfig();
       this.#start();
     }
@@ -16753,7 +16954,6 @@
       this.#database.onchange(async () => {
         await this.loadGroups();
         await this.loadMessages();
-        await this.loadContacts();
       });
       cookieStore.addEventListener("change", async () => {
         this.stop();
@@ -16765,7 +16965,6 @@
         this.#blurWindow();
       });
       this.loadGroups();
-      this.#refreshContacts();
       this.pageView = "GROUPS";
       import_mithril.default.redraw();
     };
@@ -16834,63 +17033,6 @@
       return this.#directory.getKeyPackages([actorId]);
     };
     //////////////////////////////////////////
-    // Contacts
-    //////////////////////////////////////////
-    loadContacts = async () => {
-      const promises = this.group.members.map(async (actorId) => this.loadContact(actorId));
-      const contacts = await Promise.all(promises);
-      const result = /* @__PURE__ */ new Map();
-      for (const contact of contacts) {
-        if (contact == void 0) {
-          continue;
-        }
-        result.set(contact.id, contact);
-      }
-      this.contacts = result;
-      import_mithril.default.redraw();
-    };
-    loadContact = async (actorId) => {
-      var result = await this.#database.loadContact(actorId);
-      if (result !== void 0) {
-        return result;
-      }
-      return await this.#directory.loadContact(actorId);
-    };
-    addContacts = async (actorIds) => {
-      if (this.#mls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      if (!groupIsEncrypted(this.group)) {
-        throw new Error("Not Implemented");
-      }
-      this.group = await this.#mls.addGroupMembers(this.group, actorIds);
-      await this.#database.saveGroup(this.group);
-      await this.loadGroups();
-    };
-    removeContact = async (actorId) => {
-      if (this.#mls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      if (!groupIsEncrypted(this.group)) {
-        throw new Error("Not Implemented");
-      }
-      this.group = await this.#mls.removeGroupMember(this.group, actorId);
-      await this.#database.saveGroup(this.group);
-      await this.loadGroups();
-    };
-    #refreshContacts = async () => {
-      const contacts = await this.#database.allContacts();
-      for (const contact of contacts) {
-        const updated = await this.#directory.loadContact(contact.id);
-        if (updated == void 0) {
-          continue;
-        }
-        if (updated != contact) {
-          await this.#database.saveContact(updated);
-        }
-      }
-    };
-    //////////////////////////////////////////
     // Groups
     //////////////////////////////////////////
     // createGroup creates a new group and initial message
@@ -16904,7 +17046,7 @@
         }
         group = await this.#mls.encodeGroup(group);
       }
-      this.group = await this.addGroupMembers(group, recipients);
+      this.groupStream(await this.addGroupMembers(group, recipients));
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
     };
@@ -16921,7 +17063,6 @@
     // saveGroup saves the specified group to the database
     saveGroup = async (group) => {
       group.lastMessage = group.lastMessage.slice(0, 100);
-      group.contacts = await this.calcGroupContacts(group);
       await this.#database.saveGroup(group);
       await this.loadGroups();
     };
@@ -16942,22 +17083,6 @@
         }
       });
       this.#sendActivity(group, activity);
-    };
-    // addGroupMember adds a new actorId to the group
-    addGroupMembers = async (group, actorIds) => {
-      actorIds = actorIds.filter((actorId) => !group.members.includes(actorId));
-      if (actorIds.length == 0) {
-        return group;
-      }
-      group.members.push(...actorIds);
-      if (groupIsEncrypted(group)) {
-        if (this.#mls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        group = await this.#mls.addGroupMembers(group, actorIds);
-      }
-      await this.saveGroup(group);
-      return group;
     };
     // leaveGroup leaves/deletes the specified group from the database
     leaveGroup = async (groupId) => {
@@ -16980,54 +17105,26 @@
     // selectGroup updates the "selectedGroupId" and reloads messages for that group
     selectGroup = async (groupId) => {
       if (this.groups.length == 0) {
-        this.group = NewGroup();
+        this.groupStream(NewGroup());
         this.messages = [];
-        this.contacts = /* @__PURE__ */ new Map();
         return;
       }
       var group = this.groups.find((group2) => group2.id == groupId);
       if (group == void 0) {
         group = this.groups[0];
       }
+      this.groupStream(group);
       if (group.unread) {
         group.unread = false;
         await this.saveGroup(group);
         this.syncGroup(group);
       }
-      this.group = group;
+      this.groupStream(group);
       await this.loadMessages();
-      await this.loadContacts();
       this.page_group_messages();
     };
     selectedGroupId = () => {
-      if (this.group != void 0) {
-        return this.group.id;
-      }
-      return "";
-    };
-    // calcGroupContacts calculates all contacts within a group
-    calcGroupContacts = async (group) => {
-      const contacts = await Promise.all(group.members.map((member) => this.#directory.loadContact(member)));
-      return contacts.filter((contact) => contact != void 0);
-    };
-    // groupName returns an intelligent name for the group based on its member count.
-    groupName = (group = this.group) => {
-      if (group.name != "") {
-        return group.name;
-      }
-      const contacts = group.members.map((actorId) => this.contacts.get(actorId)).filter((contact) => contact != void 0).filter((contact) => contact.id != this.actorId()).map((contact) => contact.name);
-      switch (contacts.length) {
-        // This should never happen, but just in case...
-        case 0:
-          return "Empty Group";
-        // For small sets, display all names
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-          return contacts.join(", ");
-      }
-      return contacts.slice(0, 3).join(", ") + `, +${contacts.length - 3} others`;
+      return this.groupStream().id;
     };
     setGroupState(group, stateId) {
       switch (stateId) {
@@ -17040,6 +17137,51 @@
         default:
       }
     }
+    //////////////////////////////////////////
+    // Group Members
+    //////////////////////////////////////////
+    // addGroupMember adds a new actorId to the group
+    addGroupMembers = async (group, actorIds) => {
+      actorIds = actorIds.filter((actorId) => !group.members.includes(actorId));
+      if (actorIds.length == 0) {
+        return group;
+      }
+      group.members.push(...actorIds);
+      if (groupIsEncrypted(group)) {
+        if (this.#mls == void 0) {
+          throw new Error("MLS service is not initialized");
+        }
+        group = await this.#mls.addGroupMembers(group, actorIds);
+      }
+      await this.saveGroup(group);
+      return group;
+    };
+    addGroupMember = async (actorIds) => {
+      if (this.#mls == void 0) {
+        throw new Error("MLS service is not initialized");
+      }
+      var group = this.groupStream();
+      if (!groupIsEncrypted(group)) {
+        throw new Error("Not Implemented");
+      }
+      group = await this.#mls.addGroupMembers(group, actorIds);
+      this.groupStream(group);
+      await this.#database.saveGroup(group);
+      await this.loadGroups();
+    };
+    removeContact = async (actorId) => {
+      if (this.#mls == void 0) {
+        throw new Error("MLS service is not initialized");
+      }
+      var group = this.groupStream();
+      if (!groupIsEncrypted(group)) {
+        throw new Error("Not Implemented");
+      }
+      group = await this.#mls.removeGroupMember(group, actorId);
+      this.groupStream(group);
+      await this.#database.saveGroup(group);
+      await this.loadGroups();
+    };
     //////////////////////////////////////////
     // Messages
     //////////////////////////////////////////
@@ -17062,42 +17204,44 @@
     };
     // sendMessage sends a message to the specified group
     sendMessage = async (content) => {
-      if (this.group == void 0) {
+      var group = this.groupStream();
+      if (group.id == "") {
         throw new Error("No group selected");
       }
       var message = NewMessage();
-      message.groupId = this.group.id;
+      message.groupId = group.id;
       message.sender = this.#actor.id();
       message.content = content;
       message.type = "SENT";
       await this.#database.saveMessage(message);
-      this.group.lastMessage = content;
-      await this.saveGroup(this.group);
+      await this.loadMessages();
+      group.lastMessage = content;
+      await this.saveGroup(group);
       var activity = new Activity({
-        context: this.group.id,
+        context: group.id,
         actor: this.actorId(),
         type: ActivityTypeCreate,
-        to: this.group.members,
-        object: messageToActivityStream(this.group, message)
+        to: group.members,
+        object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(this.group, activity);
-      await this.loadMessages();
+      this.#sendActivity(group, activity);
       this.removeReply();
     };
     updateMessage = async (message) => {
+      var group = this.groupStream();
       if (message.sender != this.actorId()) {
         return;
       }
-      if (message.groupId != this.group.id) {
+      if (message.groupId != group.id) {
         return;
       }
       const activity = new Activity({
         actor: this.actorId(),
         type: ActivityTypeUpdate,
-        to: this.group.members,
-        object: messageToActivityStream(this.group, message)
+        to: group.members,
+        object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(this.group, activity);
+      this.#sendActivity(group, activity);
       await this.#database.saveMessage(message);
       await this.loadMessages();
     };
@@ -17117,34 +17261,37 @@
       if (message.sender != this.actorId()) {
         return;
       }
-      if (message.groupId != this.group.id) {
+      var group = this.groupStream();
+      if (message.groupId != group.id) {
         return;
       }
       const activity = new Activity({
         "@context": ContextActivityStreams,
         "id": newId2(),
-        "to": this.group.members,
+        "to": group.members,
         "actor": this.actorId(),
         "type": ActivityTypeDelete,
         "object": message.id
       });
-      this.#sendActivity(this.group, activity);
+      this.#sendActivity(group, activity);
       await this.#database.deleteMessage(messageId);
       await this.loadMessages();
     };
     // reactToMessage adds a "reaction" from the current actor to the specified message
     reactToMessage = async (messageId, content = "\u2764\uFE0F") => {
+      const group = this.groupStream();
       const message = await this.loadMessage(messageId);
       if (message == void 0) {
         console.error("Message not found:", messageId);
         return;
       }
-      var group = await this.#database.loadGroup(message.groupId);
-      if (group == void 0) {
+      if (message.groupId != group.id) {
+        console.error("Cannot react to message in a different group");
         return;
       }
       message.setReaction(this.actorId(), content);
       await this.#database.saveMessage(message);
+      this.loadMessages();
       var activity = new Activity({
         "@context": ContextActivityStreams,
         id: newId2(),
@@ -17155,25 +17302,23 @@
         object: message.id
       });
       this.#sendActivity(group, activity);
-      await this.loadMessages();
-      import_mithril.default.redraw();
     };
     // undoReaction removes a "reaction" from the specified message
     undoReaction = async (messageId) => {
       const message = await this.loadMessage(messageId);
+      const group = this.groupStream();
       if (message == void 0) {
+        return;
+      }
+      if (message.groupId != group.id) {
+        console.error("Cannot undo reaction to message in a different group");
         return;
       }
       if (!message.removeReaction(this.actorId())) {
         return;
       }
       await this.#database.saveMessage(message);
-      await this.loadMessages();
-      import_mithril.default.redraw();
-      var group = await this.#database.loadGroup(message.groupId);
-      if (group == void 0) {
-        return;
-      }
+      this.loadMessages();
       var activity = new Activity({
         "@context": ContextActivityStreams,
         id: newId2(),
@@ -17249,7 +17394,7 @@
       if (!message.received.includes(activity.actorId())) {
         message.received.push(activity.actorId());
         await this.#database.saveMessage(message);
-        await this.loadMessages();
+        this.loadMessages();
       }
     };
     #receiveActivity_CreateMessage = async (activity) => {
@@ -17480,6 +17625,25 @@
       return await this.#mls.sendActivity(group, activity);
     };
   };
+  function calcGroupName(group, contacts) {
+    const groupName = group().name;
+    if (groupName != "") {
+      return groupName;
+    }
+    const contactNames = contacts().map((stream) => stream().name).filter((name) => name != "");
+    switch (contactNames.length) {
+      // This should never happen, but just in case...
+      case 0:
+        return "Empty Group";
+      // For small sets, display all names
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+        return contactNames.join(", ");
+    }
+    return contactNames.slice(0, 3).join(", ") + `, +${contactNames.length - 3} others`;
+  }
 
   // src/view/app.tsx
   var import_mithril36 = __toESM(require_mithril(), 1);
@@ -17719,7 +17883,7 @@
             "aria-selected": index == vnode.state.highlightedOption ? "true" : null
           },
           /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), class: "width-32 circle" })),
-          /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.usernameOrId()))
+          /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
         );
       }))) : null);
     }
@@ -17928,7 +18092,7 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row" }, controller2.groupName(group)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-red text-sm" }, group.unread && /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }))));
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row" }, controller2.groupNameStream()), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage)), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-red text-sm" }, group.unread && /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }))));
       }));
     }
   };
@@ -17944,7 +18108,8 @@
       vnode.state.message = "";
     }
     view(vnode) {
-      if (vnode.attrs.controller.group.stateId === "CLOSED") {
+      const group = vnode.attrs.controller.groupStream();
+      if (group.stateId === "CLOSED") {
         return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding align-center" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "start a new conversation"), ".");
       }
       const enabled = vnode.state.message.trim() !== "";
@@ -18095,6 +18260,14 @@
   var import_dayjs = __toESM(require_dayjs_min(), 1);
   var ViewMessage = class {
     oninit(vnode) {
+      vnode.state.contactStream = vnode.attrs.controller.groupContactStream.map((contactStreams) => {
+        const result = /* @__PURE__ */ new Map();
+        contactStreams.forEach((contactStream) => {
+          const contact = contactStream();
+          result.set(contact.id, contact);
+        });
+        return result;
+      });
     }
     // view returns the JSX for the messages within the selectedGroup.
     // If there is no selected group, then a welcome message is shown instead.
@@ -18145,10 +18318,12 @@
       if (!vnode.attrs.showSender) {
         return /* @__PURE__ */ (0, import_mithril14.default)("div", null);
       }
-      if (vnode.attrs.controller.group.members.length < 3) {
+      const contacts = vnode.state.contactStream();
+      if (contacts.size < 3) {
         return /* @__PURE__ */ (0, import_mithril14.default)("div", null);
       }
-      const contact = vnode.attrs.controller.contacts.get(vnode.attrs.message.sender) || NewContact();
+      const sender = vnode.attrs.message.sender;
+      const contact = contacts.get(sender) || NewContact(sender);
       return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-top margin-left-sm" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, contact.name));
     }
   };
@@ -18166,7 +18341,7 @@
       const controller2 = vnode.attrs.controller;
       var lastSender = "";
       var lastDate = "";
-      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, controller2.groupName()), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.group.members.length, ")"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, controller2.groupNameStream()), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.groupMemberStream().length, ")"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         const showDate = "";
         const showSender = message.sender != lastSender;
         lastSender = message.sender;
@@ -18180,26 +18355,24 @@
   var import_mithril19 = __toESM(require_mithril(), 1);
   var GroupNotes = class {
     oninit(vnode) {
-      vnode.state.name = vnode.attrs.group.name;
-      vnode.state.description = vnode.attrs.group.description;
-      vnode.state.stateId = vnode.attrs.group.stateId;
-      vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ");
+      vnode.state.group = vnode.attrs.controller.groupStream();
+      vnode.state.tags = vnode.state.group.tags.map((tag) => "#" + tag).join(" ");
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, controller2.groupName()), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.group.members.length, ")"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupName" }, "Custom Name"), /* @__PURE__ */ (0, import_mithril18.default)(
+      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, controller2.groupNameStream()), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.groupMemberStream().length, ")"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupName" }, "Custom Name"), /* @__PURE__ */ (0, import_mithril18.default)(
         "input",
         {
           id: "idGroupName",
           type: "text",
-          value: vnode.state.name,
+          value: vnode.state.group.name,
           oninput: (event) => this.setName(vnode, event)
         }
       ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) helps you organize conversations. If empty, member list is displayed.")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupNotes" }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)(
         "textarea",
         {
           id: "idGroupNotes",
-          value: vnode.state.description,
+          value: vnode.state.group.description,
           rows: "8",
           oninput: (event) => this.setDescription(vnode, event)
         }
@@ -18215,14 +18388,14 @@
       ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Organizes conversations using conversation filters.")))), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril18.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes")))))));
     }
     widgetState(vnode) {
-      if (vnode.state.stateId === "CLOSED") {
+      if (vnode.state.group.stateId === "CLOSED") {
         return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupState" }, "Status"), /* @__PURE__ */ (0, import_mithril18.default)("select", { disabled: true }, /* @__PURE__ */ (0, import_mithril18.default)("option", null, "Closed")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "This group is closed and you can no longer post to it."));
       }
       return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupState" }, "Status"), /* @__PURE__ */ (0, import_mithril18.default)(
         "select",
         {
           id: "idGroupState",
-          value: vnode.state.stateId,
+          value: vnode.state.group.stateId,
           oninput: (event) => this.setState(vnode, event)
         },
         /* @__PURE__ */ (0, import_mithril18.default)("option", { value: "IMPORTANT" }, "Important"),
@@ -18232,15 +18405,20 @@
     }
     setName(vnode, event) {
       const target = event.target;
-      vnode.state.name = target.value;
+      vnode.state.group.name = target.value;
     }
     setDescription(vnode, event) {
       const target = event.target;
-      vnode.state.description = target.value;
+      vnode.state.group.description = target.value;
     }
     setState(vnode, event) {
       const target = event.target;
-      vnode.state.stateId = target.value;
+      switch (target.value) {
+        case "IMPORTANT":
+        case "ACTIVE":
+        case "ARCHIVED":
+          vnode.state.group.stateId = target.value;
+      }
     }
     setTags(vnode, event) {
       const target = event.target;
@@ -18248,24 +18426,21 @@
     }
     async save(event, vnode) {
       haltEvent(event);
-      vnode.attrs.group.name = vnode.state.name;
-      vnode.attrs.group.description = vnode.state.description;
-      vnode.attrs.controller.setGroupState(vnode.attrs.group, vnode.state.stateId);
       vnode.state.tags = vnode.state.tags.replaceAll("#", "");
       vnode.state.tags = vnode.state.tags.trim();
       if (vnode.state.tags.trim() == "") {
-        vnode.attrs.group.tags = [];
+        vnode.state.group.tags = [];
       } else {
-        vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim());
+        vnode.state.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim());
       }
-      await vnode.attrs.controller.saveGroupAndSync(vnode.attrs.group);
+      await vnode.attrs.controller.saveGroupAndSync(vnode.state.group);
       return this.close(vnode);
     }
     async delete(vnode) {
       if (!confirm("Are you sure you want to leave this group? This action cannot be undone.")) {
         return;
       }
-      await vnode.attrs.controller.leaveGroup(vnode.attrs.group.id);
+      await vnode.attrs.controller.leaveGroup(vnode.state.group.id);
       this.close(vnode);
     }
     close(vnode) {
@@ -18277,37 +18452,15 @@
   var import_mithril20 = __toESM(require_mithril(), 1);
   var import_mithril21 = __toESM(require_mithril(), 1);
   var GroupMembers = class {
-    //
     oninit(vnode) {
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      const contactsList = Array.from(controller2.contacts.values());
-      return /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, controller2.groupName()), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", "aria-selected": "true" }, "People (", controller2.group.members.length, ")"), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "table" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addContact() }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("span", { class: "circle width-48 flex-center bg-gray text-white text-lg", style: "background-color:var(--blue60)" }, "+")), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), contactsList.map((contact) => {
-        return /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-row" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, contact.id)), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "align-right" }, /* @__PURE__ */ (0, import_mithril20.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeContact(vnode, contact.id) }, "Remove")));
+      const streamContacts = controller2.groupContactStream();
+      return /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, controller2.groupNameStream()), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", "aria-selected": "true" }, "People (", streamContacts.length, ")"), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "table" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addContact() }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("span", { class: "circle width-48 flex-center bg-gray text-white text-lg", style: "background-color:var(--blue60)" }, "+")), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), streamContacts.map((streamContact) => {
+        const contact = streamContact();
+        return /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-row" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "align-right" }, /* @__PURE__ */ (0, import_mithril20.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeContact(vnode, contact.id) }, "Remove")));
       }))));
-    }
-    setName(vnode, event) {
-      const target = event.target;
-      vnode.state.name = target.value;
-    }
-    setTags(vnode, event) {
-      const target = event.target;
-      vnode.state.tags = target.value;
-    }
-    async onsubmit(event, vnode) {
-      event.preventDefault();
-      event.stopPropagation();
-      vnode.attrs.group.name = vnode.state.name;
-      vnode.state.tags = vnode.state.tags.replaceAll("#", "");
-      vnode.state.tags = vnode.state.tags.trim();
-      if (vnode.state.tags.trim() == "") {
-        vnode.attrs.group.tags = [];
-      } else {
-        vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim());
-      }
-      await vnode.attrs.controller.saveGroup(vnode.attrs.group);
-      return this.close(vnode);
     }
     removeContact(vnode, contactId) {
       if (confirm("Are you sure you want to remove this member?")) {
@@ -18323,45 +18476,19 @@
   var import_mithril22 = __toESM(require_mithril(), 1);
   var import_mithril23 = __toESM(require_mithril(), 1);
   var GroupLeave = class {
-    //
     oninit(vnode) {
-      vnode.state.name = vnode.attrs.group.name;
-      if (vnode.attrs.group.tags == void 0) {
-        vnode.attrs.group.tags = [];
-      }
-      vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ");
+      vnode.state.group = vnode.attrs.controller.groupStream();
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, controller2.groupName()), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.group.members.length, ")"), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", "aria-selected": "true" }, "Leave"))), /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "card max-width-640 padding" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "bold margin-bottom-sm" }, 'Are you sure you want to leave "', controller2.groupName(), '"?'), /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-bottom" }, "If you leave this group, it will be removed from all of your devices.", /* @__PURE__ */ (0, import_mithril22.default)("br", null), "Other group members will still have access to the conversation and its history."), /* @__PURE__ */ (0, import_mithril22.default)("button", { class: "text-red", onclick: () => this.delete(vnode) }, "Leave Group"))));
-    }
-    setName(vnode, event) {
-      const target = event.target;
-      vnode.state.name = target.value;
-    }
-    setTags(vnode, event) {
-      const target = event.target;
-      vnode.state.tags = target.value;
-    }
-    async onsubmit(event, vnode) {
-      event.preventDefault();
-      event.stopPropagation();
-      vnode.attrs.group.name = vnode.state.name;
-      vnode.state.tags = vnode.state.tags.replaceAll("#", "");
-      vnode.state.tags = vnode.state.tags.trim();
-      if (vnode.state.tags.trim() == "") {
-        vnode.attrs.group.tags = [];
-      } else {
-        vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim());
-      }
-      await vnode.attrs.controller.saveGroup(vnode.attrs.group);
-      return this.close(vnode);
+      const groupName = controller2.groupNameStream();
+      return /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, groupName), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_members() }, "People (", controller2.groupMemberStream().length, ")"), /* @__PURE__ */ (0, import_mithril22.default)("div", { role: "tab", "aria-selected": "true" }, "Leave"))), /* @__PURE__ */ (0, import_mithril22.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "card max-width-640 padding" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "bold margin-bottom-sm" }, 'Are you sure you want to leave "', groupName, '"?'), /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-bottom" }, "If you leave this group, it will be removed from all of your devices.", /* @__PURE__ */ (0, import_mithril22.default)("br", null), "Other group members will still have access to the conversation and its history."), /* @__PURE__ */ (0, import_mithril22.default)("button", { class: "text-red", onclick: () => this.delete(vnode) }, "Leave Group"))));
     }
     async delete(vnode) {
       if (!confirm("Are you sure you want to leave this group? This action cannot be undone.")) {
         return;
       }
-      await vnode.attrs.controller.leaveGroup(vnode.attrs.group.id);
+      await vnode.attrs.controller.leaveGroup(vnode.state.group.id);
       this.close(vnode);
     }
     close(vnode) {
@@ -18432,7 +18559,7 @@
       const controller2 = vnode.attrs.controller;
       event.preventDefault();
       event.stopPropagation();
-      await controller2.addContacts(participants);
+      await controller2.addGroupMember(participants);
       return this.close(vnode);
     }
     close(vnode) {
@@ -18496,13 +18623,13 @@
       var page;
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-MEMBERS":
-          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupMembers, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupMembers, { controller: vnode.attrs.controller });
           break;
         case "GROUP-NOTES":
-          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupNotes, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupNotes, { controller: vnode.attrs.controller });
           break;
         case "GROUP-LEAVE":
-          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupLeave, { controller: vnode.attrs.controller, group: vnode.attrs.controller.group });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupLeave, { controller: vnode.attrs.controller });
           break;
         default:
           const groups = vnode.attrs.controller.groups;
@@ -18642,6 +18769,42 @@
     }
   };
 
+  // src/service/contacts.ts
+  var import_stream3 = __toESM(require_stream2(), 1);
+  var Contacts = class {
+    #contacts;
+    // Map of contact ID to Contact object
+    #maxAge;
+    // Maximum age (in ms) for a contact to be considered "fresh"
+    constructor() {
+      this.#contacts = /* @__PURE__ */ new Map();
+      this.#maxAge = 24 * 60 * 60 * 1e3;
+    }
+    // stop clears the in-memory contacts map
+    stop = () => {
+      this.#contacts.clear();
+    };
+    // loadContact retrieves a contact by ID from the in-memory map
+    loadContact = (id) => {
+      var result = (0, import_stream3.default)(NewContact(id));
+      const cachedValue = this.#contacts.get(id);
+      if (cachedValue != void 0) {
+        result(cachedValue);
+        if (Date.now() - cachedValue.updated < this.#maxAge) {
+          return result;
+        }
+      }
+      new Actor().fromURL(id).then((response) => {
+        result(ContactFromActor(response));
+      });
+      return result;
+    };
+    // saveContact adds or updates a contact in the in-memory map
+    saveContact = (contact) => {
+      this.#contacts.set(contact.id, contact);
+    };
+  };
+
   // src/app.tsx
   var controller;
   async function startup() {
@@ -18651,11 +18814,12 @@
       throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`);
     }
     const indexedDB2 = await NewIndexedDB(actorID);
+    const contacts = new Contacts();
     const database = new Database(indexedDB2);
     const delivery = new Delivery();
     const directory = new Directory();
     const receiver = new Receiver();
-    controller = new Controller(actorID, database, delivery, directory, receiver);
+    controller = new Controller(actorID, contacts, database, delivery, directory, receiver);
     import_mithril38.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril38.default)(App, { controller }) });
   }
   startup();

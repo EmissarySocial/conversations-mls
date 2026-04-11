@@ -35,15 +35,15 @@ export class Index {
 		switch (vnode.attrs.controller.pageView) {
 
 			case "GROUP-MEMBERS":
-				page = <GroupMembers controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+				page = <GroupMembers controller={vnode.attrs.controller} />
 				break
 
 			case "GROUP-NOTES":
-				page = <GroupNotes controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+				page = <GroupNotes controller={vnode.attrs.controller} />
 				break
 
 			case "GROUP-LEAVE":
-				page = <GroupLeave controller={vnode.attrs.controller} group={vnode.attrs.controller.group} />
+				page = <GroupLeave controller={vnode.attrs.controller} />
 				break
 
 			default:

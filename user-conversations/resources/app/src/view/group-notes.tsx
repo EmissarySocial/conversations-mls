@@ -9,23 +9,18 @@ type GroupNotesVnode = Vnode<GroupNotesArgs, GroupNotesState>
 
 interface GroupNotesArgs {
 	controller: Controller
-	group: Group
 }
 
 interface GroupNotesState {
-	name: string
-	description: string
-	stateId: string
+	group: Group
 	tags: string
 }
 
 export class GroupNotes {
 
 	oninit(vnode: GroupNotesVnode) {
-		vnode.state.name = vnode.attrs.group.name
-		vnode.state.description = vnode.attrs.group.description
-		vnode.state.stateId = vnode.attrs.group.stateId
-		vnode.state.tags = vnode.attrs.group.tags.map((tag) => "#" + tag).join(" ")
+		vnode.state.group = vnode.attrs.controller.groupStream()
+		vnode.state.tags = vnode.state.group.tags.map((tag) => "#" + tag).join(" ")
 	}
 
 	view(vnode: GroupNotesVnode) {
@@ -37,9 +32,9 @@ export class GroupNotes {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{controller.groupName()}</div>
+						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{controller.groupNameStream()}</div>
 						<div role="tab" aria-selected="true">Notes</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.group.members.length})</div>
+						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.groupMemberStream().length})</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>
@@ -53,7 +48,7 @@ export class GroupNotes {
 										<input
 											id="idGroupName"
 											type="text"
-											value={vnode.state.name}
+											value={vnode.state.group.name}
 											oninput={(event: Event) => this.setName(vnode, event)}
 										/>
 										<div class="text-xs text-gray">(PRIVATE) helps you organize conversations. If empty, member list is displayed.</div>
@@ -62,7 +57,7 @@ export class GroupNotes {
 										<label for="idGroupNotes">Notes</label>
 										<textarea
 											id="idGroupNotes"
-											value={vnode.state.description}
+											value={vnode.state.group.description}
 											rows="8"
 											oninput={(event: Event) => this.setDescription(vnode, event)}
 										/>
@@ -102,7 +97,7 @@ export class GroupNotes {
 	widgetState(vnode: GroupNotesVnode) {
 
 		// If if CLOSED, read only view
-		if (vnode.state.stateId === "CLOSED") {
+		if (vnode.state.group.stateId === "CLOSED") {
 
 			return <div class="layout-element" >
 				<label for="idGroupState">Status</label>
@@ -120,7 +115,7 @@ export class GroupNotes {
 
 			<select
 				id="idGroupState"
-				value={vnode.state.stateId}
+				value={vnode.state.group.stateId}
 				oninput={(event: Event) => this.setState(vnode, event)}>
 
 				<option value="IMPORTANT">Important</option>
@@ -133,17 +128,23 @@ export class GroupNotes {
 
 	setName(vnode: GroupNotesVnode, event: Event) {
 		const target = event.target as HTMLInputElement
-		vnode.state.name = target.value
+		vnode.state.group.name = target.value
 	}
 
 	setDescription(vnode: GroupNotesVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
-		vnode.state.description = target.value
+		vnode.state.group.description = target.value
 	}
 
 	setState(vnode: GroupNotesVnode, event: Event) {
 		const target = event.target as HTMLSelectElement
-		vnode.state.stateId = target.value
+
+		switch (target.value) {
+			case "IMPORTANT":
+			case "ACTIVE":
+			case "ARCHIVED":
+				vnode.state.group.stateId = target.value
+		}
 	}
 
 	setTags(vnode: GroupNotesVnode, event: Event) {
@@ -156,23 +157,18 @@ export class GroupNotes {
 		// Prevent page reload
 		haltEvent(event)
 
-		// Copy values from the form into the Group object
-		vnode.attrs.group.name = vnode.state.name
-		vnode.attrs.group.description = vnode.state.description
-		vnode.attrs.controller.setGroupState(vnode.attrs.group, vnode.state.stateId)
-
 		// Clean up tags input
 		vnode.state.tags = vnode.state.tags.replaceAll("#", "")
 		vnode.state.tags = vnode.state.tags.trim()
 
 		if (vnode.state.tags.trim() == "") {
-			vnode.attrs.group.tags = []
+			vnode.state.group.tags = []
 		} else {
-			vnode.attrs.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim())
+			vnode.state.group.tags = vnode.state.tags.split(/\s+/).map((tag) => tag.trim())
 		}
 
 		// Save the Group to the database
-		await vnode.attrs.controller.saveGroupAndSync(vnode.attrs.group)
+		await vnode.attrs.controller.saveGroupAndSync(vnode.state.group)
 
 		// Success. Close the modal dialog and redraw the screen
 		return this.close(vnode)
@@ -186,7 +182,7 @@ export class GroupNotes {
 		}
 
 		// Delete the group
-		await vnode.attrs.controller.leaveGroup(vnode.attrs.group.id)
+		await vnode.attrs.controller.leaveGroup(vnode.state.group.id)
 
 		// Close the modal dialog
 		this.close(vnode)

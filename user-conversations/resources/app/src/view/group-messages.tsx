@@ -34,9 +34,9 @@ export class GroupMessages {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" aria-selected="true">{controller.groupName()}</div>
+						<div role="tab" aria-selected="true">{controller.groupNameStream()}</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.group.members.length})</div>
+						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.groupMemberStream().length})</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>

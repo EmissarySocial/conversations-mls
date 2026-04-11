@@ -66,11 +66,14 @@ export class Delivery {
 	}
 
 	// sendActivity sends an activity to the Actor's outbox
-	sendActivity = async (activity: Activity | { [key: string]: any }) => {
+	sendActivity = async (activity: Activity | { [key: string]: any }): Promise<Activity> => {
 
-		// If the activity is not already an Activity object, convert it to one
-		if (!(activity instanceof Activity)) {
-			activity = new Activity(activity)
+		var result: Activity
+
+		if (activity instanceof Activity) {
+			result = activity
+		} else {
+			result = new Activity(activity)
 		}
 
 		// If necessary, encrypt the activity using MLS before sending
@@ -79,13 +82,13 @@ export class Delivery {
 			method: "POST",
 			headers: { "Content-Type": "application/activity+json" },
 			credentials: "include",
-			body: activity.toJSON(),
+			body: result.toJSON(),
 		})
 
 		if (!response.ok) {
 			throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`)
 		}
 
-		return activity
+		return result
 	}
 }

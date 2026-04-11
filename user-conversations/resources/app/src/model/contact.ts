@@ -5,17 +5,17 @@ export type Contact = {
 	id: string // Activity Vocabulary property: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-id
 	name: string // Activity Vocabulary property: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-name
 	icon: string // Activity Vocabulary property: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-icon
-	preferredUsername: string // Activity Vocabulary property: https://www.w3.org/TR/activitypub/#preferredUsername
+	username: string // "Fediverse handle" computed from preferredUsername and domain of the ID URL
 	known: boolean // If TRUE, this contact has been marked "known" by the user.
-	updated: number // Unix epoch (in seconds) when this contact was last retrieved
+	updated: number // Unix epoch (in ms) when this contact was last retrieved
 }
 
-export function NewContact() {
+export function NewContact(id: string) {
 	return {
-		id: "",
+		id: id,
 		name: "",
 		icon: "",
-		preferredUsername: "",
+		username: "",
 		known: false,
 		updated: 0,
 	}
@@ -26,8 +26,8 @@ export function ContactFromActor(actor: Actor): Contact {
 		id: actor.id(),
 		name: actor.name(),
 		icon: actor.icon(),
-		preferredUsername: actor.preferredUsername(),
+		username: actor.computedUsername(),
 		known: false,
-		updated: Math.floor(Date.now() / 1000),
+		updated: Date.now(),
 	}
 }

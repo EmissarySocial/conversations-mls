@@ -9,6 +9,7 @@ import { Controller } from "./service/controller"
 
 // Views
 import { App } from "./view/app"
+import { Contacts } from "./service/contacts"
 
 // Global controller instance
 var controller: Controller
@@ -27,13 +28,14 @@ async function startup() {
 
 	// Build dependencies
 	const indexedDB = await NewIndexedDB(actorID)
+	const contacts = new Contacts()
 	const database = new Database(indexedDB)
 	const delivery = new Delivery()
 	const directory = new Directory()
 	const receiver = new Receiver()
 
 	// Build the controller
-	controller = new Controller(actorID, database, delivery, directory, receiver)
+	controller = new Controller(actorID, contacts, database, delivery, directory, receiver)
 
 	// Pass the controller to the App component and mount the main application
 	m.mount(root, { view: () => <App controller={controller} /> })

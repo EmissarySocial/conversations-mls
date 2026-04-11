@@ -6,6 +6,7 @@ import { Controller } from "../service/controller"
 import { WidgetMessageCreate } from "./widget-message-create"
 import { MessageOptions } from "./message-options"
 import dayjs from "dayjs"
+import type Stream from "mithril/stream"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
@@ -17,11 +18,23 @@ type ViewMessageAttrs = {
 	showDate: string
 }
 
-type ViewMessageState = {}
+type ViewMessageState = {
+	contactStream: Stream<Map<string, Contact>>
+}
 
 export class ViewMessage {
 
 	oninit(vnode: ViewMessageVnode) {
+
+		// Create a new stream that converts the array of contacts into a map of contacts
+		vnode.state.contactStream = vnode.attrs.controller.groupContactStream.map(contactStreams => {
+			const result = new Map<string, Contact>()
+			contactStreams.forEach(contactStream => {
+				const contact = contactStream()
+				result.set(contact.id, contact)
+			})
+			return result
+		})
 	}
 
 	// view returns the JSX for the messages within the selectedGroup.
@@ -139,13 +152,16 @@ export class ViewMessage {
 			return <div></div>
 		}
 
+		const contacts = vnode.state.contactStream()
+
 		// If there are fewer than three people in the group, then we don't need to display the sender's name.
-		if (vnode.attrs.controller.group.members.length < 3) {
+		if (contacts.size < 3) {
 			return <div></div>
 		}
 
 		// Look up the contact in the group contact list
-		const contact = vnode.attrs.controller.contacts.get(vnode.attrs.message.sender) || NewContact()
+		const sender = vnode.attrs.message.sender
+		const contact = contacts.get(sender) || NewContact(sender)
 
 		return (
 			<div class="margin-top margin-left-sm">

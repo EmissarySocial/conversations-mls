@@ -110,7 +110,7 @@ export class Directory {
 	// deleteObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
 	#deleteObject = async <T>(object: T) => {
-		return await this.#send(this.#outboxUrl, {
+		await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: "Delete",
 			actor: this.#actorId,
@@ -133,10 +133,5 @@ export class Directory {
 		}
 
 		return response.headers.get("Location") || ""
-	}
-
-	loadContact = async (id: string): Promise<Contact> => {
-		const response = await new Actor().fromURL(id)
-		return ContactFromActor(response)
 	}
 }

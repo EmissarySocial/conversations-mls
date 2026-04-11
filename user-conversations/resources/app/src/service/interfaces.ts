@@ -4,6 +4,8 @@
 * and MLS services.
 *******************************************/
 
+import Stream from "mithril/stream"
+
 // ts-mls types
 import { type MlsFramedMessage } from "ts-mls"
 import { type MlsGroupInfo } from "ts-mls"
@@ -23,13 +25,19 @@ import { type EncryptedGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
+export interface IContacts {
+	loadContact(id: string): Stream<Contact>
+	saveContact(contact: Contact): void
+	stop(): void
+}
+
 // IDatabase wraps all of the methods that the MLS service
 // uses to store group state.
 export interface IDatabase {
 
 	// Lifecycle methods
 	stop(): void
-	erase(): Promise<void>
+	erase(): void
 
 	// Config methods
 	loadConfig(): Promise<Config>
@@ -58,7 +66,7 @@ export interface IDatabase {
 	deleteMessagesByGroup(groupId: string): Promise<void>
 
 	// Like/Undo methods
-	likeMessage(actorId: string, messageId: string): Promise<Message | undefined>
+	likeMessage(actorId: string, messageId: string, content: string): Promise<Message | undefined>
 	undoLikeMessage(actorId: string, messageId: string): Promise<Message | undefined>
 
 	// other event handlers
@@ -77,12 +85,6 @@ export interface IDelivery {
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
 	sendActivity(activity: Activity | { [key: string]: any }): Promise<Activity>
-
-	// Legacy methods to be refactored
-	sendFramedMessage(recipients: string[], message: MlsFramedMessage): void
-	sendGroupInfo(recipients: string[], message: MlsGroupInfo): void
-	sendPrivateMessage(recipients: string[], message: MlsFramedMessage): void
-	sendWelcome(recipients: string[], welcome: MlsWelcomeMessage): void
 }
 
 // IDirectory wraps all of the methods that the MLS service
@@ -91,7 +93,6 @@ export interface IDirectory {
 
 	// Lifecycle methods
 	stop(): void
-	erase(): Promise<void>
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
@@ -101,9 +102,6 @@ export interface IDirectory {
 	createKeyPackage(keyPackage: APKeyPackage): Promise<string>
 	updateKeyPackage(keyPackage: APKeyPackage): Promise<string>
 	deleteKeyPackage(keyPackageUrl: string): Promise<void>
-
-	// Contact methods
-	loadContact(actorID: string): Promise<Contact | undefined>
 }
 
 // IReceiver wraps all of the methods that the Controller uses

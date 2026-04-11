@@ -20,8 +20,10 @@ export class WidgetMessageCreate {
 
 	view(vnode: WidgetMessageCreateVnode) {
 
+		const group = vnode.attrs.controller.groupStream()
+
 		// Do not allow the user to add more messages if this group is closed.
-		if (vnode.attrs.controller.group.stateId === "CLOSED") {
+		if (group.stateId === "CLOSED") {
 			return <div class="card padding align-center">
 				This conversation is closed. You can no longer send messages here.
 				But you can <span class="link" onclick={() => vnode.attrs.controller.modal_newConversation()}>start a new conversation</span>.

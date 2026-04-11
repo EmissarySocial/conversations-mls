@@ -88,6 +88,24 @@ export class Actor extends Object {
 		// Fail by returning "" for the collection URL
 		return { url: "", plaintext: false }
 	}
+
+	///////////////////////////////////
+	// Computed Properties
+	computedUsername = () => {
+
+		// Get JUST the username (and not potential "@" or domain)
+		var username = this.preferredUsername()
+		if (username.charAt(0) == "@") {
+			username = username.substring(1)
+		}
+		username = username.split("@")[0]!
+
+		// Get the domain from the actor's ID URL
+		const url = new URL(this.id())
+
+		// Combine as a nice looking Fediverse handle
+		return `@${username}@${url.hostname}`
+	}
 }
 
 export async function loadActor(value: any) {

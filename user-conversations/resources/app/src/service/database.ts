@@ -136,6 +136,7 @@ export class Database {
 		return await this.#db.getAll("contact")
 	}
 
+
 	// loadContact retrieves a single contact from the database by ID
 	loadContact = async (id: string) => {
 		return this.#db.get("contact", id)
@@ -214,9 +215,15 @@ export class Database {
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
 	// TODO: This will need to be limited or pagincated for long discussions.
 	allMessages = async (groupId: string) => {
-		var messages = await this.#db.getAllFromIndex("message", "groupId", groupId)
-		messages.sort((a, b) => a.createDate - b.createDate)
-		return messages
+
+		// Retrieve the messages from the database
+		var messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
+
+		// Sort by createDate ascending
+		messageData.sort((a, b) => a.createDate - b.createDate)
+
+		// Convert to Message objects and return
+		return messageData.map(data => NewMessage(data))
 	}
 
 	// loadMessage retrieves a message from the database
