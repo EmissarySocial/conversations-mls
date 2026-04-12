@@ -110,7 +110,7 @@ export interface IReceiver {
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
-	start(handler: IActivityHandler, lastMessageGetterSetter: ILastMessageGetterSetter): void
+	start(generatorId: string, handler: IActivityHandler, lastMessageGetterSetter: ILastMessageGetterSetter): void
 	stop(): void
 }
 

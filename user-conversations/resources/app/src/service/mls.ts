@@ -60,6 +60,7 @@ export class MLS {
 	#directory: IDirectory
 	#cipherSuite: CiphersuiteImpl
 	#privateKeyPackage: PrivateKeyPackage
+	#generatorId: string
 	#actor: Actor
 
 	publicKeyPackage: KeyPackage
@@ -73,12 +74,14 @@ export class MLS {
 		publicKeyPackage: KeyPackage,
 		privateKeyPackage: PrivateKeyPackage,
 		actor: Actor,
+		generatorId: string,
 	) {
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
 
 		this.#actor = actor
+		this.#generatorId = generatorId
 		this.#cipherSuite = cipherSuite
 		this.publicKeyPackage = publicKeyPackage
 		this.#privateKeyPackage = privateKeyPackage
@@ -335,12 +338,10 @@ export class MLS {
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
 	#sendMlsMessage = async (type: string, recipients: string[], message: MlsMessage) => {
 
-
 		// If there are no recipients to send to, just return early
 		if (recipients.length === 0) {
 			return
 		}
-
 
 		// Encode the private message as bytes, then to base64
 		const contentBytes = encode(mlsMessageEncoder, message)
@@ -352,6 +353,7 @@ export class MLS {
 			type: vocab.ActivityTypeCreate,
 			actor: this.#actor.id(),
 			to: recipients,
+			generator: this.#generatorId,
 			object: {
 				type: type,
 				attributedTo: this.#actor.id(),
@@ -374,45 +376,48 @@ export class MLS {
 	// use arrow function to preserve "this" context when passing as a callback
 	async decodeMessage(message: string): Promise<Activity | null> {
 
-		const uintArray = base64ToUint8Array(message)
-		const content = decode(mlsMessageDecoder, uintArray)!
+		try {
+			const uintArray = base64ToUint8Array(message)
+			const content = decode(mlsMessageDecoder, uintArray)!
 
-		// Require that the we have a valid decoded message before proceeding
-		if (content == undefined) {
-			console.error("Unable to decode MLS message", message)
+			// Require that the we have a valid decoded message before proceeding
 			// TODO: Here's where we send a "Failure" message to the group.
+			if (content == undefined) {
+				console.error("Unable to decode MLS message", message)
+				return null
+			}
+
+			switch (content.wireformat) {
+
+				case wireformats.mls_group_info:
+					return await this.#decodeMessage_GroupInfo(content)
+
+				case wireformats.mls_key_package:
+					return null
+
+				case wireformats.mls_private_message:
+					return await this.#decodeMessage_PublicPrivateMessage(content)
+
+				case wireformats.mls_public_message:
+					return await this.#decodeMessage_PublicPrivateMessage(content)
+
+				case wireformats.mls_welcome:
+					return await this.#decodeMessage_Welcome(content)
+
+				default:
+					console.error("Unknown MLS message type:")
+					return null
+			}
+		} catch (error) {
+			console.error("Error decoding MLS message::::", error)
 			return null
-		}
-
-
-		switch (content.wireformat) {
-
-			case wireformats.mls_group_info:
-				return await this.#decodeMessage_GroupInfo(content)
-
-			case wireformats.mls_key_package:
-				return null
-
-			case wireformats.mls_private_message:
-				return await this.#decodeMessage_PrivateMessage(content)
-
-			case wireformats.mls_public_message:
-				return await this.#decodeMessage_PublicMessage(content)
-
-			case wireformats.mls_welcome:
-				return await this.#decodeMessage_Welcome(content)
-
-			default:
-				console.error("Unknown MLS message type:")
-				return null
 		}
 	}
 
 	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-	async #decodeMessage_Welcome(message: MlsWelcomeMessage) {
+	async #decodeMessage_Welcome(message: MlsWelcomeMessage): Promise<null> {
 
 		var clientState: ClientState
-
 
 		try {
 
@@ -451,7 +456,7 @@ export class MLS {
 		group.id = groupId
 
 		var encryptedGroup = addClientState(group, clientState)
-		encryptedGroup.members = await this.getGroupMembers(encryptedGroup)
+		encryptedGroup.members = this.getGroupMembers(encryptedGroup)
 
 		// Save the group to the database
 		await this.#database.saveGroup(encryptedGroup)
@@ -467,8 +472,6 @@ export class MLS {
 
 		var clientState: ClientState
 
-
-
 		// Returning `null` means that the controller won't take 
 		// any additional actions to process this message.
 		return null
@@ -477,10 +480,26 @@ export class MLS {
 	// decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
-	async #decodeMessage_PrivateMessage(mlsMessage: MlsPrivateMessage): Promise<Activity | null> {
+	async #decodeMessage_PublicPrivateMessage(mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
+
+		var groupId: string
+
+		switch (mlsMessage.wireformat) {
+
+			case wireformats.mls_private_message:
+				groupId = decodeText(mlsMessage.privateMessage.groupId)
+				break
+
+			case wireformats.mls_public_message:
+				groupId = decodeText(mlsMessage.publicMessage.content.groupId)
+				break
+
+			default:
+				console.error("Invalid message type for PrivateMessage decoder")
+				return null
+		}
 
 		// Load the group from the database so we can get the current client state for decryption
-		const groupId = decodeText(mlsMessage.privateMessage.groupId)
 		const group = await this.#database.loadGroup(groupId)
 
 		if (group == undefined) {
@@ -488,8 +507,14 @@ export class MLS {
 			return null
 		}
 
+		// RULE: Do not accept messages for closed groups
+		if (group.stateId == "CLOSED") {
+			return null
+		}
+
+		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
-			throw new Error("Group client state is undefined")
+			throw new Error("Cannot receive encrypted messages for unencrypted group")
 		}
 
 		// Decode the message using ts-mls
@@ -498,16 +523,6 @@ export class MLS {
 			state: group.clientState,
 			message: mlsMessage,
 		})
-
-		// Parse application messages and return an Activity to the caller
-		if (decodedMessage.kind == "applicationMessage") {
-
-			// Parse the plaintext message
-			const plaintext = decodeText(decodedMessage.message)
-
-			// Create a result object and embed additional context data
-			return new Activity().fromJSON(plaintext)
-		}
 
 		// Zero out the keys used to decrypt the message
 		decodedMessage.consumed.forEach(zeroOutUint8Array)
@@ -517,64 +532,26 @@ export class MLS {
 		group.updateDate = Date.now()
 		group.members = this.getGroupMembers(group)
 
-		// If the current actor has been removed from the group, then close it permanently.
+		// If the current actor has been removed from the group, then close it permanently...
 		if (!group.members.includes(this.#actor.id())) {
 			group.stateId = "CLOSED"
+			await this.#database.saveGroup(group)
+			return null
 		}
 
 		// Save the updated group to the database
 		await this.#database.saveGroup(group)
 
-		// Return `null` means there are no further actions for the controller to take.
-		return null
-	}
-
-	// decodeMessage_PublicMessage processes incoming MLS "Public Messages" that contain encrypted
-	// application messages for this user.  These messages are decrypted and then processes as
-	// ActivityStreams messages.
-	async #decodeMessage_PublicMessage(mlsMessage: MlsPublicMessage): Promise<Activity | null> {
-
-		// Load the group from the database so we can get the current client state for decryption
-		const groupId = decodeText(mlsMessage.publicMessage.content.groupId)
-		const group = await this.#database.loadGroup(groupId)
-
-		if (group == undefined) {
-			console.error("Received message for unknown group", groupId)
+		// If this is not an application message, then there are no further actions to take.
+		if (decodedMessage.kind != "applicationMessage") {
 			return null
 		}
 
-		if (!groupIsEncrypted(group)) {
-			throw new Error("Group client state is undefined")
-		}
+		// Otherwise, this IS an application message, so return the decrypted JSON-LD to the controller.
+		const plaintext = decodeText(decodedMessage.message)
 
-		// Decode the message using ts-mls
-		const decodedMessage = await processMessage({
-			context: this.#context(),
-			state: group.clientState,
-			message: mlsMessage,
-		})
-
-		// If this is an "applicationMessage", then parse the plaintext and return
-		if (decodedMessage.kind == "applicationMessage") {
-
-			// Parse the plaintext message 
-			const plaintext = decodeText(decodedMessage.message)
-
-			// Create a result object and embed additional context data
-			return new Activity().fromJSON(plaintext)
-		}
-
-		// Update the group state in the database
-		decodedMessage.consumed.forEach(zeroOutUint8Array)
-		group.clientState = decodedMessage.newState
-		group.updateDate = Date.now()
-		group.members = await this.getGroupMembers(group)
-
-		// Save the group to the database
-		await this.#database.saveGroup(group)
-
-		// Return `null` means there are no further actions for the controller to take.
-		return null
+		// Create a result object and embed additional context data
+		return new Activity().fromJSON(plaintext)
 	}
 
 	/////////////////////////////

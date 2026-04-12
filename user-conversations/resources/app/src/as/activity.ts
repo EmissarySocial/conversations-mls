@@ -41,6 +41,10 @@ export class Activity extends Object {
 		return this.getString("as", vocab.PropertyContext)
 	}
 
+	generator = () => {
+		return this.getString("as", vocab.PropertyGenerator)
+	}
+
 	// objectId returns the string value of the "object" property (which may be a URL or an embedded object)
 	objectId = () => {
 		return this.getString("as", vocab.PropertyObject)

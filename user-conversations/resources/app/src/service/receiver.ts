@@ -12,6 +12,7 @@ export class Receiver {
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#activityHandler: IActivityHandler // list of registered message handlers
 	#lastMessage: ILastMessageGetterSetter // handler function for getting/setting the last message ID
+	#generatorId: string // ID of this MLS client, used for the generator field of outgoing messages
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
 
@@ -22,6 +23,7 @@ export class Receiver {
 		this.#lastMessage = async (messageId?: string) => { return "" }
 		this.#polling = false
 		this.#pollAgain = false
+		this.#generatorId = ""
 	}
 
 	// setActor configures the Receiver with the given Actor's information,
@@ -32,11 +34,12 @@ export class Receiver {
 	}
 
 	// start begins polling for new messages and processing them with the registered handlers
-	start = async (activityHandler: IActivityHandler, lastMessage: ILastMessageGetterSetter) => {
+	start = async (generatorId: string, activityHandler: IActivityHandler, lastMessage: ILastMessageGetterSetter) => {
 
 		// Set the handler function to be called with each new message
 		this.#activityHandler = activityHandler
 		this.#lastMessage = lastMessage
+		this.#generatorId = generatorId
 
 		// Poll the server on start
 		this.poll()
@@ -79,7 +82,9 @@ export class Receiver {
 		// Process each activity sequentially
 		for await (const activity of activities) {
 			lastMessageId = activity.id()
-			await this.#activityHandler(activity)
+			if (activity.generator() !== this.#generatorId) {
+				await this.#activityHandler(activity)
+			}
 		}
 
 		// Update the last message ID after processing all messages

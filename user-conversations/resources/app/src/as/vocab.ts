@@ -58,6 +58,8 @@ export const PropertyContent = "content"
 
 export const PropertyContext = "context"
 
+export const PropertyGenerator = "generator"
+
 export const PropertyId = "id"
 
 export const PropertyObject = "object"

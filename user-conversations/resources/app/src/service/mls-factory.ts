@@ -10,7 +10,6 @@ import { generateKeyPackage } from "ts-mls"
 import type { IDatabase } from "./interfaces"
 import type { IDelivery } from "./interfaces"
 import type { IDirectory } from "./interfaces"
-import type { IReceiver } from "./interfaces"
 
 // Model objects
 import { Actor } from "../as/actor"
@@ -25,9 +24,9 @@ export async function MLSFactory(
 	database: IDatabase,
 	delivery: IDelivery,
 	directory: IDirectory,
-	receiver: IReceiver,
 	actor: Actor,
-	clientName: string,
+	generatorId: string,
+	generatorName: string,
 ): Promise<MLS> {
 
 	// Use MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519 (ID: 1)
@@ -55,7 +54,7 @@ export async function MLSFactory(
 		})
 
 		// Publish the KeyPackage to the server
-		const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage)
+		const apKeyPackage = NewAPKeyPackage(generatorId, generatorName, actor.id(), keyPackageResult.publicPackage)
 		const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage)
 
 		if (apKeyPackageURL == "") {
@@ -66,7 +65,8 @@ export async function MLSFactory(
 		dbKeyPackage = {
 			id: "self",
 			keyPackageURL: apKeyPackageURL,
-			clientName: clientName,
+			generatorId: generatorId,
+			generatorName: generatorName,
 			publicKeyPackage: keyPackageResult.publicPackage,
 			privateKeyPackage: keyPackageResult.privatePackage,
 			cipherSuiteName: cipherSuiteName,
@@ -85,6 +85,7 @@ export async function MLSFactory(
 		dbKeyPackage.publicKeyPackage,
 		dbKeyPackage.privateKeyPackage,
 		actor,
+		generatorId,
 	)
 
 	// Hoo-rah!

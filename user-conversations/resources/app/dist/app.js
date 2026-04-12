@@ -14961,19 +14961,25 @@
     }
   }));
 
+  // src/model/utils.ts
+  function newId() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
+
   // src/model/config.ts
   var ConfigID = "config";
   function NewConfig() {
     return {
       id: ConfigID,
-      ready: false,
-      clientName: "Unknown Device",
+      generatorId: newId(),
+      generatorName: "Unknown Device",
       encryptionKeyIV: new Uint8Array(),
       encryptionKey: "",
       lastMessageId: "",
       isEncryptedMessages: false,
       isDesktopNotifications: false,
-      isHideOnBlur: false
+      isHideOnBlur: false,
+      ready: false
     };
   }
 
@@ -15018,11 +15024,6 @@
       known: false,
       updated: Date.now()
     };
-  }
-
-  // src/model/utils.ts
-  function newId() {
-    return "uri:uuid:" + crypto.randomUUID();
   }
 
   // src/model/message.ts
@@ -15296,6 +15297,7 @@
   var ObjectTypeMlsWelcome = "mls:Welcome";
   var PropertyActor = "actor";
   var PropertyContext = "context";
+  var PropertyGenerator = "generator";
   var PropertyObject = "object";
   var PropertyTarget = "target";
   var PropertyTo = "to";
@@ -15671,6 +15673,9 @@
     context = () => {
       return this.getString("as", PropertyContext);
     };
+    generator = () => {
+      return this.getString("as", PropertyGenerator);
+    };
     // objectId returns the string value of the "object" property (which may be a URL or an embedded object)
     objectId = () => {
       return this.getString("as", PropertyObject);
@@ -15731,7 +15736,7 @@
   var import_stream = __toESM(require_stream2(), 1);
 
   // src/model/ap-keypackage.ts
-  function NewAPKeyPackage(generator, actorID, publicPackage) {
+  function NewAPKeyPackage(generatorId, generatorName, actorID, publicPackage) {
     const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
     return {
       id: "",
@@ -15741,7 +15746,11 @@
       attributedTo: actorID,
       mediaType: "message/mls",
       encoding: "base64",
-      generator,
+      generator: {
+        id: generatorId,
+        type: "Application",
+        name: generatorName
+      },
       content: keyPackageAsBase64
     };
   }
@@ -15761,13 +15770,15 @@
     #directory;
     #cipherSuite;
     #privateKeyPackage;
+    #generatorId;
     #actor;
     publicKeyPackage;
-    constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
+    constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
       this.#actor = actor;
+      this.#generatorId = generatorId;
       this.#cipherSuite = cipherSuite;
       this.publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
@@ -15942,6 +15953,7 @@
         type: ActivityTypeCreate,
         actor: this.#actor.id(),
         to: recipients,
+        generator: this.#generatorId,
         object: {
           type,
           attributedTo: this.#actor.id(),
@@ -15959,26 +15971,31 @@
     /////////////////////////////
     // use arrow function to preserve "this" context when passing as a callback
     async decodeMessage(message) {
-      const uintArray = base64ToUint8Array(message);
-      const content = decode(mlsMessageDecoder, uintArray);
-      if (content == void 0) {
-        console.error("Unable to decode MLS message", message);
+      try {
+        const uintArray = base64ToUint8Array(message);
+        const content = decode(mlsMessageDecoder, uintArray);
+        if (content == void 0) {
+          console.error("Unable to decode MLS message", message);
+          return null;
+        }
+        switch (content.wireformat) {
+          case wireformats.mls_group_info:
+            return await this.#decodeMessage_GroupInfo(content);
+          case wireformats.mls_key_package:
+            return null;
+          case wireformats.mls_private_message:
+            return await this.#decodeMessage_PublicPrivateMessage(content);
+          case wireformats.mls_public_message:
+            return await this.#decodeMessage_PublicPrivateMessage(content);
+          case wireformats.mls_welcome:
+            return await this.#decodeMessage_Welcome(content);
+          default:
+            console.error("Unknown MLS message type:");
+            return null;
+        }
+      } catch (error) {
+        console.error("Error decoding MLS message::::", error);
         return null;
-      }
-      switch (content.wireformat) {
-        case wireformats.mls_group_info:
-          return await this.#decodeMessage_GroupInfo(content);
-        case wireformats.mls_key_package:
-          return null;
-        case wireformats.mls_private_message:
-          return await this.#decodeMessage_PrivateMessage(content);
-        case wireformats.mls_public_message:
-          return await this.#decodeMessage_PublicMessage(content);
-        case wireformats.mls_welcome:
-          return await this.#decodeMessage_Welcome(content);
-        default:
-          console.error("Unknown MLS message type:");
-          return null;
       }
     }
     // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
@@ -16006,7 +16023,7 @@
       const group = NewGroup();
       group.id = groupId;
       var encryptedGroup = addClientState(group, clientState);
-      encryptedGroup.members = await this.getGroupMembers(encryptedGroup);
+      encryptedGroup.members = this.getGroupMembers(encryptedGroup);
       await this.#database.saveGroup(encryptedGroup);
       return null;
     }
@@ -16018,63 +16035,50 @@
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
     // ActivityStreams messages.
-    async #decodeMessage_PrivateMessage(mlsMessage) {
-      const groupId = decodeText(mlsMessage.privateMessage.groupId);
+    async #decodeMessage_PublicPrivateMessage(mlsMessage) {
+      var groupId;
+      switch (mlsMessage.wireformat) {
+        case wireformats.mls_private_message:
+          groupId = decodeText(mlsMessage.privateMessage.groupId);
+          break;
+        case wireformats.mls_public_message:
+          groupId = decodeText(mlsMessage.publicMessage.content.groupId);
+          break;
+        default:
+          console.error("Invalid message type for PrivateMessage decoder");
+          return null;
+      }
       const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
         console.error("Received message for unknown group", groupId);
         return null;
       }
+      if (group.stateId == "CLOSED") {
+        return null;
+      }
       if (!groupIsEncrypted(group)) {
-        throw new Error("Group client state is undefined");
+        throw new Error("Cannot receive encrypted messages for unencrypted group");
       }
       const decodedMessage = await processMessage({
         context: this.#context(),
         state: group.clientState,
         message: mlsMessage
       });
-      if (decodedMessage.kind == "applicationMessage") {
-        const plaintext = decodeText(decodedMessage.message);
-        return new Activity().fromJSON(plaintext);
-      }
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
       group.updateDate = Date.now();
       group.members = this.getGroupMembers(group);
       if (!group.members.includes(this.#actor.id())) {
         group.stateId = "CLOSED";
-      }
-      await this.#database.saveGroup(group);
-      return null;
-    }
-    // decodeMessage_PublicMessage processes incoming MLS "Public Messages" that contain encrypted
-    // application messages for this user.  These messages are decrypted and then processes as
-    // ActivityStreams messages.
-    async #decodeMessage_PublicMessage(mlsMessage) {
-      const groupId = decodeText(mlsMessage.publicMessage.content.groupId);
-      const group = await this.#database.loadGroup(groupId);
-      if (group == void 0) {
-        console.error("Received message for unknown group", groupId);
+        await this.#database.saveGroup(group);
         return null;
       }
-      if (!groupIsEncrypted(group)) {
-        throw new Error("Group client state is undefined");
-      }
-      const decodedMessage = await processMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: mlsMessage
-      });
-      if (decodedMessage.kind == "applicationMessage") {
-        const plaintext = decodeText(decodedMessage.message);
-        return new Activity().fromJSON(plaintext);
-      }
-      decodedMessage.consumed.forEach(zeroOutUint8Array);
-      group.clientState = decodedMessage.newState;
-      group.updateDate = Date.now();
-      group.members = await this.getGroupMembers(group);
       await this.#database.saveGroup(group);
-      return null;
+      if (decodedMessage.kind != "applicationMessage") {
+        return null;
+      }
+      const plaintext = decodeText(decodedMessage.message);
+      return new Activity().fromJSON(plaintext);
     }
     /////////////////////////////
     // Helpers
@@ -16372,6 +16376,8 @@
     // list of registered message handlers
     #lastMessage;
     // handler function for getting/setting the last message ID
+    #generatorId;
+    // ID of this MLS client, used for the generator field of outgoing messages
     #polling;
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
@@ -16386,6 +16392,7 @@
       };
       this.#polling = false;
       this.#pollAgain = false;
+      this.#generatorId = "";
     }
     // setActor configures the Receiver with the given Actor's information,
     // once it has been loaded from the network.
@@ -16394,9 +16401,10 @@
       this.#messagesUrl = url;
     }
     // start begins polling for new messages and processing them with the registered handlers
-    start = async (activityHandler, lastMessage) => {
+    start = async (generatorId, activityHandler, lastMessage) => {
       this.#activityHandler = activityHandler;
       this.#lastMessage = lastMessage;
+      this.#generatorId = generatorId;
       this.poll();
       const collection = await new Collection().fromURL(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
@@ -16424,7 +16432,9 @@
       const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" });
       for await (const activity of activities) {
         lastMessageId = activity.id();
-        await this.#activityHandler(activity);
+        if (activity.generator() !== this.#generatorId) {
+          await this.#activityHandler(activity);
+        }
       }
       await this.#lastMessage(lastMessageId);
       this.#polling = false;
@@ -16814,7 +16824,7 @@
   ];
 
   // src/service/mls-factory.ts
-  async function MLSFactory(database, delivery, directory, receiver, actor, clientName) {
+  async function MLSFactory(database, delivery, directory, actor, generatorId, generatorName) {
     const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
     const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
     var dbKeyPackage = await database.loadKeyPackage();
@@ -16828,7 +16838,7 @@
         cipherSuite,
         lifetime: defaultLifetime()
       });
-      const apKeyPackage = NewAPKeyPackage(clientName, actor.id(), keyPackageResult.publicPackage);
+      const apKeyPackage = NewAPKeyPackage(generatorId, generatorName, actor.id(), keyPackageResult.publicPackage);
       const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage);
       if (apKeyPackageURL == "") {
         throw new Error("Failed to create KeyPackage on server");
@@ -16836,7 +16846,8 @@
       dbKeyPackage = {
         id: "self",
         keyPackageURL: apKeyPackageURL,
-        clientName,
+        generatorId,
+        generatorName,
         publicKeyPackage: keyPackageResult.publicPackage,
         privateKeyPackage: keyPackageResult.privatePackage,
         cipherSuiteName,
@@ -16851,7 +16862,8 @@
       cipherSuite,
       dbKeyPackage.publicKeyPackage,
       dbKeyPackage.privateKeyPackage,
-      actor
+      actor,
+      generatorId
     );
     return result;
   }
@@ -16943,9 +16955,9 @@
           this.#database,
           this.#delivery,
           this.#directory,
-          this.#receiver,
           this.#actor,
-          this.config.clientName
+          this.config.generatorId,
+          this.config.generatorName
         );
       } catch (error) {
         console.error("Failed to initialize MLS service", error);
@@ -16953,7 +16965,7 @@
         return;
       }
       this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage);
-      this.#receiver.start(this.receiveActivity, this.lastMessage);
+      this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage);
       this.#database.onchange(async () => {
         await this.loadGroups();
         await this.loadMessages();
@@ -16975,7 +16987,7 @@
     startupConfiguration = async (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => {
       this.#encryptionKey = await generateAESKey();
       this.config.ready = true;
-      this.config.clientName = clientName;
+      this.config.generatorName = clientName;
       this.config.isEncryptedMessages = isEncryptedMessages;
       this.config.isDesktopNotifications = isDesktopNotifications;
       this.config.isHideOnBlur = isHideOnBlur;
@@ -16985,7 +16997,7 @@
     // saveConfiguration is called when the user submits their options from the initial welcome screen
     saveConfiguration = async (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => {
       this.config.ready = true;
-      this.config.clientName = clientName;
+      this.config.generatorName = clientName;
       this.config.isEncryptedMessages = isEncryptedMessages;
       this.config.isDesktopNotifications = isDesktopNotifications;
       this.config.isHideOnBlur = isHideOnBlur;
@@ -17049,8 +17061,9 @@
           throw new Error("MLS service is not initialized");
         }
         group = await this.#mls.encodeGroup(group);
+        this.groupStream(group);
       }
-      this.groupStream(await this.addGroupMembers(group, recipients));
+      await this.addGroupMembers(recipients);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
     };
@@ -17144,34 +17157,24 @@
     //////////////////////////////////////////
     // Group Members
     //////////////////////////////////////////
-    // addGroupMember adds a new actorId to the group
-    addGroupMembers = async (group, actorIds) => {
+    // addGroupMember adds a new actorId to the currently selected group
+    addGroupMembers = async (actorIds) => {
+      var group = this.groupStream();
       actorIds = actorIds.filter((actorId) => !group.members.includes(actorId));
       if (actorIds.length == 0) {
         return group;
       }
-      group.members.push(...actorIds);
       if (groupIsEncrypted(group)) {
         if (this.#mls == void 0) {
           throw new Error("MLS service is not initialized");
         }
         group = await this.#mls.addGroupMembers(group, actorIds);
+      } else {
+        group.members.push(...actorIds);
       }
+      this.groupStream(group);
       await this.saveGroup(group);
       return group;
-    };
-    addGroupMember = async (actorIds) => {
-      if (this.#mls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      var group = this.groupStream();
-      if (!groupIsEncrypted(group)) {
-        throw new Error("Not Implemented");
-      }
-      group = await this.#mls.addGroupMembers(group, actorIds);
-      this.groupStream(group);
-      await this.#database.saveGroup(group);
-      await this.loadGroups();
     };
     removeContact = async (actorId) => {
       if (this.#mls == void 0) {
@@ -17217,6 +17220,10 @@
       message.sender = this.#actor.id();
       message.content = content;
       message.type = "SENT";
+      if (this.inReplyTo != void 0) {
+        message.inReplyTo = this.inReplyTo.id;
+        this.removeReply();
+      }
       await this.#database.saveMessage(message);
       await this.loadMessages();
       group.lastMessage = content;
@@ -17229,7 +17236,6 @@
         object: messageToActivityStream(group, message)
       });
       this.#sendActivity(group, activity);
-      this.removeReply();
     };
     updateMessage = async (message) => {
       var group = this.groupStream();
@@ -17344,8 +17350,10 @@
       try {
         var object = await activity.object();
         if (activity.actorId() != object.attributedToId()) {
-          throw new Error("Activity actor must match object actor");
+          console.log("Activity actor must match object actor");
+          return;
         }
+        console.log("Received activity:", activity.toObject());
         if (object.isMLSMessage()) {
           if (this.#mls == void 0) {
             throw new Error("MLS service is not initialized");
@@ -17355,18 +17363,23 @@
             return;
           }
           if (decodedActivity.actorId() != activity.actorId()) {
-            throw new Error("Decrypted activity actor must match outer activity actor");
+            console.error("Decrypted activity actor must match outer activity actor");
+            return;
           }
           activity = decodedActivity;
           object = await activity.object();
+          console.log("Decoded activity:", activity.toObject());
         }
-        console.log("Received activity:", activity.toObject());
+      } catch (error) {
+        console.error("Unable to decode MLS message:", error);
+        return;
+      }
+      try {
         switch (activity.type()) {
           case ActivityTypeAcknowledge:
             return await this.#receiveActivity_Acknowledge(activity);
           case ActivityTypeCreate:
-            await this.#receiveActivity_CreateMessage(activity);
-            return;
+            return await this.#receiveActivity_CreateMessage(activity);
           case ActivityTypeDelete:
             return await this.#receiveActivity_DeleteMessage(activity);
           case ActivityTypeFailure:
@@ -17406,12 +17419,12 @@
       if (object.attributedToId() != activity.actorId()) {
         throw new Error("Decrypted activity actor must match object's attributedTo");
       }
-      const sentByMe = object.attributedToId() == this.actorId();
       const groupId = activity.context();
-      const group = await this.#database.loadGroup(groupId);
+      var group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
-        return;
+        throw new Error("Group not found for incoming message");
       }
+      const sentByMe = object.attributedToId() == this.actorId();
       const message = NewMessage({
         id: object.id(),
         groupId,
@@ -17420,12 +17433,12 @@
         content: object.content(),
         reactions: {},
         history: [],
-        received: [this.actorId()],
+        received: [],
         inReplyTo: object.inReplyToId(),
         createDate: Date.now(),
         updateDate: Date.now()
       });
-      console.log("Received 'Create' message:", message);
+      console.log("Received new message:", message);
       await this.#database.saveMessage(message);
       group.lastMessage = object.content();
       if (!sentByMe) {
@@ -17434,6 +17447,13 @@
         }
       }
       await this.saveGroup(group);
+      this.#sendActivity(group, {
+        actor: this.actorId(),
+        type: ActivityTypeAcknowledge,
+        to: [message.sender],
+        object: message.id,
+        context: group.id
+      });
       if (this.config.isDesktopNotifications) {
         if (Notification.permission === "granted") {
           if (!sentByMe) {
@@ -17445,13 +17465,6 @@
           }
         }
       }
-      this.#sendActivity(group, {
-        actor: this.actorId(),
-        type: ActivityTypeAcknowledge,
-        to: [message.sender],
-        object: messageToActivityStream(group, message),
-        context: group.id
-      });
     };
     #receiveActivity_Failure = async (activity) => {
     };
@@ -18563,7 +18576,7 @@
       const controller2 = vnode.attrs.controller;
       event.preventDefault();
       event.stopPropagation();
-      await controller2.addGroupMember(participants);
+      await controller2.addGroupMembers(participants);
       return this.close(vnode);
     }
     close(vnode) {

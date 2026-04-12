@@ -138,7 +138,7 @@ export class AddContact {
 		event.stopPropagation()
 
 		// Create a new conversation and send plaintext message
-		await controller.addGroupMember(participants)
+		await controller.addGroupMembers(participants)
 		return this.close(vnode)
 	}
 

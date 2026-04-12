@@ -1,4 +1,5 @@
 import { type APActor } from "../model/ap-actor"
+import type { Contact } from "../model/contact"
 import type { Group } from "../model/group"
 
 // haltEvent prevents the default behavior of an event and stops its propagation
@@ -54,4 +55,39 @@ export function allActorsHaveKeyPackages(actors: APActor[]): boolean {
 	}
 
 	return true
+}
+
+
+
+// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
+// internal state and member list.
+function groupName(group: Group, contacts: Contact[]): string {
+
+	// If the group has a name, then just use that.
+	const groupName = group.name
+	if (groupName != "") {
+		return groupName
+	}
+
+	const contactNames = contacts.map(contact => contact.name).filter(name => name != "")
+
+	// Fancy default name based on the number of members (excluding "me")
+	switch (contactNames.length) {
+
+		// This should never happen, but just in case...
+		case 0:
+			return "Empty Group"
+
+		// For small sets, display all names
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			return contactNames.join(", ")
+	}
+
+	// For larger groups, display the first 3 names + the remaining count
+	return contactNames
+		.slice(0, 3)
+		.join(", ") + `, +${contactNames.length - 3} others`
 }

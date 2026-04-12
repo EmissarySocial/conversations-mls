@@ -19,12 +19,16 @@ export interface APKeyPackage {
 	mediaType: "message/mls"
 	encoding: "base64"
 	content: string
-	generator: string
+	generator: {
+		id: string,
+		type: "Application",
+		name: string,
+	}
 }
 
 // NewAPKeyPackage creates a fully initialized KeyPackage object
 // using the provided actorID and public KeyPackage.
-export function NewAPKeyPackage(generator: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
+export function NewAPKeyPackage(generatorId: string, generatorName: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
 
 	// Encode the KeyPackage as an MLS message
 	const keyPackageAsBase64 = encodeKeyPackage(publicPackage)
@@ -36,7 +40,11 @@ export function NewAPKeyPackage(generator: string, actorID: string, publicPackag
 		attributedTo: actorID,
 		mediaType: "message/mls",
 		encoding: "base64",
-		generator: generator,
+		generator: {
+			id: generatorId,
+			type: "Application",
+			name: generatorName,
+		},
 		content: keyPackageAsBase64,
 	}
 }
