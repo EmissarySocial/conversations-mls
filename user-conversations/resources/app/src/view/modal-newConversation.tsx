@@ -5,6 +5,7 @@ import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"
+import { Collection } from "../as/collection"
 
 type NewConversationVnode = Vnode<NewConversationAttrs, NewConversationState>
 
@@ -16,7 +17,7 @@ interface NewConversationAttrs {
 interface NewConversationState {
 	actors: Actor[]
 	content: string
-	encrypted: boolean
+	canBeEncrypted: boolean
 }
 
 export class NewConversation {
@@ -24,7 +25,7 @@ export class NewConversation {
 	oninit(vnode: NewConversationVnode) {
 		vnode.state.actors = []
 		vnode.state.content = ""
-		vnode.state.encrypted = false
+		vnode.state.canBeEncrypted = false
 	}
 
 	view(vnode: NewConversationVnode) {
@@ -42,7 +43,7 @@ export class NewConversation {
 									name="actorIds"
 									value={vnode.state.actors}
 									endpoint="/.api/actors"
-									onselect={(actors: Actor[]) => this.selectActors(vnode, actors)}></ActorSearch>
+									onselect={(actors: Actor[], canBeEncrypted: boolean) => this.selectActors(vnode, actors, canBeEncrypted)}></ActorSearch>
 							</div>
 							<div class="layout-element">
 								<label>Message</label>
@@ -71,7 +72,7 @@ export class NewConversation {
 			)
 		}
 
-		if (vnode.state.encrypted) {
+		if (vnode.state.canBeEncrypted) {
 			return (
 				<div class="layout-title">
 					<i class="bi bi-shield-lock"></i> Encrypted Message
@@ -91,7 +92,7 @@ export class NewConversation {
 			return <span></span>
 		}
 
-		if (vnode.state.encrypted) {
+		if (vnode.state.canBeEncrypted) {
 			return (
 				<div>
 					This will be encrypted before it leaves this device, and will not be readable by anyone other than the
@@ -117,7 +118,7 @@ export class NewConversation {
 			)
 		}
 
-		if (vnode.state.encrypted) {
+		if (vnode.state.canBeEncrypted) {
 			return (
 				<button type="submit" class="primary" tabIndex="0">
 					<i class="bi bi-lock"></i> Send Encrypted
@@ -132,15 +133,11 @@ export class NewConversation {
 		)
 	}
 
-	// selectActors updates the selected actors in the component state when the user selects participants from the ActorSearch component
-	selectActors(vnode: NewConversationVnode, actors: Actor[]) {
-		vnode.state.actors = actors
 
-		if (actors.some((actor) => actor.mlsKeyPackages() == "")) {
-			vnode.state.encrypted = false
-		} else {
-			vnode.state.encrypted = true
-		}
+	// selectActors updates the selected actors when the ActorSearch component adds/removes participants
+	selectActors(vnode: NewConversationVnode, actors: Actor[], canBeEncrypted: boolean) {
+		vnode.state.actors = actors
+		vnode.state.canBeEncrypted = canBeEncrypted
 	}
 
 	// setPlaintext updates the content message in the component state as the user types
@@ -161,7 +158,7 @@ export class NewConversation {
 		event.stopPropagation()
 
 		// Create a new group and send an encrypted message
-		const group = await controller.createGroup(participants, vnode.state.content, vnode.state.encrypted)
+		const group = await controller.createGroup(participants, vnode.state.content, vnode.state.canBeEncrypted)
 		return this.close(vnode)
 	}
 

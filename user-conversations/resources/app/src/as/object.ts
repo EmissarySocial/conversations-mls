@@ -37,7 +37,7 @@ export class Object {
 
 		// Report errors
 		if (!response.ok) {
-			throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`)
+			throw new Error(`Unable to fetch url:'${url}': ${response.status} ${response.statusText}`)
 		}
 
 		// Parse the JSON response into a JSONLD

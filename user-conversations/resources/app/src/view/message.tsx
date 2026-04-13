@@ -1,10 +1,8 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { type Message } from "../model/message"
-import { NewContact, type Contact } from "../model/contact"
 import { Controller } from "../service/controller"
-import { WidgetMessageCreate } from "./widget-message-create"
-import { MessageOptions } from "./message-options"
+import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
 
@@ -14,28 +12,16 @@ type ViewMessageAttrs = {
 	controller: Controller
 	message: Message
 	showOptions: boolean
-	showSender: boolean
 	showDate: string
+	sender?: Stream<Contact>
 }
 
 type ViewMessageState = {
-	contactStream: Stream<Map<string, Contact>>
 }
 
 export class ViewMessage {
 
-	oninit(vnode: ViewMessageVnode) {
 
-		// Create a new stream that converts the array of contacts into a map of contacts
-		vnode.state.contactStream = vnode.attrs.controller.groupContactStream.map(contactStreams => {
-			const result = new Map<string, Contact>()
-			contactStreams.forEach(contactStream => {
-				const contact = contactStream()
-				result.set(contact.id, contact)
-			})
-			return result
-		})
-	}
 
 	// view returns the JSX for the messages within the selectedGroup.
 	// If there is no selected group, then a welcome message is shown instead.
@@ -45,20 +31,22 @@ export class ViewMessage {
 		const controller = vnode.attrs.controller
 		const message = vnode.attrs.message
 
+		var sender: Contact | undefined
+
+		if (vnode.attrs.sender != undefined) {
+			sender = vnode.attrs.sender()
+		}
+
 		switch (message.type) {
 
 			case "SENT":
 
 				return (
 					<div class="message sent">
-						{this.drawDate(vnode)}
-						<div class="bubble hover-trigger pos-relative" onclick={() => vnode.attrs.showOptions = true}>
-							<div>
-								{this.drawAcknowledgements(vnode)}
-								<div class="flex-grow">{message.content}</div>
-							</div>
-							<MessageOptions controller={controller} message={message} open={vnode.attrs.showOptions} />
-
+						<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
+							{this.drawAcknowledgements(vnode)}
+							<div class="padding-xs">{message.content}</div>
+							{this.drawReactions(vnode, message)}
 						</div>
 					</div>
 				)
@@ -67,25 +55,19 @@ export class ViewMessage {
 
 				return (
 					<div class="message received">
-						{this.drawDate(vnode)}
-						{this.drawSender(vnode)}
-						<div class="bubble hover-trigger pos-relative" onclick={() => vnode.attrs.showOptions = true}>
-							<div class="flex-row flex-align-start width-100% max-width-100%">
-								<div class="flex-grow">{message.content}</div>
-								<div class="flex-row flex-align-center text-xs text-gray">
-									{(message.history.length > 0) ?
-										<span class="clickable"
-											onclick={() => controller.modal_messageHistory(message.id)}>
-											<span class="nowrap text-underline margin-right-xs">Edited</span>
-											<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
-										</span>
-										:
-										<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
-									}
-								</div>
-							</div>
-							<MessageOptions controller={controller} message={message} open={vnode.attrs.showOptions} />
 
+						<div class="sender-icon">
+							{(sender != undefined) && <img src={sender.icon} class="circle width-48" />}
+						</div>
+
+						<div class="flex-grow">
+							{(sender != undefined) && (
+								<div class="sender">{sender.name || "..."}</div>
+							)}
+							<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
+								<div class="padding-xs">{message.content}</div>
+								{this.drawReactions(vnode, message)}
+							</div>
 						</div>
 					</div>
 				)
@@ -105,6 +87,8 @@ export class ViewMessage {
 
 		throw new Error(`Unknown message type: ${message.type}`)
 	}
+
+
 
 	drawAcknowledgements(vnode: ViewMessageVnode): JSX.Element | null {
 
@@ -145,28 +129,84 @@ export class ViewMessage {
 		)
 	}
 
-	drawSender(vnode: ViewMessageVnode): JSX.Element {
+	drawReactions(vnode: ViewMessageVnode, message: Message): (JSX.Element | undefined) {
 
-		// If this is not the beginning of a new group, then don't display anything
-		if (!vnode.attrs.showSender) {
-			return <div></div>
-		}
-
-		const contacts = vnode.state.contactStream()
-
-		// If there are fewer than three people in the group, then we don't need to display the sender's name.
-		if (contacts.size < 3) {
-			return <div></div>
-		}
-
-		// Look up the contact in the group contact list
-		const sender = vnode.attrs.message.sender
-		const contact = contacts.get(sender) || NewContact(sender)
+		const controller = vnode.attrs.controller
+		const reactions = Object.entries(message.reactions)
+		const isSentByMe = (message.type == "SENT")
+		var atLeastOneReaction = false
 
 		return (
-			<div class="margin-top margin-left-sm">
-				<div>{contact.name}</div>
+			<div class="message-options flex-row flex-align-center">
+				<div>
+					{reactions.map(([content, actors]) => {
+						const hasReacted = message.reactions[content]?.includes(controller.actorId())
+						const reactionCount = (actors.length > 1) ? actors.length : ""
+						atLeastOneReaction = true
+
+						// READ ONLY: I cannot react to messages sent by myself.
+						if (isSentByMe) {
+							return <button>{content} {reactionCount}</button>
+						}
+
+						// Show my reaction as selected and allow me to undo
+						if (hasReacted) {
+							return <button class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
+						}
+
+						// Show unselected reactions that I can also join
+						return <button tabIndex="0" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
+					})}
+				</div>
+				{atLeastOneReaction && <div></div>}
+				<div class="text-gray flex-grow">
+					<button tabIndex="0" onclick={() => controller.modal_pickEmoji(this.pickEmoji)}><i class="bi bi-emoji-smile"></i> Like</button>
+					<button tabIndex="0" onclick={() => controller.startReply(message)}><i class="bi bi-reply"></i> Reply</button>
+
+					{isSentByMe && (
+						<button tabIndex="0" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>
+					)}
+				</div>
+				<div class="text-gray">
+					{(message.history.length > 0) ?
+						<span class="clickable"
+							onclick={() => controller.modal_messageHistory(message.id)}>
+							<span class="nowrap text-underline margin-right-xs">Edited</span>
+							<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
+						</span>
+						:
+						<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
+					}
+				</div>
 			</div>
 		)
 	}
+
+	sendReaction(vnode: ViewMessageVnode, content: string) {
+		vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content)
+	}
+
+	copy(vnode: ViewMessageVnode) {
+		navigator.clipboard.writeText(vnode.attrs.message.content)
+		alert("Message copied to clipboard")
+	}
+
+	edit(vnode: ViewMessageVnode) {
+		vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id)
+	}
+
+	delete(vnode: ViewMessageVnode) {
+		if (confirm("Are you sure you want to delete this message?")) {
+			vnode.attrs.controller.deleteMessage(vnode.attrs.message.id)
+		}
+	}
+
+	startReply(vnode: ViewMessageVnode) {
+		vnode.attrs.controller.startReply(vnode.attrs.message)
+	}
+
+	pickEmoji(emoji: string) {
+
+	}
+
 }

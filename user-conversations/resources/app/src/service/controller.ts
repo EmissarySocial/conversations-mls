@@ -1,5 +1,9 @@
-// old imports
+// Mithril
 import m from "mithril"
+import Stream from "mithril/stream"
+
+// ts-mls
+import type { KeyPackage } from "ts-mls"
 
 // ActivityPub objects
 import { Actor } from "../as/actor"
@@ -21,10 +25,7 @@ import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
-
 import { type Emoji, keyPackageEmojiKey } from "./emojikeys"
-
-// MLS Services
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
 
@@ -32,9 +33,6 @@ import { MLS } from "./mls"
 import { generateAESKey } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
-import type { APKeyPackage } from "../model/ap-keypackage"
-import type { KeyPackage } from "ts-mls"
-import Stream from "mithril/stream"
 
 export class Controller {
 
@@ -55,7 +53,6 @@ export class Controller {
 	messages: Message[]
 
 	groupStream: Stream<Group | EncryptedGroup>
-	groupNameStream: Stream<string>
 	groupMemberStream: Stream<string[]>
 	groupContactStream: Stream<Stream<Contact>[]>
 
@@ -96,8 +93,7 @@ export class Controller {
 		// Reactive Streams
 		this.groupStream = Stream(NewGroup())
 		this.groupMemberStream = this.groupStream.map(group => group.members)
-		this.groupContactStream = this.groupMemberStream.map((members) => members.map(id => this.#contacts.loadContact(id)))
-		this.groupNameStream = Stream.combine(calcGroupName, [this.groupStream, this.groupContactStream])
+		this.groupContactStream = this.groupMemberStream.map((members) => members.map(id => this.#contacts.getContactStream(id)))
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
@@ -250,8 +246,100 @@ export class Controller {
 		window.document.location.reload()
 	}
 
+
 	//////////////////////////////////////////
-	// Getters
+	// Pages
+	//////////////////////////////////////////
+
+	page_index = () => {
+		this.pageView = "INDEX"
+		m.redraw()
+	}
+
+	page_settings = () => {
+		this.pageView = "SETTINGS"
+		m.redraw()
+	}
+
+	page_groups = () => {
+		this.pageView = "GROUPS"
+		m.redraw()
+	}
+
+	page_group_messages = () => {
+		this.pageView = "GROUP-MESSAGES"
+		m.redraw()
+	}
+
+	page_group_members = () => {
+		this.pageView = "GROUP-MEMBERS"
+		m.redraw()
+	}
+
+	page_group_notes = () => {
+		this.pageView = "GROUP-NOTES"
+		m.redraw()
+	}
+
+	page_group_leave = () => {
+		this.pageView = "GROUP-LEAVE"
+		m.redraw()
+	}
+
+	//////////////////////////////////////////
+	// Modal Dialogs
+	//////////////////////////////////////////
+
+	modal_addGroupMember = () => {
+		this.modalView = "ADD-GROUP-MEMBER"
+	}
+
+	modal_close = () => {
+		this.modalView = ""
+	}
+
+	modal_newConversation = () => {
+		this.modalView = "NEW-CONVERSATION"
+	}
+
+	modal_editMessage = async (messageId: string) => {
+
+		const message = await this.loadMessage(messageId)
+
+		if (message == undefined) {
+			console.error("Message not found")
+			return
+		}
+
+		if (message.sender != this.actorId()) {
+			console.error("Only the sender can edit this message")
+			return
+		}
+
+		this.message = message
+		this.modalView = "EDIT-MESSAGE"
+		m.redraw()
+	}
+
+	modal_messageHistory = async (messageId: string) => {
+
+		const message = await this.loadMessage(messageId)
+
+		if (message == undefined) {
+			return
+		}
+
+		this.message = message
+		this.modalView = "MESSAGE-HISTORY"
+	}
+
+	modal_pickEmoji = async (callback: (emoji: string) => void) => {
+		this.modalView = "PICK-EMOJI"
+		// this.emojiCallback = callback
+	}
+
+	//////////////////////////////////////////
+	// Property Getters
 	//////////////////////////////////////////
 
 	actorId = (): string => {
@@ -348,6 +436,9 @@ export class Controller {
 		// RULE: Truncate lastMessage to 100 characters for display purposes
 		group.lastMessage = group.lastMessage.slice(0, 100)
 
+		// Calculate the default group name based on the members of the group
+		group.defaultName = await this.#calcGroupDefaultName(group)
+
 		// Save the group to the database
 		await this.#database.saveGroup(group)
 
@@ -441,6 +532,7 @@ export class Controller {
 
 		this.groupStream(group)
 		await this.loadMessages()
+		this.inReplyTo = undefined
 
 		this.page_group_messages()
 	}
@@ -496,40 +588,48 @@ export class Controller {
 			group.members.push(...actorIds)
 		}
 
-		// Update the "selected group" stream
-		this.groupStream(group)
+		// Re-calculate the default name
+		group.defaultName = await this.#calcGroupDefaultName(group)
 
 		// Save the group to the database
 		await this.saveGroup(group)
+
+		// Update the "selected group" stream
+		this.groupStream(group)
 
 		// Return the updated group
 		return group
 	}
 
-	removeContact = async (actorId: string) => {
-
-		// Guarantee dependency
-		if (this.#mls == undefined) {
-			throw new Error("MLS service is not initialized")
-		}
+	removeGroupMember = async (actorId: string) => {
 
 		var group = this.groupStream()
 
-		if (!groupIsEncrypted(group)) {
-			throw new Error("Not Implemented")
+		// Special logic for encrypted groups
+		if (groupIsEncrypted(group)) {
+
+			// Guarantee dependency
+			if (this.#mls == undefined) {
+				throw new Error("MLS service is not initialized")
+			}
+
+			// Remove the member using MLS
+			group = await this.#mls.removeGroupMember(group, actorId)
+
+		} else {
+
+			// Remove the member from the regular group list
+			group.members = group.members.filter((member) => member != actorId)
 		}
 
-		// Remove the member from the group
-		group = await this.#mls.removeGroupMember(group, actorId)
-
-		// Apply the updated group to the "current group" stream
-		this.groupStream(group)
+		// Recalculate the default group name
+		group.defaultName = await this.#calcGroupDefaultName(group)
 
 		// Save the group to the database
 		await this.#database.saveGroup(group)
 
-		// Reload groups and messages to refresh the UX
-		await this.loadGroups()
+		// Apply the updated group to the "current group" stream
+		this.groupStream(group)
 	}
 
 
@@ -551,6 +651,9 @@ export class Controller {
 	startReply = (message: Message) => {
 		this.inReplyTo = message
 		m.redraw()
+		window.requestAnimationFrame(() => {
+			document.getElementById("message-input")?.focus()
+		})
 	}
 
 	removeReply = () => {
@@ -1108,92 +1211,6 @@ export class Controller {
 
 
 	//////////////////////////////////////////
-	// Pages
-	//////////////////////////////////////////
-
-	page_index = () => {
-		this.pageView = "INDEX"
-		m.redraw()
-	}
-
-	page_settings = () => {
-		this.pageView = "SETTINGS"
-		m.redraw()
-	}
-
-	page_groups = () => {
-		this.pageView = "GROUPS"
-		m.redraw()
-	}
-
-	page_group_messages = () => {
-		this.pageView = "GROUP-MESSAGES"
-		m.redraw()
-	}
-
-	page_group_members = () => {
-		this.pageView = "GROUP-MEMBERS"
-		m.redraw()
-	}
-
-	page_group_notes = () => {
-		this.pageView = "GROUP-NOTES"
-		m.redraw()
-	}
-
-	page_group_leave = () => {
-		this.pageView = "GROUP-LEAVE"
-		m.redraw()
-	}
-
-	//////////////////////////////////////////
-	// Modal Dialogs
-	//////////////////////////////////////////
-
-	modal_addContact = () => {
-		this.modalView = "ADD-CONTACT"
-	}
-
-	modal_close = () => {
-		this.modalView = ""
-	}
-
-	modal_newConversation = () => {
-		this.modalView = "NEW-CONVERSATION"
-	}
-
-	modal_editMessage = async (messageId: string) => {
-
-		const message = await this.loadMessage(messageId)
-
-		if (message == undefined) {
-			console.error("Message not found")
-			return
-		}
-
-		if (message.sender != this.actorId()) {
-			console.error("Only the sender can edit this message")
-			return
-		}
-
-		this.message = message
-		this.modalView = "EDIT-MESSAGE"
-		m.redraw()
-	}
-
-	modal_messageHistory = async (messageId: string) => {
-
-		const message = await this.loadMessage(messageId)
-
-		if (message == undefined) {
-			return
-		}
-
-		this.message = message
-		this.modalView = "MESSAGE-HISTORY"
-	}
-
-	//////////////////////////////////////////
 	// Window Focus/Blur
 	//////////////////////////////////////////
 
@@ -1237,41 +1254,37 @@ export class Controller {
 		console.log("Sending activity via MLS service:", activity.toObject())
 		return await this.#mls.sendActivity(group, activity)
 	}
-}
 
-/******************************************
- * Helper Functions
- ******************************************/
+	//////////////////////////////////////////
+	// Other Helpers
+	//////////////////////////////////////////
 
-// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
-// internal state and member list.
-function calcGroupName(group: Stream<Group>, contacts: Stream<Stream<Contact>[]>): string {
+	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
+	// internal state and member list.
+	#calcGroupDefaultName = async (group: Group): Promise<string> => {
 
-	// If the group has a name, then just use that.
-	const groupName = group().name
-	if (groupName != "") {
-		return groupName
+		const contactPromises = group.members.map(actorId => this.#contacts.loadContact(actorId))
+		const contacts = await Promise.all(contactPromises)
+		const contactNames = contacts.map(contact => contact?.name || "").filter(name => name != "")
+
+		// Fancy default name based on the number of members (excluding "me")
+		switch (contactNames.length) {
+
+			// This should never happen, but just in case...
+			case 0:
+				return "Empty Group"
+
+			// For small sets, display all names
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				return contactNames.join(", ")
+		}
+
+		// For larger groups, display the first 3 names + the remaining count
+		return contactNames
+			.slice(0, 2)
+			.join(", ") + `, +${contactNames.length - 2} others`
 	}
-
-	const contactNames = contacts().map(stream => stream().name).filter(name => name != "")
-
-	// Fancy default name based on the number of members (excluding "me")
-	switch (contactNames.length) {
-
-		// This should never happen, but just in case...
-		case 0:
-			return "Empty Group"
-
-		// For small sets, display all names
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			return contactNames.join(", ")
-	}
-
-	// For larger groups, display the first 3 names + the remaining count
-	return contactNames
-		.slice(0, 3)
-		.join(", ") + `, +${contactNames.length - 3} others`
 }

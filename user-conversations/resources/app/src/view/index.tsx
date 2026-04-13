@@ -9,7 +9,7 @@ import { GroupNotes } from "./group-notes"
 import { GroupMembers } from "./group-members"
 import { GroupLeave } from "./group-leave"
 import { Empty } from "./empty"
-import { AddContact } from "./modal-addContact"
+import { AddGroupMember } from "./modal-addGroupMember"
 import { EditMessage } from "./modal-editMessage"
 import { MessageHistory } from "./modal-messageHistory"
 
@@ -55,7 +55,6 @@ export class Index {
 				}
 		}
 
-		//
 		return (
 			<div id="conversations">
 				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
@@ -67,38 +66,14 @@ export class Index {
 		)
 	}
 
-	private viewGroups(vnode: IndexVnode): JSX.Element[] {
-		const controller = vnode.attrs.controller
-
-		return controller.groups.map((group) => {
-			var cssClass = "flex-row flex-align-center padding hover-trigger"
-
-			if (group.id == controller.selectedGroupId()) {
-				cssClass += " selected"
-			}
-
-			return (
-				<div role="button" class={cssClass} onclick={() => controller.selectGroup(group.id)}>
-					<div class="width-32 circle flex-center">
-						<i class="bi bi-lock-fill"></i>
-					</div>
-					<div class="flex-grow nowrap ellipsis">
-						<div>{group.name}</div>
-						<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
-					</div>
-				</div>
-			)
-		})
-	}
-
 	// viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
 	private viewModals(vnode: IndexVnode): JSX.Element | undefined {
 		const modalView = vnode.attrs.controller.modalView
 
 		switch (modalView) {
 
-			case "ADD-CONTACT":
-				return <AddContact controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+			case "ADD-GROUP-MEMBER":
+				return <AddGroupMember controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
 
 			case "EDIT-MESSAGE":
 				return <EditMessage controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />

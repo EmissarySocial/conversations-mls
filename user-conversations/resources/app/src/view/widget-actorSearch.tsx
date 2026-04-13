@@ -13,7 +13,7 @@ interface ActorSearchAttrs {
 	value: Actor[]
 	endpoint: string
 	position?: string
-	onselect: (actors: Actor[]) => void
+	onselect: (actors: Actor[], canBeEncrypted: boolean) => void
 }
 
 interface ActorSearchState {
@@ -186,7 +186,7 @@ export class ActorSearch {
 		vnode.state.actors = []
 		vnode.state.search = ""
 		vnode.state.highlightedOption = -1
-		vnode.attrs.onselect(vnode.attrs.value)
+		this.notifyParent(vnode)
 
 		// Load KeyPackages AFTER selecting the actor from the search results
 		this.loadKeyPackages(vnode, selected)
@@ -197,7 +197,6 @@ export class ActorSearch {
 
 		// See if we already have keyPackages for this actor in the cache
 		if (vnode.state.keyPackages[actor.id()] != undefined) {
-			console.log("A")
 			return
 		}
 
@@ -206,19 +205,24 @@ export class ActorSearch {
 
 		// Remove KeyPackages that can't be found
 		if ((vnode.state.keyPackages == undefined) || (keyPackages.length == 0)) {
-			console.log("C")
 			delete vnode.state.keyPackages[actor.id()]
-			m.redraw()
+			this.notifyParent(vnode)
 			return
 		}
 
 		// Otherwise, add keyPackes to the widget's cache
-		console.log("D")
 		vnode.state.keyPackages[actor.id()] = keyPackages
-		m.redraw()
+		this.notifyParent(vnode)
+	}
 
-		// Success!
-		console.log("final", vnode.state.keyPackages)
+	allActorsHaveKeyPackages(vnode: ActorSearchVnode): boolean {
+		for (const actor of vnode.attrs.value) {
+			if (!this.isActorMLS(vnode, actor.id())) {
+				return false
+			}
+		}
+
+		return true
 	}
 
 	isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
@@ -233,8 +237,13 @@ export class ActorSearch {
 
 	removeActor(vnode: ActorSearchVnode, index: number) {
 		vnode.attrs.value.splice(index, 1)
-		vnode.attrs.onselect(vnode.attrs.value)
+		this.notifyParent(vnode)
 		requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus())
 		vnode.state.highlightedOption = -1
 	}
+
+	notifyParent(vnode: ActorSearchVnode) {
+		vnode.attrs.onselect(vnode.attrs.value, this.allActorsHaveKeyPackages(vnode))
+	}
 }
+

@@ -26,7 +26,8 @@ import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
 export interface IContacts {
-	loadContact(id: string): Stream<Contact>
+	getContactStream(id: string): Stream<Contact>
+	loadContact(id: string): Promise<Contact | undefined>
 	saveContact(contact: Contact): void
 	stop(): void
 }
@@ -42,11 +43,6 @@ export interface IDatabase {
 	// Config methods
 	loadConfig(): Promise<Config>
 	saveConfig(config: Config): Promise<void>
-
-	// Contact methods
-	allContacts(): Promise<Contact[]>
-	loadContact(actorId: string): Promise<Contact | undefined>
-	saveContact(contact: Contact): Promise<void>
 
 	// Group methods
 	allGroups(): Promise<(Group | EncryptedGroup)[]>

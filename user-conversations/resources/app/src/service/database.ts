@@ -28,14 +28,6 @@ interface Schema extends DBSchema {
 		}
 	}
 
-	contact: {
-		key: string
-		value: Contact
-		indexes: {
-			id: string
-		}
-	}
-
 	group: {
 		key: string
 		value: Group | EncryptedGroup
@@ -72,7 +64,6 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 
 				// Create object stores for each record
 				db.createObjectStore("config", { keyPath: "id" })
-				db.createObjectStore("contact", { keyPath: "id" })
 				db.createObjectStore("group", { keyPath: "id" })
 				db.createObjectStore("keyPackage", { keyPath: "id" })
 				db.createObjectStore("message", { keyPath: "id" })
@@ -125,26 +116,6 @@ export class Database {
 		config.id = ConfigID
 		config.ready = true
 		await this.#db.put("config", config)
-	}
-
-	/////////////////////////////////////////////
-	// Contacts
-	/////////////////////////////////////////////
-
-	// allContacts returns all contacts from the database
-	allContacts = async () => {
-		return await this.#db.getAll("contact")
-	}
-
-
-	// loadContact retrieves a single contact from the database by ID
-	loadContact = async (id: string) => {
-		return this.#db.get("contact", id)
-	}
-
-	// saveContact saves a single contact to the database
-	saveContact = async (contact: Contact) => {
-		await this.#db.put("contact", contact)
 	}
 
 	/////////////////////////////////////////////

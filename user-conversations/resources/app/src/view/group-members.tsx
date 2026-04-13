@@ -21,22 +21,23 @@ export class GroupMembers {
 
 		// List the settings
 		const controller = vnode.attrs.controller
-		const streamContacts = controller.groupContactStream()
+		const group = controller.groupStream()
+		const contactStreams = controller.groupContactStream()
 
 		return (
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{controller.groupNameStream()}</div>
+						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
-						<div role="tab" aria-selected="true">People ({streamContacts.length})</div>
+						<div role="tab" aria-selected="true">People ({contactStreams.length})</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
 					<div class="table">
 
-						<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addContact()}>
+						<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()}>
 							<div>
 								<span class="circle width-48 flex-center bg-gray text-white text-lg" style="background-color:var(--blue60)">+</span>
 							</div>
@@ -46,8 +47,8 @@ export class GroupMembers {
 							</div>
 						</div>
 
-						{streamContacts.map(streamContact => {
-							const contact = streamContact()
+						{contactStreams.map(contactStream => {
+							const contact = contactStream()
 							return (
 
 								<div class="flex-row">
@@ -59,9 +60,12 @@ export class GroupMembers {
 										<div class="text-gray">{contact.username}</div>
 									</div>
 									<div class="align-right">
-										<button class="text-sm" tabIndex="0" onclick={() => this.removeContact(vnode, contact.id)} >
-											Remove
-										</button>
+										{
+											(contact.id == controller.actorId()) ||
+											<button class="text-sm" tabIndex="0" onclick={() => this.removeGroupMember(vnode, contact.id)} >
+												Remove
+											</button>
+										}
 									</div>
 								</div>
 							)
@@ -72,9 +76,10 @@ export class GroupMembers {
 		)
 	}
 
-	removeContact(vnode: GroupMembersVnode, contactId: string) {
+	removeGroupMember(vnode: GroupMembersVnode, contactId: string) {
 		if (confirm("Are you sure you want to remove this member?")) {
-			vnode.attrs.controller.removeContact(contactId)
+			vnode.attrs.controller.removeGroupMember(contactId)
+			m.redraw()
 		}
 	}
 

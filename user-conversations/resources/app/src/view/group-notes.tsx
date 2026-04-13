@@ -25,17 +25,18 @@ export class GroupNotes {
 
 	view(vnode: GroupNotesVnode) {
 
-		// List the settings
+		// Collect variables
 		const controller = vnode.attrs.controller
+		const group = vnode.state.group
 
 		return (
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{controller.groupNameStream()}</div>
+						<div role="tab" onclick={() => controller.page_group_messages()}>{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" aria-selected="true">Notes</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.groupMemberStream().length})</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
+						<div role="tab" onclick={() => controller.page_group_members()}>People ({group.members.length})</div>
+						<div role="tab" onclick={() => controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">

@@ -24,7 +24,8 @@ export class GroupLeave {
 
 		// List the settings
 		const controller = vnode.attrs.controller
-		const groupName = controller.groupNameStream()
+		const group = controller.groupStream()
+		const groupName = group.name || group.defaultName || "Messages"
 
 		return (
 			<div id="conversation-details">

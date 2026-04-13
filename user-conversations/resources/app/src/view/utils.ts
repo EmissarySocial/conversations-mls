@@ -1,3 +1,5 @@
+import type { Actor } from "../as/actor"
+import { Collection } from "../as/collection"
 import { type APActor } from "../model/ap-actor"
 import type { Contact } from "../model/contact"
 import type { Group } from "../model/group"
@@ -42,12 +44,14 @@ export function getFocusElements(node: Element): [HTMLInputElement | undefined, 
 	return [firstElement, lastElement]
 }
 
-
-export function actorHasKeyPackages(actor: APActor): boolean {
-	return (actor["mls:keyPackages"] != "")
+// actorHasKeyPackages checks if an Actor has any MLS KeyPackages
+export function actorHasKeyPackages(actor: Actor): boolean {
+	const keyPackagesUrl = actor.mlsKeyPackages()
+	return keyPackagesUrl != ""
 }
 
-export function allActorsHaveKeyPackages(actors: APActor[]): boolean {
+// allActorsHaveKeyPackages checks if all Actors in a list have MLS KeyPackages
+export function allActorsHaveKeyPackages(actors: Actor[]): boolean {
 	for (const actor of actors) {
 		if (!actorHasKeyPackages(actor)) {
 			return false
@@ -55,39 +59,4 @@ export function allActorsHaveKeyPackages(actors: APActor[]): boolean {
 	}
 
 	return true
-}
-
-
-
-// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
-// internal state and member list.
-function groupName(group: Group, contacts: Contact[]): string {
-
-	// If the group has a name, then just use that.
-	const groupName = group.name
-	if (groupName != "") {
-		return groupName
-	}
-
-	const contactNames = contacts.map(contact => contact.name).filter(name => name != "")
-
-	// Fancy default name based on the number of members (excluding "me")
-	switch (contactNames.length) {
-
-		// This should never happen, but just in case...
-		case 0:
-			return "Empty Group"
-
-		// For small sets, display all names
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			return contactNames.join(", ")
-	}
-
-	// For larger groups, display the first 3 names + the remaining count
-	return contactNames
-		.slice(0, 3)
-		.join(", ") + `, +${contactNames.length - 3} others`
 }

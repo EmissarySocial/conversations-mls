@@ -60,8 +60,8 @@ export class Groups {
 							</div>
 							<div class="flex-row flex-grow nowrap ellipsis pos-relative">
 								<div class="flex-grow">
-									<div class="flex-row">{controller.groupNameStream()}</div>
-									<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage}</div>
+									<div class="flex-row">{group.name || group.defaultName || ""}</div>
+									<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
 								</div>
 								<div class="text-red text-sm">
 									{group.unread && <i class="bi bi-circle-fill"></i>}

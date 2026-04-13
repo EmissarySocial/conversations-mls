@@ -38,43 +38,59 @@
 			overflow-y:scroll;
 
 			.message {
-
 				display:flex;
-				flex-direction:column;
-				margin-bottom:8px;
+				gap:8px;
+				margin-bottom:12px;
+
+				.sender {
+					font-size:16px;
+					font-weight:500;
+					margin:12px 0px 4px 0px;
+				}
+
+				.sender-icon {
+					width:48px;
+					flex-shrink:0;
+					margin-top:40px;
+				}
 
 				.bubble {
+					padding:8px 12px;
 					border-radius:16px;
-					padding:8px 16px 4px 16px;
 					min-width:320px;
-					width:75%;
+					width:66%;
 					max-width:600px;
+					flex-grow: 1;
 
-					button.circle {
-						border-radius:50%;
-						padding:6px;
-						margin:0px 1px;
+					.message-options {
+						margin-top:12px;
+						font-size:12px;
+
+						button {
+							background-color:inherit;
+							border-color:inherit;
+							color: inherit;
+							font-size:12px;
+							padding: 4px 8px;
+							margin:0px;
+						}
 					}
+				
 				}
 
 				&.sent {
 
-					align-items: flex-end;
+					justify-content:flex-end;
 
 					.bubble {
 						background-color: var(--blue50);
+						border-color: var(--blue50);
 						color:white;
 
 						button {
-							background-color:rgba(0,0,0,0.1);
-							color:white;
 
 							&:hover {
-								background-color:rgba(0,0,0,0.2);
-							}
-
-							&.transparent {
-								background-color:transparent;
+								background-color:rgba(0,0,0,0.1);
 							}
 
 							&.selected {
@@ -90,16 +106,12 @@
 
 					.bubble {
 						background-color: var(--gray10);
+						border-color: var(--gray10);
 
 						button {
-							background-color:var(--gray15);
 
 							&:hover {
-								background-color:var(--gray20);
-							}
-
-							&.transparent {
-								background-color:transparent;
+								background-color:rgba(0,0,0,0.1);
 							}
 
 							&.selected {
