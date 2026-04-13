@@ -167,7 +167,7 @@ export class ViewMessage {
 					{(message.history.length > 0) ?
 						<span class="clickable"
 							onclick={() => controller.modal_messageHistory(message.id)}>
-							<span class="nowrap text-underline margin-right-xs">Edited</span>
+							<span class="nowrap text-underline margin-right-xs"><i class="bi bi-clock-history"></i> Edited</span>
 							<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
 						</span>
 						:

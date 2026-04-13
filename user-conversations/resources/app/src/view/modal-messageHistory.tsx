@@ -18,11 +18,16 @@ interface MessageHistoryState {
 export class MessageHistory {
 
 	oninit(vnode: MessageHistoryVnode) {
+		if (vnode.attrs.controller.message == undefined) {
+			throw new Error("No message selected for viewing history")
+		}
+
 		vnode.state.content = vnode.attrs.controller.message.content
 	}
 
 	view(vnode: MessageHistoryVnode) {
-		const message = vnode.attrs.controller.message
+		const message = vnode.attrs.controller.message!
+
 		return (
 			<Modal close={vnode.attrs.close}>
 				<h1><i class="bi bi-clock-history"></i> Message History</h1>

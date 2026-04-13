@@ -18248,7 +18248,7 @@
           class: "clickable",
           onclick: () => controller2.modal_messageHistory(message.id)
         },
-        /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap text-underline margin-right-xs" }, "Edited"),
+        /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap text-underline margin-right-xs" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-clock-history" }), " Edited"),
         /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))
       ) : /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))));
     }
@@ -18562,6 +18562,9 @@
   var import_mithril28 = __toESM(require_mithril(), 1);
   var MessageHistory = class {
     oninit(vnode) {
+      if (vnode.attrs.controller.message == void 0) {
+        throw new Error("No message selected for viewing history");
+      }
       vnode.state.content = vnode.attrs.controller.message.content;
     }
     view(vnode) {
