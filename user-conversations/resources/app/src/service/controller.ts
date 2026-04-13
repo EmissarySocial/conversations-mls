@@ -25,7 +25,7 @@ import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
-import { type Emoji, keyPackageEmojiKey } from "./emojikeys"
+import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
 import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
 
@@ -33,6 +33,7 @@ import { MLS } from "./mls"
 import { generateAESKey } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
+import type { Emoji } from "../model/emoji"
 
 export class Controller {
 
@@ -46,7 +47,7 @@ export class Controller {
 	#mls?: MLS
 	#allowPlaintextMessages: boolean
 	#encryptionKey?: CryptoKey
-	emojiKey: Emoji[] = []
+	emojiKey: EmojiKey[] = []
 
 	config: Config
 	groups: Group[]
@@ -56,7 +57,7 @@ export class Controller {
 	groupMemberStream: Stream<string[]>
 	groupContactStream: Stream<Stream<Contact>[]>
 
-	message: Message
+	message: Message | undefined
 	inReplyTo: Message | undefined
 
 	pageView: string = "LOADING"
@@ -87,7 +88,7 @@ export class Controller {
 		// Application State
 		this.groups = []
 		this.messages = []
-		this.message = new Message()
+		this.message = undefined
 		this.inReplyTo = undefined
 
 		// Reactive Streams
@@ -333,9 +334,29 @@ export class Controller {
 		this.modalView = "MESSAGE-HISTORY"
 	}
 
-	modal_pickEmoji = async (callback: (emoji: string) => void) => {
-		this.modalView = "PICK-EMOJI"
+	modal_startReaction = async (message: Message) => {
+		this.message = message
+		this.modalView = "MESSAGE-START-REACTION"
 		// this.emojiCallback = callback
+	}
+
+	modal_startReaction_callback = async (emoji: Emoji) => {
+
+		// "current message" must be defined
+		if (this.message == undefined) {
+			console.error("No message selected for reaction")
+			return
+		}
+
+		// Create the reaction
+		await this.reactToMessage(this.message.id, emoji.emoji)
+
+		// Close the modal dialog
+		this.message = undefined
+		this.modalView = ""
+
+		// Redraw the UX
+		m.redraw()
 	}
 
 	//////////////////////////////////////////
@@ -741,11 +762,6 @@ export class Controller {
 
 	// deleteMessage removes a message (sent by the current actor) from the current group
 	deleteMessage = async (messageId: string) => {
-
-
-		if (!confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
-			return
-		}
 
 		// Load the message from the data store
 		const message = await this.loadMessage(messageId)

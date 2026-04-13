@@ -1,16 +1,16 @@
 import { type KeyPackage } from "ts-mls"
 import { encodeKeyPackage } from "../model/ap-keypackage"
 
-export type Emoji = [string, string]
+export type EmojiKey = [string, string]
 
-export async function keyPackageEmojiKey(keyPackage: KeyPackage): Promise<Emoji[]> {
+export async function keyPackageEmojiKey(keyPackage: KeyPackage): Promise<EmojiKey[]> {
 	const keyPackageAsBase64 = encodeKeyPackage(keyPackage)
 	const signature = new TextEncoder().encode(keyPackageAsBase64)
 	return await emojiKey(signature)
 }
 
 // emojiKey: Uint8Array (raw key bytes) or hex string
-export async function emojiKey(signature: Uint8Array<ArrayBufferLike>) {
+export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<EmojiKey[]> {
 	const checksum = await crypto.subtle.digest('SHA-256', signature.slice(0))
 	const checksumHash = new Uint8Array(checksum);
 
@@ -18,7 +18,7 @@ export async function emojiKey(signature: Uint8Array<ArrayBufferLike>) {
 		throw new Error("Checksum must be 32 characters long")
 	}
 
-	var result: Emoji[] = new Array(5)
+	var result: EmojiKey[] = new Array(5)
 
 	for (var i = 0; i < 5; i++) {
 		const first = checksumHash[i * 2] // First byte
@@ -31,7 +31,7 @@ export async function emojiKey(signature: Uint8Array<ArrayBufferLike>) {
 	return result;
 }
 
-const emojiSet: Emoji[] = [
+const emojiSet: EmojiKey[] = [
 	["🐶", "Dog"], ["🐱", "Cat"], ["🦁", "Lion"],
 	["🐎", "Horse"], ["🦄", "Unicorn"], ["🐷", "Pig"],
 	["🐘", "Elephant"], ["🐰", "Rabbit"], ["🐼", "Panda"],

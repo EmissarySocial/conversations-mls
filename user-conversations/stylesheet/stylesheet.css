@@ -124,6 +124,51 @@
 			}
 		}
 	}
+
+	#emoji-picker {
+
+		max-height:600px;
+		overflow-y:scroll;
+		overflow-x:hidden;
+
+		.emoji-group {
+
+			margin-bottom:16px;
+
+			.emoji-group-title {
+				font-size:14px;
+				font-weight:500;
+				margin:4px 0px;
+				padding:0px 4px;
+				color:var(--gray40);
+			}
+
+			.emoji-grid {
+				display:grid; 
+				grid-template-columns: repeat(10, 1fr);
+				gap: 2px;
+
+				.emoji {
+					width:100%;
+					font-size:24px;
+					aspect-ratio: 1;
+					padding:4px;
+					background:var(--gray05);
+					border:solid 1px var(--gray10);
+					border-radius: 4px;
+					cursor: pointer;
+					display:flex;
+					align-items:center;
+					justify-content:center;
+
+					&:hover {
+						background-color: var(--blue10);
+						border-color: var(--blue50);
+					}
+				}
+			}
+		}
+	}
 }
 
 #reply-panel {

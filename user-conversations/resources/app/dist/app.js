@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m24, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m25, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m24;
+          if (params[key] == null) return m25;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m24, key, extra) {
-            if (key == null) return "\\" + m24;
+          function(m25, key, extra) {
+            if (key == null) return "\\" + m25;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request = require_request2();
       var router = require_route();
-      var m24 = function m25() {
+      var m25 = function m26() {
         return hyperscript.apply(this, arguments);
       };
-      m24.m = hyperscript;
-      m24.trust = hyperscript.trust;
-      m24.fragment = hyperscript.fragment;
-      m24.Fragment = "[";
-      m24.mount = mountRedraw.mount;
-      m24.route = router;
-      m24.render = require_render2();
-      m24.redraw = mountRedraw.redraw;
-      m24.request = request.request;
-      m24.parseQueryString = require_parse();
-      m24.buildQueryString = require_build();
-      m24.parsePathname = require_parse2();
-      m24.buildPathname = require_build2();
-      m24.vnode = require_vnode();
-      m24.censor = require_censor();
-      m24.domFor = require_domFor();
-      module.exports = m24;
+      m25.m = hyperscript;
+      m25.trust = hyperscript.trust;
+      m25.fragment = hyperscript.fragment;
+      m25.Fragment = "[";
+      m25.mount = mountRedraw.mount;
+      m25.route = router;
+      m25.render = require_render2();
+      m25.redraw = mountRedraw.redraw;
+      m25.request = request.request;
+      m25.parseQueryString = require_parse();
+      m25.buildQueryString = require_build();
+      m25.parsePathname = require_parse2();
+      m25.buildPathname = require_build2();
+      m25.vnode = require_vnode();
+      m25.censor = require_censor();
+      m25.domFor = require_domFor();
+      module.exports = m25;
     }
   });
 
@@ -3426,9 +3426,9 @@
     while (a !== _0n3) {
       const q = b / a;
       const r = b % a;
-      const m24 = x - u * q;
+      const m25 = x - u * q;
       const n = y - v * q;
-      b = a, a = r, x = u, y = v, u = m24, v = n;
+      b = a, a = r, x = u, y = v, u = m25, v = n;
     }
     const gcd = b;
     if (gcd !== _1n3)
@@ -4659,13 +4659,13 @@
       k: "number",
       hash: "function"
     });
-    const { p, k, m: m24, hash, expand, DST } = options;
+    const { p, k, m: m25, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes3(msg);
     asafenumber(count);
     const log2p = p.toString(2).length;
     const L = Math.ceil((log2p + k) / 8);
-    const len_in_bytes = count * m24 * L;
+    const len_in_bytes = count * m25 * L;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -4678,9 +4678,9 @@
     }
     const u = new Array(count);
     for (let i = 0; i < count; i++) {
-      const e = new Array(m24);
-      for (let j = 0; j < m24; j++) {
-        const elm_offset = L * (j + i * m24);
+      const e = new Array(m25);
+      for (let j = 0; j < m25; j++) {
+        const elm_offset = L * (j + i * m25);
         const tv = prb.subarray(elm_offset, elm_offset + L);
         e[j] = mod2(os2ip(tv), p);
       }
@@ -5042,8 +5042,8 @@
       evaluate: (secretKey, input) => evaluate(ctxVOPRF, secretKey, input)
     };
     const poprf = (info) => {
-      const m24 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T = Point.BASE.multiply(m24);
+      const m25 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T = Point.BASE.multiply(m25);
       return {
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -5067,7 +5067,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn3.fromBytes(secretKey);
-          const t = Fn3.add(skS, m24);
+          const t = Fn3.add(skS, m25);
           const invT = Fn3.inv(t);
           const blindedPoints = blinded.map(Point.fromBytes);
           const evalPoints = blindedPoints.map((i) => i.multiply(invT));
@@ -5098,7 +5098,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t = Fn3.add(skS, m24);
+          const t = Fn3.add(skS, m25);
           const invT = Fn3.inv(t);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -6909,7 +6909,7 @@
         seedArgs.push(abytes3(e, void 0, "extraEntropy"));
       }
       const seed = concatBytes2(...seedArgs);
-      const m24 = h1int;
+      const m25 = h1int;
       function k2sig(kBytes) {
         const k = bits2int(kBytes);
         if (!Fn3.isValidNot0(k))
@@ -6919,7 +6919,7 @@
         const r = Fn3.create(q.x);
         if (r === _0n9)
           return;
-        const s = Fn3.create(ik * Fn3.create(m24 + r * d));
+        const s = Fn3.create(ik * Fn3.create(m25 + r * d));
         if (s === _0n9)
           return;
         let recovery = (q.x === r ? 0 : 2) | Number(q.y & _1n10);
@@ -6995,8 +6995,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m24 = "") {
-          super(m24);
+        constructor(m25 = "") {
+          super(m25);
         }
       };
       DER = {
@@ -7241,26 +7241,26 @@
     "node_modules/mithril/stream/stream.js"(exports, module) {
       (function() {
         "use strict";
-        Stream4.SKIP = {};
-        Stream4.lift = lift;
-        Stream4.scan = scan;
-        Stream4.merge = merge;
-        Stream4.combine = combine;
-        Stream4.scanMerge = scanMerge;
-        Stream4["fantasy-land/of"] = Stream4;
+        Stream5.SKIP = {};
+        Stream5.lift = lift;
+        Stream5.scan = scan;
+        Stream5.merge = merge;
+        Stream5.combine = combine;
+        Stream5.scanMerge = scanMerge;
+        Stream5["fantasy-land/of"] = Stream5;
         var warnedHalt = false;
-        Object.defineProperty(Stream4, "HALT", {
+        Object.defineProperty(Stream5, "HALT", {
           get: function() {
             warnedHalt || console.log("HALT is deprecated and has been renamed to SKIP");
             warnedHalt = true;
-            return Stream4.SKIP;
+            return Stream5.SKIP;
           }
         });
-        function Stream4(value) {
+        function Stream5(value) {
           var dependentStreams = [];
           var dependentFns = [];
           function stream(v) {
-            if (arguments.length && v !== Stream4.SKIP) {
+            if (arguments.length && v !== Stream5.SKIP) {
               value = v;
               if (open(stream)) {
                 stream._changing();
@@ -7272,8 +7272,8 @@
             }
             return value;
           }
-          stream.constructor = Stream4;
-          stream._state = arguments.length && value !== Stream4.SKIP ? "active" : "pending";
+          stream.constructor = Stream5;
+          stream._state = arguments.length && value !== Stream5.SKIP ? "active" : "pending";
           stream._parents = [];
           stream._changing = function() {
             if (open(stream)) stream._state = "changing";
@@ -7282,7 +7282,7 @@
             });
           };
           stream._map = function(fn, ignoreInitial) {
-            var target = ignoreInitial ? Stream4() : Stream4(fn(value));
+            var target = ignoreInitial ? Stream5() : Stream5(fn(value));
             target._parents.push(stream);
             dependentStreams.push(target);
             dependentFns.push(fn);
@@ -7293,7 +7293,7 @@
           };
           var end;
           function createEnd() {
-            end = Stream4();
+            end = Stream5();
             end.map(function(value2) {
               if (value2 === true) {
                 stream._parents.forEach(function(p) {
@@ -7331,11 +7331,11 @@
         }
         function combine(fn, streams) {
           var ready = streams.every(function(s) {
-            if (s.constructor !== Stream4)
+            if (s.constructor !== Stream5)
               throw new Error("Ensure that each item passed to stream.combine/stream.merge/lift is a stream.");
             return s._state === "active";
           });
-          var stream = ready ? Stream4(fn.apply(null, streams.concat([streams]))) : Stream4();
+          var stream = ready ? Stream5(fn.apply(null, streams.concat([streams]))) : Stream5();
           var changed = [];
           var mappers = streams.map(function(s) {
             return s._map(function(value) {
@@ -7371,7 +7371,7 @@
         function scan(fn, acc, origin) {
           var stream = origin.map(function(v) {
             var next = fn(acc, v);
-            if (next !== Stream4.SKIP) acc = next;
+            if (next !== Stream5.SKIP) acc = next;
             return next;
           });
           stream(acc);
@@ -7402,9 +7402,9 @@
         function open(s) {
           return s._state === "pending" || s._state === "active" || s._state === "changing";
         }
-        if (typeof module !== "undefined") module["exports"] = Stream4;
-        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream4;
-        else window.m = { stream: Stream4 };
+        if (typeof module !== "undefined") module["exports"] = Stream5;
+        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream5;
+        else window.m = { stream: Stream5 };
       })();
     }
   });
@@ -7427,12 +7427,12 @@
         var t = 1e3, e = 6e4, n = 36e5, r = "millisecond", i = "second", s = "minute", u = "hour", a = "day", o = "week", c = "month", f = "quarter", h = "year", d = "date", l = "Invalid Date", $ = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t2) {
           var e2 = ["th", "st", "nd", "rd"], n2 = t2 % 100;
           return "[" + t2 + (e2[(n2 - 20) % 10] || e2[n2] || e2[0]) + "]";
-        } }, m24 = function(t2, e2, n2) {
+        } }, m25 = function(t2, e2, n2) {
           var r2 = String(t2);
           return !r2 || r2.length >= e2 ? t2 : "" + Array(e2 + 1 - r2.length).join(n2) + t2;
-        }, v = { s: m24, z: function(t2) {
+        }, v = { s: m25, z: function(t2) {
           var e2 = -t2.utcOffset(), n2 = Math.abs(e2), r2 = Math.floor(n2 / 60), i2 = n2 % 60;
-          return (e2 <= 0 ? "+" : "-") + m24(r2, 2, "0") + ":" + m24(i2, 2, "0");
+          return (e2 <= 0 ? "+" : "-") + m25(r2, 2, "0") + ":" + m25(i2, 2, "0");
         }, m: function t2(e2, n2) {
           if (e2.date() < n2.date()) return -t2(n2, e2);
           var r2 = 12 * (n2.year() - e2.year()) + (n2.month() - e2.month()), i2 = e2.clone().add(r2, c), s2 = n2 - i2 < 0, u2 = e2.clone().add(r2 + (s2 ? -1 : 1), c);
@@ -7472,8 +7472,8 @@
           function M2(t2) {
             this.$L = w(t2.locale, null, true), this.parse(t2), this.$x = this.$x || t2.x || {}, this[p] = true;
           }
-          var m25 = M2.prototype;
-          return m25.parse = function(t2) {
+          var m26 = M2.prototype;
+          return m26.parse = function(t2) {
             this.$d = (function(t3) {
               var e2 = t3.date, n2 = t3.utc;
               if (null === e2) return /* @__PURE__ */ new Date(NaN);
@@ -7488,33 +7488,33 @@
               }
               return new Date(e2);
             })(t2), this.init();
-          }, m25.init = function() {
+          }, m26.init = function() {
             var t2 = this.$d;
             this.$y = t2.getFullYear(), this.$M = t2.getMonth(), this.$D = t2.getDate(), this.$W = t2.getDay(), this.$H = t2.getHours(), this.$m = t2.getMinutes(), this.$s = t2.getSeconds(), this.$ms = t2.getMilliseconds();
-          }, m25.$utils = function() {
+          }, m26.$utils = function() {
             return b;
-          }, m25.isValid = function() {
+          }, m26.isValid = function() {
             return !(this.$d.toString() === l);
-          }, m25.isSame = function(t2, e2) {
+          }, m26.isSame = function(t2, e2) {
             var n2 = O(t2);
             return this.startOf(e2) <= n2 && n2 <= this.endOf(e2);
-          }, m25.isAfter = function(t2, e2) {
+          }, m26.isAfter = function(t2, e2) {
             return O(t2) < this.startOf(e2);
-          }, m25.isBefore = function(t2, e2) {
+          }, m26.isBefore = function(t2, e2) {
             return this.endOf(e2) < O(t2);
-          }, m25.$g = function(t2, e2, n2) {
+          }, m26.$g = function(t2, e2, n2) {
             return b.u(t2) ? this[e2] : this.set(n2, t2);
-          }, m25.unix = function() {
+          }, m26.unix = function() {
             return Math.floor(this.valueOf() / 1e3);
-          }, m25.valueOf = function() {
+          }, m26.valueOf = function() {
             return this.$d.getTime();
-          }, m25.startOf = function(t2, e2) {
+          }, m26.startOf = function(t2, e2) {
             var n2 = this, r2 = !!b.u(e2) || e2, f2 = b.p(t2), l2 = function(t3, e3) {
               var i2 = b.w(n2.$u ? Date.UTC(n2.$y, e3, t3) : new Date(n2.$y, e3, t3), n2);
               return r2 ? i2 : i2.endOf(a);
             }, $2 = function(t3, e3) {
               return b.w(n2.toDate()[t3].apply(n2.toDate("s"), (r2 ? [0, 0, 0, 0] : [23, 59, 59, 999]).slice(e3)), n2);
-            }, y2 = this.$W, M3 = this.$M, m26 = this.$D, v2 = "set" + (this.$u ? "UTC" : "");
+            }, y2 = this.$W, M3 = this.$M, m27 = this.$D, v2 = "set" + (this.$u ? "UTC" : "");
             switch (f2) {
               case h:
                 return r2 ? l2(1, 0) : l2(31, 11);
@@ -7522,7 +7522,7 @@
                 return r2 ? l2(1, M3) : l2(0, M3 + 1);
               case o:
                 var g2 = this.$locale().weekStart || 0, D2 = (y2 < g2 ? y2 + 7 : y2) - g2;
-                return l2(r2 ? m26 - D2 : m26 + (6 - D2), M3);
+                return l2(r2 ? m27 - D2 : m27 + (6 - D2), M3);
               case a:
               case d:
                 return $2(v2 + "Hours", 0);
@@ -7535,20 +7535,20 @@
               default:
                 return this.clone();
             }
-          }, m25.endOf = function(t2) {
+          }, m26.endOf = function(t2) {
             return this.startOf(t2, false);
-          }, m25.$set = function(t2, e2) {
+          }, m26.$set = function(t2, e2) {
             var n2, o2 = b.p(t2), f2 = "set" + (this.$u ? "UTC" : ""), l2 = (n2 = {}, n2[a] = f2 + "Date", n2[d] = f2 + "Date", n2[c] = f2 + "Month", n2[h] = f2 + "FullYear", n2[u] = f2 + "Hours", n2[s] = f2 + "Minutes", n2[i] = f2 + "Seconds", n2[r] = f2 + "Milliseconds", n2)[o2], $2 = o2 === a ? this.$D + (e2 - this.$W) : e2;
             if (o2 === c || o2 === h) {
               var y2 = this.clone().set(d, 1);
               y2.$d[l2]($2), y2.init(), this.$d = y2.set(d, Math.min(this.$D, y2.daysInMonth())).$d;
             } else l2 && this.$d[l2]($2);
             return this.init(), this;
-          }, m25.set = function(t2, e2) {
+          }, m26.set = function(t2, e2) {
             return this.clone().$set(t2, e2);
-          }, m25.get = function(t2) {
+          }, m26.get = function(t2) {
             return this[b.p(t2)]();
-          }, m25.add = function(r2, f2) {
+          }, m26.add = function(r2, f2) {
             var d2, l2 = this;
             r2 = Number(r2);
             var $2 = b.p(f2), y2 = function(t2) {
@@ -7559,11 +7559,11 @@
             if ($2 === h) return this.set(h, this.$y + r2);
             if ($2 === a) return y2(1);
             if ($2 === o) return y2(7);
-            var M3 = (d2 = {}, d2[s] = e, d2[u] = n, d2[i] = t, d2)[$2] || 1, m26 = this.$d.getTime() + r2 * M3;
-            return b.w(m26, this);
-          }, m25.subtract = function(t2, e2) {
+            var M3 = (d2 = {}, d2[s] = e, d2[u] = n, d2[i] = t, d2)[$2] || 1, m27 = this.$d.getTime() + r2 * M3;
+            return b.w(m27, this);
+          }, m26.subtract = function(t2, e2) {
             return this.add(-1 * t2, e2);
-          }, m25.format = function(t2) {
+          }, m26.format = function(t2) {
             var e2 = this, n2 = this.$locale();
             if (!this.isValid()) return n2.invalidDate || l;
             var r2 = t2 || "YYYY-MM-DDTHH:mm:ssZ", i2 = b.z(this), s2 = this.$H, u2 = this.$m, a2 = this.$M, o2 = n2.weekdays, c2 = n2.months, f2 = n2.meridiem, h2 = function(t3, n3, i3, s3) {
@@ -7629,11 +7629,11 @@
                 return null;
               })(t3) || i2.replace(":", "");
             }));
-          }, m25.utcOffset = function() {
+          }, m26.utcOffset = function() {
             return 15 * -Math.round(this.$d.getTimezoneOffset() / 15);
-          }, m25.diff = function(r2, d2, l2) {
-            var $2, y2 = this, M3 = b.p(d2), m26 = O(r2), v2 = (m26.utcOffset() - this.utcOffset()) * e, g2 = this - m26, D2 = function() {
-              return b.m(y2, m26);
+          }, m26.diff = function(r2, d2, l2) {
+            var $2, y2 = this, M3 = b.p(d2), m27 = O(r2), v2 = (m27.utcOffset() - this.utcOffset()) * e, g2 = this - m27, D2 = function() {
+              return b.m(y2, m27);
             };
             switch (M3) {
               case h:
@@ -7664,23 +7664,23 @@
                 $2 = g2;
             }
             return l2 ? $2 : b.a($2);
-          }, m25.daysInMonth = function() {
+          }, m26.daysInMonth = function() {
             return this.endOf(c).$D;
-          }, m25.$locale = function() {
+          }, m26.$locale = function() {
             return D[this.$L];
-          }, m25.locale = function(t2, e2) {
+          }, m26.locale = function(t2, e2) {
             if (!t2) return this.$L;
             var n2 = this.clone(), r2 = w(t2, e2, true);
             return r2 && (n2.$L = r2), n2;
-          }, m25.clone = function() {
+          }, m26.clone = function() {
             return b.w(this.$d, this);
-          }, m25.toDate = function() {
+          }, m26.toDate = function() {
             return new Date(this.valueOf());
-          }, m25.toJSON = function() {
+          }, m26.toJSON = function() {
             return this.isValid() ? this.toISOString() : null;
-          }, m25.toISOString = function() {
+          }, m26.toISOString = function() {
             return this.$d.toISOString();
-          }, m25.toString = function() {
+          }, m26.toString = function() {
             return this.$d.toUTCString();
           }, M2;
         })(), k = _.prototype;
@@ -7711,7 +7711,7 @@
             return n.fromToBase(r2, e2, t2, o2);
           }
           t.en.relativeTime = o, n.fromToBase = function(e2, n2, i2, d2, u) {
-            for (var f, a, s, l = i2.$locale().relativeTime || o, h = r.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m24 = h.length, c = 0; c < m24; c += 1) {
+            for (var f, a, s, l = i2.$locale().relativeTime || o, h = r.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m25 = h.length, c = 0; c < m25; c += 1) {
               var y = h[c];
               y.d && (f = d2 ? t(e2).diff(i2, y.d, true) : i2.diff(e2, y.d, true));
               var p = (r.rounding || Math.round)(Math.abs(f));
@@ -7744,7 +7744,7 @@
   });
 
   // src/app.tsx
-  var import_mithril38 = __toESM(require_mithril(), 1);
+  var import_mithril40 = __toESM(require_mithril(), 1);
 
   // node_modules/ts-mls/dist/src/codec/number.js
   var uint8Encoder = (n) => [
@@ -11282,11 +11282,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m24) => [m24.applicationData, m24.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m25) => [m25.applicationData, m25.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m24) => [m24.proposal, m24.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m25) => [m25.proposal, m25.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m24) => [m24.commit, m24.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m25) => [m25.commit, m25.auth]), config)(msg);
       }
     };
   }
@@ -16904,7 +16904,7 @@
       this.#allowPlaintextMessages = false;
       this.groups = [];
       this.messages = [];
-      this.message = new Message();
+      this.message = void 0;
       this.inReplyTo = void 0;
       this.groupStream = (0, import_stream2.default)(NewGroup());
       this.groupMemberStream = this.groupStream.map((group) => group.members);
@@ -17074,8 +17074,19 @@
       this.message = message;
       this.modalView = "MESSAGE-HISTORY";
     };
-    modal_pickEmoji = async (callback) => {
-      this.modalView = "PICK-EMOJI";
+    modal_startReaction = async (message) => {
+      this.message = message;
+      this.modalView = "MESSAGE-START-REACTION";
+    };
+    modal_startReaction_callback = async (emoji) => {
+      if (this.message == void 0) {
+        console.error("No message selected for reaction");
+        return;
+      }
+      await this.reactToMessage(this.message.id, emoji.emoji);
+      this.message = void 0;
+      this.modalView = "";
+      import_mithril.default.redraw();
     };
     //////////////////////////////////////////
     // Property Getters
@@ -17319,9 +17330,6 @@
     };
     // deleteMessage removes a message (sent by the current actor) from the current group
     deleteMessage = async (messageId) => {
-      if (!confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
-        return;
-      }
       const message = await this.loadMessage(messageId);
       if (message == void 0) {
         return;
@@ -17659,8 +17667,8 @@
   };
 
   // src/view/app.tsx
-  var import_mithril35 = __toESM(require_mithril(), 1);
-  var import_mithril36 = __toESM(require_mithril(), 1);
+  var import_mithril37 = __toESM(require_mithril(), 1);
+  var import_mithril38 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
@@ -17751,8 +17759,8 @@
   };
 
   // src/view/index.tsx
-  var import_mithril29 = __toESM(require_mithril(), 1);
-  var import_mithril30 = __toESM(require_mithril(), 1);
+  var import_mithril31 = __toESM(require_mithril(), 1);
+  var import_mithril32 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
   var import_mithril7 = __toESM(require_mithril(), 1);
@@ -18237,7 +18245,7 @@
           return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
         }
         return /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
-      })), atLeastOneReaction && /* @__PURE__ */ (0, import_mithril12.default)("div", null), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_pickEmoji(this.pickEmoji) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril12.default)(
+      })), atLeastOneReaction && /* @__PURE__ */ (0, import_mithril12.default)("div", null), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril12.default)(
         "span",
         {
           class: "clickable",
@@ -18257,16 +18265,6 @@
     edit(vnode) {
       vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id);
     }
-    delete(vnode) {
-      if (confirm("Are you sure you want to delete this message?")) {
-        vnode.attrs.controller.deleteMessage(vnode.attrs.message.id);
-      }
-    }
-    startReply(vnode) {
-      vnode.attrs.controller.startReply(vnode.attrs.message);
-    }
-    pickEmoji(emoji) {
-    }
   };
 
   // src/view/group-messages.tsx
@@ -18278,11 +18276,9 @@
       vnode.state.previousMessageCount = 0;
     }
     oncreate(vnode) {
-      console.log("oncreate");
       this.scrollToBottom(vnode);
     }
     onupdate(vnode) {
-      console.log("onupdate");
       const currentMessageCount = vnode.attrs.controller.messages.length;
       if (currentMessageCount !== vnode.state.previousMessageCount) {
         this.scrollToBottom(vnode);
@@ -18528,10 +18524,13 @@
   var import_mithril26 = __toESM(require_mithril(), 1);
   var EditMessage = class {
     oninit(vnode) {
+      if (vnode.attrs.controller.message == void 0) {
+        throw new Error("No message selected for editing");
+      }
       vnode.state.content = vnode.attrs.controller.message.content;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril25.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril25.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-pencil-square" }), " Edit Message"), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril25.default)("textarea", { rows: "8", value: vnode.state.content, oninput: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "text-sm text-gray" }, "Changes will be sent to all participants, but may not be visible in some apps.")))), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril25.default)("button", { class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril25.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      return /* @__PURE__ */ (0, import_mithril25.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril25.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-pencil-square" }), " Edit Message"), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril25.default)("textarea", { rows: "8", value: vnode.state.content, oninput: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "text-sm text-gray" }, "Changes will be sent to all participants, but some apps may not display edits.")))), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril25.default)("button", { class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril25.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close")), /* @__PURE__ */ (0, import_mithril25.default)("div", null, /* @__PURE__ */ (0, import_mithril25.default)("span", { role: "button", class: "text-red", tabIndex: "0", onclick: () => this.delete(vnode) }, "Delete")))));
     }
     setMessage(vnode, event) {
       const target = event.target;
@@ -18545,6 +18544,16 @@
       message.content = vnode.state.content;
       await controller2.updateMessage(message);
       return this.close(vnode);
+    }
+    delete(vnode) {
+      const message = vnode.attrs.controller.message;
+      if (message == void 0) {
+        throw new Error("No message selected for deletion");
+      }
+      if (confirm("Are you sure you want to delete this message?")) {
+        vnode.attrs.controller.deleteMessage(message.id);
+        vnode.attrs.controller.modal_close();
+      }
     }
     close(vnode) {
       vnode.attrs.controller.clearMessage();
@@ -18569,6 +18578,89 @@
     }
   };
 
+  // src/view/modal-pickEmoji.tsx
+  var import_mithril29 = __toESM(require_mithril(), 1);
+  var import_stream3 = __toESM(require_stream2(), 1);
+  var import_mithril30 = __toESM(require_mithril(), 1);
+  var PickEmoji = class {
+    oninit(vnode) {
+      vnode.state.recentEmojis = JSON.parse(localStorage.getItem("recentEmojis") || "[]");
+      vnode.state.emojiGroups = (0, import_stream3.default)([]);
+      fetch("/.templates/user-conversations/resources/emoji/data-by-group.json", { cache: "force-cache" }).then((response) => response.json()).then((emojis) => {
+        vnode.state.emojiGroups(emojis);
+        vnode.state.emojiGroups.end(true);
+        import_mithril29.default.redraw();
+      });
+    }
+    // Focus the search input when the modal opens
+    oncreate(vnode) {
+      window.requestAnimationFrame(() => {
+        const input = document.getElementById("emoji-search");
+        if (input) {
+          input.focus();
+        }
+      });
+    }
+    view(vnode) {
+      var emojiGroups = vnode.state.emojiGroups();
+      if (!vnode.state.emojiGroups.end()) {
+        return /* @__PURE__ */ (0, import_mithril29.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril29.default)(
+          "input",
+          {
+            id: "emoji-search",
+            type: "search",
+            placeholder: "Search...",
+            class: "margin-bottom"
+          }
+        ), /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "emoji-picker" }, "Loading..."));
+      }
+      var filteredGroups;
+      if (vnode.state.searchQuery) {
+        const query = vnode.state.searchQuery.toLowerCase();
+        filteredGroups = emojiGroups.map((group) => {
+          return {
+            name: group.name,
+            slug: group.slug,
+            emojis: group.emojis.filter(
+              (emoji) => emoji.name.includes(query)
+            )
+          };
+        }).filter((group) => group.emojis.length > 0);
+      } else {
+        filteredGroups = emojiGroups;
+      }
+      return /* @__PURE__ */ (0, import_mithril29.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril29.default)(
+        "input",
+        {
+          id: "emoji-search",
+          type: "search",
+          placeholder: "Search...",
+          class: "margin-bottom",
+          value: vnode.state.searchQuery,
+          oninput: (event) => this.filterEmojis(vnode, event)
+        }
+      ), /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "emoji-picker" }, vnode.state.recentEmojis.length > 0 && /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-group-title" }, "Recently Used", /* @__PURE__ */ (0, import_mithril29.default)("span", { class: "link margin-left-xs", tabIndex: "0", role: "button", onclick: () => this.clearRecentEmojis(vnode) }, "clear")), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-grid" }, vnode.state.recentEmojis.map((emoji) => /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji", title: emoji.name, onclick: () => this.select(vnode, emoji) }, emoji.emoji)))), filteredGroups.map((emojiGroup) => /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-group-title" }, emojiGroup.name), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji-grid" }, emojiGroup.emojis.map((emoji) => /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "emoji", title: emoji.name, onclick: () => this.select(vnode, emoji) }, emoji.emoji)))))));
+    }
+    filterEmojis(vnode, event) {
+      vnode.state.searchQuery = event.target.value.toLowerCase();
+    }
+    select(vnode, emoji) {
+      var recentEmojis = vnode.state.recentEmojis;
+      recentEmojis = [emoji, ...recentEmojis.filter((e) => e.emoji !== emoji.emoji)];
+      recentEmojis = recentEmojis.slice(0, 10);
+      localStorage.setItem("recentEmojis", JSON.stringify(recentEmojis));
+      vnode.attrs.onselect(emoji);
+      this.close(vnode);
+    }
+    clearRecentEmojis(vnode) {
+      vnode.state.recentEmojis = [];
+      localStorage.removeItem("recentEmojis");
+    }
+    close(vnode) {
+      vnode.attrs.close();
+    }
+  };
+
   // src/view/index.tsx
   var Index = class {
     oninit(vnode) {
@@ -18578,36 +18670,39 @@
       var page;
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-MEMBERS":
-          page = /* @__PURE__ */ (0, import_mithril29.default)(GroupMembers, { controller: vnode.attrs.controller });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupMembers, { controller: vnode.attrs.controller });
           break;
         case "GROUP-NOTES":
-          page = /* @__PURE__ */ (0, import_mithril29.default)(GroupNotes, { controller: vnode.attrs.controller });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupNotes, { controller: vnode.attrs.controller });
           break;
         case "GROUP-LEAVE":
-          page = /* @__PURE__ */ (0, import_mithril29.default)(GroupLeave, { controller: vnode.attrs.controller });
+          page = /* @__PURE__ */ (0, import_mithril31.default)(GroupLeave, { controller: vnode.attrs.controller });
           break;
         default:
           const groups = vnode.attrs.controller.groups;
           if (groups.length == 0) {
-            page = /* @__PURE__ */ (0, import_mithril29.default)(Empty, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril31.default)(Empty, { controller: vnode.attrs.controller });
           } else {
-            page = /* @__PURE__ */ (0, import_mithril29.default)(GroupMessages, { controller: vnode.attrs.controller });
+            page = /* @__PURE__ */ (0, import_mithril31.default)(GroupMessages, { controller: vnode.attrs.controller });
           }
       }
-      return /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril29.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
+      return /* @__PURE__ */ (0, import_mithril31.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril31.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
     }
     // viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
     viewModals(vnode) {
-      const modalView = vnode.attrs.controller.modalView;
+      const controller2 = vnode.attrs.controller;
+      const modalView = controller2.modalView;
       switch (modalView) {
         case "ADD-GROUP-MEMBER":
-          return /* @__PURE__ */ (0, import_mithril29.default)(AddGroupMember, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril31.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
         case "EDIT-MESSAGE":
-          return /* @__PURE__ */ (0, import_mithril29.default)(EditMessage, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril31.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
+        case "MESSAGE-START-REACTION":
+          return /* @__PURE__ */ (0, import_mithril31.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-HISTORY":
-          return /* @__PURE__ */ (0, import_mithril29.default)(MessageHistory, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril31.default)(MessageHistory, { controller: controller2, close: () => this.closeModal(vnode) });
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril29.default)(NewConversation, { controller: vnode.attrs.controller, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril31.default)(NewConversation, { controller: controller2, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -18616,21 +18711,21 @@
       document.getElementById("modal")?.classList.remove("ready");
       window.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril29.default.redraw();
+        import_mithril31.default.redraw();
       }, 240);
     }
   };
 
   // src/view/app-blurred.tsx
-  var import_mithril31 = __toESM(require_mithril(), 1);
+  var import_mithril33 = __toESM(require_mithril(), 1);
   var AppBlurred = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
+      return /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
     }
   };
 
   // src/view/app-settings.tsx
-  var import_mithril32 = __toESM(require_mithril(), 1);
+  var import_mithril34 = __toESM(require_mithril(), 1);
   var AppSettings = class {
     oninit(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -18642,7 +18737,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril32.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril32.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril32.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril32.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril32.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril32.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril32.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril32.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril32.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril32.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. This EmojiKey represents the encryption keys used by this device. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. ", " ", /* @__PURE__ */ (0, import_mithril32.default)("a", { href: "/@me/settings/keyPackages" }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril32.default)("button", { class: "text-red", onclick: () => controller2.stop("SIGN_OUT") }, "Sign Out")), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril32.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device")), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "padding-vertical-xl" })));
+      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. This EmojiKey represents the encryption keys used by this device. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. ", " ", /* @__PURE__ */ (0, import_mithril34.default)("a", { href: "/@me/settings/keyPackages" }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.stop("SIGN_OUT") }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
     }
     setEncryptedMessages(vnode, event) {
       const target = event.target;
@@ -18679,22 +18774,22 @@
   };
 
   // src/view/app-stopped.tsx
-  var import_mithril33 = __toESM(require_mithril(), 1);
-  var import_mithril34 = __toESM(require_mithril(), 1);
+  var import_mithril35 = __toESM(require_mithril(), 1);
+  var import_mithril36 = __toESM(require_mithril(), 1);
   var AppStopped = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
     }
     message(vnode) {
       switch (vnode.attrs.message) {
         case "SERVER_DOWN":
-          return /* @__PURE__ */ (0, import_mithril33.default)("div", null, /* @__PURE__ */ (0, import_mithril33.default)("h2", null, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-slash-circle" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril33.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         case "SIGN_OUT":
-          return /* @__PURE__ */ (0, import_mithril33.default)("div", null, /* @__PURE__ */ (0, import_mithril33.default)("h2", null, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), "To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril33.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ", then re-enter your password.");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), "To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ", then re-enter your password.");
         case "COOKIES_CHANGED":
-          return /* @__PURE__ */ (0, import_mithril33.default)("div", null, /* @__PURE__ */ (0, import_mithril33.default)("h2", null, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril33.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril33.default)("div", null, /* @__PURE__ */ (0, import_mithril33.default)("h2", null, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-slash-circle" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril33.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
       }
     }
   };
@@ -18708,29 +18803,29 @@
       const controller2 = vnode.attrs.controller;
       if (!controller2.isApplicationRunning) {
         console.error(controller2);
-        return /* @__PURE__ */ (0, import_mithril35.default)(AppStopped, { message: controller2.stopReason });
+        return /* @__PURE__ */ (0, import_mithril37.default)(AppStopped, { message: controller2.stopReason });
       }
       if (!controller2.isWindowFocused) {
         if (controller2.config.isHideOnBlur) {
-          return /* @__PURE__ */ (0, import_mithril35.default)(AppBlurred, null);
+          return /* @__PURE__ */ (0, import_mithril37.default)(AppBlurred, null);
         }
       }
       switch (controller2.pageView) {
         case "LOADING":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "app-content" }, "Loading...");
+          return /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "app-content" }, "Loading...");
         case "WELCOME":
-          return /* @__PURE__ */ (0, import_mithril35.default)(Welcome, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril37.default)(Welcome, { controller: controller2 });
         case "SETTINGS":
-          return /* @__PURE__ */ (0, import_mithril35.default)(AppSettings, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril37.default)(AppSettings, { controller: controller2 });
         default:
-          return /* @__PURE__ */ (0, import_mithril35.default)(Index, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril37.default)(Index, { controller: controller2 });
       }
     }
   };
 
   // src/service/contacts.ts
-  var import_mithril37 = __toESM(require_mithril(), 1);
-  var import_stream3 = __toESM(require_stream2(), 1);
+  var import_mithril39 = __toESM(require_mithril(), 1);
+  var import_stream4 = __toESM(require_stream2(), 1);
   var Contacts = class {
     #contacts;
     // Map of contact ID to Contact object
@@ -18759,7 +18854,7 @@
     };
     // getContactStream retrieves a contact by ID from the in-memory map
     getContactStream = (id) => {
-      var result = (0, import_stream3.default)(NewContact(id));
+      var result = (0, import_stream4.default)(NewContact(id));
       const cachedValue = this.#contacts.get(id);
       if (cachedValue != void 0) {
         result(cachedValue);
@@ -18769,7 +18864,7 @@
       }
       new Actor().fromURL(id).then((response) => {
         result(ContactFromActor(response));
-        import_mithril37.default.redraw();
+        import_mithril39.default.redraw();
       });
       return result;
     };
@@ -18794,7 +18889,7 @@
     const directory = new Directory();
     const receiver = new Receiver();
     controller = new Controller(actorID, contacts, database, delivery, directory, receiver);
-    import_mithril38.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril38.default)(App, { controller }) });
+    import_mithril40.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril40.default)(App, { controller }) });
   }
   startup();
 })();

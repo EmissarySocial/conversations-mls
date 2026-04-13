@@ -21,8 +21,6 @@ type ViewMessageState = {
 
 export class ViewMessage {
 
-
-
 	// view returns the JSX for the messages within the selectedGroup.
 	// If there is no selected group, then a welcome message is shown instead.
 	view(vnode: ViewMessageVnode) {
@@ -160,12 +158,14 @@ export class ViewMessage {
 				</div>
 				{atLeastOneReaction && <div></div>}
 				<div class="text-gray flex-grow">
-					<button tabIndex="0" onclick={() => controller.modal_pickEmoji(this.pickEmoji)}><i class="bi bi-emoji-smile"></i> Like</button>
+					{isSentByMe ||
+						<button tabIndex="0" onclick={() => controller.modal_startReaction(message)}><i class="bi bi-emoji-smile"></i> Like</button>
+					}
 					<button tabIndex="0" onclick={() => controller.startReply(message)}><i class="bi bi-reply"></i> Reply</button>
 
-					{isSentByMe && (
+					{isSentByMe &&
 						<button tabIndex="0" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>
-					)}
+					}
 				</div>
 				<div class="text-gray">
 					{(message.history.length > 0) ?
@@ -194,19 +194,4 @@ export class ViewMessage {
 	edit(vnode: ViewMessageVnode) {
 		vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id)
 	}
-
-	delete(vnode: ViewMessageVnode) {
-		if (confirm("Are you sure you want to delete this message?")) {
-			vnode.attrs.controller.deleteMessage(vnode.attrs.message.id)
-		}
-	}
-
-	startReply(vnode: ViewMessageVnode) {
-		vnode.attrs.controller.startReply(vnode.attrs.message)
-	}
-
-	pickEmoji(emoji: string) {
-
-	}
-
 }

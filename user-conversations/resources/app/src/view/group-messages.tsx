@@ -27,12 +27,10 @@ export class GroupMessages {
 	}
 
 	oncreate(vnode: GroupMessagesVnode) {
-		console.log("oncreate")
 		this.scrollToBottom(vnode)
 	}
 
 	onupdate(vnode: GroupMessagesVnode) {
-		console.log("onupdate")
 		const currentMessageCount = vnode.attrs.controller.messages.length;
 		if (currentMessageCount !== vnode.state.previousMessageCount) {
 			this.scrollToBottom(vnode)

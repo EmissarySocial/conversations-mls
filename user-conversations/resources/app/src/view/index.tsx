@@ -12,6 +12,7 @@ import { Empty } from "./empty"
 import { AddGroupMember } from "./modal-addGroupMember"
 import { EditMessage } from "./modal-editMessage"
 import { MessageHistory } from "./modal-messageHistory"
+import { PickEmoji } from "./modal-pickEmoji"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -68,21 +69,25 @@ export class Index {
 
 	// viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
 	private viewModals(vnode: IndexVnode): JSX.Element | undefined {
-		const modalView = vnode.attrs.controller.modalView
+		const controller = vnode.attrs.controller
+		const modalView = controller.modalView
 
 		switch (modalView) {
 
 			case "ADD-GROUP-MEMBER":
-				return <AddGroupMember controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+				return <AddGroupMember controller={controller} close={() => this.closeModal(vnode)} />
 
 			case "EDIT-MESSAGE":
-				return <EditMessage controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+				return <EditMessage controller={controller} close={() => this.closeModal(vnode)} />
+
+			case "MESSAGE-START-REACTION":
+				return <PickEmoji controller={controller} onselect={controller.modal_startReaction_callback} close={() => this.closeModal(vnode)} />
 
 			case "MESSAGE-HISTORY":
-				return <MessageHistory controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+				return <MessageHistory controller={controller} close={() => this.closeModal(vnode)} />
 
 			case "NEW-CONVERSATION":
-				return <NewConversation controller={vnode.attrs.controller} close={() => this.closeModal(vnode)} />
+				return <NewConversation controller={controller} close={() => this.closeModal(vnode)} />
 
 		}
 
