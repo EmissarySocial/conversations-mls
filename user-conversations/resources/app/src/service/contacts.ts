@@ -54,15 +54,17 @@ export class Contacts {
 			result(cachedValue)
 
 			// If the cached value is stil fresh, then we're done.
-			if (Date.now() - cachedValue.updated < this.#maxAge) {
+			if (cachedValue.updated + this.#maxAge > Date.now()) {
 				return result
 			}
 		}
 
 		// Fall through means the cached value is missing or stale.
-		// Load it from the network and update the stream when it arrives.
+		// Load it from the network, add it to the cache, then update the stream
 		new Actor().fromURL(id).then(response => {
-			result(ContactFromActor(response))
+			const contact = ContactFromActor(response)
+			this.#contacts.set(id, contact)
+			result(contact)
 			m.redraw()
 		})
 

@@ -18191,7 +18191,6 @@
     // view returns the JSX for the messages within the selectedGroup.
     // If there is no selected group, then a welcome message is shown instead.
     view(vnode) {
-      const controller2 = vnode.attrs.controller;
       const message = vnode.attrs.message;
       var sender;
       if (vnode.attrs.sender != void 0) {
@@ -18233,11 +18232,9 @@
       const controller2 = vnode.attrs.controller;
       const reactions = Object.entries(message.reactions);
       const isSentByMe = message.type == "SENT";
-      var atLeastOneReaction = false;
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, reactions.map(([content, actors]) => {
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", null, reactions.map(([content, actors]) => {
         const hasReacted = message.reactions[content]?.includes(controller2.actorId());
         const reactionCount = actors.length > 1 ? actors.length : "";
-        atLeastOneReaction = true;
         if (isSentByMe) {
           return /* @__PURE__ */ (0, import_mithril12.default)("button", null, content, " ", reactionCount);
         }
@@ -18245,7 +18242,7 @@
           return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
         }
         return /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
-      })), atLeastOneReaction && /* @__PURE__ */ (0, import_mithril12.default)("div", null), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril12.default)(
+      })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril12.default)(
         "span",
         {
           class: "clickable",
@@ -18274,6 +18271,7 @@
   var GroupMessages = class {
     oninit(vnode) {
       vnode.state.previousMessageCount = 0;
+      vnode.state.contacts = vnode.attrs.controller.groupContactStream();
     }
     oncreate(vnode) {
       this.scrollToBottom(vnode);
@@ -18288,19 +18286,17 @@
       vnode.state.previousMessageCount = vnode.attrs.controller.messages.length;
       const domElement = document.getElementById("conversation-messages");
       domElement.scrollTop = domElement.scrollHeight;
-      console.log(domElement, domElement.scrollTop, domElement.scrollHeight);
     }
     // view returns the JSX for the messages within the selectedGroup.
     // If there is no selected group, then a welcome message is shown instead.
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
-      const contactMap = new Map(controller2.groupContactStream().map((contactStream) => [contactStream().id, contactStream()]));
       var lastSender = "";
       return /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", "aria-selected": "true" }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => controller2.page_group_members() }, "People (", group.members.length, ")"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         var sender;
         if (message.sender != lastSender) {
-          sender = controller2.groupContactStream().find((contact) => contact().id == message.sender);
+          sender = vnode.state.contacts.find((contact) => contact().id == message.sender);
           lastSender = message.sender;
         }
         return /* @__PURE__ */ (0, import_mithril14.default)(ViewMessage, { controller: controller2, message, sender, showDate: "" });
@@ -18858,12 +18854,14 @@
       const cachedValue = this.#contacts.get(id);
       if (cachedValue != void 0) {
         result(cachedValue);
-        if (Date.now() - cachedValue.updated < this.#maxAge) {
+        if (cachedValue.updated + this.#maxAge > Date.now()) {
           return result;
         }
       }
       new Actor().fromURL(id).then((response) => {
-        result(ContactFromActor(response));
+        const contact = ContactFromActor(response);
+        this.#contacts.set(id, contact);
+        result(contact);
         import_mithril39.default.redraw();
       });
       return result;

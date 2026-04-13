@@ -25,10 +25,7 @@ export class ViewMessage {
 	// If there is no selected group, then a welcome message is shown instead.
 	view(vnode: ViewMessageVnode) {
 
-		// List the messages in the selected group
-		const controller = vnode.attrs.controller
 		const message = vnode.attrs.message
-
 		var sender: Contact | undefined
 
 		if (vnode.attrs.sender != undefined) {
@@ -132,31 +129,30 @@ export class ViewMessage {
 		const controller = vnode.attrs.controller
 		const reactions = Object.entries(message.reactions)
 		const isSentByMe = (message.type == "SENT")
-		var atLeastOneReaction = false
 
 		return (
 			<div class="message-options flex-row flex-align-center">
-				<div>
-					{reactions.map(([content, actors]) => {
-						const hasReacted = message.reactions[content]?.includes(controller.actorId())
-						const reactionCount = (actors.length > 1) ? actors.length : ""
-						atLeastOneReaction = true
+				{(reactions.length > 0) &&
+					<div>
+						{reactions.map(([content, actors]) => {
+							const hasReacted = message.reactions[content]?.includes(controller.actorId())
+							const reactionCount = (actors.length > 1) ? actors.length : ""
 
-						// READ ONLY: I cannot react to messages sent by myself.
-						if (isSentByMe) {
-							return <button>{content} {reactionCount}</button>
-						}
+							// READ ONLY: I cannot react to messages sent by myself.
+							if (isSentByMe) {
+								return <button>{content} {reactionCount}</button>
+							}
 
-						// Show my reaction as selected and allow me to undo
-						if (hasReacted) {
-							return <button class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
-						}
+							// Show my reaction as selected and allow me to undo
+							if (hasReacted) {
+								return <button class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
+							}
 
-						// Show unselected reactions that I can also join
-						return <button tabIndex="0" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
-					})}
-				</div>
-				{atLeastOneReaction && <div></div>}
+							// Show unselected reactions that I can also join
+							return <button tabIndex="0" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
+						})}
+					</div>
+				}
 				<div class="text-gray flex-grow">
 					{isSentByMe ||
 						<button tabIndex="0" onclick={() => controller.modal_startReaction(message)}><i class="bi bi-emoji-smile"></i> Like</button>

@@ -18,12 +18,14 @@ type GroupMessagesAttrs = {
 
 type GroupMessagesState = {
 	previousMessageCount: number
+	contacts: Stream<Contact>[]
 }
 
 export class GroupMessages {
 
 	oninit(vnode: GroupMessagesVnode) {
 		vnode.state.previousMessageCount = 0
+		vnode.state.contacts = vnode.attrs.controller.groupContactStream()
 	}
 
 	oncreate(vnode: GroupMessagesVnode) {
@@ -41,8 +43,7 @@ export class GroupMessages {
 		vnode.state.previousMessageCount = vnode.attrs.controller.messages.length;
 
 		const domElement = document.getElementById("conversation-messages")!
-		domElement.scrollTop = domElement.scrollHeight;
-		console.log(domElement, domElement.scrollTop, domElement.scrollHeight)
+		domElement.scrollTop = domElement.scrollHeight
 	}
 
 	// view returns the JSX for the messages within the selectedGroup.
@@ -52,7 +53,6 @@ export class GroupMessages {
 		// List the messages in the selected group
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
-		const contactMap = new Map(controller.groupContactStream().map(contactStream => [contactStream().id, contactStream()]))
 
 		// Grouping values
 		var lastSender = ""
@@ -75,7 +75,7 @@ export class GroupMessages {
 							var sender: Stream<Contact> | undefined
 
 							if (message.sender != lastSender) {
-								sender = controller.groupContactStream().find(contact => contact().id == message.sender)
+								sender = vnode.state.contacts.find(contact => contact().id == message.sender)
 								lastSender = message.sender
 							}
 
