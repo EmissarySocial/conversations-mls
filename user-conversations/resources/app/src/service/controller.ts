@@ -418,7 +418,7 @@ export class Controller {
 			}
 
 			// Add MLS clientState
-			group = await this.#mls.encodeGroup(group)
+			group = await this.#mls.createGroup(group)
 			this.groupStream(group)
 		}
 

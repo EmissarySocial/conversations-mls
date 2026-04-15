@@ -93,12 +93,12 @@ export class MLS {
 		this.#actor = null as any
 	}
 
-	/////////////////////////////
+	//////////////////////////////////////////
 	// Group Management
-	/////////////////////////////
+	//////////////////////////////////////////
 
-	// encodeGroup adds an MLS clientState to a regular group to make it an EncryptedGroup
-	encodeGroup = async (group: Group): Promise<EncryptedGroup> => {
+	// createGroup is an encoder hook that is called when an encrypted group is created.
+	createGroup = async (group: Group): Promise<EncryptedGroup> => {
 
 		// Generate a new clientState for this group
 		const clientState = await createGroup({
@@ -294,85 +294,9 @@ export class MLS {
 		)
 	}
 
-	/////////////////////////////
-	// Sending Messages
-	/////////////////////////////
-
-	// sendActivity encodes an Activity as an MLS message and sends it to 
-	// all group members using the delivery service. Group state may be
-	// updated as a result of this message.
-	sendActivity = async (group: EncryptedGroup, activity: Activity | { [key: string]: any }) => {
-
-		if (!(activity instanceof Activity)) {
-			activity = new Activity(activity)
-		}
-
-		// Encrypt the message using MLS
-		const messageText = activity.toJSON()
-		const messageBytes = encodeText(messageText)
-		const applicationMessage = await createApplicationMessage({
-			context: this.#context(),
-			state: group.clientState,
-			message: messageBytes,
-		})
-
-		// Zero out the keys used to encrypt the message
-		applicationMessage.consumed.forEach(zeroOutUint8Array)
-
-		// update the Group with the new group state
-		group.clientState = applicationMessage.newState
-		group.updateDate = Date.now()
-
-		// save the updated group
-		await this.#database.saveGroup(group)
-
-		// send the activity to all group members
-		return await this.#sendMlsMessage(
-			vocab.ObjectTypeMlsPrivateMessage,
-			activity.getArray("as", vocab.PropertyTo),
-			applicationMessage.message,
-		)
-	}
-
-	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-	#sendMlsMessage = async (type: string, recipients: string[], message: MlsMessage) => {
-
-		// If there are no recipients to send to, just return early
-		if (recipients.length === 0) {
-			return
-		}
-
-		// Encode the private message as bytes, then to base64
-		const contentBytes = encode(mlsMessageEncoder, message)
-		const contentBase64 = bytesToBase64(contentBytes)
-
-		// Create an ActivityPub activity for the private message
-		const activity = new Activity({
-			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
-			type: vocab.ActivityTypeCreate,
-			actor: this.#actor.id(),
-			to: recipients,
-			generator: this.#generatorId,
-			object: {
-				type: type,
-				attributedTo: this.#actor.id(),
-				to: recipients,
-				content: contentBase64,
-				mediaType: vocab.MediaTypeMLSMessage,
-				"mls:encoding": vocab.EncodingTypeBase64,
-			},
-		})
-
-		console.log("#sendMlsMessage.. sending Activity", activity.toObject())
-
-		this.#delivery.sendActivity(activity)
-
-		return activity
-	}
-
-	/////////////////////////////
+	//////////////////////////////////////////
 	// Receiving Messages
-	/////////////////////////////
+	//////////////////////////////////////////
 
 	// use arrow function to preserve "this" context when passing as a callback
 	async decodeMessage(message: string): Promise<Activity | null> {
@@ -467,7 +391,6 @@ export class MLS {
 		return null
 	}
 
-
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
 	async #decodeMessage_GroupInfo(message: MlsGroupInfo) {
 
@@ -555,9 +478,86 @@ export class MLS {
 		return new Activity().fromJSON(plaintext)
 	}
 
-	/////////////////////////////
+
+	//////////////////////////////////////////
+	// Sending Messages
+	//////////////////////////////////////////
+
+	// sendActivity encodes an Activity as an MLS message and sends it to 
+	// updated as a result of this message.
+	sendActivity = async (group: EncryptedGroup, activity: Activity | { [key: string]: any }) => {
+
+		if (!(activity instanceof Activity)) {
+			activity = new Activity(activity)
+		}
+
+		// Encrypt the message using MLS
+		const messageText = activity.toJSON()
+		const messageBytes = encodeText(messageText)
+		const applicationMessage = await createApplicationMessage({
+			context: this.#context(),
+			state: group.clientState,
+			message: messageBytes,
+		})
+
+		// Zero out the keys used to encrypt the message
+		applicationMessage.consumed.forEach(zeroOutUint8Array)
+
+		// update the Group with the new group state
+		group.clientState = applicationMessage.newState
+		group.updateDate = Date.now()
+
+		// save the updated group
+		await this.#database.saveGroup(group)
+
+		// send the activity to all group members
+		return await this.#sendMlsMessage(
+			vocab.ObjectTypeMlsPrivateMessage,
+			activity.getArray("as", vocab.PropertyTo),
+			applicationMessage.message,
+		)
+	}
+
+	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+	#sendMlsMessage = async (type: string, recipients: string[], message: MlsMessage) => {
+
+		// If there are no recipients to send to, just return early
+		if (recipients.length === 0) {
+			return
+		}
+
+		// Encode the private message as bytes, then to base64
+		const contentBytes = encode(mlsMessageEncoder, message)
+		const contentBase64 = bytesToBase64(contentBytes)
+
+		// Create an ActivityPub activity for the private message
+		const activity = new Activity({
+			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
+			type: vocab.ActivityTypeCreate,
+			actor: this.#actor.id(),
+			to: recipients,
+			generator: this.#generatorId,
+			object: {
+				type: type,
+				attributedTo: this.#actor.id(),
+				to: recipients,
+				content: contentBase64,
+				mediaType: vocab.MediaTypeMLSMessage,
+				"mls:encoding": vocab.EncodingTypeBase64,
+			},
+		})
+
+		console.log("#sendMlsMessage.. sending Activity", activity.toObject())
+
+		this.#delivery.sendActivity(activity)
+
+		return activity
+	}
+
+	//////////////////////////////////////////
 	// Helpers
-	/////////////////////////////
+	//////////////////////////////////////////
+
 
 	// #context returns an MlsContext with the current cipher suite and authentication service.
 	#context = (): MlsContext => {
@@ -568,9 +568,10 @@ export class MLS {
 	}
 }
 
-/////////////////////////////
+
+//////////////////////////////////////////
 // Helpers
-/////////////////////////////
+//////////////////////////////////////////
 
 // leafNodeMatches returns a unary function that returns TRUE if the 
 // provided actorId matches the identity in the leaf node's credential.

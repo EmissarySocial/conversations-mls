@@ -15773,11 +15773,11 @@
       this.#privateKeyPackage = null;
       this.#actor = null;
     };
-    /////////////////////////////
+    //////////////////////////////////////////
     // Group Management
-    /////////////////////////////
-    // encodeGroup adds an MLS clientState to a regular group to make it an EncryptedGroup
-    encodeGroup = async (group) => {
+    //////////////////////////////////////////
+    // createGroup is an encoder hook that is called when an encrypted group is created.
+    createGroup = async (group) => {
       const clientState = await createGroup({
         context: this.#context(),
         groupId: encodeText(group.id),
@@ -15899,62 +15899,9 @@
         commitResult.commit
       );
     }
-    /////////////////////////////
-    // Sending Messages
-    /////////////////////////////
-    // sendActivity encodes an Activity as an MLS message and sends it to 
-    // all group members using the delivery service. Group state may be
-    // updated as a result of this message.
-    sendActivity = async (group, activity) => {
-      if (!(activity instanceof Activity)) {
-        activity = new Activity(activity);
-      }
-      const messageText = activity.toJSON();
-      const messageBytes = encodeText(messageText);
-      const applicationMessage = await createApplicationMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: messageBytes
-      });
-      applicationMessage.consumed.forEach(zeroOutUint8Array);
-      group.clientState = applicationMessage.newState;
-      group.updateDate = Date.now();
-      await this.#database.saveGroup(group);
-      return await this.#sendMlsMessage(
-        ObjectTypeMlsPrivateMessage,
-        activity.getArray("as", PropertyTo),
-        applicationMessage.message
-      );
-    };
-    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    #sendMlsMessage = async (type, recipients, message) => {
-      if (recipients.length === 0) {
-        return;
-      }
-      const contentBytes = encode(mlsMessageEncoder, message);
-      const contentBase64 = bytesToBase64(contentBytes);
-      const activity = new Activity({
-        "@context": [ContextActivityStreams, { mls: ContextMLS }],
-        type: ActivityTypeCreate,
-        actor: this.#actor.id(),
-        to: recipients,
-        generator: this.#generatorId,
-        object: {
-          type,
-          attributedTo: this.#actor.id(),
-          to: recipients,
-          content: contentBase64,
-          mediaType: MediaTypeMLSMessage,
-          "mls:encoding": EncodingTypeBase64
-        }
-      });
-      console.log("#sendMlsMessage.. sending Activity", activity.toObject());
-      this.#delivery.sendActivity(activity);
-      return activity;
-    };
-    /////////////////////////////
+    //////////////////////////////////////////
     // Receiving Messages
-    /////////////////////////////
+    //////////////////////////////////////////
     // use arrow function to preserve "this" context when passing as a callback
     async decodeMessage(message) {
       try {
@@ -16066,9 +16013,61 @@
       const plaintext = decodeText(decodedMessage.message);
       return new Activity().fromJSON(plaintext);
     }
-    /////////////////////////////
+    //////////////////////////////////////////
+    // Sending Messages
+    //////////////////////////////////////////
+    // sendActivity encodes an Activity as an MLS message and sends it to 
+    // updated as a result of this message.
+    sendActivity = async (group, activity) => {
+      if (!(activity instanceof Activity)) {
+        activity = new Activity(activity);
+      }
+      const messageText = activity.toJSON();
+      const messageBytes = encodeText(messageText);
+      const applicationMessage = await createApplicationMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: messageBytes
+      });
+      applicationMessage.consumed.forEach(zeroOutUint8Array);
+      group.clientState = applicationMessage.newState;
+      group.updateDate = Date.now();
+      await this.#database.saveGroup(group);
+      return await this.#sendMlsMessage(
+        ObjectTypeMlsPrivateMessage,
+        activity.getArray("as", PropertyTo),
+        applicationMessage.message
+      );
+    };
+    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+    #sendMlsMessage = async (type, recipients, message) => {
+      if (recipients.length === 0) {
+        return;
+      }
+      const contentBytes = encode(mlsMessageEncoder, message);
+      const contentBase64 = bytesToBase64(contentBytes);
+      const activity = new Activity({
+        "@context": [ContextActivityStreams, { mls: ContextMLS }],
+        type: ActivityTypeCreate,
+        actor: this.#actor.id(),
+        to: recipients,
+        generator: this.#generatorId,
+        object: {
+          type,
+          attributedTo: this.#actor.id(),
+          to: recipients,
+          content: contentBase64,
+          mediaType: MediaTypeMLSMessage,
+          "mls:encoding": EncodingTypeBase64
+        }
+      });
+      console.log("#sendMlsMessage.. sending Activity", activity.toObject());
+      this.#delivery.sendActivity(activity);
+      return activity;
+    };
+    //////////////////////////////////////////
     // Helpers
-    /////////////////////////////
+    //////////////////////////////////////////
     // #context returns an MlsContext with the current cipher suite and authentication service.
     #context = () => {
       return {
@@ -17126,7 +17125,7 @@
         if (this.#mls == void 0) {
           throw new Error("MLS service is not initialized");
         }
-        group = await this.#mls.encodeGroup(group);
+        group = await this.#mls.createGroup(group);
         this.groupStream(group);
       }
       await this.addGroupMembers(recipients);
