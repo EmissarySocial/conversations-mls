@@ -185,7 +185,6 @@ export class MLS {
 			ratchetTreeExtension: true,
 		})
 
-
 		// Zero out the keys used to encrypt the commit message
 		commitResult.consumed.forEach(zeroOutUint8Array)
 
@@ -363,6 +362,8 @@ export class MLS {
 				"mls:encoding": vocab.EncodingTypeBase64,
 			},
 		})
+
+		console.log("#sendMlsMessage.. sending Activity", activity.toObject())
 
 		this.#delivery.sendActivity(activity)
 

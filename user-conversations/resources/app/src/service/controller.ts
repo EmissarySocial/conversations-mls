@@ -164,6 +164,7 @@ export class Controller {
 
 		// Listen for application state changes
 		cookieStore.addEventListener("change", async () => {
+			console.log("cookies changed")
 			this.stop("COOKIES_CHANGED")
 		})
 
@@ -217,6 +218,7 @@ export class Controller {
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
+		console.log("Application stopping:", message)
 		this.#database.stop()
 		this.#delivery.stop()
 		this.#receiver.stop()

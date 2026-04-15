@@ -70,11 +70,14 @@ export class Delivery {
 
 		var result: Activity
 
+		console.log("Delivery.sendActivity", activity)
+
 		if (activity instanceof Activity) {
 			result = activity
 		} else {
 			result = new Activity(activity)
 		}
+
 
 		// If necessary, encrypt the activity using MLS before sending
 		// Send the Activity to the server

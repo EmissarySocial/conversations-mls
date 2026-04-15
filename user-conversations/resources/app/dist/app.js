@@ -15948,6 +15948,7 @@
           "mls:encoding": EncodingTypeBase64
         }
       });
+      console.log("#sendMlsMessage.. sending Activity", activity.toObject());
       this.#delivery.sendActivity(activity);
       return activity;
     };
@@ -16147,6 +16148,7 @@
     // sendActivity sends an activity to the Actor's outbox
     sendActivity = async (activity) => {
       var result;
+      console.log("Delivery.sendActivity", activity);
       if (activity instanceof Activity) {
         result = activity;
       } else {
@@ -16954,6 +16956,7 @@
         await this.loadMessages();
       });
       cookieStore.addEventListener("change", async () => {
+        console.log("cookies changed");
         this.stop("COOKIES_CHANGED");
       });
       window.addEventListener("focus", async () => {
@@ -16989,6 +16992,7 @@
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
+      console.log("Application stopping:", message);
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -18123,7 +18127,7 @@
     view(vnode) {
       const group = vnode.attrs.controller.groupStream();
       if (group.stateId === "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding align-center" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "start a new conversation"), ".");
+        return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding-vertical-xl padding-horizontal align-center bg-stripes" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "start a new conversation"), ".");
       }
       const enabled = vnode.state.message.trim() !== "";
       const disabled = !enabled;
@@ -18198,9 +18202,9 @@
       }
       switch (message.type) {
         case "SENT":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, this.drawAcknowledgements(vnode), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode, message)));
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode)));
         case "RECEIVED":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode, message))));
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode))));
         case "ADD-ACTOR":
           return /* @__PURE__ */ (0, import_mithril12.default)("div", null, "Add Actor");
         case "REMOVE-ACTOR":
@@ -18212,24 +18216,9 @@
       }
       throw new Error(`Unknown message type: ${message.type}`);
     }
-    drawAcknowledgements(vnode) {
-      if (vnode.attrs.message.received.length == 0) {
-        return null;
-      }
-      if (vnode.attrs.message.received.length < 4) {
-        return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs" }, vnode.attrs.message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), (0, import_dayjs.default)(vnode.attrs.message.updateDate).format("hh:mm A"));
-      }
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;" }), " ", vnode.attrs.message.received.length, "\xA0", (0, import_dayjs.default)(vnode.attrs.message.updateDate).format("hh:mm A"));
-    }
-    drawDate(vnode) {
-      const showDate = vnode.attrs.showDate;
-      if (showDate == "") {
-        return /* @__PURE__ */ (0, import_mithril12.default)("div", null);
-      }
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-top margin-horizontal-sm text-sm text-light-gray" }, vnode.attrs.showDate);
-    }
-    drawReactions(vnode, message) {
+    drawReactions(vnode) {
       const controller2 = vnode.attrs.controller;
+      const message = vnode.attrs.message;
       const reactions = Object.entries(message.reactions);
       const isSentByMe = message.type == "SENT";
       return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", null, reactions.map(([content, actors]) => {
@@ -18242,15 +18231,38 @@
           return /* @__PURE__ */ (0, import_mithril12.default)("button", { class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
         }
         return /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
-      })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, message.history.length > 0 ? /* @__PURE__ */ (0, import_mithril12.default)(
+      })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, this.drawAcknowledgements(vnode), this.drawPostTime(vnode)));
+    }
+    drawAcknowledgements(vnode) {
+      if (vnode.attrs.message.received.length == 0) {
+        return null;
+      }
+      if (vnode.attrs.message.received.length < 5) {
+        return /* @__PURE__ */ (0, import_mithril12.default)("span", null, vnode.attrs.message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
+      }
+      return /* @__PURE__ */ (0, import_mithril12.default)("span", null, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;" }), " ", vnode.attrs.message.received.length, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
+    }
+    drawPostTime(vnode) {
+      const message = vnode.attrs.message;
+      if (message.history.length == 0) {
+        return /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"));
+      }
+      return /* @__PURE__ */ (0, import_mithril12.default)(
         "span",
         {
           class: "clickable",
-          onclick: () => controller2.modal_messageHistory(message.id)
+          onclick: () => vnode.attrs.controller.modal_messageHistory(message.id)
         },
         /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap text-underline margin-right-xs" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-clock-history" }), " Edited"),
         /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))
-      ) : /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))));
+      );
+    }
+    drawPostDate(vnode) {
+      const showDate = vnode.attrs.showDate;
+      if (showDate == "") {
+        return /* @__PURE__ */ (0, import_mithril12.default)("div", null);
+      }
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-top margin-horizontal-sm text-sm text-light-gray" }, vnode.attrs.showDate);
     }
     sendReaction(vnode, content) {
       vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content);

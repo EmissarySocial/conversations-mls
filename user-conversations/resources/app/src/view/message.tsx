@@ -39,9 +39,8 @@ export class ViewMessage {
 				return (
 					<div class="message sent">
 						<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
-							{this.drawAcknowledgements(vnode)}
 							<div class="padding-xs">{message.content}</div>
-							{this.drawReactions(vnode, message)}
+							{this.drawReactions(vnode)}
 						</div>
 					</div>
 				)
@@ -61,7 +60,7 @@ export class ViewMessage {
 							)}
 							<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
 								<div class="padding-xs">{message.content}</div>
-								{this.drawReactions(vnode, message)}
+								{this.drawReactions(vnode)}
 							</div>
 						</div>
 					</div>
@@ -83,50 +82,10 @@ export class ViewMessage {
 		throw new Error(`Unknown message type: ${message.type}`)
 	}
 
-
-
-	drawAcknowledgements(vnode: ViewMessageVnode): JSX.Element | null {
-
-		if (vnode.attrs.message.received.length == 0) {
-			return null
-		}
-
-		if (vnode.attrs.message.received.length < 4) {
-			return (
-				<div class="float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs">
-					{vnode.attrs.message.received.map(actorId => <i class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
-					{dayjs(vnode.attrs.message.updateDate).format("hh:mm A")}
-				</div>
-			)
-		}
-
-		return (
-			<div class="float-right padding-left-lg padding-bottom-lg text-gray nowrap text-xs">
-				<i class="bi bi-check-circle" style="margin-right:2px;"></i> {vnode.attrs.message.received.length}
-				&nbsp;
-				{dayjs(vnode.attrs.message.updateDate).format("hh:mm A")}
-			</div>
-		)
-	}
-
-	drawDate(vnode: ViewMessageVnode): JSX.Element {
-
-		const showDate = vnode.attrs.showDate
-
-		if (showDate == "") {
-			return <div></div>
-		}
-
-		return (
-			<div class="margin-top margin-horizontal-sm text-sm text-light-gray">
-				{vnode.attrs.showDate}
-			</div>
-		)
-	}
-
-	drawReactions(vnode: ViewMessageVnode, message: Message): (JSX.Element | undefined) {
+	drawReactions(vnode: ViewMessageVnode): (JSX.Element | undefined) {
 
 		const controller = vnode.attrs.controller
+		const message = vnode.attrs.message
 		const reactions = Object.entries(message.reactions)
 		const isSentByMe = (message.type == "SENT")
 
@@ -164,16 +123,64 @@ export class ViewMessage {
 					}
 				</div>
 				<div class="text-gray">
-					{(message.history.length > 0) ?
-						<span class="clickable"
-							onclick={() => controller.modal_messageHistory(message.id)}>
-							<span class="nowrap text-underline margin-right-xs"><i class="bi bi-clock-history"></i> Edited</span>
-							<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
-						</span>
-						:
-						<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
-					}
+					{this.drawAcknowledgements(vnode)}
+					{this.drawPostTime(vnode)}
 				</div>
+			</div>
+		)
+	}
+
+	drawAcknowledgements(vnode: ViewMessageVnode): JSX.Element | null {
+
+		if (vnode.attrs.message.received.length == 0) {
+			return null
+		}
+
+		if (vnode.attrs.message.received.length < 5) {
+			return (
+				<span>
+					{vnode.attrs.message.received.map(actorId => <i class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
+					<span class="margin-horizontal-xs">&middot;</span>
+				</span>
+			)
+		}
+
+		return (
+			<span>
+				<i class="bi bi-check-circle" style="margin-right:2px;"></i> {vnode.attrs.message.received.length}
+				<span class="margin-horizontal-xs">&middot;</span>
+			</span>
+		)
+	}
+
+	drawPostTime(vnode: ViewMessageVnode): JSX.Element {
+
+		const message = vnode.attrs.message
+
+		if (message.history.length == 0) {
+			return <span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
+		}
+
+		return (
+			<span class="clickable"
+				onclick={() => vnode.attrs.controller.modal_messageHistory(message.id)}>
+				<span class="nowrap text-underline margin-right-xs"><i class="bi bi-clock-history"></i> Edited</span>
+				<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
+			</span>
+		)
+	}
+
+	drawPostDate(vnode: ViewMessageVnode): JSX.Element {
+
+		const showDate = vnode.attrs.showDate
+
+		if (showDate == "") {
+			return <div></div>
+		}
+
+		return (
+			<div class="margin-top margin-horizontal-sm text-sm text-light-gray">
+				{vnode.attrs.showDate}
 			</div>
 		)
 	}
