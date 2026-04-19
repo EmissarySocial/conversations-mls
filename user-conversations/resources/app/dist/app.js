@@ -16140,20 +16140,23 @@
 
   // src/service/delivery.ts
   var Delivery = class {
-    #actorId;
-    // actorId is the ID of the user sending messages
+    // The URL of the current user's outbox
     #outboxUrl;
-    // outboxUrl is the URL of the user's outbox
-    constructor(actorId) {
-      this.#actorId = actorId;
+    // The cookie string present when this instance was created
+    // used to detect changes to cookies/authentication state
+    #originalCookie;
+    constructor() {
+      this.#originalCookie = document.cookie;
       this.#outboxUrl = "";
     }
+    // stop clears this service and prevents it from sending any more messages.
     stop = () => {
-      this.#actorId = "";
       this.#outboxUrl = "";
+      this.#originalCookie = "";
     };
+    // setActor is used to configure the Delivery service
+    // after the Actor has been loaded by the Controller.
     setActor(actor) {
-      this.#actorId = actor.id();
       this.#outboxUrl = actor.outbox();
     }
     /**
@@ -16166,6 +16169,7 @@
      * @throws Error if the fetch fails
      */
     load = async (url) => {
+      this.#checkCookies();
       if (typeof url != "string") {
         return url;
       }
@@ -16183,6 +16187,10 @@
     sendActivity = async (activity) => {
       var result;
       console.log("Delivery.sendActivity", activity);
+      if (this.#outboxUrl == "") {
+        throw new Error("Outbox URL not set. Cannot send activity.");
+      }
+      this.#checkCookies();
       if (activity instanceof Activity) {
         result = activity;
       } else {
@@ -16199,6 +16207,14 @@
       }
       return result;
     };
+    // #checkCookies guarantees that we're still signed in as the 
+    // original user.  It throws an error if the cookies have changed since 
+    // this component was created, halting whatever operation was in progress..
+    #checkCookies() {
+      if (document.cookie !== this.#originalCookie) {
+        throw new Error("Cookies have changed since the last request.");
+      }
+    }
   };
 
   // src/as/collection.ts
@@ -16468,6 +16484,8 @@
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
     // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+    #originalCookie;
+    // The original cookie string, used for detecting changes in cookies
     // constructor initializes the Receiver with the actor's ID and messages URL
     constructor() {
       this.#messagesUrl = "";
@@ -16479,6 +16497,7 @@
       this.#polling = false;
       this.#pollAgain = false;
       this.#generatorId = "";
+      this.#originalCookie = document.cookie;
     }
     // setActor configures the Receiver with the given Actor's information,
     // once it has been loaded from the network.
@@ -16491,13 +16510,13 @@
       this.#activityHandler = activityHandler;
       this.#lastMessage = lastMessage;
       this.#generatorId = generatorId;
-      this.poll();
+      this.#poll();
       const collection = await new Collection().fromURL(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
       if (sseEndpoint != "") {
         this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
         this.#eventSource.onmessage = () => {
-          this.poll();
+          this.#poll();
         };
       }
     };
@@ -16508,11 +16527,12 @@
     };
     // poll retrieves new messages from the mls:messages collection and calls the
     // onMessage callback for each new message
-    poll = async () => {
+    #poll = async () => {
       if (this.#polling) {
         this.#pollAgain = true;
         return;
       }
+      this.#checkCookies();
       this.#polling = true;
       var lastMessageId = await this.#lastMessage();
       const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" });
@@ -16526,9 +16546,17 @@
       this.#polling = false;
       if (this.#pollAgain) {
         this.#pollAgain = false;
-        this.poll();
+        this.#poll();
       }
     };
+    // #checkCookies guarantees that we're still signed in as the 
+    // original user.  It throws an error if the cookies have changed since 
+    // this component was created, halting whatever operation was in progress..
+    #checkCookies() {
+      if (document.cookie !== this.#originalCookie) {
+        throw new Error("Cookies have changed since the last request.");
+      }
+    }
   };
 
   // src/service/controller.ts
@@ -17019,15 +17047,6 @@
         await this.loadGroups();
         await this.loadMessages();
       });
-      cookieStore.addEventListener("change", async () => {
-        this.stop("COOKIES_CHANGED");
-      });
-      window.addEventListener("focus", async () => {
-        this.#focusWindow();
-      });
-      window.addEventListener("blur", async () => {
-        this.#blurWindow();
-      });
       this.loadGroups();
       this.pageView = "GROUPS";
       import_mithril.default.redraw();
@@ -17052,9 +17071,13 @@
       this.config.isHideOnBlur = isHideOnBlur;
       await this.#database.saveConfig(this.config);
     };
+    //////////////////////////////////////////
+    // Other Lifecycle Methods
+    //////////////////////////////////////////
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
+      console.log("Stopping application:", message);
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -17074,6 +17097,19 @@
       }
       this.#database.erase();
       window.document.location.reload();
+    };
+    //////////////////////////////////////////
+    // Window Focus/Blur
+    //////////////////////////////////////////
+    onFocusWindow = () => {
+      console.log("controller.onFocusWindow");
+      this.isWindowFocused = true;
+      import_mithril.default.redraw();
+    };
+    onBlurWindow = () => {
+      console.log("controller.onBlurWindow");
+      this.isWindowFocused = false;
+      import_mithril.default.redraw();
     };
     //////////////////////////////////////////
     // Pages
@@ -17702,17 +17738,6 @@
       message.content = object.content();
       message.updateDate = Date.now();
       await this.#database.saveMessage(message);
-    };
-    //////////////////////////////////////////
-    // Window Focus/Blur
-    //////////////////////////////////////////
-    #focusWindow = () => {
-      this.isWindowFocused = true;
-      import_mithril.default.redraw();
-    };
-    #blurWindow = () => {
-      this.isWindowFocused = false;
-      import_mithril.default.redraw();
     };
     //////////////////////////////////////////
     // Network Stuff
@@ -18989,6 +19014,26 @@
     viewKeyPackages() {
       window.location.assign("/@me/settings/keyPackages");
     }
+    //////////////////////////////////////////
+    // State Watcher
+    //////////////////////////////////////////
+    watchSignin = (stop) => {
+      if (typeof cookieStore !== "undefined") {
+        cookieStore.addEventListener("change", async () => {
+          console.log("cookies changed (via CookieStore API)");
+          stop("COOKIES_CHANGED");
+        });
+        return;
+      }
+      const originalCookie = document.cookie;
+      const intervalId = setInterval(() => {
+        if (document.cookie !== originalCookie) {
+          console.log("cookies changed (via polling)");
+          stop("COOKIES_CHANGED");
+        }
+      }, 1e3);
+      return () => clearInterval(intervalId);
+    };
   };
 
   // src/app.tsx
@@ -19006,11 +19051,18 @@
     const host = new Host();
     const contacts = new Contacts();
     const database = new Database(indexedDB2);
-    const delivery = new Delivery(actorId);
+    const delivery = new Delivery();
     const directory = new Directory(actorId);
     const receiver = new Receiver();
     controller = new Controller(actorId, contacts, database, delivery, directory, receiver, host);
     import_mithril40.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril40.default)(App, { controller }) });
+    window.addEventListener("focus", async () => {
+      controller.onFocusWindow();
+    });
+    window.addEventListener("blur", async () => {
+      controller.onBlurWindow();
+    });
+    host.watchSignin((message) => controller.stop(message));
   }
   startup();
 })();

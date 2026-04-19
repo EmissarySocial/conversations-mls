@@ -37,7 +37,7 @@ async function startup() {
 	const host = new Host()
 	const contacts = new Contacts()
 	const database = new Database(indexedDB)
-	const delivery = new Delivery(actorId)
+	const delivery = new Delivery()
 	const directory = new Directory(actorId)
 	const receiver = new Receiver()
 
@@ -46,6 +46,17 @@ async function startup() {
 
 	// Pass the controller to the App component and mount the main application
 	m.mount(root, { view: () => <App controller={controller} /> })
+
+	window.addEventListener("focus", async () => {
+		controller.onFocusWindow()
+	})
+
+	window.addEventListener("blur", async () => {
+		controller.onBlurWindow()
+	})
+
+	// Use the host connector to watch application state (e.g. cookies)
+	host.watchSignin((message: string) => controller.stop(message))
 }
 
 // 3..2..1.. Go!

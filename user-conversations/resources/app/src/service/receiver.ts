@@ -15,6 +15,7 @@ export class Receiver {
 	#generatorId: string // ID of this MLS client, used for the generator field of outgoing messages
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
+	#originalCookie: string // The original cookie string, used for detecting changes in cookies
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor() {
@@ -24,6 +25,7 @@ export class Receiver {
 		this.#polling = false
 		this.#pollAgain = false
 		this.#generatorId = ""
+		this.#originalCookie = document.cookie
 	}
 
 	// setActor configures the Receiver with the given Actor's information,
@@ -42,7 +44,7 @@ export class Receiver {
 		this.#generatorId = generatorId
 
 		// Poll the server on start
-		this.poll()
+		this.#poll()
 
 		// If possible, listen for server-sent-events (SSE) from the server
 		const collection = await new Collection().fromURL(this.#messagesUrl)
@@ -51,7 +53,7 @@ export class Receiver {
 		if (sseEndpoint != "") {
 			this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true })
 			this.#eventSource.onmessage = () => {
-				this.poll()
+				this.#poll()
 			}
 		}
 	}
@@ -64,13 +66,16 @@ export class Receiver {
 
 	// poll retrieves new messages from the mls:messages collection and calls the
 	// onMessage callback for each new message
-	poll = async () => {
-		//
+	#poll = async () => {
+
 		// If already polling, set #pollAgain flag and exit.
 		if (this.#polling) {
 			this.#pollAgain = true
 			return
 		}
+
+		// Verify that the cookie hasn't changed since we last checked.
+		this.#checkCookies()
 
 		// Set the "lock" to prevent simultaneous polls
 		this.#polling = true
@@ -96,7 +101,16 @@ export class Receiver {
 		// Re-run poll if we received any messages while we were polling
 		if (this.#pollAgain) {
 			this.#pollAgain = false
-			this.poll()
+			this.#poll()
+		}
+	}
+
+	// #checkCookies guarantees that we're still signed in as the 
+	// original user.  It throws an error if the cookies have changed since 
+	// this component was created, halting whatever operation was in progress..
+	#checkCookies() {
+		if (document.cookie !== this.#originalCookie) {
+			throw new Error("Cookies have changed since the last request.")
 		}
 	}
 }

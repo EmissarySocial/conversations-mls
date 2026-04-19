@@ -18,4 +18,36 @@ export class Host {
 	viewKeyPackages() {
 		window.location.assign("/@me/settings/keyPackages")
 	}
+
+	//////////////////////////////////////////
+	// State Watcher
+	//////////////////////////////////////////
+
+	watchSignin = (stop: (message: string) => void) => {
+
+		// If the cookieStore API is available, use it
+		// to listen for Application state changes
+		if (typeof cookieStore !== "undefined") {
+			cookieStore.addEventListener("change", async () => {
+				console.log("cookies changed (via CookieStore API)")
+				stop("COOKIES_CHANGED")
+			})
+
+			// Since we're using the cookieStore API, we're done here.
+			return
+		}
+
+		// Fall through means that we need to poll this on our own
+		const originalCookie = document.cookie;
+
+		const intervalId = setInterval(() => {
+			if (document.cookie !== originalCookie) {
+				console.log("cookies changed (via polling)")
+				stop("COOKIES_CHANGED")
+			}
+		}, 1000);
+
+		// Return a cleanup function
+		return () => clearInterval(intervalId);
+	}
 }

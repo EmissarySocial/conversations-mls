@@ -106,6 +106,7 @@ export class Controller {
 		this.#start()
 	}
 
+
 	//////////////////////////////////////////
 	// Startup
 	//////////////////////////////////////////
@@ -196,19 +197,6 @@ export class Controller {
 			await this.loadMessages()
 		})
 
-		// Listen for application state changes
-		cookieStore.addEventListener("change", async () => {
-			this.stop("COOKIES_CHANGED")
-		})
-
-		window.addEventListener("focus", async () => {
-			this.#focusWindow()
-		})
-
-		window.addEventListener("blur", async () => {
-			this.#blurWindow()
-		})
-
 		// Refresh Data for the UX
 		this.loadGroups()
 
@@ -248,9 +236,14 @@ export class Controller {
 		await this.#database.saveConfig(this.config)
 	}
 
+	//////////////////////////////////////////
+	// Other Lifecycle Methods
+	//////////////////////////////////////////
+
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
+		console.log("Stopping application:", message)
 		this.#database.stop()
 		this.#delivery.stop()
 		this.#receiver.stop()
@@ -279,6 +272,23 @@ export class Controller {
 
 		// Reload the application
 		window.document.location.reload()
+	}
+
+
+	//////////////////////////////////////////
+	// Window Focus/Blur
+	//////////////////////////////////////////
+
+	onFocusWindow = () => {
+		console.log("controller.onFocusWindow")
+		this.isWindowFocused = true
+		m.redraw()
+	}
+
+	onBlurWindow = () => {
+		console.log("controller.onBlurWindow")
+		this.isWindowFocused = false
+		m.redraw()
 	}
 
 
@@ -1306,26 +1316,11 @@ export class Controller {
 
 
 	//////////////////////////////////////////
-	// Window Focus/Blur
-	//////////////////////////////////////////
-
-	#focusWindow = () => {
-		this.isWindowFocused = true
-		m.redraw()
-	}
-
-	#blurWindow = () => {
-		this.isWindowFocused = false
-		m.redraw()
-	}
-
-	//////////////////////////////////////////
 	// Network Stuff
 	//////////////////////////////////////////
 
 	// sendActivity sends an activity to the Actor's outbox
 	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }) => {
-
 
 		// RULE: If the activity is not already an Activity object, convert it to one
 		if (!(activity instanceof Activity)) {
@@ -1347,6 +1342,7 @@ export class Controller {
 		// Send the activity MLS service
 		return await this.#mls.sendActivity(group, activity)
 	}
+
 
 	//////////////////////////////////////////
 	// Other Helpers
