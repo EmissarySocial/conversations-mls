@@ -20,20 +20,20 @@ import { Message, NewMessage } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
 
 // Services
-import { type IContacts } from "./interfaces"
+import { type IContacts, type IHost } from "./interfaces"
 import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IReceiver } from "./interfaces"
 import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
-import { MLSFactory } from "./mls-factory"
 import { MLS } from "./mls"
 
 // Other utility functions
-import { generateAESKey } from "./cryptography"
+import { cipherSuiteImplementation, generateAESKey, newKeyPackage } from "./cryptography"
 import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
 import type { Emoji } from "../model/emoji"
+import type { DBKeyPackage } from "../model/db-keypackage"
 
 export class Controller {
 
@@ -44,8 +44,10 @@ export class Controller {
 	#directory: IDirectory
 	#receiver: IReceiver
 	#contacts: IContacts
+	#host: IHost
 	#mls?: MLS
 	#allowPlaintextMessages: boolean
+	#allowCiphertextMessages: boolean
 	#encryptionKey?: CryptoKey
 	emojiKey: EmojiKey[] = []
 
@@ -74,6 +76,7 @@ export class Controller {
 		delivery: IDelivery,
 		directory: IDirectory,
 		receiver: IReceiver,
+		host: IHost,
 	) {
 		// Dependencies
 		this.#actorId = actorId
@@ -83,7 +86,9 @@ export class Controller {
 		this.#delivery = delivery
 		this.#directory = directory
 		this.#receiver = receiver
+		this.#host = host
 		this.#allowPlaintextMessages = false
+		this.#allowCiphertextMessages = false
 
 		// Application State
 		this.groups = []
@@ -120,38 +125,67 @@ export class Controller {
 			return
 		}
 
-		// Load the actor object from the network and locate their messages collection
-		this.#actor = await new Actor().fromURL(this.#actorId)
-		const { url, plaintext } = this.#actor.messages()
-
-		if (url == "") {
-			throw new Error(`Actor does not support MLS API.`)
-		}
-
-		// Apply the freshly loaded actor to all of the dependencies
-		this.#allowPlaintextMessages = plaintext
-		this.#delivery.setActor(this.#actor)
-		this.#directory.setActor(this.#actor)
-		this.#receiver.setActor(this.#actor)
-
-		// Create the MLS instance
+		// Try to load the Actor and locate their messages collection
 		try {
-			this.#mls = await MLSFactory(
-				this.#database,
-				this.#delivery,
-				this.#directory,
-				this.#actor,
-				this.config.generatorId,
-				this.config.generatorName,
-			)
+			this.#actor = await new Actor().fromURL(this.#actorId)
+
 		} catch (error) {
-			console.error("Failed to initialize MLS service", error)
+			console.error("Unable to load the Actor record", error)
 			this.stop("SERVER_DOWN")
 			return
 		}
 
-		// Calculate EmojiKey
-		this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage)
+		// Collect the messages API information
+		const { url, plaintext, ciphertext } = this.#actor.messages()
+
+		if (url == "") {
+			console.error("Actor does not support messages APIs")
+			this.stop("UNSUPPORTED")
+			return
+		}
+
+		// Apply the freshly loaded actor to all of the dependencies
+		this.#allowPlaintextMessages = plaintext
+		this.#allowCiphertextMessages = ciphertext
+
+		// Wire additional data into each dependency
+		this.#receiver.setActor(this.#actor)
+		this.#delivery.setActor(this.#actor)
+		this.#directory.setActor(this.#actor)
+		this.#directory.setGenerator(this.config.generatorId, this.config.generatorName)
+
+		// Initialize MLS (if supported by the server)
+		if (this.#allowCiphertextMessages) {
+
+			try {
+
+				// Load async dependencies: ciphersuite and keyPackage
+				const cipherSuite = await cipherSuiteImplementation()
+				const keyPackage = await this.loadOrCreateKeyPackage()
+
+				// Create the MLS encoder service
+				this.#mls = new MLS(
+					this,
+					this.#database,
+					this.#delivery,
+					this.#directory,
+					cipherSuite,
+					keyPackage.id,
+					keyPackage.publicKeyPackage,
+					keyPackage.privateKeyPackage,
+					this.#actor,
+					this.config.generatorId,
+				)
+
+				// Calculate EmojiKey
+				this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage)
+
+			} catch (error) {
+				console.error("Unable to initialize MLS service", error)
+				this.stop("SERVER_DOWN")
+				return
+			}
+		}
 
 		// Start the realtime message receiver
 		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage)
@@ -164,7 +198,6 @@ export class Controller {
 
 		// Listen for application state changes
 		cookieStore.addEventListener("change", async () => {
-			console.log("cookies changed")
 			this.stop("COOKIES_CHANGED")
 		})
 
@@ -218,7 +251,6 @@ export class Controller {
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
-		console.log("Application stopping:", message)
 		this.#database.stop()
 		this.#delivery.stop()
 		this.#receiver.stop()
@@ -362,6 +394,18 @@ export class Controller {
 	}
 
 	//////////////////////////////////////////
+	// Host Connectors
+	//////////////////////////////////////////
+
+	host_actor = (actorId: string) => {
+		this.#host.viewActor(actorId)
+	}
+
+	host_keyPackages = () => {
+		this.#host.viewKeyPackages()
+	}
+
+	//////////////////////////////////////////
 	// Property Getters
 	//////////////////////////////////////////
 
@@ -389,9 +433,57 @@ export class Controller {
 	// KeyPackages
 	//////////////////////////////////////////
 
-	loadKeyPackages = async (actorId: string): Promise<KeyPackage[]> => {
+	// createOrUpdateKeyPackage creates a new KeyPackage and POSTs it 
+	// to the server to replaces the current one. If there is no 
+	// existing KeyPackage, then the new one is created
+	createOrUpdateKeyPackage = async (): Promise<DBKeyPackage> => {
+
+		var keyPackageId: string
+
+		// Generate initial key package for this user
+		const keyPackageResult = await newKeyPackage(this.#actor.id())
+
+		// Try to find an existing KeyPackage record
+		const keyPackage = await this.#database.loadKeyPackage()
+
+		// If we don't already have a KeyPackage, then create a new one
+		if (keyPackage == undefined) {
+			keyPackageId = await this.#directory.createKeyPackage(keyPackageResult.publicPackage)
+		} else {
+
+			// Otherwise, update the existing KeyPackage
+			keyPackageId = keyPackage.keyPackageURL
+			await this.#directory.updateKeyPackage(keyPackageId, keyPackageResult.publicPackage)
+		}
+
+		// Recalculate the EmojiKey for this KeyPackage
+		this.emojiKey = await keyPackageEmojiKey(keyPackageResult.publicPackage)
+
+		// Save the KeyPackage to the local database and return
+		return await this.#database.saveKeyPackage(keyPackageId, keyPackageResult.publicPackage, keyPackageResult.privatePackage)
+	}
+
+	// loadOrCreateKeyPackage tries to load the KeyPackage for the 
+	// current Actor. If none exists, then a new one is created and returned
+	loadOrCreateKeyPackage = async (): Promise<DBKeyPackage> => {
+
+		// Try to load the KeyPackage from the IndexedDB database
+		const dbKeyPackage = await this.#database.loadKeyPackage()
+
+		// If it already exists, then use that
+		if (dbKeyPackage != undefined) {
+			return dbKeyPackage
+		}
+
+		// Otherwise, we don't already have a KeyPackage for this device 
+		return await this.createOrUpdateKeyPackage()
+	}
+
+	// loadActorKeyPackages loads the KeyPackages for the specified actor
+	loadActorKeyPackages = async (actorId: string): Promise<KeyPackage[]> => {
 		return this.#directory.getKeyPackages([actorId])
 	}
+
 
 	//////////////////////////////////////////
 	// Groups
@@ -399,9 +491,6 @@ export class Controller {
 
 	// createGroup creates a new group and initial message
 	createGroup = async (recipients: string[], initialMessage: string, encrypted: boolean) => {
-
-		// TODO: Make this optional
-		encrypted = true
 
 		// Add "me" to the members list
 		recipients.push(this.actorId())
@@ -444,8 +533,6 @@ export class Controller {
 
 	saveGroupAndSync = async (group: Group) => {
 
-		console.log("saveGroupAndSync", group)
-
 		// Save the group in the database
 		await this.saveGroup(group)
 
@@ -470,8 +557,6 @@ export class Controller {
 	}
 
 	syncGroup = async (group: Group) => {
-
-		console.log("syncGroup", group)
 
 		// Send a "Group:Update" activity to my other devices
 		var activity = new Activity({
@@ -549,8 +634,8 @@ export class Controller {
 		// Remove "unread" marker, if it exists
 		if (group.unread) {
 			group.unread = false
-			await this.saveGroup(group) // Run this HTTP call asynchronously
-			this.syncGroup(group) // Run this HTTP call asynchronously
+			await this.saveGroup(group)
+			this.syncGroup(group) // (run async)
 		}
 
 		this.groupStream(group)
@@ -903,11 +988,9 @@ export class Controller {
 
 			// RULE: Activities must match the object that they contain
 			if (activity.actorId() != object.attributedToId()) {
-				console.log("Activity actor must match object actor")
 				return
 			}
 
-			console.log("Received activity:", activity.toObject())
 
 			// Decode MLS-encrypted messages
 			if (object.isMLSMessage()) {
@@ -918,7 +1001,7 @@ export class Controller {
 				}
 
 				// Decode the message embedded in the object.content.
-				const decodedActivity = await this.#mls.decodeMessage(object.content())
+				const decodedActivity = await this.#mls.receiveActivity(object.content())
 
 				// If the activity is null, then the MLS decoder has done all of the work.
 				// There's nothing more to do, so exit.
@@ -936,7 +1019,6 @@ export class Controller {
 				activity = decodedActivity
 				object = await activity.object()
 
-				console.log("Decoded activity:", activity.toObject())
 			}
 
 		} catch (error) {
@@ -1048,7 +1130,6 @@ export class Controller {
 			updateDate: Date.now(),
 		})
 
-		console.log("Received new message:", message)
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
@@ -1169,17 +1250,14 @@ export class Controller {
 
 	#receiveActivity_UpdateContext = async (activity: Activity) => {
 
-		console.log("receiveActivity_UpdateContext", activity)
 		const object = await activity.object()
 
 		var group = await this.#database.loadGroup(object.id())
 
 		if (group == undefined) {
-			console.log("Group not found")
 			return
 		}
 
-		console.log("Group found", group)
 		group.name = object.name()
 		group.description = object.description()
 		group.tags = object.getArray("as", "tag")
@@ -1187,7 +1265,6 @@ export class Controller {
 		this.setGroupState(group, object.getString("emissary", "stateId"))
 
 		await this.saveGroup(group)
-		console.log("Group updated", group)
 	}
 
 	#receiveActivity_UpdateMessage = async (activity: Activity) => {
@@ -1249,7 +1326,6 @@ export class Controller {
 	// sendActivity sends an activity to the Actor's outbox
 	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }) => {
 
-		console.log("sendActivity:", activity)
 
 		// RULE: If the activity is not already an Activity object, convert it to one
 		if (!(activity instanceof Activity)) {
@@ -1269,7 +1345,6 @@ export class Controller {
 		}
 
 		// Send the activity MLS service
-		console.log("Sending activity via MLS service:", activity.toObject())
 		return await this.#mls.sendActivity(group, activity)
 	}
 

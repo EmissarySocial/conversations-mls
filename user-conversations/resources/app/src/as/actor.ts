@@ -68,25 +68,30 @@ export class Actor extends Object {
 	// The boolean return value indicates whether the returned URL is for the
 	// Emissary-specific collection (true) or the standard mls:messages collection (false).
 	messages = () => {
-		//
-		// First, try using the custom emissary:messages property
-		// because it will also give us unencrypted direct messages
-		const emissaryMessages = this.emissaryMessages()
 
-		if (emissaryMessages != "") {
-			return { url: emissaryMessages, plaintext: true }
-		}
+		// Default to "no support". If nothing else is found, then this server doesn't support this messages API.
+		var result = { url: "", plaintext: false, ciphertext: false }
 
-		// Otherwise, fall back to the standard mls:messages property,
-		// but this only supports encrypted group messages
+		// First, check to see if an MLS-only endpoint is available. If so, 
+		// then this account can send/receive encrypted messages
 		const mlsMessages = this.mlsMessages()
 
 		if (mlsMessages != "") {
-			return { url: mlsMessages, plaintext: false }
+			result.url = mlsMessages
+			result.ciphertext = true
 		}
 
-		// Fail by returning "" for the collection URL
-		return { url: "", plaintext: false }
+		// If the Emissary-specific endpoint is available, then we can also send/receive
+		// unencrypted messages.  Update the URL to use the dual-use endpoint.
+		const emissaryMessages = this.emissaryMessages()
+
+		if (emissaryMessages != "") {
+			result.url = emissaryMessages
+			result.plaintext = true
+		}
+
+		// You get what you get.
+		return result
 	}
 
 	///////////////////////////////////

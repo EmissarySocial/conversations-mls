@@ -10,6 +10,7 @@ import { Controller } from "./service/controller"
 // Views
 import { App } from "./view/app"
 import { Contacts } from "./service/contacts"
+import { Host } from "./service/host"
 
 // Global controller instance
 var controller: Controller
@@ -17,25 +18,31 @@ var controller: Controller
 // startup initializes the application and mounts the Mithril components.
 async function startup() {
 
-	// Collect arguments from the DOM
+	// Locate the root DOM element
 	const root = document.getElementById("mls")!
-	const actorID = root.dataset["actor-id"] || ""
 
-	// Verify that the root element exists
 	if (root == undefined) {
 		throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`)
 	}
 
+	// Locate the authenticated actor ID
+	const actorId = root.dataset["actorId"]
+
+	if (actorId == undefined || actorId == "") {
+		throw new Error(`Actor ID not provided. Please set the "data-actor-id" attribute on the root element.`)
+	}
+
 	// Build dependencies
-	const indexedDB = await NewIndexedDB(actorID)
+	const indexedDB = await NewIndexedDB(actorId)
+	const host = new Host()
 	const contacts = new Contacts()
 	const database = new Database(indexedDB)
-	const delivery = new Delivery()
-	const directory = new Directory()
+	const delivery = new Delivery(actorId)
+	const directory = new Directory(actorId)
 	const receiver = new Receiver()
 
 	// Build the controller
-	controller = new Controller(actorID, contacts, database, delivery, directory, receiver)
+	controller = new Controller(actorId, contacts, database, delivery, directory, receiver, host)
 
 	// Pass the controller to the App component and mount the main application
 	m.mount(root, { view: () => <App controller={controller} /> })

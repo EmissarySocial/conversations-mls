@@ -1,29 +1,42 @@
-/*
-export async function encryptKeyWithPasscode(key: CryptoKey, passcodeKey: CryptoKey, salt: Uint8Array) {
+import { type CiphersuiteName } from "ts-mls"
+import { type CiphersuiteImpl } from "ts-mls"
+import { type Credential } from "ts-mls"
+import { type KeyPackage } from "ts-mls"
+import { type PrivateKeyPackage } from "ts-mls"
 
-	crypto.subtle.encrypt()
+import { getCiphersuiteImpl } from "ts-mls"
+import { defaultCredentialTypes } from "ts-mls"
+import { defaultLifetime } from "ts-mls"
+import { generateKeyPackage } from "ts-mls"
+
+// cipherSuiteImplementation returns the common ciphersuite implementation used by this app
+export async function cipherSuiteImplementation(): Promise<CiphersuiteImpl> {
+	const cipherSuiteName: CiphersuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+	const cipherSuite = await getCiphersuiteImpl(cipherSuiteName)
+	return cipherSuite;
 }
 
+// newKeyPackage generates a new KeyPackage for the specified actor ID, using the common ciphersuite
+export async function newKeyPackage(actorId: string): Promise<{ publicPackage: KeyPackage, privatePackage: PrivateKeyPackage }> {
 
-async function encrypt(content: string, key: CryptoKey) {
-	const salt = crypto.getRandomValues(new Uint8Array(16));
+	// Use the common ciphersuite
+	const cipherSuite = await cipherSuiteImplementation()
 
-	const iv = crypto.getRandomValues(new Uint8Array(12));
+	// Create a credential for this User
+	const credential: Credential = {
+		credentialType: defaultCredentialTypes.basic,
+		identity: new TextEncoder().encode(actorId),
+	}
 
-	const contentBytes = stringToBytes(content);
-
-	const cipher = new Uint8Array(
-		await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, contentBytes)
-	);
-
-	return {
-		salt: bytesToBase64(salt),
-		iv: bytesToBase64(iv),
-		cipher: bytesToBase64(cipher),
-	};
+	// Generate initial key package for this user
+	return await generateKeyPackage({
+		credential: credential,
+		cipherSuite: cipherSuite,
+		lifetime: defaultLifetime(),
+	})
 }
-*/
 
+// generateAESKey generates a new random AES-GCM key for encrypting messages
 export async function generateAESKey() {
 	return await crypto.subtle.generateKey(
 		{
@@ -35,7 +48,7 @@ export async function generateAESKey() {
 	);
 }
 
-
+// deriveKeyFromPassword derives a symmetric encryption key from the specified password and salt using PBKDF2
 export async function deriveKeyFromPassword(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
 
 	// RULE: Require salt to be 16+ bytes long (128 bits) for PBKDF2
@@ -65,6 +78,7 @@ export async function deriveKeyFromPassword(password: string, salt: ArrayBuffer)
 	);
 }
 
+// encodeToBase64 encodes a CryptoKey to a Base64 string for storage or transmission
 export async function encodeKeyToBase64(key: CryptoKey): Promise<string> {
 	const exported = await crypto.subtle.exportKey("raw", key)
 	const keyBytes = new Uint8Array(exported);
@@ -73,6 +87,7 @@ export async function encodeKeyToBase64(key: CryptoKey): Promise<string> {
 	return base64Key;
 }
 
+// decodeKeyFromBase64 decodes a Base64 string back into a CryptoKey
 export async function decodeKeyFromBase64(base64Key: string): Promise<CryptoKey> {
 
 	const keyString = atob(base64Key)

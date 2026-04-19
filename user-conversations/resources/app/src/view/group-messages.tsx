@@ -65,7 +65,6 @@ export class GroupMessages {
 						<div role="tab" aria-selected="true">{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
 						<div role="tab" onclick={() => controller.page_group_members()}>People ({group.members.length})</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>
 				<div id="conversation-messages">

@@ -1,5 +1,6 @@
 // MLS Types
-import { type ClientConfig } from "ts-mls"
+import { type KeyPackage } from "ts-mls"
+import { type PrivateKeyPackage } from "ts-mls"
 
 // IDB Objects
 import { type DBSchema } from "idb"
@@ -10,7 +11,6 @@ import { openDB } from "idb"
 import { type Config } from "../model/config"
 import { type EncryptedGroup } from "../model/group"
 import { type Group } from "../model/group"
-import { type Contact } from "../model/contact"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
@@ -89,8 +89,17 @@ export class Database {
 	}
 
 	erase = () => {
+		console.log("Erasing database: ", this.#db.name)
 		this.#db.close()
-		window.indexedDB.deleteDatabase(this.#db.name)
+		var req = window.indexedDB.deleteDatabase(this.#db.name)
+
+		req.onerror = (event) => {
+			console.error("Unable to erase database: ", event)
+		}
+
+		req.onblocked = () => {
+			alert("Unable to erase database. Please close the other tabs that are using this application and try again.")
+		}
 	}
 
 	// setChange allows the caller to provide a redraw function that will be called after database operations
@@ -167,16 +176,31 @@ export class Database {
 	}
 
 	/////////////////////////////////////////////
-	// Private KeyPackage
+	// KeyPackages
 	/////////////////////////////////////////////
 
+	// loadKeyPackage retrieves the KeyPackage for the current user
 	loadKeyPackage = async () => {
-		const keyPackage = await this.#db.get("keyPackage", "self")
-		return keyPackage
+		return await this.#db.get("keyPackage", "self")
 	}
 
-	saveKeyPackage = async (keyPackage: DBKeyPackage) => {
-		await this.#db.put("keyPackage", keyPackage)
+	// saveKeyPackage saves the ID, public, and private portions of the KeyPackage to the database
+	saveKeyPackage = async (keyPackageId: string, publicPackage: KeyPackage, privatePackage: PrivateKeyPackage) => {
+
+		// Create a DBKeyPackage record
+		const dbKeyPackage = {
+			id: "self",
+			keyPackageURL: keyPackageId,
+			publicKeyPackage: publicPackage,
+			privateKeyPackage: privatePackage,
+			createDate: Date.now(),
+		}
+
+		// Save it to the database
+		await this.#db.put("keyPackage", dbKeyPackage)
+
+		// Return to caller
+		return dbKeyPackage
 	}
 
 	/////////////////////////////////////////////

@@ -201,7 +201,7 @@ export class ActorSearch {
 		}
 
 		// Load the actor's keyPackages collection
-		const keyPackages = await vnode.attrs.controller.loadKeyPackages(actor.id())
+		const keyPackages = await vnode.attrs.controller.loadActorKeyPackages(actor.id())
 
 		// Remove KeyPackages that can't be found
 		if ((vnode.state.keyPackages == undefined) || (keyPackages.length == 0)) {

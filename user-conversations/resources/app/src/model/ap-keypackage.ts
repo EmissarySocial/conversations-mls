@@ -28,13 +28,13 @@ export interface APKeyPackage {
 
 // NewAPKeyPackage creates a fully initialized KeyPackage object
 // using the provided actorID and public KeyPackage.
-export function NewAPKeyPackage(generatorId: string, generatorName: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
+export function NewAPKeyPackage(keyPackageId: string, generatorId: string, generatorName: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
 
 	// Encode the KeyPackage as an MLS message
 	const keyPackageAsBase64 = encodeKeyPackage(publicPackage)
 
 	return {
-		id: "", // This will be appened by the server
+		id: keyPackageId,
 		type: "mls:KeyPackage",
 		to: "as:Public",
 		attributedTo: actorID,

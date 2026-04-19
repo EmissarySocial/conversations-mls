@@ -7,7 +7,7 @@
 import Stream from "mithril/stream"
 
 // ts-mls types
-import { type MlsFramedMessage } from "ts-mls"
+import { type MlsFramedMessage, type PrivateKeyPackage } from "ts-mls"
 import { type MlsGroupInfo } from "ts-mls"
 import { type MlsWelcomeMessage } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
@@ -32,6 +32,14 @@ export interface IContacts {
 	stop(): void
 }
 
+export interface IController {
+
+	// Lifecycle methods
+	stop(message: string): void
+
+	createOrUpdateKeyPackage(): Promise<DBKeyPackage>
+}
+
 // IDatabase wraps all of the methods that the MLS service
 // uses to store group state.
 export interface IDatabase {
@@ -52,7 +60,7 @@ export interface IDatabase {
 
 	// KeyPackage methods
 	loadKeyPackage(): Promise<DBKeyPackage | undefined>
-	saveKeyPackage(keyPackage: DBKeyPackage): Promise<void>
+	saveKeyPackage(keyPackageId: string, publicPackage: KeyPackage, privatePackage: PrivateKeyPackage): Promise<DBKeyPackage>
 
 	// Message methods
 	allMessages(groupId: string): Promise<Message[]>
@@ -92,12 +100,20 @@ export interface IDirectory {
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
+	setGenerator(generatorId: string, generatorName: string): void
 
 	// KeyPackage methods
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
-	createKeyPackage(keyPackage: APKeyPackage): Promise<string>
-	updateKeyPackage(keyPackage: APKeyPackage): Promise<string>
+	createKeyPackage(publicPackage: KeyPackage): Promise<string>
+	updateKeyPackage(keyPackageId: string, publicPackage: KeyPackage): Promise<void>
 	deleteKeyPackage(keyPackageUrl: string): Promise<void>
+}
+
+// IHost wraps methods that integrate with the host application, such as viewing an actor's profile
+// or managing keypackages on the serve
+export interface IHost {
+	viewActor(actorId: string): void
+	viewKeyPackages(): void
 }
 
 // IReceiver wraps all of the methods that the Controller uses

@@ -28,6 +28,13 @@ export class AppStopped {
 
 		switch (vnode.attrs.message) {
 
+			case "COOKIES_CHANGED":
+				return <div>
+					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
+					It looks like you have signed in to a different account using another tab.
+					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
+				</div>
+
 			case "SERVER_DOWN":
 				return <div>
 					<h2><i class="bi bi-slash-circle"></i> Cannot Reach Server</h2>
@@ -42,10 +49,10 @@ export class AppStopped {
 					then re-enter your password.
 				</div>
 
-			case "COOKIES_CHANGED":
+			case "UNSUPPORTED":
 				return <div>
-					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
-					It looks like you have signed in to a different account using another tab.
+					<h2><i class="bi bi-slash-circle"></i> Unsupported Account</h2>
+					It looks like your account doesn't support the required APIs for conversations.
 					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
 				</div>
 

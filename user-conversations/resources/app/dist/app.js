@@ -15005,28 +15005,6 @@
     return group.clientState !== void 0;
   }
 
-  // src/model/contact.ts
-  function NewContact(id) {
-    return {
-      id,
-      name: "",
-      icon: "",
-      username: "",
-      known: false,
-      updated: 0
-    };
-  }
-  function ContactFromActor(actor) {
-    return {
-      id: actor.id(),
-      name: actor.name(),
-      icon: actor.icon(),
-      username: actor.computedUsername(),
-      known: false,
-      updated: Date.now()
-    };
-  }
-
   // src/model/message.ts
   var Message = class {
     // Properties
@@ -15099,8 +15077,15 @@
       this.#db.close();
     };
     erase = () => {
+      console.log("Erasing database: ", this.#db.name);
       this.#db.close();
-      window.indexedDB.deleteDatabase(this.#db.name);
+      var req = window.indexedDB.deleteDatabase(this.#db.name);
+      req.onerror = (event) => {
+        console.error("Unable to erase database: ", event);
+      };
+      req.onblocked = () => {
+        alert("Unable to erase database. Please close the other tabs that are using this application and try again.");
+      };
     };
     // setChange allows the caller to provide a redraw function that will be called after database operations
     onchange = (callback) => {
@@ -15155,14 +15140,23 @@
       this.#onchange();
     };
     /////////////////////////////////////////////
-    // Private KeyPackage
+    // KeyPackages
     /////////////////////////////////////////////
+    // loadKeyPackage retrieves the KeyPackage for the current user
     loadKeyPackage = async () => {
-      const keyPackage = await this.#db.get("keyPackage", "self");
-      return keyPackage;
+      return await this.#db.get("keyPackage", "self");
     };
-    saveKeyPackage = async (keyPackage) => {
-      await this.#db.put("keyPackage", keyPackage);
+    // saveKeyPackage saves the ID, public, and private portions of the KeyPackage to the database
+    saveKeyPackage = async (keyPackageId, publicPackage, privatePackage) => {
+      const dbKeyPackage = {
+        id: "self",
+        keyPackageURL: keyPackageId,
+        publicKeyPackage: publicPackage,
+        privateKeyPackage: privatePackage,
+        createDate: Date.now()
+      };
+      await this.#db.put("keyPackage", dbKeyPackage);
+      return dbKeyPackage;
     };
     /////////////////////////////////////////////
     // Messages
@@ -15462,15 +15456,18 @@
     // The boolean return value indicates whether the returned URL is for the
     // Emissary-specific collection (true) or the standard mls:messages collection (false).
     messages = () => {
-      const emissaryMessages = this.emissaryMessages();
-      if (emissaryMessages != "") {
-        return { url: emissaryMessages, plaintext: true };
-      }
+      var result = { url: "", plaintext: false, ciphertext: false };
       const mlsMessages = this.mlsMessages();
       if (mlsMessages != "") {
-        return { url: mlsMessages, plaintext: false };
+        result.url = mlsMessages;
+        result.ciphertext = true;
       }
-      return { url: "", plaintext: false };
+      const emissaryMessages = this.emissaryMessages();
+      if (emissaryMessages != "") {
+        result.url = emissaryMessages;
+        result.plaintext = true;
+      }
+      return result;
     };
     ///////////////////////////////////
     // Computed Properties
@@ -15721,11 +15718,10 @@
   var import_stream = __toESM(require_stream2(), 1);
 
   // src/model/ap-keypackage.ts
-  function NewAPKeyPackage(generatorId, generatorName, actorID, publicPackage) {
+  function NewAPKeyPackage(keyPackageId, generatorId, generatorName, actorID, publicPackage) {
     const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
     return {
-      id: "",
-      // This will be appened by the server
+      id: keyPackageId,
       type: "mls:KeyPackage",
       to: "as:Public",
       attributedTo: actorID,
@@ -15748,28 +15744,54 @@
     return bytesToBase64(keyPackageMessage);
   }
 
+  // src/model/contact.ts
+  function NewContact(id) {
+    return {
+      id,
+      name: "",
+      icon: "",
+      username: "",
+      known: false,
+      updated: 0
+    };
+  }
+  function ContactFromActor(actor) {
+    return {
+      id: actor.id(),
+      name: actor.name(),
+      icon: actor.icon(),
+      username: actor.computedUsername(),
+      known: false,
+      updated: Date.now()
+    };
+  }
+
   // src/service/mls.ts
   var MLS = class {
+    #controller;
     #database;
     #delivery;
     #directory;
     #cipherSuite;
+    #keyPackageId;
+    #publicKeyPackage;
     #privateKeyPackage;
     #generatorId;
     #actor;
-    publicKeyPackage;
-    constructor(database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+    constructor(controller2, database, delivery, directory, cipherSuite, keyPackageId, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+      this.#controller = controller2;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
+      this.#cipherSuite = cipherSuite;
       this.#actor = actor;
       this.#generatorId = generatorId;
-      this.#cipherSuite = cipherSuite;
-      this.publicKeyPackage = publicKeyPackage;
+      this.#keyPackageId = keyPackageId;
+      this.#publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
     }
     stop = () => {
-      this.publicKeyPackage = null;
+      this.#publicKeyPackage = null;
       this.#privateKeyPackage = null;
       this.#actor = null;
     };
@@ -15777,20 +15799,21 @@
     // Group Management
     //////////////////////////////////////////
     // createGroup is an encoder hook that is called when an encrypted group is created.
-    createGroup = async (group) => {
+    async createGroup(group) {
       const clientState = await createGroup({
         context: this.#context(),
         groupId: encodeText(group.id),
-        keyPackage: this.publicKeyPackage,
+        keyPackage: this.#publicKeyPackage,
         privateKeyPackage: this.#privateKeyPackage
       });
       const encryptedGroup = addClientState(group, clientState);
       await this.addGroupMembers(encryptedGroup, [this.#actor.id()]);
       await this.#database.saveGroup(encryptedGroup);
+      await this.#cycleKeyPackages();
       return encryptedGroup;
-    };
+    }
     // getGroupMembers returns the list of member IDs for a given group
-    getGroupMembers = (group) => {
+    getGroupMembers(group) {
       const leafNodes = getGroupMembers(group.clientState);
       const members = leafNodes.map((leaf) => {
         const credential = leaf.credential;
@@ -15800,27 +15823,28 @@
         return "";
       }).filter((identity) => identity != "");
       return [...new Set(members)];
-    };
-    #getGroupSignatures = (group) => {
+    }
+    // #getGroupSignatures retrieves all KeyPackage signatures from the group state.
+    #getGroupSignatures(group) {
       const leafNodes = getGroupMembers(group.clientState);
       const keyPackages = leafNodes.map((leafNode) => leafNode.signature);
       return keyPackages.filter((keyPackage) => keyPackage !== void 0);
-    };
+    }
     // addGroupMembers updates the group state.  It sends a Commit
     // message to existing members, and a Welcome message to new members,
-    addGroupMembers = async (group, newMembers) => {
+    async addGroupMembers(group, newMembers) {
       const currentMembers = group.members;
       var addKeyPackages = await this.#directory.getKeyPackages(newMembers);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.publicKeyPackage.signature));
+      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
       const signatures = this.#getGroupSignatures(group);
       addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
       if (addKeyPackages.length == 0) {
         return group;
       }
-      const addProposals = addKeyPackages.map((newKeyPackage) => ({
+      const addProposals = addKeyPackages.map((newKeyPackage3) => ({
         proposalType: defaultProposalTypes.add,
         add: {
-          keyPackage: newKeyPackage
+          keyPackage: newKeyPackage3
         }
       }));
       const commitResult = await createCommit({
@@ -15848,7 +15872,7 @@
         );
       }
       return group;
-    };
+    }
     async removeGroupMember(group, actorId) {
       const leafNodes = getGroupMembers(group.clientState);
       while (true) {
@@ -15900,10 +15924,20 @@
       );
     }
     //////////////////////////////////////////
+    // Key Packages
+    //////////////////////////////////////////
+    async #cycleKeyPackages() {
+      const dbKeyPackage = await this.#controller.createOrUpdateKeyPackage();
+      this.#publicKeyPackage = dbKeyPackage.publicKeyPackage;
+      this.#privateKeyPackage = dbKeyPackage.privateKeyPackage;
+    }
+    //////////////////////////////////////////
     // Receiving Messages
     //////////////////////////////////////////
-    // use arrow function to preserve "this" context when passing as a callback
-    async decodeMessage(message) {
+    // receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
+    // If no further action is required (such as processing a GroupInfo or Welcome message) then
+    // null is returned.
+    async receiveActivity(message) {
       try {
         const uintArray = base64ToUint8Array(message);
         const content = decode(mlsMessageDecoder, uintArray);
@@ -15913,15 +15947,15 @@
         }
         switch (content.wireformat) {
           case wireformats.mls_group_info:
-            return await this.#decodeMessage_GroupInfo(content);
+            return await this.#receiveActivity_GroupInfo(content);
           case wireformats.mls_key_package:
             return null;
           case wireformats.mls_private_message:
-            return await this.#decodeMessage_PublicPrivateMessage(content);
+            return await this.#receiveActivity_PublicPrivateMessage(content);
           case wireformats.mls_public_message:
-            return await this.#decodeMessage_PublicPrivateMessage(content);
+            return await this.#receiveActivity_PublicPrivateMessage(content);
           case wireformats.mls_welcome:
-            return await this.#decodeMessage_Welcome(content);
+            return await this.#receiveActivity_Welcome(content);
           default:
             console.error("Unknown MLS message type:");
             return null;
@@ -15932,13 +15966,13 @@
       }
     }
     // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-    async #decodeMessage_Welcome(message) {
+    async #receiveActivity_Welcome(message) {
       var clientState;
       try {
         clientState = await joinGroup({
           context: this.#context(),
           welcome: message.welcome,
-          keyPackage: this.publicKeyPackage,
+          keyPackage: this.#publicKeyPackage,
           privateKeys: this.#privateKeyPackage
         });
       } catch (e) {
@@ -15958,17 +15992,18 @@
       var encryptedGroup = addClientState(group, clientState);
       encryptedGroup.members = this.getGroupMembers(encryptedGroup);
       await this.#database.saveGroup(encryptedGroup);
+      await this.#cycleKeyPackages();
       return null;
     }
     // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-    async #decodeMessage_GroupInfo(message) {
+    async #receiveActivity_GroupInfo(message) {
       var clientState;
       return null;
     }
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
     // ActivityStreams messages.
-    async #decodeMessage_PublicPrivateMessage(mlsMessage) {
+    async #receiveActivity_PublicPrivateMessage(mlsMessage) {
       var groupId;
       switch (mlsMessage.wireformat) {
         case wireformats.mls_private_message:
@@ -16018,7 +16053,7 @@
     //////////////////////////////////////////
     // sendActivity encodes an Activity as an MLS message and sends it to 
     // updated as a result of this message.
-    sendActivity = async (group, activity) => {
+    async sendActivity(group, activity) {
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
@@ -16038,9 +16073,9 @@
         activity.getArray("as", PropertyTo),
         applicationMessage.message
       );
-    };
+    }
     // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    #sendMlsMessage = async (type, recipients, message) => {
+    async #sendMlsMessage(type, recipients, message) {
       if (recipients.length === 0) {
         return;
       }
@@ -16064,17 +16099,17 @@
       console.log("#sendMlsMessage.. sending Activity", activity.toObject());
       this.#delivery.sendActivity(activity);
       return activity;
-    };
+    }
     //////////////////////////////////////////
     // Helpers
     //////////////////////////////////////////
     // #context returns an MlsContext with the current cipher suite and authentication service.
-    #context = () => {
+    #context() {
       return {
         cipherSuite: this.#cipherSuite,
         authService: unsafeTestingAuthenticationService
       };
-    };
+    }
   };
   function leafNodeMatches(actorId) {
     return (member) => {
@@ -16109,8 +16144,8 @@
     // actorId is the ID of the user sending messages
     #outboxUrl;
     // outboxUrl is the URL of the user's outbox
-    constructor() {
-      this.#actorId = "";
+    constructor(actorId) {
+      this.#actorId = actorId;
       this.#outboxUrl = "";
     }
     stop = () => {
@@ -16251,23 +16286,64 @@
     }
   }
 
+  // src/service/cryptography.ts
+  async function cipherSuiteImplementation() {
+    const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
+    const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
+    return cipherSuite;
+  }
+  async function newKeyPackage(actorId) {
+    const cipherSuite = await cipherSuiteImplementation();
+    const credential = {
+      credentialType: defaultCredentialTypes.basic,
+      identity: new TextEncoder().encode(actorId)
+    };
+    return await generateKeyPackage({
+      credential,
+      cipherSuite,
+      lifetime: defaultLifetime()
+    });
+  }
+  async function generateAESKey() {
+    return await crypto.subtle.generateKey(
+      {
+        name: "AES-GCM",
+        length: 256
+      },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  }
+
   // src/service/directory.ts
   var Directory = class {
     #actorId;
-    // ID of the local actor
+    // ID of the local actor 
     #outboxUrl;
     // Outbox URL of the local actor
-    constructor() {
-      this.#actorId = "";
+    #generatorId;
+    // ID of the generator
+    #generatorName;
+    // Name of the generator
+    constructor(actorId) {
+      this.#actorId = actorId;
       this.#outboxUrl = "";
+      this.#generatorId = "";
+      this.#generatorName = "";
     }
     stop = () => {
       this.#actorId = "";
       this.#outboxUrl = "";
+      this.#generatorId = "";
+      this.#generatorName = "";
     };
     setActor = (actor) => {
       this.#actorId = actor.id();
       this.#outboxUrl = actor.outbox();
+    };
+    setGenerator = (generatorId, generatorName) => {
+      this.#generatorId = generatorId;
+      this.#generatorName = generatorName;
     };
     // getKeyPackage loads the KeyPackages published by a single actor
     getKeyPackages = async (actorIds) => {
@@ -16297,25 +16373,47 @@
       console.log("getKeyPackages result", result);
       return result;
     };
-    // createKeyPackage publishes a new KeyPackage to the User's outbox.
-    createKeyPackage = async (keyPackage) => {
+    // createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
+    // It returns the ID of the newly created KeyPackage or throws an error on failure.
+    createKeyPackage = async (publicPackage) => {
+      const keyPackage = NewAPKeyPackage(
+        "",
+        // ID will be assigned by the server
+        this.#generatorId,
+        this.#generatorName,
+        this.#actorId,
+        publicPackage
+      );
       return await this.#createObject(keyPackage);
     };
-    updateKeyPackage = async (keyPackage) => {
-      return await this.#updateObject(keyPackage);
+    // updateKeyPackage sends the provided KeyPackage to the server as an ActivityPub `Update` activity.
+    // It returns the ID of the updated KeyPackage or throws an error on failure.
+    updateKeyPackage = async (keyPackageId, publicPackage) => {
+      const keyPackage = NewAPKeyPackage(
+        keyPackageId,
+        this.#generatorId,
+        this.#generatorName,
+        this.#actorId,
+        publicPackage
+      );
+      await this.#updateObject(keyPackage);
     };
-    deleteKeyPackage = async (keyPackageUrl) => {
-      return await this.#deleteObject(keyPackageUrl);
+    deleteKeyPackage = async (keyPackageId) => {
+      return await this.#deleteObject(keyPackageId);
     };
     // createObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #createObject = async (object) => {
-      return await this.#send(this.#outboxUrl, {
+      const result = await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
         type: "Create",
         actor: this.#actorId,
         object
       });
+      if (result == "") {
+        throw new Error("Server MUST return an id for the created object.");
+      }
+      return result;
     };
     // updateObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
@@ -16337,8 +16435,10 @@
         object
       });
     };
-    // send POSTs an ActivityPub activity to the specified outbox
-    // and returns the Location header from the response
+    // send POSTs an ActivityPub activity to the Actor's outbox
+    // returns the location of the affected Object.
+    // It throws an error if the fetch fails or if the response 
+    // does not provide a Location header.
     #send = async (outbox, activity) => {
       const response = await fetch(outbox, {
         method: "POST",
@@ -16810,63 +16910,6 @@
     ["\u{1FABB}", "Hyacinth"]
   ];
 
-  // src/service/mls-factory.ts
-  async function MLSFactory(database, delivery, directory, actor, generatorId, generatorName) {
-    const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
-    const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
-    var dbKeyPackage = await database.loadKeyPackage();
-    if (dbKeyPackage == void 0) {
-      const credential = {
-        credentialType: defaultCredentialTypes.basic,
-        identity: new TextEncoder().encode(actor.id())
-      };
-      var keyPackageResult = await generateKeyPackage({
-        credential,
-        cipherSuite,
-        lifetime: defaultLifetime()
-      });
-      const apKeyPackage = NewAPKeyPackage(generatorId, generatorName, actor.id(), keyPackageResult.publicPackage);
-      const apKeyPackageURL = await directory.createKeyPackage(apKeyPackage);
-      if (apKeyPackageURL == "") {
-        throw new Error("Failed to create KeyPackage on server");
-      }
-      dbKeyPackage = {
-        id: "self",
-        keyPackageURL: apKeyPackageURL,
-        generatorId,
-        generatorName,
-        publicKeyPackage: keyPackageResult.publicPackage,
-        privateKeyPackage: keyPackageResult.privatePackage,
-        cipherSuiteName,
-        createDate: Date.now()
-      };
-      await database.saveKeyPackage(dbKeyPackage);
-    }
-    var result = new MLS(
-      database,
-      delivery,
-      directory,
-      cipherSuite,
-      dbKeyPackage.publicKeyPackage,
-      dbKeyPackage.privateKeyPackage,
-      actor,
-      generatorId
-    );
-    return result;
-  }
-
-  // src/service/cryptography.ts
-  async function generateAESKey() {
-    return await crypto.subtle.generateKey(
-      {
-        name: "AES-GCM",
-        length: 256
-      },
-      true,
-      ["encrypt", "decrypt"]
-    );
-  }
-
   // src/service/controller.ts
   var Controller = class {
     #actorId;
@@ -16876,8 +16919,10 @@
     #directory;
     #receiver;
     #contacts;
+    #host;
     #mls;
     #allowPlaintextMessages;
+    #allowCiphertextMessages;
     #encryptionKey;
     emojiKey = [];
     config;
@@ -16894,7 +16939,7 @@
     isApplicationRunning = true;
     stopReason = "";
     // constructor initializes the Controller with its dependencies
-    constructor(actorId, contacts, database, delivery, directory, receiver) {
+    constructor(actorId, contacts, database, delivery, directory, receiver, host) {
       this.#actorId = actorId;
       this.#actor = new Actor();
       this.#contacts = contacts;
@@ -16902,7 +16947,9 @@
       this.#delivery = delivery;
       this.#directory = directory;
       this.#receiver = receiver;
+      this.#host = host;
       this.#allowPlaintextMessages = false;
+      this.#allowCiphertextMessages = false;
       this.groups = [];
       this.messages = [];
       this.message = void 0;
@@ -16925,37 +16972,54 @@
         import_mithril.default.redraw();
         return;
       }
-      this.#actor = await new Actor().fromURL(this.#actorId);
-      const { url, plaintext } = this.#actor.messages();
-      if (url == "") {
-        throw new Error(`Actor does not support MLS API.`);
-      }
-      this.#allowPlaintextMessages = plaintext;
-      this.#delivery.setActor(this.#actor);
-      this.#directory.setActor(this.#actor);
-      this.#receiver.setActor(this.#actor);
       try {
-        this.#mls = await MLSFactory(
-          this.#database,
-          this.#delivery,
-          this.#directory,
-          this.#actor,
-          this.config.generatorId,
-          this.config.generatorName
-        );
+        this.#actor = await new Actor().fromURL(this.#actorId);
       } catch (error) {
-        console.error("Failed to initialize MLS service", error);
+        console.error("Unable to load the Actor record", error);
         this.stop("SERVER_DOWN");
         return;
       }
-      this.emojiKey = await keyPackageEmojiKey(this.#mls.publicKeyPackage);
+      const { url, plaintext, ciphertext } = this.#actor.messages();
+      if (url == "") {
+        console.error("Actor does not support messages APIs");
+        this.stop("UNSUPPORTED");
+        return;
+      }
+      this.#allowPlaintextMessages = plaintext;
+      this.#allowCiphertextMessages = ciphertext;
+      this.#receiver.setActor(this.#actor);
+      this.#delivery.setActor(this.#actor);
+      this.#directory.setActor(this.#actor);
+      this.#directory.setGenerator(this.config.generatorId, this.config.generatorName);
+      if (this.#allowCiphertextMessages) {
+        try {
+          const cipherSuite = await cipherSuiteImplementation();
+          const keyPackage = await this.loadOrCreateKeyPackage();
+          this.#mls = new MLS(
+            this,
+            this.#database,
+            this.#delivery,
+            this.#directory,
+            cipherSuite,
+            keyPackage.id,
+            keyPackage.publicKeyPackage,
+            keyPackage.privateKeyPackage,
+            this.#actor,
+            this.config.generatorId
+          );
+          this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage);
+        } catch (error) {
+          console.error("Unable to initialize MLS service", error);
+          this.stop("SERVER_DOWN");
+          return;
+        }
+      }
       this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage);
       this.#database.onchange(async () => {
         await this.loadGroups();
         await this.loadMessages();
       });
       cookieStore.addEventListener("change", async () => {
-        console.log("cookies changed");
         this.stop("COOKIES_CHANGED");
       });
       window.addEventListener("focus", async () => {
@@ -16991,7 +17055,6 @@
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
-      console.log("Application stopping:", message);
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -17092,6 +17155,15 @@
       import_mithril.default.redraw();
     };
     //////////////////////////////////////////
+    // Host Connectors
+    //////////////////////////////////////////
+    host_actor = (actorId) => {
+      this.#host.viewActor(actorId);
+    };
+    host_keyPackages = () => {
+      this.#host.viewKeyPackages();
+    };
+    //////////////////////////////////////////
     // Property Getters
     //////////////////////////////////////////
     actorId = () => {
@@ -17110,7 +17182,33 @@
     //////////////////////////////////////////
     // KeyPackages
     //////////////////////////////////////////
-    loadKeyPackages = async (actorId) => {
+    // createOrUpdateKeyPackage creates a new KeyPackage and POSTs it 
+    // to the server to replaces the current one. If there is no 
+    // existing KeyPackage, then the new one is created
+    createOrUpdateKeyPackage = async () => {
+      var keyPackageId;
+      const keyPackageResult = await newKeyPackage(this.#actor.id());
+      const keyPackage = await this.#database.loadKeyPackage();
+      if (keyPackage == void 0) {
+        keyPackageId = await this.#directory.createKeyPackage(keyPackageResult.publicPackage);
+      } else {
+        keyPackageId = keyPackage.keyPackageURL;
+        await this.#directory.updateKeyPackage(keyPackageId, keyPackageResult.publicPackage);
+      }
+      this.emojiKey = await keyPackageEmojiKey(keyPackageResult.publicPackage);
+      return await this.#database.saveKeyPackage(keyPackageId, keyPackageResult.publicPackage, keyPackageResult.privatePackage);
+    };
+    // loadOrCreateKeyPackage tries to load the KeyPackage for the 
+    // current Actor. If none exists, then a new one is created and returned
+    loadOrCreateKeyPackage = async () => {
+      const dbKeyPackage = await this.#database.loadKeyPackage();
+      if (dbKeyPackage != void 0) {
+        return dbKeyPackage;
+      }
+      return await this.createOrUpdateKeyPackage();
+    };
+    // loadActorKeyPackages loads the KeyPackages for the specified actor
+    loadActorKeyPackages = async (actorId) => {
       return this.#directory.getKeyPackages([actorId]);
     };
     //////////////////////////////////////////
@@ -17118,7 +17216,6 @@
     //////////////////////////////////////////
     // createGroup creates a new group and initial message
     createGroup = async (recipients, initialMessage, encrypted) => {
-      encrypted = true;
       recipients.push(this.actorId());
       var group = NewGroup();
       if (encrypted == true) {
@@ -17138,7 +17235,6 @@
       await this.selectGroup(this.selectedGroupId());
     };
     saveGroupAndSync = async (group) => {
-      console.log("saveGroupAndSync", group);
       await this.saveGroup(group);
       this.syncGroup(group);
     };
@@ -17150,7 +17246,6 @@
       await this.loadGroups();
     };
     syncGroup = async (group) => {
-      console.log("syncGroup", group);
       var activity = new Activity({
         "to": [this.actorId()],
         "actor": this.actorId(),
@@ -17419,15 +17514,13 @@
       try {
         var object = await activity.object();
         if (activity.actorId() != object.attributedToId()) {
-          console.log("Activity actor must match object actor");
           return;
         }
-        console.log("Received activity:", activity.toObject());
         if (object.isMLSMessage()) {
           if (this.#mls == void 0) {
             throw new Error("MLS service is not initialized");
           }
-          const decodedActivity = await this.#mls.decodeMessage(object.content());
+          const decodedActivity = await this.#mls.receiveActivity(object.content());
           if (decodedActivity == null) {
             return;
           }
@@ -17437,7 +17530,6 @@
           }
           activity = decodedActivity;
           object = await activity.object();
-          console.log("Decoded activity:", activity.toObject());
         }
       } catch (error) {
         console.error("Unable to decode MLS message:", error);
@@ -17507,7 +17599,6 @@
         createDate: Date.now(),
         updateDate: Date.now()
       });
-      console.log("Received new message:", message);
       await this.#database.saveMessage(message);
       group.lastMessage = object.content();
       if (!sentByMe) {
@@ -17580,21 +17671,17 @@
       }
     };
     #receiveActivity_UpdateContext = async (activity) => {
-      console.log("receiveActivity_UpdateContext", activity);
       const object = await activity.object();
       var group = await this.#database.loadGroup(object.id());
       if (group == void 0) {
-        console.log("Group not found");
         return;
       }
-      console.log("Group found", group);
       group.name = object.name();
       group.description = object.description();
       group.tags = object.getArray("as", "tag");
       group.unread = object.getBoolean("emissary", "unread");
       this.setGroupState(group, object.getString("emissary", "stateId"));
       await this.saveGroup(group);
-      console.log("Group updated", group);
     };
     #receiveActivity_UpdateMessage = async (activity) => {
       const object = await activity.object();
@@ -17632,7 +17719,6 @@
     //////////////////////////////////////////
     // sendActivity sends an activity to the Actor's outbox
     #sendActivity = async (group, activity) => {
-      console.log("sendActivity:", activity);
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
@@ -17642,7 +17728,6 @@
       if (this.#mls == void 0) {
         throw new Error("MLS service is not initialized");
       }
-      console.log("Sending activity via MLS service:", activity.toObject());
       return await this.#mls.sendActivity(group, activity);
     };
     //////////////////////////////////////////
@@ -17980,7 +18065,7 @@
       if (vnode.state.keyPackages[actor.id()] != void 0) {
         return;
       }
-      const keyPackages = await vnode.attrs.controller.loadKeyPackages(actor.id());
+      const keyPackages = await vnode.attrs.controller.loadActorKeyPackages(actor.id());
       if (vnode.state.keyPackages == void 0 || keyPackages.length == 0) {
         delete vnode.state.keyPackages[actor.id()];
         this.notifyParent(vnode);
@@ -18304,7 +18389,7 @@
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       var lastSender = "";
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", "aria-selected": "true" }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => controller2.page_group_members() }, "People (", group.members.length, ")"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", "aria-selected": "true" }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "tab", onclick: () => controller2.page_group_members() }, "People (", group.members.length, ")"))), /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         var sender;
         if (message.sender != lastSender) {
           sender = vnode.state.contacts.find((contact) => contact().id == message.sender);
@@ -18326,7 +18411,7 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = vnode.state.group;
-      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => controller2.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, "Notes"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => controller2.page_group_members() }, "People (", group.members.length, ")"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => controller2.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril16.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril16.default)("label", { for: "idGroupName" }, "Custom Name"), /* @__PURE__ */ (0, import_mithril16.default)(
+      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => controller2.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, "Notes"), /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", onclick: () => controller2.page_group_members() }, "People (", group.members.length, ")"))), /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril16.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril16.default)("label", { for: "idGroupName" }, "Custom Name"), /* @__PURE__ */ (0, import_mithril16.default)(
         "input",
         {
           id: "idGroupName",
@@ -18424,14 +18509,22 @@
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       const contactStreams = controller2.groupContactStream();
-      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_leave() }, "Leave"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "table" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember() }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center bg-gray text-white text-lg", style: "background-color:var(--blue60)" }, "+")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), contactStreams.map((contactStream) => {
+      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "table" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember() }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center bg-gray text-white text-lg", style: "background-color:var(--blue60)" }, "+")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), contactStreams.map((contactStream) => {
         const contact = contactStream();
-        return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-row" }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "align-right" }, contact.id == controller2.actorId() || /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove")));
+        return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm", onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "align-right" }, contact.id == controller2.actorId() ? /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm text-red", tabIndex: "0", onclick: () => this.leaveGroup(vnode) }, "Leave Group") : /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove")));
       }))));
     }
-    removeGroupMember(vnode, contactId) {
+    async leaveGroup(vnode) {
+      const controller2 = vnode.attrs.controller;
+      if (confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
+        const group = controller2.groupStream();
+        await controller2.leaveGroup(group.id);
+        controller2.page_index();
+      }
+    }
+    async removeGroupMember(vnode, contactId) {
       if (confirm("Are you sure you want to remove this member?")) {
-        vnode.attrs.controller.removeGroupMember(contactId);
+        await vnode.attrs.controller.removeGroupMember(contactId);
         import_mithril18.default.redraw();
       }
     }
@@ -18739,7 +18832,7 @@
   var AppSettings = class {
     oninit(vnode) {
       const controller2 = vnode.attrs.controller;
-      vnode.state.name = controller2.config.clientName;
+      vnode.state.name = controller2.config.generatorName;
       vnode.state.isHideOnBlur = controller2.config.isHideOnBlur;
       vnode.state.isEncryptedMessages = controller2.config.isEncryptedMessages;
       vnode.state.isDesktopNotifications = controller2.config.isDesktopNotifications;
@@ -18747,7 +18840,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. This EmojiKey represents the encryption keys used by this device. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. ", " ", /* @__PURE__ */ (0, import_mithril34.default)("a", { href: "/@me/settings/keyPackages" }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.stop("SIGN_OUT") }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
+      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages() }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.stop("SIGN_OUT") }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
     }
     setEncryptedMessages(vnode, event) {
       const target = event.target;
@@ -18792,12 +18885,14 @@
     }
     message(vnode) {
       switch (vnode.attrs.message) {
+        case "COOKIES_CHANGED":
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         case "SERVER_DOWN":
           return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         case "SIGN_OUT":
           return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), "To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ", then re-enter your password.");
-        case "COOKIES_CHANGED":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+        case "UNSUPPORTED":
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         default:
           return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
       }
@@ -18886,21 +18981,35 @@
     };
   };
 
+  // src/service/host.ts
+  var Host = class {
+    viewActor(actorId) {
+      htmx.ajax("GET", "/@me/newsfeed/browse-actor?url=" + encodeURIComponent(actorId));
+    }
+    viewKeyPackages() {
+      window.location.assign("/@me/settings/keyPackages");
+    }
+  };
+
   // src/app.tsx
   var controller;
   async function startup() {
     const root2 = document.getElementById("mls");
-    const actorID = root2.dataset["actor-id"] || "";
     if (root2 == void 0) {
       throw new Error(`Can't mount Mithril app. Please verify that <div id="mls"> exists.`);
     }
-    const indexedDB2 = await NewIndexedDB(actorID);
+    const actorId = root2.dataset["actorId"];
+    if (actorId == void 0 || actorId == "") {
+      throw new Error(`Actor ID not provided. Please set the "data-actor-id" attribute on the root element.`);
+    }
+    const indexedDB2 = await NewIndexedDB(actorId);
+    const host = new Host();
     const contacts = new Contacts();
     const database = new Database(indexedDB2);
-    const delivery = new Delivery();
-    const directory = new Directory();
+    const delivery = new Delivery(actorId);
+    const directory = new Directory(actorId);
     const receiver = new Receiver();
-    controller = new Controller(actorID, contacts, database, delivery, directory, receiver);
+    controller = new Controller(actorId, contacts, database, delivery, directory, receiver, host);
     import_mithril40.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril40.default)(App, { controller }) });
   }
   startup();

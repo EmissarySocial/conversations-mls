@@ -25,7 +25,7 @@ export class AppSettings {
 	oninit(vnode: AppSettingsVnode) {
 		const controller = vnode.attrs.controller
 
-		vnode.state.name = controller.config.clientName
+		vnode.state.name = controller.config.generatorName
 		vnode.state.isHideOnBlur = controller.config.isHideOnBlur
 		vnode.state.isEncryptedMessages = controller.config.isEncryptedMessages
 		vnode.state.isDesktopNotifications = controller.config.isDesktopNotifications
@@ -78,9 +78,11 @@ export class AppSettings {
 					<div class="card padding margin-top">
 						<div class="text-lg bold margin-bottom">EmojiKey</div>
 						<div class="margin-bottom-lg">
-							EmojiKeys give you an easy way to verify your identity. This EmojiKey represents the encryption keys used by this device.
-							When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. {" "}
-							<a href="/@me/settings/keyPackages">View all registered devices &rarr;</a>
+							EmojiKeys give you an easy way to verify your identity.
+							When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey.
+							EmojiKey change frequently, so make sure you're comparing the most recent one.
+							{" "}
+							<span class="link" tabIndex="0" onclick={() => controller.host_keyPackages()}>View all registered devices &rarr;</span>
 						</div>
 
 						<div class="flex-row">

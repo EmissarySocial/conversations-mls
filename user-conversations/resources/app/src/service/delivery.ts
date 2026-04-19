@@ -20,8 +20,8 @@ export class Delivery {
 	#actorId: string // actorId is the ID of the user sending messages
 	#outboxUrl: string // outboxUrl is the URL of the user's outbox
 
-	constructor() {
-		this.#actorId = ""
+	constructor(actorId: string) {
+		this.#actorId = actorId
 		this.#outboxUrl = ""
 	}
 
