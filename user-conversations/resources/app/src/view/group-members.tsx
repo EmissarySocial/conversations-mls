@@ -31,7 +31,6 @@ export class GroupMembers {
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
 						<div role="tab" aria-selected="true">People ({contactStreams.length})</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_leave()}>Leave</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
@@ -51,20 +50,24 @@ export class GroupMembers {
 							const contact = contactStream()
 							return (
 
-								<div class="flex-row">
-									<div>
+								<div class="flex-row" role="button">
+									<div onclick={() => controller.host_actor(contact.id)}>
 										<img src={contact.icon} class="circle width-48" />
 									</div>
-									<div class="flex-grow padding-left-sm">
+									<div class="flex-grow padding-left-sm" onclick={() => controller.host_actor(contact.id)}>
 										<div class="bold">{contact.name}</div>
 										<div class="text-gray">{contact.username}</div>
 									</div>
 									<div class="align-right">
 										{
-											(contact.id == controller.actorId()) ||
-											<button class="text-sm" tabIndex="0" onclick={() => this.removeGroupMember(vnode, contact.id)} >
-												Remove
-											</button>
+											(contact.id == controller.actorId()) ?
+												<button class="text-sm text-red" tabIndex="0" onclick={() => this.leaveGroup(vnode)} >
+													Leave Group
+												</button>
+												:
+												<button class="text-sm" tabIndex="0" onclick={() => this.removeGroupMember(vnode, contact.id)} >
+													Remove
+												</button>
 										}
 									</div>
 								</div>
@@ -76,9 +79,18 @@ export class GroupMembers {
 		)
 	}
 
-	removeGroupMember(vnode: GroupMembersVnode, contactId: string) {
+	async leaveGroup(vnode: GroupMembersVnode) {
+		const controller = vnode.attrs.controller
+		if (confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
+			const group = controller.groupStream()
+			await controller.leaveGroup(group.id)
+			controller.page_index()
+		}
+	}
+
+	async removeGroupMember(vnode: GroupMembersVnode, contactId: string) {
 		if (confirm("Are you sure you want to remove this member?")) {
-			vnode.attrs.controller.removeGroupMember(contactId)
+			await vnode.attrs.controller.removeGroupMember(contactId)
 			m.redraw()
 		}
 	}
