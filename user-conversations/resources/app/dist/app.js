@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m25, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m26, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m25;
+          if (params[key] == null) return m26;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m25, key, extra) {
-            if (key == null) return "\\" + m25;
+          function(m26, key, extra) {
+            if (key == null) return "\\" + m26;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request = require_request2();
       var router = require_route();
-      var m25 = function m26() {
+      var m26 = function m27() {
         return hyperscript.apply(this, arguments);
       };
-      m25.m = hyperscript;
-      m25.trust = hyperscript.trust;
-      m25.fragment = hyperscript.fragment;
-      m25.Fragment = "[";
-      m25.mount = mountRedraw.mount;
-      m25.route = router;
-      m25.render = require_render2();
-      m25.redraw = mountRedraw.redraw;
-      m25.request = request.request;
-      m25.parseQueryString = require_parse();
-      m25.buildQueryString = require_build();
-      m25.parsePathname = require_parse2();
-      m25.buildPathname = require_build2();
-      m25.vnode = require_vnode();
-      m25.censor = require_censor();
-      m25.domFor = require_domFor();
-      module.exports = m25;
+      m26.m = hyperscript;
+      m26.trust = hyperscript.trust;
+      m26.fragment = hyperscript.fragment;
+      m26.Fragment = "[";
+      m26.mount = mountRedraw.mount;
+      m26.route = router;
+      m26.render = require_render2();
+      m26.redraw = mountRedraw.redraw;
+      m26.request = request.request;
+      m26.parseQueryString = require_parse();
+      m26.buildQueryString = require_build();
+      m26.parsePathname = require_parse2();
+      m26.buildPathname = require_build2();
+      m26.vnode = require_vnode();
+      m26.censor = require_censor();
+      m26.domFor = require_domFor();
+      module.exports = m26;
     }
   });
 
@@ -3426,9 +3426,9 @@
     while (a !== _0n3) {
       const q = b / a;
       const r = b % a;
-      const m25 = x - u * q;
+      const m26 = x - u * q;
       const n = y - v * q;
-      b = a, a = r, x = u, y = v, u = m25, v = n;
+      b = a, a = r, x = u, y = v, u = m26, v = n;
     }
     const gcd = b;
     if (gcd !== _1n3)
@@ -4659,13 +4659,13 @@
       k: "number",
       hash: "function"
     });
-    const { p, k, m: m25, hash, expand, DST } = options;
+    const { p, k, m: m26, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes3(msg);
     asafenumber(count);
     const log2p = p.toString(2).length;
     const L = Math.ceil((log2p + k) / 8);
-    const len_in_bytes = count * m25 * L;
+    const len_in_bytes = count * m26 * L;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -4678,9 +4678,9 @@
     }
     const u = new Array(count);
     for (let i = 0; i < count; i++) {
-      const e = new Array(m25);
-      for (let j = 0; j < m25; j++) {
-        const elm_offset = L * (j + i * m25);
+      const e = new Array(m26);
+      for (let j = 0; j < m26; j++) {
+        const elm_offset = L * (j + i * m26);
         const tv = prb.subarray(elm_offset, elm_offset + L);
         e[j] = mod2(os2ip(tv), p);
       }
@@ -5042,8 +5042,8 @@
       evaluate: (secretKey, input) => evaluate(ctxVOPRF, secretKey, input)
     };
     const poprf = (info) => {
-      const m25 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T = Point.BASE.multiply(m25);
+      const m26 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T = Point.BASE.multiply(m26);
       return {
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -5067,7 +5067,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn3.fromBytes(secretKey);
-          const t = Fn3.add(skS, m25);
+          const t = Fn3.add(skS, m26);
           const invT = Fn3.inv(t);
           const blindedPoints = blinded.map(Point.fromBytes);
           const evalPoints = blindedPoints.map((i) => i.multiply(invT));
@@ -5098,7 +5098,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t = Fn3.add(skS, m25);
+          const t = Fn3.add(skS, m26);
           const invT = Fn3.inv(t);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -6909,7 +6909,7 @@
         seedArgs.push(abytes3(e, void 0, "extraEntropy"));
       }
       const seed = concatBytes2(...seedArgs);
-      const m25 = h1int;
+      const m26 = h1int;
       function k2sig(kBytes) {
         const k = bits2int(kBytes);
         if (!Fn3.isValidNot0(k))
@@ -6919,7 +6919,7 @@
         const r = Fn3.create(q.x);
         if (r === _0n9)
           return;
-        const s = Fn3.create(ik * Fn3.create(m25 + r * d));
+        const s = Fn3.create(ik * Fn3.create(m26 + r * d));
         if (s === _0n9)
           return;
         let recovery = (q.x === r ? 0 : 2) | Number(q.y & _1n10);
@@ -6995,8 +6995,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m25 = "") {
-          super(m25);
+        constructor(m26 = "") {
+          super(m26);
         }
       };
       DER = {
@@ -7427,12 +7427,12 @@
         var t = 1e3, e = 6e4, n = 36e5, r = "millisecond", i = "second", s = "minute", u = "hour", a = "day", o = "week", c = "month", f = "quarter", h = "year", d = "date", l = "Invalid Date", $ = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t2) {
           var e2 = ["th", "st", "nd", "rd"], n2 = t2 % 100;
           return "[" + t2 + (e2[(n2 - 20) % 10] || e2[n2] || e2[0]) + "]";
-        } }, m25 = function(t2, e2, n2) {
+        } }, m26 = function(t2, e2, n2) {
           var r2 = String(t2);
           return !r2 || r2.length >= e2 ? t2 : "" + Array(e2 + 1 - r2.length).join(n2) + t2;
-        }, v = { s: m25, z: function(t2) {
+        }, v = { s: m26, z: function(t2) {
           var e2 = -t2.utcOffset(), n2 = Math.abs(e2), r2 = Math.floor(n2 / 60), i2 = n2 % 60;
-          return (e2 <= 0 ? "+" : "-") + m25(r2, 2, "0") + ":" + m25(i2, 2, "0");
+          return (e2 <= 0 ? "+" : "-") + m26(r2, 2, "0") + ":" + m26(i2, 2, "0");
         }, m: function t2(e2, n2) {
           if (e2.date() < n2.date()) return -t2(n2, e2);
           var r2 = 12 * (n2.year() - e2.year()) + (n2.month() - e2.month()), i2 = e2.clone().add(r2, c), s2 = n2 - i2 < 0, u2 = e2.clone().add(r2 + (s2 ? -1 : 1), c);
@@ -7472,8 +7472,8 @@
           function M2(t2) {
             this.$L = w(t2.locale, null, true), this.parse(t2), this.$x = this.$x || t2.x || {}, this[p] = true;
           }
-          var m26 = M2.prototype;
-          return m26.parse = function(t2) {
+          var m27 = M2.prototype;
+          return m27.parse = function(t2) {
             this.$d = (function(t3) {
               var e2 = t3.date, n2 = t3.utc;
               if (null === e2) return /* @__PURE__ */ new Date(NaN);
@@ -7488,33 +7488,33 @@
               }
               return new Date(e2);
             })(t2), this.init();
-          }, m26.init = function() {
+          }, m27.init = function() {
             var t2 = this.$d;
             this.$y = t2.getFullYear(), this.$M = t2.getMonth(), this.$D = t2.getDate(), this.$W = t2.getDay(), this.$H = t2.getHours(), this.$m = t2.getMinutes(), this.$s = t2.getSeconds(), this.$ms = t2.getMilliseconds();
-          }, m26.$utils = function() {
+          }, m27.$utils = function() {
             return b;
-          }, m26.isValid = function() {
+          }, m27.isValid = function() {
             return !(this.$d.toString() === l);
-          }, m26.isSame = function(t2, e2) {
+          }, m27.isSame = function(t2, e2) {
             var n2 = O(t2);
             return this.startOf(e2) <= n2 && n2 <= this.endOf(e2);
-          }, m26.isAfter = function(t2, e2) {
+          }, m27.isAfter = function(t2, e2) {
             return O(t2) < this.startOf(e2);
-          }, m26.isBefore = function(t2, e2) {
+          }, m27.isBefore = function(t2, e2) {
             return this.endOf(e2) < O(t2);
-          }, m26.$g = function(t2, e2, n2) {
+          }, m27.$g = function(t2, e2, n2) {
             return b.u(t2) ? this[e2] : this.set(n2, t2);
-          }, m26.unix = function() {
+          }, m27.unix = function() {
             return Math.floor(this.valueOf() / 1e3);
-          }, m26.valueOf = function() {
+          }, m27.valueOf = function() {
             return this.$d.getTime();
-          }, m26.startOf = function(t2, e2) {
+          }, m27.startOf = function(t2, e2) {
             var n2 = this, r2 = !!b.u(e2) || e2, f2 = b.p(t2), l2 = function(t3, e3) {
               var i2 = b.w(n2.$u ? Date.UTC(n2.$y, e3, t3) : new Date(n2.$y, e3, t3), n2);
               return r2 ? i2 : i2.endOf(a);
             }, $2 = function(t3, e3) {
               return b.w(n2.toDate()[t3].apply(n2.toDate("s"), (r2 ? [0, 0, 0, 0] : [23, 59, 59, 999]).slice(e3)), n2);
-            }, y2 = this.$W, M3 = this.$M, m27 = this.$D, v2 = "set" + (this.$u ? "UTC" : "");
+            }, y2 = this.$W, M3 = this.$M, m28 = this.$D, v2 = "set" + (this.$u ? "UTC" : "");
             switch (f2) {
               case h:
                 return r2 ? l2(1, 0) : l2(31, 11);
@@ -7522,7 +7522,7 @@
                 return r2 ? l2(1, M3) : l2(0, M3 + 1);
               case o:
                 var g2 = this.$locale().weekStart || 0, D2 = (y2 < g2 ? y2 + 7 : y2) - g2;
-                return l2(r2 ? m27 - D2 : m27 + (6 - D2), M3);
+                return l2(r2 ? m28 - D2 : m28 + (6 - D2), M3);
               case a:
               case d:
                 return $2(v2 + "Hours", 0);
@@ -7535,20 +7535,20 @@
               default:
                 return this.clone();
             }
-          }, m26.endOf = function(t2) {
+          }, m27.endOf = function(t2) {
             return this.startOf(t2, false);
-          }, m26.$set = function(t2, e2) {
+          }, m27.$set = function(t2, e2) {
             var n2, o2 = b.p(t2), f2 = "set" + (this.$u ? "UTC" : ""), l2 = (n2 = {}, n2[a] = f2 + "Date", n2[d] = f2 + "Date", n2[c] = f2 + "Month", n2[h] = f2 + "FullYear", n2[u] = f2 + "Hours", n2[s] = f2 + "Minutes", n2[i] = f2 + "Seconds", n2[r] = f2 + "Milliseconds", n2)[o2], $2 = o2 === a ? this.$D + (e2 - this.$W) : e2;
             if (o2 === c || o2 === h) {
               var y2 = this.clone().set(d, 1);
               y2.$d[l2]($2), y2.init(), this.$d = y2.set(d, Math.min(this.$D, y2.daysInMonth())).$d;
             } else l2 && this.$d[l2]($2);
             return this.init(), this;
-          }, m26.set = function(t2, e2) {
+          }, m27.set = function(t2, e2) {
             return this.clone().$set(t2, e2);
-          }, m26.get = function(t2) {
+          }, m27.get = function(t2) {
             return this[b.p(t2)]();
-          }, m26.add = function(r2, f2) {
+          }, m27.add = function(r2, f2) {
             var d2, l2 = this;
             r2 = Number(r2);
             var $2 = b.p(f2), y2 = function(t2) {
@@ -7559,11 +7559,11 @@
             if ($2 === h) return this.set(h, this.$y + r2);
             if ($2 === a) return y2(1);
             if ($2 === o) return y2(7);
-            var M3 = (d2 = {}, d2[s] = e, d2[u] = n, d2[i] = t, d2)[$2] || 1, m27 = this.$d.getTime() + r2 * M3;
-            return b.w(m27, this);
-          }, m26.subtract = function(t2, e2) {
+            var M3 = (d2 = {}, d2[s] = e, d2[u] = n, d2[i] = t, d2)[$2] || 1, m28 = this.$d.getTime() + r2 * M3;
+            return b.w(m28, this);
+          }, m27.subtract = function(t2, e2) {
             return this.add(-1 * t2, e2);
-          }, m26.format = function(t2) {
+          }, m27.format = function(t2) {
             var e2 = this, n2 = this.$locale();
             if (!this.isValid()) return n2.invalidDate || l;
             var r2 = t2 || "YYYY-MM-DDTHH:mm:ssZ", i2 = b.z(this), s2 = this.$H, u2 = this.$m, a2 = this.$M, o2 = n2.weekdays, c2 = n2.months, f2 = n2.meridiem, h2 = function(t3, n3, i3, s3) {
@@ -7629,11 +7629,11 @@
                 return null;
               })(t3) || i2.replace(":", "");
             }));
-          }, m26.utcOffset = function() {
+          }, m27.utcOffset = function() {
             return 15 * -Math.round(this.$d.getTimezoneOffset() / 15);
-          }, m26.diff = function(r2, d2, l2) {
-            var $2, y2 = this, M3 = b.p(d2), m27 = O(r2), v2 = (m27.utcOffset() - this.utcOffset()) * e, g2 = this - m27, D2 = function() {
-              return b.m(y2, m27);
+          }, m27.diff = function(r2, d2, l2) {
+            var $2, y2 = this, M3 = b.p(d2), m28 = O(r2), v2 = (m28.utcOffset() - this.utcOffset()) * e, g2 = this - m28, D2 = function() {
+              return b.m(y2, m28);
             };
             switch (M3) {
               case h:
@@ -7664,23 +7664,23 @@
                 $2 = g2;
             }
             return l2 ? $2 : b.a($2);
-          }, m26.daysInMonth = function() {
+          }, m27.daysInMonth = function() {
             return this.endOf(c).$D;
-          }, m26.$locale = function() {
+          }, m27.$locale = function() {
             return D[this.$L];
-          }, m26.locale = function(t2, e2) {
+          }, m27.locale = function(t2, e2) {
             if (!t2) return this.$L;
             var n2 = this.clone(), r2 = w(t2, e2, true);
             return r2 && (n2.$L = r2), n2;
-          }, m26.clone = function() {
+          }, m27.clone = function() {
             return b.w(this.$d, this);
-          }, m26.toDate = function() {
+          }, m27.toDate = function() {
             return new Date(this.valueOf());
-          }, m26.toJSON = function() {
+          }, m27.toJSON = function() {
             return this.isValid() ? this.toISOString() : null;
-          }, m26.toISOString = function() {
+          }, m27.toISOString = function() {
             return this.$d.toISOString();
-          }, m26.toString = function() {
+          }, m27.toString = function() {
             return this.$d.toUTCString();
           }, M2;
         })(), k = _.prototype;
@@ -7711,7 +7711,7 @@
             return n.fromToBase(r2, e2, t2, o2);
           }
           t.en.relativeTime = o, n.fromToBase = function(e2, n2, i2, d2, u) {
-            for (var f, a, s, l = i2.$locale().relativeTime || o, h = r.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m25 = h.length, c = 0; c < m25; c += 1) {
+            for (var f, a, s, l = i2.$locale().relativeTime || o, h = r.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m26 = h.length, c = 0; c < m26; c += 1) {
               var y = h[c];
               y.d && (f = d2 ? t(e2).diff(i2, y.d, true) : i2.diff(e2, y.d, true));
               var p = (r.rounding || Math.round)(Math.abs(f));
@@ -7744,7 +7744,7 @@
   });
 
   // src/app.tsx
-  var import_mithril40 = __toESM(require_mithril(), 1);
+  var import_mithril42 = __toESM(require_mithril(), 1);
 
   // node_modules/ts-mls/dist/src/codec/number.js
   var uint8Encoder = (n) => [
@@ -11282,11 +11282,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m25) => [m25.applicationData, m25.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m26) => [m26.applicationData, m26.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m25) => [m25.proposal, m25.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m26) => [m26.proposal, m26.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m25) => [m25.commit, m25.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m26) => [m26.commit, m26.auth]), config)(msg);
       }
     };
   }
@@ -11374,6 +11374,36 @@
     };
     const result = await protect(senderDataSecret, authenticatedData, groupContext, secretTree, content, leafIndex, paddingConfig, cs);
     return { newSecretTree: result.tree, privateMessage: result.privateMessage, consumed: result.consumed };
+  }
+  async function protectProposal(signKey, senderDataSecret, p, authenticatedData, groupContext, secretTree, leafIndex, paddingConfig, cs) {
+    const tbs = {
+      protocolVersion: groupContext.version,
+      wireformat: wireformats.mls_private_message,
+      content: {
+        contentType: contentTypes.proposal,
+        proposal: p,
+        groupId: groupContext.groupId,
+        epoch: groupContext.epoch,
+        sender: {
+          senderType: senderTypes.member,
+          leafIndex
+        },
+        authenticatedData
+      },
+      senderType: senderTypes.member,
+      context: groupContext
+    };
+    const auth = await signFramedContentApplicationOrProposal(signKey, tbs, cs);
+    const content = { ...tbs.content, auth };
+    const protectResult = await protect(senderDataSecret, authenticatedData, groupContext, secretTree, content, leafIndex, paddingConfig, cs);
+    const newSecretTree = protectResult.tree;
+    const authenticatedContent = {
+      wireformat: wireformats.mls_private_message,
+      content,
+      auth
+    };
+    const proposalRef = await makeProposalRef(authenticatedContent, cs.hash);
+    return { privateMessage: protectResult.privateMessage, newSecretTree, proposalRef, consumed: protectResult.consumed };
   }
   async function protect(senderDataSecret, authenticatedData, groupContext, secretTree, content, leafIndex, config, cs) {
     const { newTree, generation, reuseGuard, nonce, key, consumed } = await consumeRatchet(secretTree, toLeafIndex(leafIndex), content.contentType, cs);
@@ -11500,6 +11530,31 @@
   }
 
   // node_modules/ts-mls/dist/src/messageProtectionPublic.js
+  async function protectProposalPublic(signKey, membershipKey, groupContext, authenticatedData, proposal, leafIndex, cs) {
+    const framedContent = {
+      groupId: groupContext.groupId,
+      epoch: groupContext.epoch,
+      sender: { senderType: senderTypes.member, leafIndex },
+      contentType: contentTypes.proposal,
+      authenticatedData,
+      proposal
+    };
+    const tbs = {
+      protocolVersion: groupContext.version,
+      wireformat: wireformats.mls_public_message,
+      content: framedContent,
+      senderType: senderTypes.member,
+      context: groupContext
+    };
+    const auth = await signFramedContentApplicationOrProposal(signKey, tbs, cs);
+    const authenticatedContent = {
+      wireformat: wireformats.mls_public_message,
+      content: framedContent,
+      auth
+    };
+    const msg = await protectPublicMessage(membershipKey, groupContext, authenticatedContent, cs);
+    return { publicMessage: msg };
+  }
   async function protectPublicMessage(membershipKey, groupContext, content, cs) {
     if (content.content.contentType === contentTypes.application)
       throw new UsageError("Can't make an application message public");
@@ -11691,6 +11746,48 @@
   }
 
   // node_modules/ts-mls/dist/src/createMessage.js
+  async function createProposal(params) {
+    const context = params.context;
+    const state = params.state;
+    const cs = context.cipherSuite;
+    const ad = params.authenticatedData ?? new Uint8Array();
+    const clientConfig = context.clientConfig ?? defaultClientConfig;
+    const publicMessage = params.wireAsPublicMessage ?? false;
+    const proposal = params.proposal;
+    if (publicMessage) {
+      const result = await protectProposalPublic(state.signaturePrivateKey, state.keySchedule.membershipKey, state.groupContext, ad, proposal, state.privatePath.leafIndex, cs);
+      const newState = await processProposal(state, {
+        content: result.publicMessage.content,
+        auth: result.publicMessage.auth,
+        wireformat: wireformats.mls_public_message
+      }, proposal, cs.hash);
+      return {
+        newState,
+        message: {
+          wireformat: wireformats.mls_public_message,
+          version: protocolVersions.mls10,
+          publicMessage: result.publicMessage
+        },
+        consumed: []
+      };
+    } else {
+      const result = await protectProposal(state.signaturePrivateKey, state.keySchedule.senderDataSecret, proposal, ad, state.groupContext, state.secretTree, state.privatePath.leafIndex, clientConfig.paddingConfig, cs);
+      const newState = {
+        ...state,
+        secretTree: result.newSecretTree,
+        unappliedProposals: addUnappliedProposal(result.proposalRef, state.unappliedProposals, proposal, state.privatePath.leafIndex)
+      };
+      return {
+        newState,
+        message: {
+          wireformat: wireformats.mls_private_message,
+          version: protocolVersions.mls10,
+          privateMessage: result.privateMessage
+        },
+        consumed: result.consumed
+      };
+    }
+  }
   async function createApplicationMessage(params) {
     const context = params.context;
     const state = params.state;
@@ -14973,8 +15070,9 @@
       id: ConfigID,
       generatorId: newId(),
       generatorName: "Unknown Device",
+      encryptionKey: new ArrayBuffer(0),
       encryptionKeyIV: new Uint8Array(),
-      encryptionKey: "",
+      encryptionKeySalt: new Uint8Array(),
       lastMessageId: "",
       isEncryptedMessages: false,
       isDesktopNotifications: false,
@@ -15051,6 +15149,83 @@
     return new Message(data);
   }
 
+  // src/as/vocab.ts
+  var ActivityTypeAcknowledge = "Acknowledge";
+  var ActivityTypeCreate = "Create";
+  var ActivityTypeDelete = "Delete";
+  var ActivityTypeLeave = "Leave";
+  var ActivityTypeLike = "Like";
+  var ActivityTypeFailure = "Failure";
+  var ActivityTypeUndo = "Undo";
+  var ActivityTypeUpdate = "Update";
+  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
+  var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var EncodingTypeBase64 = "base64";
+  var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeNote = "Note";
+  var ObjectTypeEmissaryContext = "emissary:Context";
+  var ObjectTypeMlsPrivateMessage = "mls:PrivateMessage";
+  var ObjectTypeMlsGroupInfo = "mls:GroupInfo";
+  var ObjectTypeMlsWelcome = "mls:Welcome";
+  var PropertyActor = "actor";
+  var PropertyContext = "context";
+  var PropertyGenerator = "generator";
+  var PropertyObject = "object";
+  var PropertyTarget = "target";
+  var PropertyTo = "to";
+
+  // src/service/utils.ts
+  function base64ToUint8Array(base64) {
+    const binary_string = window.atob(base64);
+    const len = binary_string.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes;
+  }
+  function newId2() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
+  function uint8ArrayEqual(a, b) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function uint8ArraysContain(arrays, target) {
+    for (const array of arrays) {
+      if (uint8ArrayEqual(array, target)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function messageToActivityStream(group, message) {
+    return {
+      id: message.id,
+      attributedTo: message.sender,
+      type: ObjectTypeNote,
+      to: group.members,
+      context: group.id,
+      content: message.content,
+      published: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  function diffArrays(before, after) {
+    const beforeSet = new Set(before);
+    const afterSet = new Set(after);
+    return {
+      added: after.filter((item) => !beforeSet.has(item)),
+      removed: before.filter((item) => !afterSet.has(item))
+    };
+  }
+
   // src/service/database.ts
   async function NewIndexedDB(actorId) {
     return await openDB(actorId, 1, {
@@ -15068,7 +15243,9 @@
   var Database = class {
     #db;
     #onchange;
-    constructor(db) {
+    #host;
+    constructor(host, db) {
+      this.#host = host;
       this.#db = db;
       this.#onchange = () => {
       };
@@ -15080,6 +15257,10 @@
       console.log("Erasing database: ", this.#db.name);
       this.#db.close();
       var req = window.indexedDB.deleteDatabase(this.#db.name);
+      req.onsuccess = (event) => {
+        console.log("Database erased successfully: ", event);
+        this.#host.reload();
+      };
       req.onerror = (event) => {
         console.error("Unable to erase database: ", event);
       };
@@ -15127,6 +15308,31 @@
     };
     // saveGroup saves a group to the database
     saveGroup = async (group) => {
+      console.log("saveGroup", group);
+      const previousGroup = await this.loadGroup(group.id);
+      const previousMembers = previousGroup?.members || [];
+      console.log(previousGroup, previousMembers);
+      const { added, removed } = diffArrays(previousMembers, group.members);
+      console.log(added, removed);
+      added.forEach((member) => {
+        const statusMessage = NewMessage({
+          id: newId2(),
+          groupId: group.id,
+          type: "ADD-ACTOR",
+          sender: member
+        });
+        this.saveMessage(statusMessage);
+      });
+      removed.forEach((member) => {
+        const statusMessage = NewMessage({
+          id: newId2(),
+          groupId: group.id,
+          type: "REMOVE-ACTOR",
+          sender: member
+        });
+        this.saveMessage(statusMessage);
+      });
+      group.lastMessage = group.lastMessage.slice(0, 100);
       await this.#db.put("group", group);
       this.#onchange();
     };
@@ -15256,30 +15462,6 @@
     }
     return "";
   }
-
-  // src/as/vocab.ts
-  var ActivityTypeAcknowledge = "Acknowledge";
-  var ActivityTypeCreate = "Create";
-  var ActivityTypeDelete = "Delete";
-  var ActivityTypeLike = "Like";
-  var ActivityTypeFailure = "Failure";
-  var ActivityTypeUndo = "Undo";
-  var ActivityTypeUpdate = "Update";
-  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
-  var ContextMLS = "https://purl.archive.org/socialweb/mls";
-  var EncodingTypeBase64 = "base64";
-  var MediaTypeMLSMessage = "message/mls";
-  var ObjectTypeNote = "Note";
-  var ObjectTypeEmissaryContext = "emissary:Context";
-  var ObjectTypeMlsPrivateMessage = "mls:PrivateMessage";
-  var ObjectTypeMlsGroupInfo = "mls:GroupInfo";
-  var ObjectTypeMlsWelcome = "mls:Welcome";
-  var PropertyActor = "actor";
-  var PropertyContext = "context";
-  var PropertyGenerator = "generator";
-  var PropertyObject = "object";
-  var PropertyTarget = "target";
-  var PropertyTo = "to";
 
   // src/as/object.ts
   var Object2 = class {
@@ -15582,50 +15764,6 @@
     return new Document();
   }
 
-  // src/service/utils.ts
-  function base64ToUint8Array(base64) {
-    const binary_string = window.atob(base64);
-    const len = binary_string.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binary_string.charCodeAt(i);
-    }
-    return bytes;
-  }
-  function newId2() {
-    return "uri:uuid:" + crypto.randomUUID();
-  }
-  function uint8ArrayEqual(a, b) {
-    if (a.length != b.length) {
-      return false;
-    }
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-  function uint8ArraysContain(arrays, target) {
-    for (const array of arrays) {
-      if (uint8ArrayEqual(array, target)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  function messageToActivityStream(group, message) {
-    return {
-      id: message.id,
-      attributedTo: message.sender,
-      type: ObjectTypeNote,
-      to: group.members,
-      context: group.id,
-      content: message.content,
-      published: (/* @__PURE__ */ new Date()).toISOString()
-    };
-  }
-
   // src/as/activity.ts
   var Activity = class extends Object2 {
     constructor(value) {
@@ -15873,55 +16011,76 @@
       }
       return group;
     }
+    // removeGroupMember removes all clients for the specified actorId. This function cannot be used
+    // to remove the current signed-in actor; use leaveGroup() for this operation instead.
     async removeGroupMember(group, actorId) {
-      const leafNodes = getGroupMembers(group.clientState);
+      if (actorId == this.#actor.id()) {
+        throw new Error("Cannot remove the current signed-in actor. To remove this actor, use leaveGroup() instead.");
+      }
       while (true) {
-        const removeIndex = leafNodes.findIndex(leafNodeMatches(actorId));
+        const leafNodes = getGroupMembers(group.clientState);
+        const removeIndex = leafNodes.findIndex(leafNodeMatchesActor(actorId));
         if (removeIndex === -1) {
           break;
         }
-        const commitResult = await createCommit({
+        await this.removeLeafNode(group, removeIndex);
+      }
+      group.members = this.getGroupMembers(group);
+      await this.#database.saveGroup(group);
+      return group;
+    }
+    // leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
+    // for this user from the group, then sends a PROPOSAL to 
+    // remove THIS DEVICE from the group.
+    async leaveGroup(group) {
+      console.log("MLS.leaveGroup.  signature:" + this.#publicKeyPackage.signature);
+      while (true) {
+        const leafNodes2 = getGroupMembers(group.clientState);
+        const removeIndex2 = leafNodes2.findIndex(leafNodeMyOtherDevices(this.#actor.id(), this.#publicKeyPackage.signature));
+        console.log("removing OTHER device from group", removeIndex2);
+        console.log("signature", leafNodes2[removeIndex2]?.signature);
+        if (removeIndex2 === -1) {
+          break;
+        }
+        await this.removeLeafNode(group, removeIndex2);
+      }
+      const leafNodes = getGroupMembers(group.clientState);
+      const removeIndex = leafNodes.findIndex(leafNodeThisDevice(this.#actor.id(), this.#publicKeyPackage.signature));
+      console.log("removing THIS device from group with proposal", removeIndex);
+      if (removeIndex !== -1) {
+        const proposal = await createProposal({
           context: this.#context(),
           state: group.clientState,
-          extraProposals: [{
+          proposal: {
             proposalType: defaultProposalTypes.remove,
             remove: { removed: removeIndex }
-          }],
-          ratchetTreeExtension: true
+          }
         });
-        commitResult.consumed.forEach(zeroOutUint8Array);
         await this.#sendMlsMessage(
           ObjectTypeMlsGroupInfo,
           group.members,
-          commitResult.commit
+          proposal.message
         );
-        group.clientState = commitResult.newState;
-        group.members = group.members.filter((member) => member !== actorId);
-        await this.#database.saveGroup(group);
       }
-      return group;
     }
-    // leaveGroup removes ALL CLIENTS for this user from this group and generates
-    // a new commit that is sent to the remaining members of the group.
-    async leaveGroup(group) {
-      const proposals = getGroupMembers(group.clientState).filter(leafNodeMatches(this.#actor.id())).map((_client, index) => {
-        return {
-          proposalType: defaultProposalTypes.remove,
-          remove: { removed: index }
-        };
-      });
+    async removeLeafNode(group, removeIndex) {
+      const leafNodes = getGroupMembers(group.clientState);
       const commitResult = await createCommit({
         context: this.#context(),
         state: group.clientState,
-        extraProposals: proposals,
+        extraProposals: [{
+          proposalType: defaultProposalTypes.remove,
+          remove: { removed: removeIndex }
+        }],
         ratchetTreeExtension: true
       });
-      await this.#database.saveGroup(group);
+      commitResult.consumed.forEach(zeroOutUint8Array);
       await this.#sendMlsMessage(
         ObjectTypeMlsGroupInfo,
         group.members,
         commitResult.commit
       );
+      group.clientState = commitResult.newState;
     }
     //////////////////////////////////////////
     // Key Packages
@@ -15975,7 +16134,8 @@
           keyPackage: this.#publicKeyPackage,
           privateKeys: this.#privateKeyPackage
         });
-      } catch (e) {
+      } catch (error) {
+        console.error("Unable to process welcome message", error);
         return null;
       }
       if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
@@ -16021,16 +16181,19 @@
         console.error("Received message for unknown group", groupId);
         return null;
       }
-      if (group.stateId == "CLOSED") {
-        return null;
-      }
       if (!groupIsEncrypted(group)) {
         throw new Error("Cannot receive encrypted messages for unencrypted group");
+      }
+      if (group.stateId == "CLOSED") {
+        return null;
       }
       const decodedMessage = await processMessage({
         context: this.#context(),
         state: group.clientState,
-        message: mlsMessage
+        message: mlsMessage,
+        callback: (message) => {
+          return "accept";
+        }
       });
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
@@ -16111,7 +16274,7 @@
       };
     }
   };
-  function leafNodeMatches(actorId) {
+  function leafNodeMatchesActor(actorId) {
     return (member) => {
       if (member.credential.credentialType != defaultCredentialTypes.basic) {
         return false;
@@ -16123,6 +16286,24 @@
         const credential = member.credential;
         return decodeText(credential.identity) == id;
       });
+    };
+  }
+  function leafNodeThisDevice(actorId, signature) {
+    return (member) => {
+      const credential = member.credential;
+      if (decodeText(credential.identity) != actorId) {
+        return false;
+      }
+      return uint8ArrayEqual(member.signature, signature);
+    };
+  }
+  function leafNodeMyOtherDevices(actorId, signature) {
+    return (member) => {
+      const credential = member.credential;
+      if (decodeText(credential.identity) != actorId) {
+        return false;
+      }
+      return !uint8ArrayEqual(member.signature, signature);
     };
   }
   function encodeText(text) {
@@ -16186,7 +16367,6 @@
     // sendActivity sends an activity to the Actor's outbox
     sendActivity = async (activity) => {
       var result;
-      console.log("Delivery.sendActivity", activity);
       if (this.#outboxUrl == "") {
         throw new Error("Outbox URL not set. Cannot send activity.");
       }
@@ -16196,6 +16376,7 @@
       } else {
         result = new Activity(activity);
       }
+      console.log("Delivery.sendActivity", activity.toObject());
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         headers: { "Content-Type": "application/activity+json" },
@@ -16322,10 +16503,83 @@
   }
   async function generateAESKey() {
     return await crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      // Algorithm
+      true,
+      // "extractable" (required for wrapKey)
+      ["encrypt", "decrypt"]
+      // Key usages
+    );
+  }
+  async function deriveKeyFromPassword(passcode, salt) {
+    if (salt.byteLength < 16) {
+      throw new Error("Salt must be at least 16 bytes long");
+    }
+    const baseKey = await crypto.subtle.importKey(
+      "raw",
+      // Format of the key material
+      new TextEncoder().encode(passcode),
+      // Key material
+      "PBKDF2",
+      // Algorithm
+      false,
+      // extractable
+      ["deriveKey"]
+      // Key usages
+    );
+    return await crypto.subtle.deriveKey(
       {
-        name: "AES-GCM",
-        length: 256
+        name: "PBKDF2",
+        salt,
+        iterations: 6e5,
+        // OWASP recommends 600,000 iterattions for FIPS-compliance
+        hash: "SHA-256"
       },
+      baseKey,
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["wrapKey", "unwrapKey"]
+    );
+  }
+  async function wrapKey(encryptionKey, wrappingKey, iv) {
+    return crypto.subtle.wrapKey(
+      "raw",
+      encryptionKey,
+      wrappingKey,
+      { name: "AES-GCM", iv }
+    );
+  }
+  async function unwrapKey(wrappedKey, wrappingKey, iv) {
+    return crypto.subtle.unwrapKey(
+      "raw",
+      wrappedKey,
+      // the encrypted key data
+      wrappingKey,
+      // the KEK (PBKDF2 derived key)
+      { name: "AES-GCM", iv },
+      // <- HOW to decrypt the wrapped key (AES-GCM + the IV)
+      { name: "AES-GCM", length: 256 },
+      // <- what TYPE of key comes out the other end
+      true,
+      // extractable
+      ["encrypt", "decrypt"]
+      // key usages
+    );
+  }
+  async function encodeKeyToBase64(key) {
+    const exported = await crypto.subtle.exportKey("raw", key);
+    const keyBytes = new Uint8Array(exported);
+    const keyString = String.fromCharCode(...keyBytes);
+    const base64Key = btoa(keyString);
+    return base64Key;
+  }
+  async function decodeKeyFromBase64(base64Key) {
+    const keyString = atob(base64Key);
+    const rawKey = Uint8Array.from(keyString, (c) => c.charCodeAt(0));
+    return crypto.subtle.importKey(
+      "raw",
+      rawKey,
+      "AES-GCM",
       true,
       ["encrypt", "decrypt"]
     );
@@ -17000,11 +17254,22 @@
         import_mithril.default.redraw();
         return;
       }
+      if (this.#encryptionKey == void 0) {
+        const sessionKey = window.sessionStorage.getItem("key");
+        if (sessionKey) {
+          this.#encryptionKey = await decodeKeyFromBase64(sessionKey);
+        }
+      }
+      if (this.#encryptionKey == void 0) {
+        this.pageView = "SIGN-IN";
+        import_mithril.default.redraw();
+        return;
+      }
       try {
         this.#actor = await new Actor().fromURL(this.#actorId);
       } catch (error) {
         console.error("Unable to load the Actor record", error);
-        this.stop("SERVER_DOWN");
+        this.stop("SERVER-DOWN");
         return;
       }
       const { url, plaintext, ciphertext } = this.#actor.messages();
@@ -17038,7 +17303,7 @@
           this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage);
         } catch (error) {
           console.error("Unable to initialize MLS service", error);
-          this.stop("SERVER_DOWN");
+          this.stop("SERVER-DOWN");
           return;
         }
       }
@@ -17053,12 +17318,17 @@
     };
     // startupConfiguration is called when the user submits their options from the initial welcome screen
     startupConfiguration = async (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => {
-      this.#encryptionKey = await generateAESKey();
       this.config.ready = true;
       this.config.generatorName = clientName;
       this.config.isEncryptedMessages = isEncryptedMessages;
       this.config.isDesktopNotifications = isDesktopNotifications;
       this.config.isHideOnBlur = isHideOnBlur;
+      const encryptionKey = await generateAESKey();
+      this.config.encryptionKeyIV = crypto.getRandomValues(new Uint8Array(16));
+      this.config.encryptionKeySalt = crypto.getRandomValues(new Uint8Array(16));
+      const wrappingKey = await deriveKeyFromPassword(passcode, this.config.encryptionKeySalt.buffer);
+      const wrappedKey = await wrapKey(encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer);
+      this.config.encryptionKey = wrappedKey;
       await this.#database.saveConfig(this.config);
       await this.#start();
     };
@@ -17071,6 +17341,19 @@
       this.config.isHideOnBlur = isHideOnBlur;
       await this.#database.saveConfig(this.config);
     };
+    // signIn uses the provided passcode to extract the encryption key from the configuration value.
+    signIn = async (passcode) => {
+      try {
+        const wrappingKey = await deriveKeyFromPassword(passcode, this.config.encryptionKeySalt.buffer);
+        this.#encryptionKey = await unwrapKey(this.config.encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer);
+        window.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey));
+        await this.#start();
+        return true;
+      } catch (error) {
+        console.error("Failed to sign in:", error);
+        return false;
+      }
+    };
     //////////////////////////////////////////
     // Other Lifecycle Methods
     //////////////////////////////////////////
@@ -17082,19 +17365,18 @@
       this.#delivery.stop();
       this.#receiver.stop();
       this.#directory.stop();
+      window.sessionStorage.removeItem("key");
       this.isApplicationRunning = false;
       this.stopReason = message;
       import_mithril.default.redraw();
     };
     // eraseDevice removes all locally stored data and reloads the application.
     eraseDevice = async () => {
-      if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
-        return;
-      }
       const keyPackage = await this.#database.loadKeyPackage();
       if (keyPackage != void 0) {
         await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL);
       }
+      window.sessionStorage.removeItem("key");
       this.#database.erase();
       window.document.location.reload();
     };
@@ -17102,14 +17384,16 @@
     // Window Focus/Blur
     //////////////////////////////////////////
     onFocusWindow = () => {
-      console.log("controller.onFocusWindow");
       this.isWindowFocused = true;
-      import_mithril.default.redraw();
+      if (this.config.isHideOnBlur) {
+        import_mithril.default.redraw();
+      }
     };
     onBlurWindow = () => {
-      console.log("controller.onBlurWindow");
       this.isWindowFocused = false;
-      import_mithril.default.redraw();
+      if (this.config.isHideOnBlur) {
+        import_mithril.default.redraw();
+      }
     };
     //////////////////////////////////////////
     // Pages
@@ -17141,6 +17425,9 @@
     page_group_leave = () => {
       this.pageView = "GROUP-LEAVE";
       import_mithril.default.redraw();
+    };
+    page_signout = () => {
+      this.stop("SIGN-OUT");
     };
     //////////////////////////////////////////
     // Modal Dialogs
@@ -17276,7 +17563,6 @@
     };
     // saveGroup saves the specified group to the database
     saveGroup = async (group) => {
-      group.lastMessage = group.lastMessage.slice(0, 100);
       group.defaultName = await this.#calcGroupDefaultName(group);
       await this.#database.saveGroup(group);
       await this.loadGroups();
@@ -17300,18 +17586,33 @@
     };
     // leaveGroup leaves/deletes the specified group from the database
     leaveGroup = async (groupId) => {
+      console.log("leaveGroup: " + groupId);
       if (this.#database == void 0) {
         throw new Error("Database service is not initialized");
       }
       const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
+        console.log("Group not found locally. Nothing to leave.");
         return;
       }
       if (groupIsEncrypted(group)) {
         if (this.#mls == void 0) {
           throw new Error("MLS service is not initialized");
         }
+        try {
+          await this.#mls.leaveGroup(group);
+        } catch (error) {
+          console.error("Error leaving group:", error);
+        }
       }
+      console.log("Notifying other devices to delete this group from their database");
+      await this.#delivery.sendActivity(new Activity({
+        to: this.#actor.id(),
+        actor: this.#actor.id(),
+        type: ActivityTypeLeave,
+        object: group.id
+      }));
+      console.log("Deleting group from THIS device database.");
       await this.#database.deleteGroup(groupId);
       await this.#database.deleteMessagesByGroup(groupId);
       await this.loadGroups();
@@ -17385,6 +17686,7 @@
       } else {
         group.members = group.members.filter((member) => member != actorId);
       }
+      console.log("HEre???");
       group.defaultName = await this.#calcGroupDefaultName(group);
       await this.#database.saveGroup(group);
       this.groupStream(group);
@@ -17544,13 +17846,25 @@
       this.#sendActivity(group, activity);
     };
     //////////////////////////////////////////
+    // Contacts
+    //////////////////////////////////////////
+    // getContactStream returns a Contact stream for the specified actorId
+    getContactStream = (actorId) => {
+      return this.#contacts.getContactStream(actorId);
+    };
+    //////////////////////////////////////////
     // Receiving Activities
     //////////////////////////////////////////
     receiveActivity = async (activity) => {
+      console.log("Received activity:", activity.toObject());
       try {
         var object = await activity.object();
-        if (activity.actorId() != object.attributedToId()) {
-          return;
+        console.log("Got object:", object.toObject());
+        if (object.attributedToId() != "") {
+          if (activity.actorId() != object.attributedToId()) {
+            console.log("Activity actor does not match object attributedTo. Ignoring activity.");
+            return;
+          }
         }
         if (object.isMLSMessage()) {
           if (this.#mls == void 0) {
@@ -17581,6 +17895,8 @@
             return await this.#receiveActivity_DeleteMessage(activity);
           case ActivityTypeFailure:
             return await this.#receiveActivity_Failure(activity);
+          case ActivityTypeLeave:
+            return await this.#receiveActivity_Leave(activity);
           case ActivityTypeLike:
             return await this.#receiveActivity_Like(activity);
           case ActivityTypeUndo:
@@ -17674,6 +17990,15 @@
       }
       await this.#database.deleteMessage(message.id);
       await this.loadMessages();
+    };
+    #receiveActivity_Leave = async (activity) => {
+      console.log("Received 'Leave' activity:", activity);
+      if (activity.actorId() != this.actorId()) {
+        console.log("Ignoring 'Leave' activity from other actor:", activity);
+        return;
+      }
+      await this.#database.deleteGroup(activity.objectId());
+      this.loadGroups();
     };
     #receiveActivity_Like = async (activity) => {
       const message = await this.#database.loadMessage(activity.objectId());
@@ -17780,8 +18105,8 @@
   };
 
   // src/view/app.tsx
-  var import_mithril37 = __toESM(require_mithril(), 1);
-  var import_mithril38 = __toESM(require_mithril(), 1);
+  var import_mithril39 = __toESM(require_mithril(), 1);
+  var import_mithril40 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
@@ -18183,6 +18508,12 @@
     }
     // onsubmit creates a new group with the selected participants, sends the content message, and closes the dialog
     async onsubmit(event, vnode) {
+      if (vnode.state.content == "") {
+        return;
+      }
+      if (vnode.state.actors.length == 0) {
+        return;
+      }
       const participants = vnode.state.actors.map((actor) => actor.id());
       const controller2 = vnode.attrs.controller;
       event.preventDefault();
@@ -18304,24 +18635,31 @@
     // view returns the JSX for the messages within the selectedGroup.
     // If there is no selected group, then a welcome message is shown instead.
     view(vnode) {
+      const controller2 = vnode.attrs.controller;
       const message = vnode.attrs.message;
       var sender;
       if (vnode.attrs.sender != void 0) {
         sender = vnode.attrs.sender();
       }
+      const senderName = sender?.name || message.sender;
       switch (message.type) {
         case "SENT":
           return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode)));
         case "RECEIVED":
           return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode))));
-        case "ADD-ACTOR":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", null, "Add Actor");
-        case "REMOVE-ACTOR":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", null, "Remove Actor");
-        case "ADD-DEVICE":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", null, "Add Device");
+        case "ADD-ACTOR": {
+          const contact = vnode.attrs.controller.getContactStream(message.sender)();
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;" }), contact.name), " ", " ", "JOINED the group at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
+        }
+        case "REMOVE-ACTOR": {
+          const contact = vnode.attrs.controller.getContactStream(message.sender)();
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;" }), contact.name), " ", " ", "left the group at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
+        }
+        case "ADD-DEVICE": {
+          const Contact = vnode.attrs.controller.getContactStream(message.sender);
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, senderName), " ", " ", "ADDED a new device");
+        }
         case "REMOVE-DEVICE":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", null, "Remove Device");
       }
       throw new Error(`Unknown message type: ${message.type}`);
     }
@@ -18534,24 +18872,31 @@
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       const contactStreams = controller2.groupContactStream();
-      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "table" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember() }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center bg-gray text-white text-lg", style: "background-color:var(--blue60)" }, "+")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), contactStreams.map((contactStream) => {
+      return /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_messages() }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", onclick: () => vnode.attrs.controller.page_group_notes() }, "Notes"), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "table" }, group.stateId !== "CLOSED" && /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember() }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--blue60)" }, /* @__PURE__ */ (0, import_mithril18.default)("i", { class: "bi bi-plus" }))), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Invite one or more people to this group"))), contactStreams.map((contactStream) => {
         const contact = contactStream();
+        if (contact.id == controller2.actorId()) {
+          return null;
+        }
         return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm", onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "align-right" }, contact.id == controller2.actorId() ? /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm text-red", tabIndex: "0", onclick: () => this.leaveGroup(vnode) }, "Leave Group") : /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove")));
-      }))));
+      }), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => this.leaveGroup(vnode) }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--red60)" }, /* @__PURE__ */ (0, import_mithril18.default)("i", { class: "bi bi-x" }))), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Leave Group"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Leave this group and remove it from all your devices."))))));
     }
     async leaveGroup(vnode) {
-      const controller2 = vnode.attrs.controller;
-      if (confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
-        const group = controller2.groupStream();
-        await controller2.leaveGroup(group.id);
-        controller2.page_index();
+      console.log("confirm: leave group");
+      if (!confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
+        console.log("NOT leaving group");
+        return;
       }
+      console.log("leaving group");
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      await controller2.leaveGroup(group.id);
+      controller2.page_index();
     }
     async removeGroupMember(vnode, contactId) {
-      if (confirm("Are you sure you want to remove this member?")) {
-        await vnode.attrs.controller.removeGroupMember(contactId);
-        import_mithril18.default.redraw();
+      if (!confirm("Are you sure you want to remove this member?")) {
+        return;
       }
+      await vnode.attrs.controller.removeGroupMember(contactId);
     }
     close(vnode) {
       vnode.attrs.controller.page_group_messages();
@@ -18865,7 +19210,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages() }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.stop("SIGN_OUT") }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.eraseDevice() }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
+      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Conversation Settings"), /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages() }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
     }
     setEncryptedMessages(vnode, event) {
       const target = event.target;
@@ -18899,6 +19244,12 @@
       );
       vnode.attrs.controller.page_index();
     }
+    eraseDevice(vnode) {
+      if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
+        return;
+      }
+      vnode.attrs.controller.eraseDevice();
+    }
   };
 
   // src/view/app-stopped.tsx
@@ -18910,17 +19261,57 @@
     }
     message(vnode) {
       switch (vnode.attrs.message) {
-        case "COOKIES_CHANGED":
+        case "COOKIES-CHANGED":
           return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
-        case "SERVER_DOWN":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
-        case "SIGN_OUT":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), "To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ", then re-enter your password.");
+        case "SERVER-DOWN":
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+        case "SIGN-OUT":
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "Reload this page"), " to return to conversations.");
         case "UNSUPPORTED":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
       }
+    }
+  };
+
+  // src/view/app-signin.tsx
+  var import_mithril37 = __toESM(require_mithril(), 1);
+  var import_mithril38 = __toESM(require_mithril(), 1);
+  var AppSignIn = class {
+    oninit(vnode) {
+      vnode.state.passcode = "";
+      vnode.state.requestPending = false;
+    }
+    oncreate(vnode) {
+      document.getElementById("passcode")?.focus();
+    }
+    view(vnode) {
+      return /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "card padding-lg width-640" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "align-center text-light-gray margin-vertical", style: "font-size:80px;" }, "\xA0", /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-chat" }), "\xA0"), /* @__PURE__ */ (0, import_mithril37.default)("h1", { class: "align-center text-xl bold" }, "Conversations Passcode"), vnode.state.requestPending ? /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril37.default)("input", { type: "password", class: "flex-grow", hint: "Conversation Passcode", disabled: true }), /* @__PURE__ */ (0, import_mithril37.default)("button", { type: "submit", class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril37.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-arrow-clockwise" })))) : /* @__PURE__ */ (0, import_mithril37.default)("form", { onsubmit: (event) => this.submit(vnode, event) }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril37.default)("input", { id: "passcode", type: "password", class: "flex-grow", hint: "Conversation Passcode", oninput: (event) => this.setPasscode(vnode, event), value: vnode.state.passcode }), /* @__PURE__ */ (0, import_mithril37.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-arrow-right" })))), vnode.state.message && /* @__PURE__ */ (0, import_mithril37.default)("p", { class: "text-red margin-vertical" }, vnode.state.message), /* @__PURE__ */ (0, import_mithril37.default)("p", { class: "margin-vertical" }, "To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations."), /* @__PURE__ */ (0, import_mithril37.default)("p", { class: "margin-vertical" }, "You can ", /* @__PURE__ */ (0, import_mithril37.default)("span", { class: "link", tabIndex: "0", onclick: () => this.reset(vnode) }, "reset your passcode"), " if you don't remember it, but all encrypted messages will be lost.")));
+    }
+    setPasscode(vnode, event) {
+      const input = event.target;
+      vnode.state.passcode = input.value;
+    }
+    async submit(vnode, event) {
+      vnode.state.requestPending = true;
+      haltEvent(event);
+      const success = await vnode.attrs.controller.signIn(vnode.state.passcode);
+      if (!success) {
+        vnode.state.passcode = "";
+        vnode.state.requestPending = false;
+        vnode.state.message = "Passcode incorrect. You cannot continue without the valid passcode.";
+        import_mithril37.default.redraw();
+        window.requestAnimationFrame(() => {
+          document.getElementById("passcode")?.focus();
+        });
+      }
+    }
+    reset(vnode) {
+      if (!confirm("Resetting your passcode will remove all encrypted conversations from this device. Are you sure you want to continue?")) {
+        return;
+      }
+      vnode.attrs.controller.eraseDevice();
     }
   };
 
@@ -18933,28 +19324,30 @@
       const controller2 = vnode.attrs.controller;
       if (!controller2.isApplicationRunning) {
         console.error(controller2);
-        return /* @__PURE__ */ (0, import_mithril37.default)(AppStopped, { message: controller2.stopReason });
+        return /* @__PURE__ */ (0, import_mithril39.default)(AppStopped, { message: controller2.stopReason });
       }
       if (!controller2.isWindowFocused) {
         if (controller2.config.isHideOnBlur) {
-          return /* @__PURE__ */ (0, import_mithril37.default)(AppBlurred, null);
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppBlurred, null);
         }
       }
       switch (controller2.pageView) {
         case "LOADING":
-          return /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "app-content" }, "Loading...");
-        case "WELCOME":
-          return /* @__PURE__ */ (0, import_mithril37.default)(Welcome, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "app-content" }, "Loading...");
         case "SETTINGS":
-          return /* @__PURE__ */ (0, import_mithril37.default)(AppSettings, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppSettings, { controller: controller2 });
+        case "SIGN-IN":
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppSignIn, { controller: controller2 });
+        case "WELCOME":
+          return /* @__PURE__ */ (0, import_mithril39.default)(Welcome, { controller: controller2 });
         default:
-          return /* @__PURE__ */ (0, import_mithril37.default)(Index, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)(Index, { controller: controller2 });
       }
     }
   };
 
   // src/service/contacts.ts
-  var import_mithril39 = __toESM(require_mithril(), 1);
+  var import_mithril41 = __toESM(require_mithril(), 1);
   var import_stream4 = __toESM(require_stream2(), 1);
   var Contacts = class {
     #contacts;
@@ -18996,7 +19389,7 @@
         const contact = ContactFromActor(response);
         this.#contacts.set(id, contact);
         result(contact);
-        import_mithril39.default.redraw();
+        import_mithril41.default.redraw();
       });
       return result;
     };
@@ -19008,6 +19401,9 @@
 
   // src/service/host.ts
   var Host = class {
+    reload() {
+      window.location.reload();
+    }
     viewActor(actorId) {
       htmx.ajax("GET", "/@me/newsfeed/browse-actor?url=" + encodeURIComponent(actorId));
     }
@@ -19021,7 +19417,7 @@
       if (typeof cookieStore !== "undefined") {
         cookieStore.addEventListener("change", async () => {
           console.log("cookies changed (via CookieStore API)");
-          stop("COOKIES_CHANGED");
+          stop("COOKIES-CHANGED");
         });
         return;
       }
@@ -19029,7 +19425,7 @@
       const intervalId = setInterval(() => {
         if (document.cookie !== originalCookie) {
           console.log("cookies changed (via polling)");
-          stop("COOKIES_CHANGED");
+          stop("COOKIES-CHANGED");
         }
       }, 1e3);
       return () => clearInterval(intervalId);
@@ -19050,12 +19446,12 @@
     const indexedDB2 = await NewIndexedDB(actorId);
     const host = new Host();
     const contacts = new Contacts();
-    const database = new Database(indexedDB2);
+    const database = new Database(host, indexedDB2);
     const delivery = new Delivery();
     const directory = new Directory(actorId);
     const receiver = new Receiver();
     controller = new Controller(actorId, contacts, database, delivery, directory, receiver, host);
-    import_mithril40.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril40.default)(App, { controller }) });
+    import_mithril42.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril42.default)(App, { controller }) });
     window.addEventListener("focus", async () => {
       controller.onFocusWindow();
     });

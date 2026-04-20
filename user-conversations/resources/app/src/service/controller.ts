@@ -29,8 +29,8 @@ import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
 import { MLS } from "./mls"
 
 // Other utility functions
-import { cipherSuiteImplementation, generateAESKey, newKeyPackage } from "./cryptography"
-import { messageToActivityStream } from "./utils"
+import { cipherSuiteImplementation, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, newKeyPackage, unwrapKey, wrapKey } from "./cryptography"
+import { diffArrays, messageToActivityStream } from "./utils"
 import { newId } from "./utils"
 import type { Emoji } from "../model/emoji"
 import type { DBKeyPackage } from "../model/db-keypackage"
@@ -126,13 +126,29 @@ export class Controller {
 			return
 		}
 
+		// Try to load the encryption key from sessionStorage (in case of page reload)
+		if (this.#encryptionKey == undefined) {
+
+			const sessionKey = window.sessionStorage.getItem("key")
+			if (sessionKey) {
+				this.#encryptionKey = await decodeKeyFromBase64(sessionKey)
+			}
+		}
+
+		// The user must sign in (and extract their encryption key) to continue
+		if (this.#encryptionKey == undefined) {
+			this.pageView = "SIGN-IN"
+			m.redraw()
+			return
+		}
+
 		// Try to load the Actor and locate their messages collection
 		try {
 			this.#actor = await new Actor().fromURL(this.#actorId)
 
 		} catch (error) {
 			console.error("Unable to load the Actor record", error)
-			this.stop("SERVER_DOWN")
+			this.stop("SERVER-DOWN")
 			return
 		}
 
@@ -183,7 +199,7 @@ export class Controller {
 
 			} catch (error) {
 				console.error("Unable to initialize MLS service", error)
-				this.stop("SERVER_DOWN")
+				this.stop("SERVER-DOWN")
 				return
 			}
 		}
@@ -208,9 +224,6 @@ export class Controller {
 	// startupConfiguration is called when the user submits their options from the initial welcome screen
 	startupConfiguration = async (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
 
-		// Create encryption key for database encryption
-		this.#encryptionKey = await generateAESKey()
-
 		// Set up the initial configuration
 		this.config.ready = true
 		this.config.generatorName = clientName
@@ -218,6 +231,17 @@ export class Controller {
 		this.config.isDesktopNotifications = isDesktopNotifications
 		this.config.isHideOnBlur = isHideOnBlur
 
+		// Create encryption key for database encryption
+		const encryptionKey = await generateAESKey()
+
+		this.config.encryptionKeyIV = crypto.getRandomValues(new Uint8Array(16))
+		this.config.encryptionKeySalt = crypto.getRandomValues(new Uint8Array(16))
+
+		const wrappingKey = await deriveKeyFromPassword(passcode, this.config.encryptionKeySalt.buffer as ArrayBuffer)
+		const wrappedKey = await wrapKey(encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer as ArrayBuffer)
+		this.config.encryptionKey = wrappedKey
+
+		// Save the new configuration to the database
 		await this.#database.saveConfig(this.config)
 
 		// Call start again.  Since we've set config.ready to true, this will skip the welcome screen and initialize the app.
@@ -236,6 +260,31 @@ export class Controller {
 		await this.#database.saveConfig(this.config)
 	}
 
+	// signIn uses the provided passcode to extract the encryption key from the configuration value.
+	signIn = async (passcode: string): Promise<boolean> => {
+
+		try {
+
+			// Derive the wrapping key from the passcode and salt
+			const wrappingKey = await deriveKeyFromPassword(passcode, this.config.encryptionKeySalt.buffer as ArrayBuffer)
+
+			// Unwrap the encryption key using the wrapping key and initial value
+			this.#encryptionKey = await unwrapKey(this.config.encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer as ArrayBuffer)
+
+			// Save the key in the session
+			window.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey))
+
+			// If you've made it this far, then the passcode is valid and you can proceed with the app
+			await this.#start()
+			return true
+
+		} catch (error) {
+			// Errors mean that we  do not have the correct passcode.
+			console.error("Failed to sign in:", error)
+			return false
+		}
+	}
+
 	//////////////////////////////////////////
 	// Other Lifecycle Methods
 	//////////////////////////////////////////
@@ -249,6 +298,8 @@ export class Controller {
 		this.#receiver.stop()
 		this.#directory.stop()
 
+		window.sessionStorage.removeItem("key")
+
 		this.isApplicationRunning = false
 		this.stopReason = message
 		m.redraw()
@@ -257,15 +308,14 @@ export class Controller {
 	// eraseDevice removes all locally stored data and reloads the application.
 	eraseDevice = async () => {
 
-		if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
-			return
-		}
-
 		// Remove the KeyPackage from the server
 		const keyPackage = await this.#database.loadKeyPackage()
 		if (keyPackage != undefined) {
 			await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL)
 		}
+
+		// Erase the session key from sessionStorage
+		window.sessionStorage.removeItem("key")
 
 		// Erase all local data
 		this.#database.erase()
@@ -280,17 +330,18 @@ export class Controller {
 	//////////////////////////////////////////
 
 	onFocusWindow = () => {
-		console.log("controller.onFocusWindow")
 		this.isWindowFocused = true
-		m.redraw()
+		if (this.config.isHideOnBlur) {
+			m.redraw()
+		}
 	}
 
 	onBlurWindow = () => {
-		console.log("controller.onBlurWindow")
 		this.isWindowFocused = false
-		m.redraw()
+		if (this.config.isHideOnBlur) {
+			m.redraw()
+		}
 	}
-
 
 	//////////////////////////////////////////
 	// Pages
@@ -329,6 +380,10 @@ export class Controller {
 	page_group_leave = () => {
 		this.pageView = "GROUP-LEAVE"
 		m.redraw()
+	}
+
+	page_signout = () => {
+		this.stop("SIGN-OUT")
 	}
 
 	//////////////////////////////////////////
@@ -553,9 +608,6 @@ export class Controller {
 	// saveGroup saves the specified group to the database
 	saveGroup = async (group: Group) => {
 
-		// RULE: Truncate lastMessage to 100 characters for display purposes
-		group.lastMessage = group.lastMessage.slice(0, 100)
-
 		// Calculate the default group name based on the members of the group
 		group.defaultName = await this.#calcGroupDefaultName(group)
 
@@ -591,6 +643,8 @@ export class Controller {
 	// leaveGroup leaves/deletes the specified group from the database
 	leaveGroup = async (groupId: string) => {
 
+		console.log("leaveGroup: " + groupId)
+
 		// Guarantee dependency
 		if (this.#database == undefined) {
 			throw new Error("Database service is not initialized")
@@ -601,6 +655,7 @@ export class Controller {
 
 		// RULE: If we don't have the group locally, then just exit
 		if (group == undefined) {
+			console.log("Group not found locally. Nothing to leave.")
 			return
 		}
 
@@ -611,10 +666,25 @@ export class Controller {
 				throw new Error("MLS service is not initialized")
 			}
 
-			// await this.#mls.leaveGroup(group)
+			try {
+				// Send MLS messages to leave the group
+				await this.#mls.leaveGroup(group)
+			} catch (error) {
+				console.error("Error leaving group:", error)
+			}
 		}
 
-		// Delete the group
+		// (3/4) Send a message to my other devices to delete this group from their database.
+		console.log("Notifying other devices to delete this group from their database")
+		await this.#delivery.sendActivity(new Activity({
+			to: this.#actor.id(),
+			actor: this.#actor.id(),
+			type: vocab.ActivityTypeLeave,
+			object: group.id,
+		}))
+
+		// (4/4) Delete the group from THIS database
+		console.log("Deleting group from THIS device database.")
 		await this.#database.deleteGroup(groupId)
 		await this.#database.deleteMessagesByGroup(groupId)
 		await this.loadGroups()
@@ -739,6 +809,8 @@ export class Controller {
 			// Remove the member from the regular group list
 			group.members = group.members.filter((member) => member != actorId)
 		}
+
+		console.log("HEre???")
 
 		// Recalculate the default group name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -984,23 +1056,39 @@ export class Controller {
 		this.#sendActivity(group, activity)
 	}
 
+
+	//////////////////////////////////////////
+	// Contacts
+	//////////////////////////////////////////
+
+	// getContactStream returns a Contact stream for the specified actorId
+	getContactStream = (actorId: string): Stream<Contact> => {
+		return this.#contacts.getContactStream(actorId)
+	}
+
+
 	//////////////////////////////////////////
 	// Receiving Activities
 	//////////////////////////////////////////
 
 	receiveActivity = async (activity: Activity) => {
 
+		console.log("Received activity:", activity.toObject())
+
 		// Part 1: Parse and possibly decode the received activity
 		try {
 			// Retrieve the object from the activity. This should be embedded,
 			// but we can load from the network if needed.
 			var object = await activity.object()
+			console.log("Got object:", object.toObject())
 
 			// RULE: Activities must match the object that they contain
-			if (activity.actorId() != object.attributedToId()) {
-				return
+			if (object.attributedToId() != "") {
+				if (activity.actorId() != object.attributedToId()) {
+					console.log("Activity actor does not match object attributedTo. Ignoring activity.")
+					return
+				}
 			}
-
 
 			// Decode MLS-encrypted messages
 			if (object.isMLSMessage()) {
@@ -1028,7 +1116,6 @@ export class Controller {
 				// Update activity and object to continue processing using the decoded values.
 				activity = decodedActivity
 				object = await activity.object()
-
 			}
 
 		} catch (error) {
@@ -1052,6 +1139,9 @@ export class Controller {
 
 				case vocab.ActivityTypeFailure:
 					return await this.#receiveActivity_Failure(activity)
+
+				case vocab.ActivityTypeLeave:
+					return await this.#receiveActivity_Leave(activity)
 
 				case vocab.ActivityTypeLike:
 					return await this.#receiveActivity_Like(activity)
@@ -1140,7 +1230,6 @@ export class Controller {
 			updateDate: Date.now(),
 		})
 
-
 		// Save the message to the database
 		await this.#database.saveMessage(message)
 
@@ -1203,6 +1292,23 @@ export class Controller {
 
 		// Reload messages to refresh the UX
 		await this.loadMessages()
+	}
+
+	#receiveActivity_Leave = async (activity: Activity) => {
+
+		console.log("Received 'Leave' activity:", activity)
+
+		// RULE: Only listen to "Leave" activities from myself.
+		if (activity.actorId() != this.actorId()) {
+			console.log("Ignoring 'Leave' activity from other actor:", activity)
+			return
+		}
+
+		// Remove the "left" group from the database, if it exists
+		await this.#database.deleteGroup(activity.objectId())
+
+		// Refresh the group list to update the UX
+		this.loadGroups()
 	}
 
 	#receiveActivity_Like = async (activity: Activity) => {

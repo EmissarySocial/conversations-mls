@@ -39,43 +39,71 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 // generateAESKey generates a new random AES-GCM key for encrypting messages
 export async function generateAESKey() {
 	return await crypto.subtle.generateKey(
-		{
-			name: "AES-GCM",
-			length: 256,
-		},
-		true,
-		["encrypt", "decrypt"]
+		{ name: "AES-GCM", length: 256 }, // Algorithm
+		true,                             // "extractable" (required for wrapKey)
+		["encrypt", "decrypt"]            // Key usages
 	);
 }
 
 // deriveKeyFromPassword derives a symmetric encryption key from the specified password and salt using PBKDF2
-export async function deriveKeyFromPassword(password: string, salt: ArrayBuffer): Promise<CryptoKey> {
+export async function deriveKeyFromPassword(passcode: string, salt: ArrayBuffer): Promise<CryptoKey> {
 
 	// RULE: Require salt to be 16+ bytes long (128 bits) for PBKDF2
 	if (salt.byteLength < 16) {
 		throw new Error("Salt must be at least 16 bytes long")
 	}
 
+	// Convert the passcode into a CryptoKey that can be used as the basis for key derivation
 	const baseKey = await crypto.subtle.importKey(
-		"raw",
-		new TextEncoder().encode(password),
-		"PBKDF2",
-		false,
-		["deriveKey"]
+		"raw",                               // Format of the key material
+		new TextEncoder().encode(passcode),  // Key material
+		"PBKDF2",                            // Algorithm
+		false,                               // extractable
+		["deriveKey"]                        // Key usages
 	);
 
+	// Create a "wrapping" crypto key using PBKDF2 with the specified salt.
+	// This key will be used to wrap (encrypt) the actual encryption key before storing it in the database.
+	// Using PBKDF2 with a unique salt for each user and a high iteration count 
+	// helps protect against brute-force attacks on the passcode, even if the wrapped key is compromised.
+	// https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 	return await crypto.subtle.deriveKey(
 		{
 			name: "PBKDF2",
 			salt: salt,
-			iterations: 210000,
+			iterations: 600_000, // OWASP recommends 600,000 iterattions for FIPS-compliance
 			hash: "SHA-256"
 		},
 		baseKey,
 		{ name: "AES-GCM", length: 256 },
 		true,
-		["encrypt", "decrypt"]
-	);
+		["wrapKey", "unwrapKey"]
+	)
+}
+
+
+
+// wrapKey wraps the actual AES encryption key using the wrapping key (derived from a passcode) and the initial value
+export async function wrapKey(encryptionKey: CryptoKey, wrappingKey: CryptoKey, iv: ArrayBuffer): Promise<ArrayBuffer> {
+	return crypto.subtle.wrapKey(
+		"raw",
+		encryptionKey,
+		wrappingKey,
+		{ name: "AES-GCM", iv: iv }
+	)
+}
+
+export async function unwrapKey(wrappedKey: ArrayBuffer, wrappingKey: CryptoKey, iv: ArrayBuffer): Promise<CryptoKey> {
+
+	return crypto.subtle.unwrapKey(
+		"raw",
+		wrappedKey,                       // the encrypted key data
+		wrappingKey,                      // the KEK (PBKDF2 derived key)
+		{ name: "AES-GCM", iv: iv },      // <- HOW to decrypt the wrapped key (AES-GCM + the IV)
+		{ name: "AES-GCM", length: 256 }, // <- what TYPE of key comes out the other end
+		true,                             // extractable
+		["encrypt", "decrypt"]            // key usages
+	)
 }
 
 // encodeToBase64 encodes a CryptoKey to a Base64 string for storage or transmission

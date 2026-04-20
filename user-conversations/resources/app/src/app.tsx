@@ -36,7 +36,7 @@ async function startup() {
 	const indexedDB = await NewIndexedDB(actorId)
 	const host = new Host()
 	const contacts = new Contacts()
-	const database = new Database(indexedDB)
+	const database = new Database(host, indexedDB)
 	const delivery = new Delivery()
 	const directory = new Directory(actorId)
 	const receiver = new Receiver()

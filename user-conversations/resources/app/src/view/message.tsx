@@ -25,12 +25,15 @@ export class ViewMessage {
 	// If there is no selected group, then a welcome message is shown instead.
 	view(vnode: ViewMessageVnode) {
 
+		const controller = vnode.attrs.controller
 		const message = vnode.attrs.message
 		var sender: Contact | undefined
 
 		if (vnode.attrs.sender != undefined) {
 			sender = vnode.attrs.sender()
 		}
+
+		const senderName = sender?.name || message.sender
 
 		switch (message.type) {
 
@@ -66,17 +69,52 @@ export class ViewMessage {
 					</div>
 				)
 
-			case "ADD-ACTOR":
-				return <div>Add Actor</div>
+			case "ADD-ACTOR": {
 
-			case "REMOVE-ACTOR":
-				return <div>Remove Actor</div>
+				const contact = vnode.attrs.controller.getContactStream(message.sender)()
 
-			case "ADD-DEVICE":
-				return <div>Add Device</div>
+				return (
+					<div class="message status">
+						<div>
+							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>
+								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
+								{contact.name}
+							</span> {" "}
+							JOINED the group at {dayjs(message.createDate).format("h:mm A")}
+						</div>
+					</div>
+				)
+			}
+
+			case "REMOVE-ACTOR": {
+
+				const contact = vnode.attrs.controller.getContactStream(message.sender)()
+
+				return (
+					<div class="message status">
+						<div>
+							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>
+								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
+								{contact.name}
+							</span> {" "}
+							left the group at {dayjs(message.createDate).format("h:mm A")}
+						</div>
+					</div>
+				)
+			}
+
+			case "ADD-DEVICE": {
+				const Contact = vnode.attrs.controller.getContactStream(message.sender)
+
+				return (
+					<div class="message status">
+						<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>{senderName}</span> {" "}
+						ADDED a new device
+					</div>
+				)
+			}
 
 			case "REMOVE-DEVICE":
-				return <div>Remove Device</div>
 		}
 
 		throw new Error(`Unknown message type: ${message.type}`)

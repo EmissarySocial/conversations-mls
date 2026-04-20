@@ -112,6 +112,7 @@ export interface IDirectory {
 // IHost wraps methods that integrate with the host application, such as viewing an actor's profile
 // or managing keypackages on the serve
 export interface IHost {
+	reload(): void
 	viewActor(actorId: string): void
 	viewKeyPackages(): void
 }

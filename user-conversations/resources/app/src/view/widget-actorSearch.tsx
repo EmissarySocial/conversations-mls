@@ -99,6 +99,7 @@ export class ActorSearch {
 	}
 
 	async onkeydown(event: KeyboardEvent, vnode: ActorSearchVnode) {
+
 		switch (keyCode(event)) {
 			case "Backspace":
 				const target = event.target as HTMLInputElement

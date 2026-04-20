@@ -35,19 +35,25 @@ export class GroupMembers {
 				</div>
 				<div id="conversation-messages" class="padding">
 					<div class="table">
-
-						<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()}>
-							<div>
-								<span class="circle width-48 flex-center bg-gray text-white text-lg" style="background-color:var(--blue60)">+</span>
+						{(group.stateId !== "CLOSED") &&
+							<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()}>
+								<div>
+									<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--blue60)"><i class="bi bi-plus"></i></span>
+								</div>
+								<div class="flex-grow padding-left-sm">
+									<div class="bold">Add People</div>
+									<div class="text-gray">Invite one or more people to this group</div>
+								</div>
 							</div>
-							<div class="flex-grow padding-left-sm">
-								<div class="bold">Add People</div>
-								<div class="text-gray">Invite one or more people to this group</div>
-							</div>
-						</div>
+						}
 
 						{contactStreams.map(contactStream => {
 							const contact = contactStream()
+
+							if (contact.id == controller.actorId()) {
+								return null
+							}
+
 							return (
 
 								<div class="flex-row" role="button">
@@ -60,7 +66,8 @@ export class GroupMembers {
 									</div>
 									<div class="align-right">
 										{
-											(contact.id == controller.actorId()) ?
+											(contact.id == controller.actorId())
+												?
 												<button class="text-sm text-red" tabIndex="0" onclick={() => this.leaveGroup(vnode)} >
 													Leave Group
 												</button>
@@ -73,6 +80,17 @@ export class GroupMembers {
 								</div>
 							)
 						})}
+
+						<div role="link" class="flex-row" onclick={() => this.leaveGroup(vnode)}>
+							<div>
+								<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--red60)"><i class="bi bi-x"></i></span>
+							</div>
+							<div class="flex-grow padding-left-sm">
+								<div class="bold">Leave Group</div>
+								<div class="text-gray">Leave this group and remove it from all your devices.</div>
+							</div>
+						</div>
+
 					</div>
 				</div>
 			</div>
@@ -80,19 +98,27 @@ export class GroupMembers {
 	}
 
 	async leaveGroup(vnode: GroupMembersVnode) {
-		const controller = vnode.attrs.controller
-		if (confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
-			const group = controller.groupStream()
-			await controller.leaveGroup(group.id)
-			controller.page_index()
+		console.log("confirm: leave group")
+
+		if (!confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
+			console.log("NOT leaving group")
+			return
 		}
+
+		console.log("leaving group")
+		const controller = vnode.attrs.controller
+		const group = controller.groupStream()
+		await controller.leaveGroup(group.id)
+		controller.page_index()
 	}
 
 	async removeGroupMember(vnode: GroupMembersVnode, contactId: string) {
-		if (confirm("Are you sure you want to remove this member?")) {
-			await vnode.attrs.controller.removeGroupMember(contactId)
-			m.redraw()
+
+		if (!confirm("Are you sure you want to remove this member?")) {
+			return
 		}
+
+		await vnode.attrs.controller.removeGroupMember(contactId)
 	}
 
 	close(vnode: GroupMembersVnode) {

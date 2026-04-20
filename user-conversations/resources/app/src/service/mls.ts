@@ -1,5 +1,5 @@
 // MLS functions
-import { bytesToBase64, defaultCredentialTypes, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage } from "ts-mls"
+import { bytesToBase64, createProposal, defaultCredentialTypes, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage } from "ts-mls"
 import { createApplicationMessage } from "ts-mls"
 import { createCommit } from "ts-mls"
 import { createGroup } from "ts-mls"
@@ -45,10 +45,6 @@ import { groupIsEncrypted } from "../model/group"
 
 import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array, newId } from "./utils"
-
-interface IReceiver {
-	poll(): void
-}
 
 const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 
@@ -226,83 +222,125 @@ export class MLS {
 		return group
 	}
 
+	// removeGroupMember removes all clients for the specified actorId. This function cannot be used
+	// to remove the current signed-in actor; use leaveGroup() for this operation instead.
 	async removeGroupMember(group: EncryptedGroup, actorId: string): Promise<EncryptedGroup> {
 
-		// Find all current clients in this group 
-		const leafNodes = getGroupMembers(group.clientState)
+		// RULE: Do not use this method to remove the current actor from the group.
+		if (actorId == this.#actor.id()) {
+			throw new Error("Cannot remove the current signed-in actor. To remove this actor, use leaveGroup() instead.")
+		}
 
 		while (true) {
 
+			// Find all current clients in this group 
+			const leafNodes = getGroupMembers(group.clientState)
+
 			// Find the first leaf node that matches the specified actorId
-			const removeIndex = leafNodes.findIndex(leafNodeMatches(actorId))
+			const removeIndex = leafNodes.findIndex(leafNodeMatchesActor(actorId))
 
 			// If there are no more matching nodes to remove, then we're done.
 			if (removeIndex === -1) {
 				break
 			}
 
-			// Create a commit with remove proposals
-			const commitResult = await createCommit({
-				context: this.#context(),
-				state: group.clientState,
-				extraProposals: [{
-					proposalType: defaultProposalTypes.remove,
-					remove: { removed: removeIndex },
-				}],
-				ratchetTreeExtension: true,
-			})
-
-			// Zero out the keys used to encrypt the commit message
-			commitResult.consumed.forEach(zeroOutUint8Array)
-
-			// Send commit to all members
-			await this.#sendMlsMessage(
-				vocab.ObjectTypeMlsGroupInfo,
-				group.members,
-				commitResult.commit,
-			)
-
-			// Update the group with new state and new list of members
-			group.clientState = commitResult.newState
-			group.members = group.members.filter((member) => member !== actorId)
-			await this.#database.saveGroup(group)
+			// Remove the leaf node and send commits to other group members.
+			await this.removeLeafNode(group, removeIndex)
 		}
+
+		// Recalculate all members in the group
+		group.members = this.getGroupMembers(group)
+
+		// Save the group to the database
+		await this.#database.saveGroup(group)
 
 		// Return the updated group (sans-actor)
 		return group
 	}
 
-	// leaveGroup removes ALL CLIENTS for this user from this group and generates
-	// a new commit that is sent to the remaining members of the group.
+	// leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
+	// for this user from the group, then sends a PROPOSAL to 
+	// remove THIS DEVICE from the group.
 	async leaveGroup(group: EncryptedGroup): Promise<void> {
 
-		// Find all clients for this user in the group
-		const proposals = getGroupMembers(group.clientState)
-			.filter(leafNodeMatches(this.#actor.id()))
-			.map((_client, index) => {
-				return {
+		console.log("MLS.leaveGroup.  signature:" + this.#publicKeyPackage.signature)
+
+		// Remove MY OTHER devices from this group
+		while (true) {
+
+			// Find all clients in the group
+			const leafNodes = getGroupMembers(group.clientState)
+
+			// Find the first leaf node that matches the specified actorId
+			const removeIndex = leafNodes.findIndex(leafNodeMyOtherDevices(this.#actor.id(), this.#publicKeyPackage.signature))
+			console.log("removing OTHER device from group", removeIndex)
+			console.log("signature", leafNodes[removeIndex]?.signature)
+
+			// If there are no more matching nodes to remove, then we're done.
+			if (removeIndex === -1) {
+				break
+			}
+
+			// Remove the leaf node and send commits to other group members.
+			await this.removeLeafNode(group, removeIndex)
+		}
+
+		// Find all clients in the group
+		const leafNodes = getGroupMembers(group.clientState)
+
+		// Send a PROPOSAL to remove THIS DEVICE from the group.
+		const removeIndex = leafNodes.findIndex(leafNodeThisDevice(this.#actor.id(), this.#publicKeyPackage.signature))
+		console.log("removing THIS device from group with proposal", removeIndex)
+
+		if (removeIndex !== -1) {
+
+			const proposal = await createProposal({
+				context: this.#context(),
+				state: group.clientState,
+				proposal: {
 					proposalType: defaultProposalTypes.remove,
-					remove: { removed: index },
-				} as Proposal
+					remove: { removed: removeIndex },
+				},
 			})
 
-		// Commit the remove proposals to generate a new group state.
+			// Send a message to the group members
+			await this.#sendMlsMessage(
+				vocab.ObjectTypeMlsGroupInfo,
+				group.members,
+				proposal.message,
+			)
+		}
+	}
+
+
+	async removeLeafNode(group: EncryptedGroup, removeIndex: number): Promise<void> {
+
+		// Find all current clients in this group 
+		const leafNodes = getGroupMembers(group.clientState)
+
+		// Create a commit with remove proposals
 		const commitResult = await createCommit({
 			context: this.#context(),
 			state: group.clientState,
-			extraProposals: proposals,
+			extraProposals: [{
+				proposalType: defaultProposalTypes.remove,
+				remove: { removed: removeIndex },
+			}],
 			ratchetTreeExtension: true,
 		})
 
-		// Save the group with the new state
-		await this.#database.saveGroup(group)
+		// Zero out the keys used to encrypt the commit message
+		commitResult.consumed.forEach(zeroOutUint8Array)
 
-		// Send a message to the group members
+		// Send commit to all members
 		await this.#sendMlsMessage(
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			commitResult.commit,
 		)
+
+		// Update the group with new state and new list of members
+		group.clientState = commitResult.newState
 	}
 
 
@@ -382,9 +420,10 @@ export class MLS {
 				privateKeys: this.#privateKeyPackage,
 			})
 
-		} catch (e) {
+		} catch (error) {
 			// Errors mean that the private keys probably don't match, so
 			// this welcome wasn't intended for this device, so just quit.
+			console.error("Unable to process welcome message", error)
 			return null
 		}
 
@@ -462,14 +501,14 @@ export class MLS {
 			return null
 		}
 
-		// RULE: Do not accept messages for closed groups
-		if (group.stateId == "CLOSED") {
-			return null
-		}
-
 		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
 			throw new Error("Cannot receive encrypted messages for unencrypted group")
+		}
+
+		// RULE: Do not accept messages for closed groups
+		if (group.stateId == "CLOSED") {
+			return null
 		}
 
 		// Decode the message using ts-mls
@@ -477,6 +516,9 @@ export class MLS {
 			context: this.#context(),
 			state: group.clientState,
 			message: mlsMessage,
+			callback: (message) => {
+				return "accept"
+			}
 		})
 
 		// Zero out the keys used to decrypt the message
@@ -517,6 +559,7 @@ export class MLS {
 	// updated as a result of this message.
 	async sendActivity(group: EncryptedGroup, activity: Activity | { [key: string]: any }) {
 
+		// If not already, wrap Objects in an Activity.
 		if (!(activity instanceof Activity)) {
 			activity = new Activity(activity)
 		}
@@ -605,7 +648,7 @@ export class MLS {
 
 // leafNodeMatches returns a unary function that returns TRUE if the 
 // provided actorId matches the identity in the leaf node's credential.
-function leafNodeMatches(actorId: string | string[]) {
+function leafNodeMatchesActor(actorId: string | string[]) {
 	return (member: LeafNode) => {
 
 		// Guarantee that we're working with a basic credential (not X.509 or something else)
@@ -621,6 +664,30 @@ function leafNodeMatches(actorId: string | string[]) {
 			const credential = member.credential as CredentialBasic
 			return decodeText(credential.identity) == id
 		})
+	}
+}
+
+function leafNodeThisDevice(actorId: string, signature: Uint8Array) {
+	return (member: LeafNode) => {
+
+		const credential = member.credential as CredentialBasic
+		if (decodeText(credential.identity) != actorId) {
+			return false
+		}
+
+		return uint8ArrayEqual(member.signature, signature)
+	}
+}
+
+function leafNodeMyOtherDevices(actorId: string, signature: Uint8Array) {
+	return (member: LeafNode) => {
+
+		const credential = member.credential as CredentialBasic
+		if (decodeText(credential.identity) != actorId) {
+			return false
+		}
+
+		return !uint8ArrayEqual(member.signature, signature)
 	}
 }
 

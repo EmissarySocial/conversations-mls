@@ -6,6 +6,8 @@ export const ActivityTypeCreate = "Create"
 
 export const ActivityTypeDelete = "Delete"
 
+export const ActivityTypeLeave = "Leave"
+
 export const ActivityTypeLike = "Like"
 
 export const ActivityTypeFailure = "Failure"

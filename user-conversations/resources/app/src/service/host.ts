@@ -11,6 +11,10 @@ declare const htmx: {
 // This component is built to work with default Emissary routes.
 export class Host {
 
+	reload() {
+		window.location.reload()
+	}
+
 	viewActor(actorId: string) {
 		htmx.ajax("GET", "/@me/newsfeed/browse-actor?url=" + encodeURIComponent(actorId))
 	}
@@ -30,7 +34,7 @@ export class Host {
 		if (typeof cookieStore !== "undefined") {
 			cookieStore.addEventListener("change", async () => {
 				console.log("cookies changed (via CookieStore API)")
-				stop("COOKIES_CHANGED")
+				stop("COOKIES-CHANGED")
 			})
 
 			// Since we're using the cookieStore API, we're done here.
@@ -43,7 +47,7 @@ export class Host {
 		const intervalId = setInterval(() => {
 			if (document.cookie !== originalCookie) {
 				console.log("cookies changed (via polling)")
-				stop("COOKIES_CHANGED")
+				stop("COOKIES-CHANGED")
 			}
 		}, 1000);
 

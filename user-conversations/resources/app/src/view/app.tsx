@@ -7,6 +7,7 @@ import { Index } from "."
 import { AppBlurred } from "./app-blurred"
 import { AppSettings } from "./app-settings"
 import { AppStopped } from "./app-stopped"
+import { AppSignIn } from "./app-signin"
 
 type AppVnode = Vnode<AppAttrs, AppState>
 
@@ -43,11 +44,14 @@ export class App {
 			case "LOADING":
 				return <div class="app-content">Loading...</div>
 
-			case "WELCOME":
-				return <Welcome controller={controller} />
-
 			case "SETTINGS":
 				return <AppSettings controller={controller} />
+
+			case "SIGN-IN":
+				return <AppSignIn controller={controller} />
+
+			case "WELCOME":
+				return <Welcome controller={controller} />
 
 			default:
 				return <Index controller={controller} />

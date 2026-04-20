@@ -28,37 +28,36 @@ export class AppStopped {
 
 		switch (vnode.attrs.message) {
 
-			case "COOKIES_CHANGED":
+			case "COOKIES-CHANGED":
 				return <div>
 					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
 					It looks like you have signed in to a different account using another tab.
 					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
 				</div>
 
-			case "SERVER_DOWN":
+			case "SERVER-DOWN":
 				return <div>
-					<h2><i class="bi bi-slash-circle"></i> Cannot Reach Server</h2>
+					<h2><i class="bi bi-exclamation-diamond"></i> Cannot Reach Server</h2>
 					Unable to reach the server and authenticate your session.
 					To continue with conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
 				</div>
 
-			case "SIGN_OUT":
+			case "SIGN-OUT":
 				return <div>
 					<h2><i class="bi bi-slash-circle"></i> Signed Out</h2>
-					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>,
-					then re-enter your password.
+					<span role="link" class="link" onclick={() => location.reload()}>Reload this page</span> to return to conversations.
 				</div>
 
 			case "UNSUPPORTED":
 				return <div>
-					<h2><i class="bi bi-slash-circle"></i> Unsupported Account</h2>
+					<h2><i class="bi bi-exclamation-diamond"></i> Unsupported Account</h2>
 					It looks like your account doesn't support the required APIs for conversations.
 					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
 				</div>
 
 			default:
 				return <div>
-					<h2><i class="bi bi-slash-circle"></i> Unknown Error: {vnode.attrs.message}</h2>
+					<h2><i class="bi bi-question-octagon"></i> Unknown Error: {vnode.attrs.message}</h2>
 					An unrecognized error occurred.
 					To return to conversations, you must <span role="link" class="link" onclick={() => location.reload()}>reload this page</span>.
 				</div>

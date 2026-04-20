@@ -17,6 +17,8 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 // Model Objects
 import { ConfigID } from "../model/config"
 import { NewConfig } from "../model/config"
+import { diffArrays, newId } from "./utils"
+import type { IHost } from "./interfaces"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
@@ -78,8 +80,10 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 export class Database {
 	#db: IDBPDatabase<Schema>
 	#onchange: callbackFunction
+	#host: IHost
 
-	constructor(db: IDBPDatabase<Schema>) {
+	constructor(host: IHost, db: IDBPDatabase<Schema>) {
+		this.#host = host
 		this.#db = db
 		this.#onchange = () => { }
 	}
@@ -90,8 +94,14 @@ export class Database {
 
 	erase = () => {
 		console.log("Erasing database: ", this.#db.name)
+
 		this.#db.close()
 		var req = window.indexedDB.deleteDatabase(this.#db.name)
+
+		req.onsuccess = (event) => {
+			console.log("Database erased successfully: ", event)
+			this.#host.reload()
+		}
 
 		req.onerror = (event) => {
 			console.error("Unable to erase database: ", event)
@@ -155,6 +165,49 @@ export class Database {
 
 	// saveGroup saves a group to the database
 	saveGroup = async (group: Group) => {
+
+		console.log("saveGroup", group)
+
+		// Load the previous group members for comparison later
+		const previousGroup = await this.loadGroup(group.id)
+		const previousMembers = previousGroup?.members || []
+		console.log(previousGroup, previousMembers)
+		const { added, removed } = diffArrays(previousMembers, group.members)
+
+		console.log(added, removed)
+
+		// Add a status message to the conversation for
+		// each new member that was added.
+		added.forEach(member => {
+
+			const statusMessage = NewMessage({
+				id: newId(),
+				groupId: group.id,
+				type: "ADD-ACTOR",
+				sender: member,
+			})
+
+			this.saveMessage(statusMessage)
+		})
+
+		// Add a status message to the conversation for 
+		// each member that was removed.
+		removed.forEach(member => {
+
+			const statusMessage = NewMessage({
+				id: newId(),
+				groupId: group.id,
+				type: "REMOVE-ACTOR",
+				sender: member,
+			})
+
+			this.saveMessage(statusMessage)
+		})
+
+		// RULE: Truncate lastMessage to 100 characters for display purposes
+		group.lastMessage = group.lastMessage.slice(0, 100)
+
+
 		await this.#db.put("group", group)
 		this.#onchange()
 	}

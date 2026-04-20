@@ -85,3 +85,14 @@ export function messageToActivityStream(group: Group, message: Message): { [key:
 		published: new Date().toISOString(),
 	}
 }
+
+// diffArrays compares two arrays and returns the added and removed items
+export function diffArrays<T>(before: T[], after: T[]) {
+	const beforeSet = new Set(before);
+	const afterSet = new Set(after);
+
+	return {
+		added: after.filter(item => !beforeSet.has(item)),
+		removed: before.filter(item => !afterSet.has(item)),
+	};
+}

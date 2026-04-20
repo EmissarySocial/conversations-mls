@@ -79,8 +79,6 @@ export class Delivery {
 
 		var result: Activity
 
-		console.log("Delivery.sendActivity", activity)
-
 		// Guarantee that we have a valid outbox URL
 		if (this.#outboxUrl == "") {
 			throw new Error("Outbox URL not set. Cannot send activity.")
@@ -95,6 +93,8 @@ export class Delivery {
 		} else {
 			result = new Activity(activity)
 		}
+
+		console.log("Delivery.sendActivity", activity.toObject())
 
 		// If necessary, encrypt the activity using MLS before sending
 		// Send the Activity to the server

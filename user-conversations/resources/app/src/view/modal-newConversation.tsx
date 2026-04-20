@@ -149,6 +149,16 @@ export class NewConversation {
 	// onsubmit creates a new group with the selected participants, sends the content message, and closes the dialog
 	async onsubmit(event: SubmitEvent, vnode: NewConversationVnode) {
 
+		// RULE: Do not allow submission if there is no content
+		if (vnode.state.content == "") {
+			return
+		}
+
+		// RULE: Do not allow submission if there are no participants
+		if (vnode.state.actors.length == 0) {
+			return
+		}
+
 		// Collect variables
 		const participants = vnode.state.actors.map((actor) => actor.id())
 		const controller = vnode.attrs.controller
