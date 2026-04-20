@@ -40,7 +40,7 @@ export class AppSettings {
 			<div id="conversations" class="app-content">
 				<div class="padding width-800">
 					<div class="flex-row flex-align-center margin-bottom">
-						<div class="clickable circle width-32 margin-none flex-center" onclick={() => controller.page_index()}><i class="bi bi-arrow-left"></i></div>
+						<div class="clickable circle width-32 margin-none flex-center" onclick={() => controller.page_index()} tabIndex="0"><i class="bi bi-arrow-left"></i></div>
 						<div class="text-lg bold margin-none">Conversation Settings</div>
 					</div>
 
