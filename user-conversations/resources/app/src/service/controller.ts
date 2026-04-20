@@ -103,6 +103,8 @@ export class Controller {
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
+
+		// window.setTimeout(() => this.#start(), 1000) // Start the app after a short delay (for testing)
 		this.#start()
 	}
 

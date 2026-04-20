@@ -39,8 +39,12 @@ export class AppSettings {
 		return (
 			<div id="conversations" class="app-content">
 				<div class="padding width-800">
+					<div class="flex-row flex-align-center margin-bottom">
+						<div class="clickable circle width-32 margin-none flex-center" onclick={() => controller.page_index()}><i class="bi bi-arrow-left"></i></div>
+						<div class="text-lg bold margin-none">Conversation Settings</div>
+					</div>
+
 					<div class="card padding">
-						<div class="text-lg bold margin-bottom">Conversation Settings</div>
 						<form onsubmit={(event: SubmitEvent) => this.submit(event, vnode)}>
 							<div class="layout-vertical">
 								<div class="layout-elements">

@@ -44,7 +44,7 @@ export class AppSignIn {
 						:
 						<form onsubmit={(event: SubmitEvent) => this.submit(vnode, event)}>
 							<div class="margin-vertical flex-row">
-								<input id="passcode" type="password" class="flex-grow" hint="Conversation Passcode" oninput={(event: Event) => this.setPasscode(vnode, event)} value={vnode.state.passcode} />
+								<input id="passcode" type="password" class="flex-grow" hint="Conversation Passcode" oninput={(event: Event) => this.setPasscode(vnode, event)} value={vnode.state.passcode} autocomplete="off" />
 								<button type="submit" class="primary" tabIndex="0"><i class="bi bi-arrow-right"></i></button>
 							</div>
 						</form>

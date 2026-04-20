@@ -517,6 +517,7 @@ export class MLS {
 			state: group.clientState,
 			message: mlsMessage,
 			callback: (message) => {
+				console.log("Received MLS message with callback", message)
 				return "accept"
 			}
 		})

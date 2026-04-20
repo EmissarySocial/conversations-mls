@@ -8,6 +8,7 @@ import { AppBlurred } from "./app-blurred"
 import { AppSettings } from "./app-settings"
 import { AppStopped } from "./app-stopped"
 import { AppSignIn } from "./app-signin"
+import { AppLoading } from "./app-loading"
 
 type AppVnode = Vnode<AppAttrs, AppState>
 
@@ -42,7 +43,7 @@ export class App {
 		switch (controller.pageView) {
 
 			case "LOADING":
-				return <div class="app-content">Loading...</div>
+				return <AppLoading />
 
 			case "SETTINGS":
 				return <AppSettings controller={controller} />
