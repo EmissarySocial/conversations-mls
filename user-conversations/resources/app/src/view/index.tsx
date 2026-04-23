@@ -80,6 +80,9 @@ export class Index {
 			case "EDIT-MESSAGE":
 				return <EditMessage controller={controller} close={() => this.closeModal(vnode)} />
 
+			case "MESSAGE-SEND-EMOJI":
+				return <PickEmoji controller={controller} onselect={controller.modal_sendEmoji_callback} close={() => this.closeModal(vnode)} />
+
 			case "MESSAGE-START-REACTION":
 				return <PickEmoji controller={controller} onselect={controller.modal_startReaction_callback} close={() => this.closeModal(vnode)} />
 

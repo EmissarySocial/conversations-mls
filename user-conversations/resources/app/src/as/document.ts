@@ -21,6 +21,10 @@ export class Document extends Object {
 		return this.getString("as", "attributedTo")
 	}
 
+	attachment = () => {
+		return this.getString("as", "attachment")
+	}
+
 	// content returns the value of the "content" property
 	content = () => {
 		return this.getString("as", "content")

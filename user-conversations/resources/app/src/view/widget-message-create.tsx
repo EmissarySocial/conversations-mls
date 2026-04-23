@@ -20,20 +20,16 @@ export class WidgetMessageCreate {
 
 	view(vnode: WidgetMessageCreateVnode) {
 
-		const group = vnode.attrs.controller.groupStream()
+		const controller = vnode.attrs.controller
+		const group = controller.groupStream()
 
 		// Do not allow the user to add more messages if this group is closed.
 		if (group.stateId === "CLOSED") {
 			return <div class="card padding-vertical-xl padding-horizontal align-center bg-stripes">
 				This conversation is closed. You can no longer send messages here.
-				But you can <span class="link" onclick={() => vnode.attrs.controller.modal_newConversation()}>start a new conversation</span>.
+				But you can <span class="link" onclick={() => controller.modal_newConversation()}>start a new conversation</span>.
 			</div>
 		}
-
-		const enabled = vnode.state.message.trim() !== ""
-		const disabled = !enabled
-
-		const color = enabled ? "var(--blue50)" : "var(--gray30)"
 
 		return (
 			<div class="flex-row flex-justify">
@@ -50,7 +46,7 @@ export class WidgetMessageCreate {
 
 						<button
 							tabIndex="0"
-							onclick={() => alert("Emoji picker coming soon!")}
+							onclick={() => controller.modal_sendEmoji()}
 							style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
 
 						<label
@@ -61,7 +57,13 @@ export class WidgetMessageCreate {
 
 					</div>
 				</div>
-				<input type="file" id="fileInput" style="display:none;" />
+
+				<input
+					type="file"
+					id="fileInput"
+					style="display:none;"
+					onchange={(e: Event) => this.sendFile(vnode, e)}>
+				</input>
 			</div>
 		)
 	}
@@ -108,5 +110,38 @@ export class WidgetMessageCreate {
 
 		vnode.attrs.controller.sendMessage(vnode.state.message)
 		vnode.state.message = ""
+	}
+
+	sendFile(vnode: WidgetMessageCreateVnode, event: Event) {
+
+		const target = event.target as HTMLInputElement
+		if (!target.files || target.files.length === 0) {
+			return
+		}
+
+		const file = target.files[0]
+
+		if (!file) {
+			console.error("No file selected.")
+			return
+		}
+
+		const reader = new FileReader()
+		reader.onload = () => {
+			var base64: string = reader.result as string
+
+			if (reader.result == null) {
+				return
+			}
+
+			vnode.attrs.controller.sendFile(base64)
+		}
+
+		reader.onerror = () => {
+			console.error("Error reading file:", reader.error)
+		}
+
+		reader.readAsDataURL(file)
+
 	}
 }

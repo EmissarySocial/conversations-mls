@@ -77,22 +77,21 @@
 					min-width:320px;
 					width:66%;
 					max-width:600px;
-					flex-grow: 1;
+					flex-grow: 1;				
+				}
 
-					.message-options {
-						margin-top:12px;
+				.message-options {
+					margin-top:12px;
+					font-size:12px;
+
+					button {
+						background-color:inherit;
+						border-color:inherit;
+						color: inherit;
 						font-size:12px;
-
-						button {
-							background-color:inherit;
-							border-color:inherit;
-							color: inherit;
-							font-size:12px;
-							padding: 4px 8px;
-							margin:0px;
-						}
+						padding: 4px 8px;
+						margin:0px;
 					}
-				
 				}
 
 				&.sent {
@@ -104,7 +103,8 @@
 						border-color: var(--blue50);
 						color:white;
 
-						button {
+						a, button {
+							color: inherit;
 
 							&:hover {
 								background-color:rgba(0,0,0,0.1);
@@ -124,8 +124,11 @@
 					.bubble {
 						background-color: var(--gray10);
 						border-color: var(--gray10);
+						max-width:800px;
+						width:80%;
 
-						button {
+						a, button {
+							color:inherit;
 
 							&:hover {
 								background-color:rgba(0,0,0,0.1);

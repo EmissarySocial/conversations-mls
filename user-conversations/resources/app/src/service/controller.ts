@@ -435,13 +435,32 @@ export class Controller {
 		this.modalView = "MESSAGE-HISTORY"
 	}
 
+	modal_sendEmoji = async () => {
+		this.modalView = "MESSAGE-SEND-EMOJI"
+	}
+
+	modal_sendEmoji_callback = async (emoji: Emoji) => {
+
+		this.modalView = ""
+		const group = this.groupStream()
+
+		if (group.stateId == "CLOSED") {
+			console.error("Cannot send emoji post to a CLOSED group.")
+			return
+		}
+
+		this.sendMessage(emoji.emoji)
+	}
+
 	modal_startReaction = async (message: Message) => {
 		this.message = message
 		this.modalView = "MESSAGE-START-REACTION"
-		// this.emojiCallback = callback
 	}
 
 	modal_startReaction_callback = async (emoji: Emoji) => {
+
+		// Close the modal dialog
+		this.modalView = ""
 
 		// "current message" must be defined
 		if (this.message == undefined) {
@@ -449,12 +468,12 @@ export class Controller {
 			return
 		}
 
-		// Create the reaction
-		await this.reactToMessage(this.message.id, emoji.emoji)
-
-		// Close the modal dialog
+		// Deselect the "current message"
+		const messageId = this.message.id
 		this.message = undefined
-		this.modalView = ""
+
+		// Create the reaction
+		await this.reactToMessage(messageId, emoji.emoji)
 
 		// Redraw the UX
 		m.redraw()
@@ -896,6 +915,48 @@ export class Controller {
 		this.#sendActivity(group, activity)
 	}
 
+	// sendFile sends a base64-encoded file to the specified group
+	sendFile = async (file: string) => {
+
+		// Get the currently selected group
+		var group = this.groupStream()
+
+		if (group.id == "") {
+			throw new Error("No group selected")
+		}
+
+		// Create a new Message record and save to the database
+		var message = NewMessage()
+		message.groupId = group.id
+		message.sender = this.#actor.id()
+		message.attachment = file
+		message.type = "SENT"
+
+		if (this.inReplyTo != undefined) {
+			message.inReplyTo = this.inReplyTo.id
+			this.removeReply()
+		}
+
+		// Save message and reload to refresh the UX
+		await this.#database.saveMessage(message)
+		await this.loadMessages()
+
+		// Update the group with the message content
+		await this.saveGroup(group)
+
+		// Create an ActivityPub activity 
+		var activity = new Activity({
+			context: group.id,
+			actor: this.actorId(),
+			type: vocab.ActivityTypeCreate,
+			to: group.members,
+			object: messageToActivityStream(group, message),
+		})
+
+		// (asynchronously) Send the activity through the delivery service
+		this.#sendActivity(group, activity)
+	}
+
 	updateMessage = async (message: Message) => {
 
 		var group = this.groupStream()
@@ -1216,7 +1277,7 @@ export class Controller {
 			throw new Error("Group not found for incoming message")
 		}
 
-		// Create a new message record in the database for this incoming message
+		// Create a new message record in the database for this incoming message.
 		const sentByMe = (object.attributedToId() == this.actorId())
 		const message = NewMessage({
 			id: object.id(),
@@ -1224,6 +1285,7 @@ export class Controller {
 			type: (sentByMe ? "SENT" : "RECEIVED"),
 			sender: object.attributedToId(),
 			content: object.content(),
+			attachment: object.attachment(),
 			reactions: {},
 			history: [],
 			received: [],

@@ -8,6 +8,7 @@ export type MessageData = {
 	sender: string
 	inReplyTo: string
 	content: string
+	attachment: string
 	reactions: { [key: string]: string[] }
 	history: string[]
 	received: string[] // List of actor IDs that have received this message
@@ -26,6 +27,7 @@ export class Message {
 	sender: string = ""
 	inReplyTo: string = ""
 	content: string = ""
+	attachment: string = ""
 	reactions: { [key: string]: string[] } = {}
 	history: string[] = []
 	received: string[] = [] // List of actor IDs that have received this message

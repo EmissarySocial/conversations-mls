@@ -5,13 +5,13 @@ import { Controller } from "../service/controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
+import { formatFileSize, isEmoji } from "./utils"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
 type ViewMessageAttrs = {
 	controller: Controller
 	message: Message
-	showOptions: boolean
 	showDate: string
 	sender?: Stream<Contact>
 }
@@ -37,18 +37,59 @@ export class ViewMessage {
 
 		switch (message.type) {
 
-			case "SENT":
+			case "SENT": {
+
+				if (isEmoji(message.content)) {
+					return (
+						<div class="message sent">
+							<div>
+								<div class="align-center margin-none padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
+								<div class="message-options flex-row flex-align-center">
+									<div class="text-gray">
+										<button tabIndex="0" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>
+										{this.drawAcknowledgements(vnode)}
+										{this.drawPostTime(vnode)}
+									</div>
+								</div>
+							</div>
+						</div>
+					)
+				}
 
 				return (
 					<div class="message sent">
-						<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
-							<div class="padding-xs">{message.content}</div>
+						<div class="bubble">
+							{this.drawContent(message)}
 							{this.drawReactions(vnode)}
 						</div>
 					</div>
 				)
+			}
 
-			case "RECEIVED":
+			case "RECEIVED": {
+
+				if (isEmoji(message.content)) {
+					return (
+						<div class="message received">
+
+							<div class="sender-icon"></div>
+
+							<div class="flex-grow">
+								{(sender != undefined) && (
+									<div class="sender">{sender.name || "..."}</div>
+								)}
+								<div>
+									<div class="padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
+									<div class="message-options flex-row flex-align-center">
+										<div class="text-gray">
+											{this.drawPostTime(vnode)}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					)
+				}
 
 				return (
 					<div class="message received">
@@ -61,13 +102,14 @@ export class ViewMessage {
 							{(sender != undefined) && (
 								<div class="sender">{sender.name || "..."}</div>
 							)}
-							<div class="bubble" onclick={() => vnode.attrs.showOptions = true}>
-								<div class="padding-xs">{message.content}</div>
+							<div class="bubble">
+								{this.drawContent(message)}
 								{this.drawReactions(vnode)}
 							</div>
 						</div>
 					</div>
 				)
+			}
 
 			case "ADD-ACTOR": {
 
@@ -118,6 +160,21 @@ export class ViewMessage {
 		}
 
 		throw new Error(`Unknown message type: ${message.type}`)
+	}
+
+	drawContent(message: Message): JSX.Element {
+
+		if (message.attachment != "") {
+
+			if (message.attachment.startsWith("data:image")) {
+				return <img src={message.attachment} class="width-100% rounded" />
+			}
+
+			return <a href={message.attachment}><i class="bi bi-file-earmark-arrow-down"></i> Download File ({formatFileSize(message.attachment.length)})</a>
+
+		}
+
+		return <div class="padding-xs">{message.content}</div>
 	}
 
 	drawReactions(vnode: ViewMessageVnode): (JSX.Element | undefined) {

@@ -15112,6 +15112,7 @@
     sender = "";
     inReplyTo = "";
     content = "";
+    attachment = "";
     reactions = {};
     history = [];
     received = [];
@@ -15214,6 +15215,7 @@
       to: group.members,
       context: group.id,
       content: message.content,
+      attachment: message.attachment,
       published: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
@@ -15691,6 +15693,9 @@
     // attributedToId returns the string/id value of the "attributedTo" property
     attributedToId = () => {
       return this.getString("as", "attributedTo");
+    };
+    attachment = () => {
+      return this.getString("as", "attachment");
     };
     // content returns the value of the "content" property
     content = () => {
@@ -17464,18 +17469,31 @@
       this.message = message;
       this.modalView = "MESSAGE-HISTORY";
     };
+    modal_sendEmoji = async () => {
+      this.modalView = "MESSAGE-SEND-EMOJI";
+    };
+    modal_sendEmoji_callback = async (emoji) => {
+      this.modalView = "";
+      const group = this.groupStream();
+      if (group.stateId == "CLOSED") {
+        console.error("Cannot send emoji post to a CLOSED group.");
+        return;
+      }
+      this.sendMessage(emoji.emoji);
+    };
     modal_startReaction = async (message) => {
       this.message = message;
       this.modalView = "MESSAGE-START-REACTION";
     };
     modal_startReaction_callback = async (emoji) => {
+      this.modalView = "";
       if (this.message == void 0) {
         console.error("No message selected for reaction");
         return;
       }
-      await this.reactToMessage(this.message.id, emoji.emoji);
+      const messageId = this.message.id;
       this.message = void 0;
-      this.modalView = "";
+      await this.reactToMessage(messageId, emoji.emoji);
       import_mithril.default.redraw();
     };
     //////////////////////////////////////////
@@ -17743,6 +17761,33 @@
       });
       this.#sendActivity(group, activity);
     };
+    // sendFile sends a base64-encoded file to the specified group
+    sendFile = async (file) => {
+      var group = this.groupStream();
+      if (group.id == "") {
+        throw new Error("No group selected");
+      }
+      var message = NewMessage();
+      message.groupId = group.id;
+      message.sender = this.#actor.id();
+      message.attachment = file;
+      message.type = "SENT";
+      if (this.inReplyTo != void 0) {
+        message.inReplyTo = this.inReplyTo.id;
+        this.removeReply();
+      }
+      await this.#database.saveMessage(message);
+      await this.loadMessages();
+      await this.saveGroup(group);
+      var activity = new Activity({
+        context: group.id,
+        actor: this.actorId(),
+        type: ActivityTypeCreate,
+        to: group.members,
+        object: messageToActivityStream(group, message)
+      });
+      this.#sendActivity(group, activity);
+    };
     updateMessage = async (message) => {
       var group = this.groupStream();
       if (message.sender != this.actorId()) {
@@ -17945,6 +17990,7 @@
         type: sentByMe ? "SENT" : "RECEIVED",
         sender: object.attributedToId(),
         content: object.content(),
+        attachment: object.attachment(),
         reactions: {},
         history: [],
         received: [],
@@ -18239,6 +18285,17 @@
     const firstElement = focusElements[0];
     const lastElement = focusElements[focusElements.length - 1];
     return [firstElement, lastElement];
+  }
+  function isEmoji(char) {
+    return /\p{Extended_Pictographic}/u.test(char);
+  }
+  function formatFileSize(bytes) {
+    if (bytes === 0) {
+      return "0 Bytes";
+    }
+    const units = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return `${Math.round(bytes / Math.pow(1024, i))} ${units[i]}`;
   }
 
   // src/view/modal.tsx
@@ -18566,13 +18623,11 @@
       vnode.state.message = "";
     }
     view(vnode) {
-      const group = vnode.attrs.controller.groupStream();
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
       if (group.stateId === "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding-vertical-xl padding-horizontal align-center bg-stripes" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => vnode.attrs.controller.modal_newConversation() }, "start a new conversation"), ".");
+        return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "card padding-vertical-xl padding-horizontal align-center bg-stripes" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "link", onclick: () => controller2.modal_newConversation() }, "start a new conversation"), ".");
       }
-      const enabled = vnode.state.message.trim() !== "";
-      const disabled = !enabled;
-      const color = enabled ? "var(--blue50)" : "var(--gray30)";
       return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-justify" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "input", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril11.default)(
         "textarea",
         {
@@ -18586,7 +18641,7 @@
         "button",
         {
           tabIndex: "0",
-          onclick: () => alert("Emoji picker coming soon!"),
+          onclick: () => controller2.modal_sendEmoji(),
           style: "font-size:16px;"
         },
         /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-emoji-smile" })
@@ -18599,7 +18654,15 @@
           style: "font-size:16px;"
         },
         /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-image" })
-      ))), /* @__PURE__ */ (0, import_mithril11.default)("input", { type: "file", id: "fileInput", style: "display:none;" }));
+      ))), /* @__PURE__ */ (0, import_mithril11.default)(
+        "input",
+        {
+          type: "file",
+          id: "fileInput",
+          style: "display:none;",
+          onchange: (e) => this.sendFile(vnode, e)
+        }
+      ));
     }
     drawReply(vnode) {
       if (vnode.attrs.inReplyTo == void 0) {
@@ -18626,6 +18689,29 @@
       vnode.attrs.controller.sendMessage(vnode.state.message);
       vnode.state.message = "";
     }
+    sendFile(vnode, event) {
+      const target = event.target;
+      if (!target.files || target.files.length === 0) {
+        return;
+      }
+      const file = target.files[0];
+      if (!file) {
+        console.error("No file selected.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        var base64 = reader.result;
+        if (reader.result == null) {
+          return;
+        }
+        vnode.attrs.controller.sendFile(base64);
+      };
+      reader.onerror = () => {
+        console.error("Error reading file:", reader.error);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // src/view/message.tsx
@@ -18644,10 +18730,18 @@
       }
       const senderName = sender?.name || message.sender;
       switch (message.type) {
-        case "SENT":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode)));
-        case "RECEIVED":
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble", onclick: () => vnode.attrs.showOptions = true }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content), this.drawReactions(vnode))));
+        case "SENT": {
+          if (isEmoji(message.content)) {
+            return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "align-center margin-none padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit"), this.drawAcknowledgements(vnode), this.drawPostTime(vnode)))));
+          }
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(message), this.drawReactions(vnode)));
+        }
+        case "RECEIVED": {
+          if (isEmoji(message.content)) {
+            return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, this.drawPostTime(vnode))))));
+          }
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(message), this.drawReactions(vnode))));
+        }
         case "ADD-ACTOR": {
           const contact = vnode.attrs.controller.getContactStream(message.sender)();
           return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;" }), contact.name), " ", " ", "JOINED the group at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
@@ -18663,6 +18757,15 @@
         case "REMOVE-DEVICE":
       }
       throw new Error(`Unknown message type: ${message.type}`);
+    }
+    drawContent(message) {
+      if (message.attachment != "") {
+        if (message.attachment.startsWith("data:image")) {
+          return /* @__PURE__ */ (0, import_mithril12.default)("img", { src: message.attachment, class: "width-100% rounded" });
+        }
+        return /* @__PURE__ */ (0, import_mithril12.default)("a", { href: message.attachment }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(message.attachment.length), ")");
+      }
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content);
     }
     drawReactions(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -19171,6 +19274,8 @@
           return /* @__PURE__ */ (0, import_mithril31.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
         case "EDIT-MESSAGE":
           return /* @__PURE__ */ (0, import_mithril31.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
+        case "MESSAGE-SEND-EMOJI":
+          return /* @__PURE__ */ (0, import_mithril31.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_sendEmoji_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-START-REACTION":
           return /* @__PURE__ */ (0, import_mithril31.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-HISTORY":
