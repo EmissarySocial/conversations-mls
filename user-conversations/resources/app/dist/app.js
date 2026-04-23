@@ -15112,7 +15112,7 @@
     sender = "";
     inReplyTo = "";
     content = "";
-    attachment = "";
+    attachments = [];
     reactions = {};
     history = [];
     received = [];
@@ -17770,7 +17770,7 @@
       var message = NewMessage();
       message.groupId = group.id;
       message.sender = this.#actor.id();
-      message.attachment = file;
+      message.attachments = [file];
       message.type = "SENT";
       if (this.inReplyTo != void 0) {
         message.inReplyTo = this.inReplyTo.id;
@@ -17990,7 +17990,7 @@
         type: sentByMe ? "SENT" : "RECEIVED",
         sender: object.attributedToId(),
         content: object.content(),
-        attachment: object.attachment(),
+        attachments: [object.attachment()],
         reactions: {},
         history: [],
         received: [],

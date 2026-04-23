@@ -929,7 +929,7 @@ export class Controller {
 		var message = NewMessage()
 		message.groupId = group.id
 		message.sender = this.#actor.id()
-		message.attachment = file
+		message.attachments = [file]
 		message.type = "SENT"
 
 		if (this.inReplyTo != undefined) {
@@ -1285,7 +1285,7 @@ export class Controller {
 			type: (sentByMe ? "SENT" : "RECEIVED"),
 			sender: object.attributedToId(),
 			content: object.content(),
-			attachment: object.attachment(),
+			attachments: [object.attachment()],
 			reactions: {},
 			history: [],
 			received: [],
