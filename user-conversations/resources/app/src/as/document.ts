@@ -12,57 +12,57 @@ export class Document extends Object {
 
 	// attributedTo returns the value of the "attributedTo" property
 	attributedTo = async () => {
-		const attributedTo = this.get("as", "attributedTo")
+		const attributedTo = this.get("as", vocab.PropertyAttributedTo)
 		return await loadActor(attributedTo)
 	}
 
 	// attributedToId returns the string/id value of the "attributedTo" property
 	attributedToId = () => {
-		return this.getString("as", "attributedTo")
+		return this.getString("as", vocab.PropertyAttributedTo)
 	}
 
 	attachment = () => {
-		return this.getString("as", "attachment")
+		return this.getString("as", vocab.PropertyAttachment)
 	}
 
 	// content returns the value of the "content" property
 	content = () => {
-		return this.getString("as", "content")
+		return this.getString("as", vocab.PropertyContent)
 	}
 
-	description = () => {
-		return this.getString("as", "description")
+	generator = () => {
+		return this.getString("as", vocab.PropertyGenerator)
 	}
 
 	// icon returns the value of the "icon" property
 	icon = () => {
-		return this.getString("as", "icon")
+		return this.getString("as", vocab.PropertyIcon)
 	}
 
 	// inReplyTo returns the string/id value of the "inReplyTo" property
 	inReplyToId = () => {
-		return this.getString("as", "inReplyTo")
+		return this.getString("as", vocab.PropertyInReplyTo)
 	}
 
 	// inReplyTo returns the value of the "inReplyTo" property
 	inReplyTo = () => {
-		const inReplyTo = this.get("as", "inReplyTo")
+		const inReplyTo = this.get("as", vocab.PropertyInReplyTo)
 		return loadDocument(inReplyTo)
 	}
 
 	// name returns the value of the "name" property
 	name = () => {
-		return this.getString("as", "name")
+		return this.getString("as", vocab.PropertyName)
 	}
 
 	// summary returns the value of the "summary" property
 	summary = () => {
-		return this.getString("as", "summary")
+		return this.getString("as", vocab.PropertySummary)
 	}
 
 	// to returns the value of the "to" property
 	to = async () => {
-		const result = await this.getArray("as", "to")
+		const result = await this.getArray("as", vocab.PropertyTo)
 		return result.map(async (actor: any) => await loadActor(actor))
 	}
 

@@ -1,3 +1,4 @@
+import * as vocab from "./vocab"
 import { Object } from "./object"
 
 // Actor is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
@@ -9,33 +10,33 @@ export class Actor extends Object {
 
 	// icon returns the value of the "icon" property
 	icon = () => {
-		return this.getString("as", "icon")
+		return this.getString("as", vocab.PropertyIcon)
 	}
 
 	// id returns the value of the "id" property
 	id = () => {
-		return this.getString("as", "id")
+		return this.getString("as", vocab.PropertyId)
 	}
 
 	// name returns the value of the "name" property
 	name = () => {
-		return this.getString("as", "name")
+		return this.getString("as", vocab.PropertyName)
 	}
 
 	outbox = () => {
-		return this.getString("as", "outbox")
+		return this.getString("as", vocab.PropertyOutbox)
 	}
 
 	preferredUsername = () => {
-		return this.getString("as", "preferredUsername")
+		return this.getString("as", vocab.PropertyPreferredUsername)
 	}
 
 	summary = () => {
-		return this.getString("as", "summary")
+		return this.getString("as", vocab.PropertySummary)
 	}
 
 	type = () => {
-		return this.getString("as", "type")
+		return this.getString("as", vocab.PropertyType)
 	}
 
 	usernameOrId = () => {
@@ -46,11 +47,11 @@ export class Actor extends Object {
 	// MLS-specific properties
 
 	mlsMessages = () => {
-		return this.getString("mls", "messages")
+		return this.getString("mls", vocab.PropertyMlsMessages)
 	}
 
 	mlsKeyPackages = () => {
-		return this.getString("mls", "keyPackages")
+		return this.getString("mls", vocab.PropertyMlsKeyPackages)
 	}
 
 	///////////////////////////////////

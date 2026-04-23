@@ -650,7 +650,7 @@ export class Controller {
 				"id": group.id,
 				"type": vocab.ObjectTypeEmissaryContext,
 				"name": group.name,
-				"description": group.description,
+				"summary": group.summary,
 				"stateId": group.stateId,
 				"tag": group.tags,
 				"unread": group.unread,
@@ -1439,7 +1439,7 @@ export class Controller {
 		}
 
 		group.name = object.name()
-		group.description = object.description()
+		group.summary = object.summary()
 		group.tags = object.getArray("as", "tag")
 		group.unread = object.getBoolean("emissary", "unread")
 		this.setGroupState(group, object.getString("emissary", "stateId"))

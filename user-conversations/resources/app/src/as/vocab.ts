@@ -56,17 +56,35 @@ export const PropertyActor = "actor"
 
 export const PropertyAtContext = "@context"
 
+export const PropertyAttachment = "attachment"
+
+export const PropertyAttributedTo = "attributedTo"
+
 export const PropertyContent = "content"
 
 export const PropertyContext = "context"
 
 export const PropertyGenerator = "generator"
 
+export const PropertyIcon = "icon"
+
 export const PropertyId = "id"
+
+export const PropertyInReplyTo = "inReplyTo"
+
+export const PropertyMlsKeyPackages = "keyPackages"
+
+export const PropertyMlsMessages = "messages"
+
+export const PropertyName = "name"
 
 export const PropertyObject = "object"
 
-export const PropertyInReplyTo = "inReplyTo"
+export const PropertyOutbox = "outbox"
+
+export const PropertyPreferredUsername = "preferredUsername"
+
+export const PropertySummary = "summary"
 
 export const PropertyTarget = "target"
 
