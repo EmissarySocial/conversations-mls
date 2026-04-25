@@ -82,7 +82,7 @@ export function messageToActivityStream(group: Group, message: Message): { [key:
 		to: group.members,
 		context: group.id,
 		content: message.content,
-		attachment: message.attachment,
+		attachment: message.attachments,
 		published: new Date().toISOString(),
 	}
 }
