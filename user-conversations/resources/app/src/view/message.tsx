@@ -146,7 +146,7 @@ export class ViewMessage {
 			}
 
 			case "ADD-DEVICE": {
-				const Contact = vnode.attrs.controller.getContactStream(message.sender)
+				const contact = vnode.attrs.controller.getContactStream(message.sender)
 
 				return (
 					<div class="message status">
@@ -164,17 +164,19 @@ export class ViewMessage {
 
 	drawContent(message: Message): JSX.Element {
 
-		if (message.attachment != "") {
+		return <>
+			{message.attachments.map(attachment => (
+				attachment.startsWith("data:image") ? (
+					<img src={attachment} class="width-100% rounded" />
+				) : (
+					<a href={attachment} class="attachment" target="_blank" rel="noopener noreferrer">
+						<i class="bi bi-file-earmark-arrow-down"></i> Download File ({formatFileSize(attachment.length)})
+					</a>
+				)
+			))}
+			<div class="padding-xs">{message.content}</div>
+		</>
 
-			if (message.attachment.startsWith("data:image")) {
-				return <img src={message.attachment} class="width-100% rounded" />
-			}
-
-			return <a href={message.attachment}><i class="bi bi-file-earmark-arrow-down"></i> Download File ({formatFileSize(message.attachment.length)})</a>
-
-		}
-
-		return <div class="padding-xs">{message.content}</div>
 	}
 
 	drawReactions(vnode: ViewMessageVnode): (JSX.Element | undefined) {
