@@ -41,6 +41,10 @@ export class Activity extends Object {
 		return this.getString("as", vocab.PropertyContext)
 	}
 
+	instrument = () => {
+		return this.getString("as", vocab.PropertyInstrument)
+	}
+
 	// objectId returns the string value of the "object" property (which may be a URL or an embedded object)
 	objectId = () => {
 		return this.getString("as", vocab.PropertyObject)
@@ -57,6 +61,12 @@ export class Activity extends Object {
 	objectAsActivity = async () => {
 		const object = this.get("as", vocab.PropertyObject)
 		return await loadActivity(object)
+	}
+
+	// objectAsMap returns the value of the "object" property as a map.
+	// It does NOT load objectIds from the network, so is it useful in synchronous code.
+	objectAsMap = () => {
+		return this.getMap("as", vocab.PropertyObject)
 	}
 
 	// target returns the value of the "target" property
