@@ -104,7 +104,7 @@ export interface IDirectory {
 
 	// KeyPackage methods
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
-	createKeyPackage(publicPackage: KeyPackage): Promise<string>
+	createKeyPackage(publicPackage: KeyPackage): Promise<[string, string]>
 	updateKeyPackage(keyPackageId: string, publicPackage: KeyPackage): Promise<void>
 	deleteKeyPackage(keyPackageUrl: string): Promise<void>
 }

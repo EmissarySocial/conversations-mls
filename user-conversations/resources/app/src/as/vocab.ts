@@ -44,6 +44,8 @@ export const ObjectTypeNote = "Note"
 
 export const ObjectTypeEmissaryContext = "emissary:Context"
 
+export const ObjectTypeMlsKeyPackage = "mls:KeyPackage"
+
 export const ObjectTypeMlsPrivateMessage = "mls:PrivateMessage"
 
 export const ObjectTypeMlsGroupInfo = "mls:GroupInfo"
@@ -71,6 +73,8 @@ export const PropertyIcon = "icon"
 export const PropertyId = "id"
 
 export const PropertyInReplyTo = "inReplyTo"
+
+export const PropertyInstrument = "instrument"
 
 export const PropertyMlsKeyPackages = "keyPackages"
 

@@ -8,6 +8,7 @@ import type { KeyPackage } from "ts-mls"
 // ActivityPub objects
 import { Actor } from "../as/actor"
 import { Activity } from "../as/activity"
+import { Document } from "../as/document"
 import * as vocab from "../as/vocab"
 
 // Model objects
@@ -30,7 +31,7 @@ import { MLS } from "./mls"
 
 // Other utility functions
 import { cipherSuiteImplementation, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, newKeyPackage, unwrapKey, wrapKey } from "./cryptography"
-import { diffArrays, messageToActivityStream } from "./utils"
+import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
 import type { Emoji } from "../model/emoji"
 import type { DBKeyPackage } from "../model/db-keypackage"
@@ -294,7 +295,6 @@ export class Controller {
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
-		console.log("Stopping application:", message)
 		this.#database.stop()
 		this.#delivery.stop()
 		this.#receiver.stop()
@@ -524,6 +524,7 @@ export class Controller {
 	// existing KeyPackage, then the new one is created
 	createOrUpdateKeyPackage = async (): Promise<DBKeyPackage> => {
 
+		var activityId: string
 		var keyPackageId: string
 
 		// Generate initial key package for this user
@@ -534,7 +535,9 @@ export class Controller {
 
 		// If we don't already have a KeyPackage, then create a new one
 		if (keyPackage == undefined) {
-			keyPackageId = await this.#directory.createKeyPackage(keyPackageResult.publicPackage)
+			[activityId, keyPackageId] = await this.#directory.createKeyPackage(keyPackageResult.publicPackage)
+			await this.lastMessage(activityId)
+
 		} else {
 
 			// Otherwise, update the existing KeyPackage
@@ -812,6 +815,8 @@ export class Controller {
 
 	removeGroupMember = async (actorId: string) => {
 
+		console.log("removeGroupMember: " + actorId)
+
 		var group = this.groupStream()
 
 		// Special logic for encrypted groups
@@ -830,8 +835,6 @@ export class Controller {
 			// Remove the member from the regular group list
 			group.members = group.members.filter((member) => member != actorId)
 		}
-
-		console.log("HEre???")
 
 		// Recalculate the default group name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -1137,21 +1140,13 @@ export class Controller {
 	receiveActivity = async (activity: Activity) => {
 
 		console.log("Received activity:", activity.toObject())
+		var object: Document
 
 		// Part 1: Parse and possibly decode the received activity
 		try {
 			// Retrieve the object from the activity. This should be embedded,
 			// but we can load from the network if needed.
 			var object = await activity.object()
-			console.log("Got object:", object.toObject())
-
-			// RULE: Activities must match the object that they contain
-			if (object.attributedToId() != "") {
-				if (activity.actorId() != object.attributedToId()) {
-					console.log("Activity actor does not match object attributedTo. Ignoring activity.")
-					return
-				}
-			}
 
 			// Decode MLS-encrypted messages
 			if (object.isMLSMessage()) {
@@ -1162,7 +1157,7 @@ export class Controller {
 				}
 
 				// Decode the message embedded in the object.content.
-				const decodedActivity = await this.#mls.receiveActivity(object.content())
+				const decodedActivity = await this.#mls.receiveActivity(activity, object)
 
 				// If the activity is null, then the MLS decoder has done all of the work.
 				// There's nothing more to do, so exit.
@@ -1195,7 +1190,13 @@ export class Controller {
 					return await this.#receiveActivity_Acknowledge(activity)
 
 				case vocab.ActivityTypeCreate:
-					return await this.#receiveActivity_CreateMessage(activity)
+
+					switch (object.type()) {
+						case vocab.ObjectTypeMlsKeyPackage:
+							return
+						default:
+							return await this.#receiveActivity_CreateMessage(activity)
+					}
 
 				case vocab.ActivityTypeDelete:
 					return await this.#receiveActivity_DeleteMessage(activity)
@@ -1285,7 +1286,6 @@ export class Controller {
 			type: (sentByMe ? "SENT" : "RECEIVED"),
 			sender: object.attributedToId(),
 			content: object.content(),
-			attachments: [object.attachment()],
 			reactions: {},
 			history: [],
 			received: [],
@@ -1293,6 +1293,10 @@ export class Controller {
 			createDate: Date.now(),
 			updateDate: Date.now(),
 		})
+
+		if (object.attachment() != "") {
+			message.attachments = [object.attachment()]
+		}
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
@@ -1302,8 +1306,23 @@ export class Controller {
 
 		// Mark the group as "unread"
 		if (!sentByMe) {
+
+			// If not currentlly viewing this group
 			if (groupId != this.selectedGroupId()) {
+
+				// Mark it as "unread"
 				group.unread = true
+
+				// Send desktop notifications (if requested)
+				if (this.config.isDesktopNotifications) {
+					if (Notification.permission === "granted") {
+						if (this.isWindowFocused == false) {
+							new Notification(message.sender, {
+								body: message.content,
+							})
+						}
+					}
+				}
 			}
 		}
 
@@ -1315,22 +1334,10 @@ export class Controller {
 			actor: this.actorId(),
 			type: vocab.ActivityTypeAcknowledge,
 			to: [message.sender],
-			object: message.id,
+			object: object.id(),
 			context: group.id,
 		})
 
-		// Send desktop notifications (if requested)
-		if (this.config.isDesktopNotifications) {
-			if (Notification.permission === "granted") {
-				if (!sentByMe) {
-					if (this.isWindowFocused == false) {
-						new Notification(message.sender, {
-							body: message.content,
-						})
-					}
-				}
-			}
-		}
 	}
 
 	#receiveActivity_Failure = async (activity: Activity) => {
@@ -1364,7 +1371,6 @@ export class Controller {
 
 		// RULE: Only listen to "Leave" activities from myself.
 		if (activity.actorId() != this.actorId()) {
-			console.log("Ignoring 'Leave' activity from other actor:", activity)
 			return
 		}
 
@@ -1496,6 +1502,9 @@ export class Controller {
 		if (!(activity instanceof Activity)) {
 			activity = new Activity(activity)
 		}
+
+		// Apply the "instrument" property to the activity to identify that it came from this client.
+		activity.set(vocab.PropertyInstrument, this.config.generatorId)
 
 		// If this is a plaintext group, then just send the message without any more processing.
 		if (!groupIsEncrypted(group)) {

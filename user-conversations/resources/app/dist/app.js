@@ -15088,7 +15088,7 @@
       stateId: "ACTIVE",
       name: "",
       defaultName: "",
-      description: "",
+      summary: "",
       tags: [],
       lastMessage: "",
       members: [],
@@ -15165,15 +15165,30 @@
   var MediaTypeMLSMessage = "message/mls";
   var ObjectTypeNote = "Note";
   var ObjectTypeEmissaryContext = "emissary:Context";
+  var ObjectTypeMlsKeyPackage = "mls:KeyPackage";
   var ObjectTypeMlsPrivateMessage = "mls:PrivateMessage";
   var ObjectTypeMlsGroupInfo = "mls:GroupInfo";
   var ObjectTypeMlsWelcome = "mls:Welcome";
   var PropertyActor = "actor";
+  var PropertyAttachment = "attachment";
+  var PropertyAttributedTo = "attributedTo";
+  var PropertyContent = "content";
   var PropertyContext = "context";
   var PropertyGenerator = "generator";
+  var PropertyIcon = "icon";
+  var PropertyId = "id";
+  var PropertyInReplyTo = "inReplyTo";
+  var PropertyInstrument = "instrument";
+  var PropertyMlsKeyPackages = "keyPackages";
+  var PropertyMlsMessages = "messages";
+  var PropertyName = "name";
   var PropertyObject = "object";
+  var PropertyOutbox = "outbox";
+  var PropertyPreferredUsername = "preferredUsername";
+  var PropertySummary = "summary";
   var PropertyTarget = "target";
   var PropertyTo = "to";
+  var PropertyType = "type";
 
   // src/service/utils.ts
   function base64ToUint8Array(base64) {
@@ -15215,7 +15230,7 @@
       to: group.members,
       context: group.id,
       content: message.content,
-      attachment: message.attachment,
+      attachment: message.attachments,
       published: (/* @__PURE__ */ new Date()).toISOString()
     };
   }
@@ -15256,11 +15271,9 @@
       this.#db.close();
     };
     erase = () => {
-      console.log("Erasing database: ", this.#db.name);
       this.#db.close();
       var req = window.indexedDB.deleteDatabase(this.#db.name);
       req.onsuccess = (event) => {
-        console.log("Database erased successfully: ", event);
         this.#host.reload();
       };
       req.onerror = (event) => {
@@ -15310,13 +15323,11 @@
     };
     // saveGroup saves a group to the database
     saveGroup = async (group) => {
-      console.log("saveGroup", group);
       const previousGroup = await this.loadGroup(group.id);
       const previousMembers = previousGroup?.members || [];
-      console.log(previousGroup, previousMembers);
       const { added, removed } = diffArrays(previousMembers, group.members);
-      console.log(added, removed);
       added.forEach((member) => {
+        console.log("Adding member to group:", member);
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
@@ -15326,6 +15337,7 @@
         this.saveMessage(statusMessage);
       });
       removed.forEach((member) => {
+        console.log("Removing member from group:", member);
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
@@ -15465,6 +15477,63 @@
     return "";
   }
 
+  // src/as/convert.ts
+  function toArray(value) {
+    if (value == void 0) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value;
+    }
+    return [value];
+  }
+  function toBoolean(value) {
+    switch (typeof value) {
+      case "boolean":
+        return value;
+      case "string":
+        return value.toLowerCase() === "true";
+      case "number":
+        return value != 0;
+    }
+    return false;
+  }
+  function toInteger(value) {
+    switch (typeof value) {
+      case "number":
+        return Math.floor(value);
+      case "string":
+        const parsed = parseInt(value);
+        if (!isNaN(parsed)) {
+          return parsed;
+        }
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length == 0) {
+            return 0;
+          }
+          return toInteger(value[0]);
+        }
+        return toInteger(value["id"]);
+    }
+    return 0;
+  }
+  function toMap(value) {
+    switch (typeof value) {
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length == 0) {
+            return {};
+          }
+          return toMap(value[0]);
+        }
+        return value;
+      case "string":
+        return { "id": value };
+    }
+    return {};
+  }
+
   // src/as/object.ts
   var Object2 = class {
     #value;
@@ -15540,42 +15609,19 @@
     };
     getInteger = (namespace, property) => {
       const result = this.get(namespace, property);
-      if (result == void 0) {
-        return 0;
-      }
-      switch (typeof result) {
-        case "number":
-          return Math.floor(result);
-        case "string":
-          const parsed = parseInt(result);
-          if (!isNaN(parsed)) {
-            return parsed;
-          }
-      }
-      return 0;
+      return toInteger(result);
     };
     getBoolean = (namespace, property) => {
       const result = this.get(namespace, property);
-      if (result == void 0) {
-        return false;
-      }
-      switch (typeof result) {
-        case "boolean":
-          return result;
-        case "string":
-          return result.toLowerCase() === "true";
-      }
-      return false;
+      return toBoolean(result);
     };
     getArray = (namespace, property) => {
       const result = this.get(namespace, property);
-      if (result == void 0) {
-        return [];
-      }
-      if (Array.isArray(result)) {
-        return result;
-      }
-      return [result];
+      return toArray(result);
+    };
+    getMap = (namespace, property) => {
+      const result = this.get(namespace, property);
+      return toMap(result);
     };
     ///////////////////////////////////
     // Properties
@@ -15594,27 +15640,27 @@
     // Property accessors
     // icon returns the value of the "icon" property
     icon = () => {
-      return this.getString("as", "icon");
+      return this.getString("as", PropertyIcon);
     };
     // id returns the value of the "id" property
     id = () => {
-      return this.getString("as", "id");
+      return this.getString("as", PropertyId);
     };
     // name returns the value of the "name" property
     name = () => {
-      return this.getString("as", "name");
+      return this.getString("as", PropertyName);
     };
     outbox = () => {
-      return this.getString("as", "outbox");
+      return this.getString("as", PropertyOutbox);
     };
     preferredUsername = () => {
-      return this.getString("as", "preferredUsername");
+      return this.getString("as", PropertyPreferredUsername);
     };
     summary = () => {
-      return this.getString("as", "summary");
+      return this.getString("as", PropertySummary);
     };
     type = () => {
-      return this.getString("as", "type");
+      return this.getString("as", PropertyType);
     };
     usernameOrId = () => {
       return this.preferredUsername() || this.id();
@@ -15622,10 +15668,10 @@
     ///////////////////////////////////
     // MLS-specific properties
     mlsMessages = () => {
-      return this.getString("mls", "messages");
+      return this.getString("mls", PropertyMlsMessages);
     };
     mlsKeyPackages = () => {
-      return this.getString("mls", "keyPackages");
+      return this.getString("mls", PropertyMlsKeyPackages);
     };
     ///////////////////////////////////
     // Emissary-specific properties
@@ -15687,47 +15733,47 @@
     // Property accessors
     // attributedTo returns the value of the "attributedTo" property
     attributedTo = async () => {
-      const attributedTo = this.get("as", "attributedTo");
+      const attributedTo = this.get("as", PropertyAttributedTo);
       return await loadActor(attributedTo);
     };
     // attributedToId returns the string/id value of the "attributedTo" property
     attributedToId = () => {
-      return this.getString("as", "attributedTo");
+      return this.getString("as", PropertyAttributedTo);
     };
     attachment = () => {
-      return this.getString("as", "attachment");
+      return this.getString("as", PropertyAttachment);
     };
     // content returns the value of the "content" property
     content = () => {
-      return this.getString("as", "content");
+      return this.getString("as", PropertyContent);
     };
-    description = () => {
-      return this.getString("as", "description");
+    generator = () => {
+      return this.getString("as", PropertyGenerator);
     };
     // icon returns the value of the "icon" property
     icon = () => {
-      return this.getString("as", "icon");
+      return this.getString("as", PropertyIcon);
     };
     // inReplyTo returns the string/id value of the "inReplyTo" property
     inReplyToId = () => {
-      return this.getString("as", "inReplyTo");
+      return this.getString("as", PropertyInReplyTo);
     };
     // inReplyTo returns the value of the "inReplyTo" property
     inReplyTo = () => {
-      const inReplyTo = this.get("as", "inReplyTo");
+      const inReplyTo = this.get("as", PropertyInReplyTo);
       return loadDocument(inReplyTo);
     };
     // name returns the value of the "name" property
     name = () => {
-      return this.getString("as", "name");
+      return this.getString("as", PropertyName);
     };
     // summary returns the value of the "summary" property
     summary = () => {
-      return this.getString("as", "summary");
+      return this.getString("as", PropertySummary);
     };
     // to returns the value of the "to" property
     to = async () => {
-      const result = await this.getArray("as", "to");
+      const result = await this.getArray("as", PropertyTo);
       return result.map(async (actor) => await loadActor(actor));
     };
     ///////////////////////////////////
@@ -15798,8 +15844,8 @@
     context = () => {
       return this.getString("as", PropertyContext);
     };
-    generator = () => {
-      return this.getString("as", PropertyGenerator);
+    instrument = () => {
+      return this.getString("as", PropertyInstrument);
     };
     // objectId returns the string value of the "object" property (which may be a URL or an embedded object)
     objectId = () => {
@@ -15815,6 +15861,11 @@
     objectAsActivity = async () => {
       const object = this.get("as", PropertyObject);
       return await loadActivity(object);
+    };
+    // objectAsMap returns the value of the "object" property as a map.
+    // It does NOT load objectIds from the network, so is it useful in synchronous code.
+    objectAsMap = () => {
+      return this.getMap("as", PropertyObject);
     };
     // target returns the value of the "target" property
     target = async () => {
@@ -15965,7 +16016,8 @@
         }
         return "";
       }).filter((identity) => identity != "");
-      return [...new Set(members)];
+      const result = [...new Set(members)];
+      return result;
     }
     // #getGroupSignatures retrieves all KeyPackage signatures from the group state.
     #getGroupSignatures(group) {
@@ -16016,49 +16068,60 @@
       }
       return group;
     }
+    // leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
+    // for this user from the group, then sends a PROPOSAL to 
+    // remove THIS DEVICE from the group.
+    async leaveGroup(group) {
+      await this.removeGroupMember(group, this.#actor.id());
+    }
     // removeGroupMember removes all clients for the specified actorId. This function cannot be used
     // to remove the current signed-in actor; use leaveGroup() for this operation instead.
     async removeGroupMember(group, actorId) {
-      if (actorId == this.#actor.id()) {
-        throw new Error("Cannot remove the current signed-in actor. To remove this actor, use leaveGroup() instead.");
-      }
-      while (true) {
-        const leafNodes = getGroupMembers(group.clientState);
-        const removeIndex = leafNodes.findIndex(leafNodeMatchesActor(actorId));
-        if (removeIndex === -1) {
-          break;
+      console.log("removeGroupMember: " + actorId);
+      console.log(group.clientState.ratchetTree);
+      for (var index = 0; index < group.clientState.ratchetTree.length; index++) {
+        const node = group.clientState.ratchetTree[index];
+        if (node == void 0) {
+          continue;
         }
-        await this.removeLeafNode(group, removeIndex);
+        if (node.nodeType != nodeTypes.leaf) {
+          continue;
+        }
+        if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
+          continue;
+        }
+        const credential = node.leaf.credential;
+        const leafNodeActorId = decodeText(credential.identity);
+        if (leafNodeActorId != actorId) {
+          continue;
+        }
+        await this.removeLeafNode(group, index / 2);
       }
       group.members = this.getGroupMembers(group);
       await this.#database.saveGroup(group);
       return group;
     }
-    // leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
-    // for this user from the group, then sends a PROPOSAL to 
-    // remove THIS DEVICE from the group.
-    async leaveGroup(group) {
-      console.log("MLS.leaveGroup.  signature:" + this.#publicKeyPackage.signature);
-      while (true) {
-        const leafNodes2 = getGroupMembers(group.clientState);
-        const removeIndex2 = leafNodes2.findIndex(leafNodeMyOtherDevices(this.#actor.id(), this.#publicKeyPackage.signature));
-        console.log("removing OTHER device from group", removeIndex2);
-        console.log("signature", leafNodes2[removeIndex2]?.signature);
-        if (removeIndex2 === -1) {
-          break;
-        }
-        await this.removeLeafNode(group, removeIndex2);
+    // removeLeafNode removes a single indexed leaf node from the group's clientState
+    async removeLeafNode(group, leafIndex) {
+      const ratchetTreeIndex = leafIndex * 2;
+      if (ratchetTreeIndex < 0 || ratchetTreeIndex >= group.clientState.ratchetTree.length) {
+        return;
       }
-      const leafNodes = getGroupMembers(group.clientState);
-      const removeIndex = leafNodes.findIndex(leafNodeThisDevice(this.#actor.id(), this.#publicKeyPackage.signature));
-      console.log("removing THIS device from group with proposal", removeIndex);
-      if (removeIndex !== -1) {
+      const node = group.clientState.ratchetTree[ratchetTreeIndex];
+      if (node == void 0) {
+        return;
+      }
+      if (node.nodeType != nodeTypes.leaf) {
+        return;
+      }
+      if (node.leaf.signature === this.#publicKeyPackage.signature) {
+        console.log("Removing THIS DEVICE from the group. Sending proposal to remove leaf index " + leafIndex);
         const proposal = await createProposal({
           context: this.#context(),
           state: group.clientState,
           proposal: {
             proposalType: defaultProposalTypes.remove,
-            remove: { removed: removeIndex }
+            remove: { removed: leafIndex }
           }
         });
         await this.#sendMlsMessage(
@@ -16066,26 +16129,28 @@
           group.members,
           proposal.message
         );
+        return;
       }
-    }
-    async removeLeafNode(group, removeIndex) {
-      const leafNodes = getGroupMembers(group.clientState);
+      console.log("Removing SOMEONE ELSE from the group. Sending commit to remove leaf index " + leafIndex);
+      console.log(new TextDecoder().decode(node.leaf.credential.identity));
       const commitResult = await createCommit({
         context: this.#context(),
         state: group.clientState,
         extraProposals: [{
           proposalType: defaultProposalTypes.remove,
-          remove: { removed: removeIndex }
+          remove: { removed: leafIndex }
         }],
         ratchetTreeExtension: true
       });
       commitResult.consumed.forEach(zeroOutUint8Array);
+      console.log("previous epoch", group.clientState.groupContext.epoch);
+      group.clientState = commitResult.newState;
+      console.log("new epoch", group.clientState.groupContext.epoch);
       await this.#sendMlsMessage(
         ObjectTypeMlsGroupInfo,
         group.members,
         commitResult.commit
       );
-      group.clientState = commitResult.newState;
     }
     //////////////////////////////////////////
     // Key Packages
@@ -16101,31 +16166,31 @@
     // receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
     // If no further action is required (such as processing a GroupInfo or Welcome message) then
     // null is returned.
-    async receiveActivity(message) {
+    async receiveActivity(activity, object) {
       try {
+        const message = object.content();
         const uintArray = base64ToUint8Array(message);
-        const content = decode(mlsMessageDecoder, uintArray);
-        if (content == void 0) {
+        const mlsMessage = decode(mlsMessageDecoder, uintArray);
+        if (mlsMessage == void 0) {
           console.error("Unable to decode MLS message", message);
           return null;
         }
-        switch (content.wireformat) {
+        switch (mlsMessage.wireformat) {
           case wireformats.mls_group_info:
-            return await this.#receiveActivity_GroupInfo(content);
+            return await this.#receiveActivity_GroupInfo(object, mlsMessage);
           case wireformats.mls_key_package:
             return null;
           case wireformats.mls_private_message:
-            return await this.#receiveActivity_PublicPrivateMessage(content);
+            return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
           case wireformats.mls_public_message:
-            return await this.#receiveActivity_PublicPrivateMessage(content);
+            return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
           case wireformats.mls_welcome:
-            return await this.#receiveActivity_Welcome(content);
+            return await this.#receiveActivity_Welcome(mlsMessage);
           default:
-            console.error("Unknown MLS message type:");
-            return null;
+            throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
         }
       } catch (error) {
-        console.error("Error decoding MLS message::::", error);
+        console.error("Unable to decode MLS message::::", error);
         return null;
       }
     }
@@ -16157,18 +16222,19 @@
       var encryptedGroup = addClientState(group, clientState);
       encryptedGroup.members = this.getGroupMembers(encryptedGroup);
       await this.#database.saveGroup(encryptedGroup);
+      console.log("mls.#receiveActivity_Welcome: Added group. epoch", encryptedGroup.clientState.groupContext.epoch);
       await this.#cycleKeyPackages();
       return null;
     }
     // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-    async #receiveActivity_GroupInfo(message) {
+    async #receiveActivity_GroupInfo(document2, message) {
       var clientState;
       return null;
     }
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
     // ActivityStreams messages.
-    async #receiveActivity_PublicPrivateMessage(mlsMessage) {
+    async #receiveActivity_PublicPrivateMessage(document2, mlsMessage) {
       var groupId;
       switch (mlsMessage.wireformat) {
         case wireformats.mls_private_message:
@@ -16187,11 +16253,15 @@
         return null;
       }
       if (!groupIsEncrypted(group)) {
-        throw new Error("Cannot receive encrypted messages for unencrypted group");
+        throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
+      }
+      if (!group.members.includes(document2.attributedToId())) {
+        throw new Error("Received MLS message from a sender that is not a member of the group: " + document2.toJSON());
       }
       if (group.stateId == "CLOSED") {
         return null;
       }
+      console.log("About to process Private Message. Epoch", group.clientState.groupContext.epoch);
       const decodedMessage = await processMessage({
         context: this.#context(),
         state: group.clientState,
@@ -16205,7 +16275,9 @@
       group.clientState = decodedMessage.newState;
       group.updateDate = Date.now();
       group.members = this.getGroupMembers(group);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Processed message. New epoch", group.clientState.groupContext.epoch);
       if (!group.members.includes(this.#actor.id())) {
+        console.log("mls.#receiveActivity_PublicPrivateMessage: Current actor has been removed from the group.");
         group.stateId = "CLOSED";
         await this.#database.saveGroup(group);
         return null;
@@ -16215,6 +16287,7 @@
         return null;
       }
       const plaintext = decodeText(decodedMessage.message);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Decrypted message plaintext", plaintext);
       return new Activity().fromJSON(plaintext);
     }
     //////////////////////////////////////////
@@ -16226,6 +16299,7 @@
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
+      console.log("mls.sendActivity: ", activity.toObject());
       const messageText = activity.toJSON();
       const messageBytes = encodeText(messageText);
       const applicationMessage = await createApplicationMessage({
@@ -16236,6 +16310,7 @@
       applicationMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = applicationMessage.newState;
       group.updateDate = Date.now();
+      console.log("mls.sendActivity: Created message. epoch", group.clientState.groupContext.epoch);
       await this.#database.saveGroup(group);
       return await this.#sendMlsMessage(
         ObjectTypeMlsPrivateMessage,
@@ -16255,7 +16330,7 @@
         type: ActivityTypeCreate,
         actor: this.#actor.id(),
         to: recipients,
-        generator: this.#generatorId,
+        instrument: this.#generatorId,
         object: {
           type,
           attributedTo: this.#actor.id(),
@@ -16265,7 +16340,6 @@
           "mls:encoding": EncodingTypeBase64
         }
       });
-      console.log("#sendMlsMessage.. sending Activity", activity.toObject());
       this.#delivery.sendActivity(activity);
       return activity;
     }
@@ -16280,38 +16354,6 @@
       };
     }
   };
-  function leafNodeMatchesActor(actorId) {
-    return (member) => {
-      if (member.credential.credentialType != defaultCredentialTypes.basic) {
-        return false;
-      }
-      if (!Array.isArray(actorId)) {
-        actorId = [actorId];
-      }
-      return actorId.some((id) => {
-        const credential = member.credential;
-        return decodeText(credential.identity) == id;
-      });
-    };
-  }
-  function leafNodeThisDevice(actorId, signature) {
-    return (member) => {
-      const credential = member.credential;
-      if (decodeText(credential.identity) != actorId) {
-        return false;
-      }
-      return uint8ArrayEqual(member.signature, signature);
-    };
-  }
-  function leafNodeMyOtherDevices(actorId, signature) {
-    return (member) => {
-      const credential = member.credential;
-      if (decodeText(credential.identity) != actorId) {
-        return false;
-      }
-      return !uint8ArrayEqual(member.signature, signature);
-    };
-  }
   function encodeText(text) {
     return new TextEncoder().encode(text);
   }
@@ -16461,6 +16503,7 @@
     }
     var collection;
     try {
+      console.log("Fetching collection:", url);
       collection = await new Collection().fromURL(url, options);
     } catch (error) {
       console.error("Error fetching collection:", url, error);
@@ -16623,7 +16666,6 @@
     };
     // getKeyPackage loads the KeyPackages published by a single actor
     getKeyPackages = async (actorIds) => {
-      console.log("getKeyPackages", actorIds);
       var result = [];
       for (const actorId of actorIds) {
         try {
@@ -16646,7 +16688,6 @@
           console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error);
         }
       }
-      console.log("getKeyPackages result", result);
       return result;
     };
     // createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
@@ -16680,25 +16721,31 @@
     // createObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #createObject = async (object) => {
+      const activityId = newId2();
       const result = await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
-        type: "Create",
+        type: ActivityTypeCreate,
+        id: activityId,
         actor: this.#actorId,
-        object
+        to: [this.#actorId],
+        object,
+        instrument: this.#generatorId
       });
       if (result == "") {
         throw new Error("Server MUST return an id for the created object.");
       }
-      return result;
+      return [activityId, result];
     };
     // updateObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #updateObject = async (object) => {
       return await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
-        type: "Update",
+        type: ActivityTypeUpdate,
+        id: newId2(),
         actor: this.#actorId,
-        object
+        object,
+        instrument: this.#generatorId
       });
     };
     // deleteObject POSTs an ActivityPub object to the user's outbox
@@ -16706,9 +16753,11 @@
     #deleteObject = async (object) => {
       await this.#send(this.#outboxUrl, {
         "@context": "https://www.w3.org/ns/activitystreams",
-        type: "Delete",
+        type: ActivityTypeDelete,
+        id: newId2(),
         actor: this.#actorId,
-        object
+        object,
+        instrument: this.#generatorId
       });
     };
     // send POSTs an ActivityPub activity to the Actor's outbox
@@ -16798,8 +16847,15 @@
       const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" });
       for await (const activity of activities) {
         lastMessageId = activity.id();
-        if (activity.generator() !== this.#generatorId) {
+        if (activity.instrument() === this.#generatorId) {
+          console.log("Receiver.#poll: Skipping reflected message.");
+          continue;
+        }
+        try {
+          console.log("Receiver.#poll: Processing message", activity.toJSON());
           await this.#activityHandler(activity);
+        } catch (error) {
+          console.error("Receiver.#poll: Unable to process incoming message:", activity.toJSON(), error);
         }
       }
       await this.#lastMessage(lastMessageId);
@@ -17366,7 +17422,6 @@
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
-      console.log("Stopping application:", message);
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -17528,11 +17583,13 @@
     // to the server to replaces the current one. If there is no 
     // existing KeyPackage, then the new one is created
     createOrUpdateKeyPackage = async () => {
+      var activityId;
       var keyPackageId;
       const keyPackageResult = await newKeyPackage(this.#actor.id());
       const keyPackage = await this.#database.loadKeyPackage();
       if (keyPackage == void 0) {
-        keyPackageId = await this.#directory.createKeyPackage(keyPackageResult.publicPackage);
+        [activityId, keyPackageId] = await this.#directory.createKeyPackage(keyPackageResult.publicPackage);
+        await this.lastMessage(activityId);
       } else {
         keyPackageId = keyPackage.keyPackageURL;
         await this.#directory.updateKeyPackage(keyPackageId, keyPackageResult.publicPackage);
@@ -17595,7 +17652,7 @@
           "id": group.id,
           "type": ObjectTypeEmissaryContext,
           "name": group.name,
-          "description": group.description,
+          "summary": group.summary,
           "stateId": group.stateId,
           "tag": group.tags,
           "unread": group.unread
@@ -17696,6 +17753,7 @@
       return group;
     };
     removeGroupMember = async (actorId) => {
+      console.log("removeGroupMember: " + actorId);
       var group = this.groupStream();
       if (groupIsEncrypted(group)) {
         if (this.#mls == void 0) {
@@ -17705,7 +17763,6 @@
       } else {
         group.members = group.members.filter((member) => member != actorId);
       }
-      console.log("HEre???");
       group.defaultName = await this.#calcGroupDefaultName(group);
       await this.#database.saveGroup(group);
       this.groupStream(group);
@@ -17903,20 +17960,14 @@
     //////////////////////////////////////////
     receiveActivity = async (activity) => {
       console.log("Received activity:", activity.toObject());
+      var object;
       try {
         var object = await activity.object();
-        console.log("Got object:", object.toObject());
-        if (object.attributedToId() != "") {
-          if (activity.actorId() != object.attributedToId()) {
-            console.log("Activity actor does not match object attributedTo. Ignoring activity.");
-            return;
-          }
-        }
         if (object.isMLSMessage()) {
           if (this.#mls == void 0) {
             throw new Error("MLS service is not initialized");
           }
-          const decodedActivity = await this.#mls.receiveActivity(object.content());
+          const decodedActivity = await this.#mls.receiveActivity(activity, object);
           if (decodedActivity == null) {
             return;
           }
@@ -17936,7 +17987,12 @@
           case ActivityTypeAcknowledge:
             return await this.#receiveActivity_Acknowledge(activity);
           case ActivityTypeCreate:
-            return await this.#receiveActivity_CreateMessage(activity);
+            switch (object.type()) {
+              case ObjectTypeMlsKeyPackage:
+                return;
+              default:
+                return await this.#receiveActivity_CreateMessage(activity);
+            }
           case ActivityTypeDelete:
             return await this.#receiveActivity_DeleteMessage(activity);
           case ActivityTypeFailure:
@@ -17990,7 +18046,6 @@
         type: sentByMe ? "SENT" : "RECEIVED",
         sender: object.attributedToId(),
         content: object.content(),
-        attachments: [object.attachment()],
         reactions: {},
         history: [],
         received: [],
@@ -17998,11 +18053,23 @@
         createDate: Date.now(),
         updateDate: Date.now()
       });
+      if (object.attachment() != "") {
+        message.attachments = [object.attachment()];
+      }
       await this.#database.saveMessage(message);
       group.lastMessage = object.content();
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
           group.unread = true;
+          if (this.config.isDesktopNotifications) {
+            if (Notification.permission === "granted") {
+              if (this.isWindowFocused == false) {
+                new Notification(message.sender, {
+                  body: message.content
+                });
+              }
+            }
+          }
         }
       }
       await this.saveGroup(group);
@@ -18010,20 +18077,9 @@
         actor: this.actorId(),
         type: ActivityTypeAcknowledge,
         to: [message.sender],
-        object: message.id,
+        object: object.id(),
         context: group.id
       });
-      if (this.config.isDesktopNotifications) {
-        if (Notification.permission === "granted") {
-          if (!sentByMe) {
-            if (this.isWindowFocused == false) {
-              new Notification(message.sender, {
-                body: message.content
-              });
-            }
-          }
-        }
-      }
     };
     #receiveActivity_Failure = async (activity) => {
     };
@@ -18041,7 +18097,6 @@
     #receiveActivity_Leave = async (activity) => {
       console.log("Received 'Leave' activity:", activity);
       if (activity.actorId() != this.actorId()) {
-        console.log("Ignoring 'Leave' activity from other actor:", activity);
         return;
       }
       await this.#database.deleteGroup(activity.objectId());
@@ -18085,7 +18140,7 @@
         return;
       }
       group.name = object.name();
-      group.description = object.description();
+      group.summary = object.summary();
       group.tags = object.getArray("as", "tag");
       group.unread = object.getBoolean("emissary", "unread");
       this.setGroupState(group, object.getString("emissary", "stateId"));
@@ -18119,6 +18174,7 @@
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
+      activity.set(PropertyInstrument, this.config.generatorId);
       if (!groupIsEncrypted(group)) {
         return this.#delivery.sendActivity(activity);
       }
@@ -18558,6 +18614,7 @@
     selectActors(vnode, actors, canBeEncrypted) {
       vnode.state.actors = actors;
       vnode.state.canBeEncrypted = canBeEncrypted;
+      import_mithril7.default.redraw();
     }
     // setPlaintext updates the content message in the component state as the user types
     setPlaintext(vnode, event) {
@@ -18751,7 +18808,7 @@
           return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;" }), contact.name), " ", " ", "left the group at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
         }
         case "ADD-DEVICE": {
-          const Contact = vnode.attrs.controller.getContactStream(message.sender);
+          const contact = vnode.attrs.controller.getContactStream(message.sender);
           return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril12.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender) }, senderName), " ", " ", "ADDED a new device");
         }
         case "REMOVE-DEVICE":
@@ -18759,13 +18816,7 @@
       throw new Error(`Unknown message type: ${message.type}`);
     }
     drawContent(message) {
-      if (message.attachment != "") {
-        if (message.attachment.startsWith("data:image")) {
-          return /* @__PURE__ */ (0, import_mithril12.default)("img", { src: message.attachment, class: "width-100% rounded" });
-        }
-        return /* @__PURE__ */ (0, import_mithril12.default)("a", { href: message.attachment }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(message.attachment.length), ")");
-      }
-      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content);
+      return /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, message.attachments.map((attachment) => attachment.startsWith("data:image") ? /* @__PURE__ */ (0, import_mithril12.default)("img", { src: attachment, class: "width-100% rounded" }) : /* @__PURE__ */ (0, import_mithril12.default)("a", { href: attachment, class: "attachment", target: "_blank", rel: "noopener noreferrer" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(attachment.length), ")")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content));
     }
     drawReactions(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -18981,16 +19032,23 @@
         if (contact.id == controller2.actorId()) {
           return null;
         }
-        return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm", onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "align-right" }, contact.id == controller2.actorId() ? /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm text-red", tabIndex: "0", onclick: () => this.leaveGroup(vnode) }, "Leave Group") : /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove")));
+        return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("img", { src: contact.icon, class: "circle width-48" })), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm", onclick: () => controller2.host_actor(contact.id) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "align-right" }, this.drawActionButton(vnode, group, contact)));
       }), /* @__PURE__ */ (0, import_mithril18.default)("div", { role: "link", class: "flex-row", onclick: () => this.leaveGroup(vnode) }, /* @__PURE__ */ (0, import_mithril18.default)("div", null, /* @__PURE__ */ (0, import_mithril18.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--red60)" }, /* @__PURE__ */ (0, import_mithril18.default)("i", { class: "bi bi-x" }))), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "bold" }, "Leave Group"), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-gray" }, "Leave this group and remove it from all your devices."))))));
     }
+    drawActionButton(vnode, group, contact) {
+      const controller2 = vnode.attrs.controller;
+      if (group.stateId == "CLOSED") {
+        return /* @__PURE__ */ (0, import_mithril18.default)(import_mithril18.default.Fragment, null);
+      }
+      if (contact.id == controller2.actorId()) {
+        return /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm text-red", tabIndex: "0", onclick: () => this.leaveGroup(vnode) }, "Leave Group");
+      }
+      return /* @__PURE__ */ (0, import_mithril18.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove");
+    }
     async leaveGroup(vnode) {
-      console.log("confirm: leave group");
       if (!confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
-        console.log("NOT leaving group");
         return;
       }
-      console.log("leaving group");
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       await controller2.leaveGroup(group.id);
@@ -19000,7 +19058,8 @@
       if (!confirm("Are you sure you want to remove this member?")) {
         return;
       }
-      await vnode.attrs.controller.removeGroupMember(contactId);
+      const controller2 = vnode.attrs.controller;
+      await controller2.removeGroupMember(contactId);
     }
     close(vnode) {
       vnode.attrs.controller.page_group_messages();
@@ -19316,7 +19375,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "clickable circle width-32 margin-none flex-center", onclick: () => controller2.page_index(), tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril34.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-none" }, "Conversation Settings")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages() }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Clear out your current session to safeguard your private data. Only encrypted data will remain on this device."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Sign Out")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
+      return /* @__PURE__ */ (0, import_mithril34.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "clickable circle width-32 margin-none flex-center", onclick: () => controller2.page_index(), tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril34.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-none" }, "Conversation Settings")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril34.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril34.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril34.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages() }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Close Conversations"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Close out this current session. Your data will remain on this device, but cannot be accessed without a passcode."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Close")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril34.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "padding-vertical-xl" })));
     }
     setEncryptedMessages(vnode, event) {
       const target = event.target;
@@ -19368,15 +19427,15 @@
     message(vnode) {
       switch (vnode.attrs.message) {
         case "COOKIES-CHANGED":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link nowrap", onclick: () => location.reload() }, "reload this page"), ".");
         case "SERVER-DOWN":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link nowrap", onclick: () => location.reload() }, "reload this page"), ".");
         case "SIGN-OUT":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Signed Out"), /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "Reload this page"), " to return to conversations.");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link nowrap", onclick: () => location.reload() }, "Reload this page"), " to return to conversations.");
         case "UNSUPPORTED":
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link nowrap", onclick: () => location.reload() }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", onclick: () => location.reload() }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("h2", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link nowrap", onclick: () => location.reload() }, "reload this page"), ".");
       }
     }
   };
@@ -19607,4 +19666,3 @@
 @hpke/common/esm/src/curve/montgomery.js:
   (*! noble-curves - MIT License (c) 2022 Paul Miller (paulmillr.com) *)
 */
-//# sourceMappingURL=app.js.map

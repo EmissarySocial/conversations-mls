@@ -7,6 +7,8 @@ import { generateKeyPackage } from "ts-mls"
 import { mlsMessageDecoder } from "ts-mls"
 import { wireformats } from "ts-mls"
 
+import * as vocab from "../as/vocab"
+
 // Model Objects
 import { NewAPKeyPackage, type APKeyPackage } from "../model/ap-keypackage"
 import { ContactFromActor, type Contact } from "../model/contact"
@@ -16,7 +18,7 @@ import { rangeDocuments } from "../as/collection"
 import { Actor } from "../as/actor"
 import { base64ToUint8Array } from "./utils"
 import { newKeyPackage } from "./cryptography"
-
+import { newId } from "./utils"
 export class Directory {
 
 	#actorId: string // ID of the local actor 
@@ -51,7 +53,6 @@ export class Directory {
 	// getKeyPackage loads the KeyPackages published by a single actor
 	getKeyPackages = async (actorIds: string[]): Promise<KeyPackage[]> => {
 
-		console.log("getKeyPackages", actorIds)
 		var result: KeyPackage[] = []
 
 		for (const actorId of actorIds) {
@@ -83,14 +84,13 @@ export class Directory {
 			}
 		}
 
-		console.log("getKeyPackages result", result)
 		return result
 	}
 
 
 	// createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
 	// It returns the ID of the newly created KeyPackage or throws an error on failure.
-	createKeyPackage = async (publicPackage: KeyPackage): Promise<string> => {
+	createKeyPackage = async (publicPackage: KeyPackage): Promise<[string, string]> => {
 
 		// Create an ActivityPub JSON-LD object for the KeyPackage
 		const keyPackage = NewAPKeyPackage(
@@ -128,40 +128,49 @@ export class Directory {
 
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#createObject = async <T>(object: T) => {
+	#createObject = async <T>(object: T): Promise<[string, string]> => {
+
+		const activityId = newId()
 		const result = await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
-			type: "Create",
+			type: vocab.ActivityTypeCreate,
+			id: activityId,
 			actor: this.#actorId,
+			to: [this.#actorId],
 			object: object,
+			instrument: this.#generatorId,
 		})
 
 		if (result == "") {
 			throw new Error("Server MUST return an id for the created object.")
 		}
 
-		return result
+		return [activityId, result]
 	}
 
 	// updateObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#updateObject = async <T>(object: T) => {
+	#updateObject = async <T>(object: T): Promise<string> => {
 		return await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
-			type: "Update",
+			type: vocab.ActivityTypeUpdate,
+			id: newId(),
 			actor: this.#actorId,
 			object: object,
+			instrument: this.#generatorId,
 		})
 	}
 
 	// deleteObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#deleteObject = async <T>(object: T) => {
+	#deleteObject = async <T>(object: T): Promise<void> => {
 		await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
-			type: "Delete",
+			type: vocab.ActivityTypeDelete,
+			id: newId(),
 			actor: this.#actorId,
 			object: object,
+			instrument: this.#generatorId,
 		})
 	}
 

@@ -1,5 +1,7 @@
 // MLS functions
-import { bytesToBase64, createProposal, defaultCredentialTypes, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage } from "ts-mls"
+import { bytesToBase64, leafNodeSources, nodeTypes } from "ts-mls"
+import { createProposal } from "ts-mls"
+import { defaultCredentialTypes } from "ts-mls"
 import { createApplicationMessage } from "ts-mls"
 import { createCommit } from "ts-mls"
 import { createGroup } from "ts-mls"
@@ -22,6 +24,9 @@ import { type CredentialBasic } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
 import { type LeafNode } from "ts-mls"
 import { type MlsContext } from "ts-mls"
+import { type MlsGroupInfo } from "ts-mls"
+import { type MlsMessage } from "ts-mls"
+import { type MlsPublicMessage } from "ts-mls"
 import { type MlsPrivateMessage } from "ts-mls"
 import { type MlsWelcomeMessage } from "ts-mls"
 import { type Proposal } from "ts-mls"
@@ -30,6 +35,7 @@ import { type PrivateKeyPackage } from "ts-mls"
 // ActivityPub Types
 import { Actor } from "../as/actor"
 import { Activity } from "../as/activity"
+import { Document } from "../as/document"
 import * as vocab from "../as/vocab"
 
 // Application Types
@@ -134,6 +140,7 @@ export class MLS {
 		// Find all current clients in this group
 		const leafNodes = getGroupMembers(group.clientState)
 
+
 		// Extract the client's identity for each leaf node
 		const members = leafNodes
 			.map(leaf => {
@@ -146,7 +153,8 @@ export class MLS {
 			.filter((identity) => identity != "")
 
 		// Remove duplicates (many users will have multiple clients)
-		return [...new Set(members)]
+		const result = [...new Set(members)]
+		return result
 	}
 
 	// #getGroupSignatures retrieves all KeyPackage signatures from the group state.
@@ -222,30 +230,51 @@ export class MLS {
 		return group
 	}
 
+	// leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
+	// for this user from the group, then sends a PROPOSAL to 
+	// remove THIS DEVICE from the group.
+	async leaveGroup(group: EncryptedGroup): Promise<void> {
+		await this.removeGroupMember(group, this.#actor.id())
+	}
+
 	// removeGroupMember removes all clients for the specified actorId. This function cannot be used
 	// to remove the current signed-in actor; use leaveGroup() for this operation instead.
 	async removeGroupMember(group: EncryptedGroup, actorId: string): Promise<EncryptedGroup> {
 
-		// RULE: Do not use this method to remove the current actor from the group.
-		if (actorId == this.#actor.id()) {
-			throw new Error("Cannot remove the current signed-in actor. To remove this actor, use leaveGroup() instead.")
-		}
+		console.log("removeGroupMember: " + actorId)
+		console.log(group.clientState.ratchetTree)
 
-		while (true) {
+		// inspect each node in the group's ratchetTree
+		for (var index = 0; index < group.clientState.ratchetTree.length; index++) {
 
-			// Find all current clients in this group 
-			const leafNodes = getGroupMembers(group.clientState)
+			const node = group.clientState.ratchetTree[index]
 
-			// Find the first leaf node that matches the specified actorId
-			const removeIndex = leafNodes.findIndex(leafNodeMatchesActor(actorId))
+			// Skip undefined nodes
+			if (node == undefined) {
+				continue
+			}
 
-			// If there are no more matching nodes to remove, then we're done.
-			if (removeIndex === -1) {
-				break
+			// Skip parent nodes
+			if (node.nodeType != nodeTypes.leaf) {
+				continue
+			}
+
+			// Guarantee that we're working with a basic credential (not X.509 or something else)
+			if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
+				continue
+			}
+
+			// Get the credential and decode the identity
+			const credential = node.leaf.credential as CredentialBasic
+			const leafNodeActorId = decodeText(credential.identity)
+
+			// If this leaf node doesn't match the specified actorId, then do nothing.
+			if (leafNodeActorId != actorId) {
+				continue
 			}
 
 			// Remove the leaf node and send commits to other group members.
-			await this.removeLeafNode(group, removeIndex)
+			await this.removeLeafNode(group, index / 2)
 		}
 
 		// Recalculate all members in the group
@@ -258,48 +287,42 @@ export class MLS {
 		return group
 	}
 
-	// leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
-	// for this user from the group, then sends a PROPOSAL to 
-	// remove THIS DEVICE from the group.
-	async leaveGroup(group: EncryptedGroup): Promise<void> {
+	// removeLeafNode removes a single indexed leaf node from the group's clientState
+	async removeLeafNode(group: EncryptedGroup, leafIndex: number): Promise<void> {
 
-		console.log("MLS.leaveGroup.  signature:" + this.#publicKeyPackage.signature)
+		const ratchetTreeIndex = leafIndex * 2
 
-		// Remove MY OTHER devices from this group
-		while (true) {
-
-			// Find all clients in the group
-			const leafNodes = getGroupMembers(group.clientState)
-
-			// Find the first leaf node that matches the specified actorId
-			const removeIndex = leafNodes.findIndex(leafNodeMyOtherDevices(this.#actor.id(), this.#publicKeyPackage.signature))
-			console.log("removing OTHER device from group", removeIndex)
-			console.log("signature", leafNodes[removeIndex]?.signature)
-
-			// If there are no more matching nodes to remove, then we're done.
-			if (removeIndex === -1) {
-				break
-			}
-
-			// Remove the leaf node and send commits to other group members.
-			await this.removeLeafNode(group, removeIndex)
+		// BOUNDS CHECK
+		if ((ratchetTreeIndex < 0) || (ratchetTreeIndex >= group.clientState.ratchetTree.length)) {
+			return
 		}
 
-		// Find all clients in the group
-		const leafNodes = getGroupMembers(group.clientState)
+		// Find the leaf node in the clientState
+		const node = group.clientState.ratchetTree[ratchetTreeIndex]
 
-		// Send a PROPOSAL to remove THIS DEVICE from the group.
-		const removeIndex = leafNodes.findIndex(leafNodeThisDevice(this.#actor.id(), this.#publicKeyPackage.signature))
-		console.log("removing THIS device from group with proposal", removeIndex)
+		// RULE: Guard against invalid leaf nodes
+		if (node == undefined) {
+			return
+		}
 
-		if (removeIndex !== -1) {
+		// RULE: Only process leaf nodes, not parent nodes
+		if (node.nodeType != nodeTypes.leaf) {
+			return
+		}
+
+
+		// Special case for removing THIS DEVICE from the group:
+		// create an send a proposal for someone else to remove this device.
+		if (node.leaf.signature === this.#publicKeyPackage.signature) {
+
+			console.log("Removing THIS DEVICE from the group. Sending proposal to remove leaf index " + leafIndex)
 
 			const proposal = await createProposal({
 				context: this.#context(),
 				state: group.clientState,
 				proposal: {
 					proposalType: defaultProposalTypes.remove,
-					remove: { removed: removeIndex },
+					remove: { removed: leafIndex },
 				},
 			})
 
@@ -309,22 +332,21 @@ export class MLS {
 				group.members,
 				proposal.message,
 			)
+
+			return
 		}
-	}
 
+		// Fall through means we're removing SOMEONE ELSE from the group
+		console.log("Removing SOMEONE ELSE from the group. Sending commit to remove leaf index " + leafIndex)
+		console.log(new TextDecoder().decode((node.leaf.credential as CredentialBasic).identity))
 
-	async removeLeafNode(group: EncryptedGroup, removeIndex: number): Promise<void> {
-
-		// Find all current clients in this group 
-		const leafNodes = getGroupMembers(group.clientState)
-
-		// Create a commit with remove proposals
+		// Create a proper commit to remove this device
 		const commitResult = await createCommit({
 			context: this.#context(),
 			state: group.clientState,
 			extraProposals: [{
 				proposalType: defaultProposalTypes.remove,
-				remove: { removed: removeIndex },
+				remove: { removed: leafIndex },
 			}],
 			ratchetTreeExtension: true,
 		})
@@ -332,15 +354,17 @@ export class MLS {
 		// Zero out the keys used to encrypt the commit message
 		commitResult.consumed.forEach(zeroOutUint8Array)
 
-		// Send commit to all members
+		// Update the group with new state and new list of members
+		console.log("previous epoch", group.clientState.groupContext.epoch)
+		group.clientState = commitResult.newState
+		console.log("new epoch", group.clientState.groupContext.epoch)
+
+		// Send commit to all members (before updating the local group state)
 		await this.#sendMlsMessage(
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			commitResult.commit,
 		)
-
-		// Update the group with new state and new list of members
-		group.clientState = commitResult.newState
 	}
 
 
@@ -365,45 +389,48 @@ export class MLS {
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
 	// null is returned.
-	async receiveActivity(message: string): Promise<Activity | null> {
+	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
 		try {
+			const message = object.content()
 			const uintArray = base64ToUint8Array(message)
-			const content = decode(mlsMessageDecoder, uintArray)!
+			const mlsMessage = decode(mlsMessageDecoder, uintArray)!
 
 			// Require that the we have a valid decoded message before proceeding
 			// TODO: Here's where we send a "Failure" message to the group.
-			if (content == undefined) {
+			if (mlsMessage == undefined) {
 				console.error("Unable to decode MLS message", message)
 				return null
 			}
 
-			switch (content.wireformat) {
+			// Execute the appropriate handler 
+			switch (mlsMessage.wireformat) {
 
 				case wireformats.mls_group_info:
-					return await this.#receiveActivity_GroupInfo(content)
+					return await this.#receiveActivity_GroupInfo(object, mlsMessage)
 
 				case wireformats.mls_key_package:
 					return null
 
 				case wireformats.mls_private_message:
-					return await this.#receiveActivity_PublicPrivateMessage(content)
+					return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
 
 				case wireformats.mls_public_message:
-					return await this.#receiveActivity_PublicPrivateMessage(content)
+					return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
 
 				case wireformats.mls_welcome:
-					return await this.#receiveActivity_Welcome(content)
+					return await this.#receiveActivity_Welcome(mlsMessage)
 
 				default:
-					console.error("Unknown MLS message type:")
-					return null
+					throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
 			}
+
 		} catch (error) {
-			console.error("Error decoding MLS message::::", error)
+			console.error("Unable to decode MLS message::::", error)
 			return null
 		}
 	}
+
 
 	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
 	async #receiveActivity_Welcome(message: MlsWelcomeMessage): Promise<null> {
@@ -452,6 +479,8 @@ export class MLS {
 
 		// Save the group to the database
 		await this.#database.saveGroup(encryptedGroup)
+		console.log("mls.#receiveActivity_Welcome: Added group. epoch", encryptedGroup.clientState.groupContext.epoch)
+
 
 		// Cycle the KeyPackage
 		await this.#cycleKeyPackages()
@@ -462,7 +491,7 @@ export class MLS {
 	}
 
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-	async #receiveActivity_GroupInfo(message: MlsGroupInfo) {
+	async #receiveActivity_GroupInfo(document: Document, message: MlsGroupInfo) {
 
 		var clientState: ClientState
 
@@ -474,7 +503,7 @@ export class MLS {
 	// decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
-	async #receiveActivity_PublicPrivateMessage(mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
+	async #receiveActivity_PublicPrivateMessage(document: Document, mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
 
 		var groupId: string
 
@@ -503,13 +532,20 @@ export class MLS {
 
 		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
-			throw new Error("Cannot receive encrypted messages for unencrypted group")
+			throw new Error("Cannot receive MLS-encrypted messages for unencrypted group")
+		}
+
+		// RULE: Sender must be a member of the group
+		if (!group.members.includes(document.attributedToId())) {
+			throw new Error("Received MLS message from a sender that is not a member of the group: " + document.toJSON())
 		}
 
 		// RULE: Do not accept messages for closed groups
 		if (group.stateId == "CLOSED") {
 			return null
 		}
+
+		console.log("About to process Private Message. Epoch", group.clientState.groupContext.epoch)
 
 		// Decode the message using ts-mls
 		const decodedMessage = await processMessage({
@@ -529,9 +565,11 @@ export class MLS {
 		group.clientState = decodedMessage.newState
 		group.updateDate = Date.now()
 		group.members = this.getGroupMembers(group)
+		console.log("mls.#receiveActivity_PublicPrivateMessage: Processed message. New epoch", group.clientState.groupContext.epoch)
 
 		// If the current actor has been removed from the group, then close it permanently...
 		if (!group.members.includes(this.#actor.id())) {
+			console.log("mls.#receiveActivity_PublicPrivateMessage: Current actor has been removed from the group.")
 			group.stateId = "CLOSED"
 			await this.#database.saveGroup(group)
 			return null
@@ -547,6 +585,8 @@ export class MLS {
 
 		// Otherwise, this IS an application message, so return the decrypted JSON-LD to the controller.
 		const plaintext = decodeText(decodedMessage.message)
+
+		console.log("mls.#receiveActivity_PublicPrivateMessage: Decrypted message plaintext", plaintext)
 
 		// Create a result object and embed additional context data
 		return new Activity().fromJSON(plaintext)
@@ -565,6 +605,8 @@ export class MLS {
 			activity = new Activity(activity)
 		}
 
+		console.log("mls.sendActivity: ", activity.toObject())
+
 		// Encrypt the message using MLS
 		const messageText = activity.toJSON()
 		const messageBytes = encodeText(messageText)
@@ -580,6 +622,7 @@ export class MLS {
 		// update the Group with the new group state
 		group.clientState = applicationMessage.newState
 		group.updateDate = Date.now()
+		console.log("mls.sendActivity: Created message. epoch", group.clientState.groupContext.epoch)
 
 		// save the updated group
 		await this.#database.saveGroup(group)
@@ -610,7 +653,7 @@ export class MLS {
 			type: vocab.ActivityTypeCreate,
 			actor: this.#actor.id(),
 			to: recipients,
-			generator: this.#generatorId,
+			instrument: this.#generatorId,
 			object: {
 				type: type,
 				attributedTo: this.#actor.id(),
@@ -620,8 +663,6 @@ export class MLS {
 				"mls:encoding": vocab.EncodingTypeBase64,
 			},
 		})
-
-		console.log("#sendMlsMessage.. sending Activity", activity.toObject())
 
 		this.#delivery.sendActivity(activity)
 
@@ -647,58 +688,12 @@ export class MLS {
 // Helpers
 //////////////////////////////////////////
 
-// leafNodeMatches returns a unary function that returns TRUE if the 
-// provided actorId matches the identity in the leaf node's credential.
-function leafNodeMatchesActor(actorId: string | string[]) {
-	return (member: LeafNode) => {
-
-		// Guarantee that we're working with a basic credential (not X.509 or something else)
-		if (member.credential.credentialType != defaultCredentialTypes.basic) {
-			return false
-		}
-
-		if (!Array.isArray(actorId)) {
-			actorId = [actorId]
-		}
-
-		return actorId.some((id) => {
-			const credential = member.credential as CredentialBasic
-			return decodeText(credential.identity) == id
-		})
-	}
-}
-
-function leafNodeThisDevice(actorId: string, signature: Uint8Array) {
-	return (member: LeafNode) => {
-
-		const credential = member.credential as CredentialBasic
-		if (decodeText(credential.identity) != actorId) {
-			return false
-		}
-
-		return uint8ArrayEqual(member.signature, signature)
-	}
-}
-
-function leafNodeMyOtherDevices(actorId: string, signature: Uint8Array) {
-	return (member: LeafNode) => {
-
-		const credential = member.credential as CredentialBasic
-		if (decodeText(credential.identity) != actorId) {
-			return false
-		}
-
-		return !uint8ArrayEqual(member.signature, signature)
-	}
-}
-
-
 // encodeText is a shorthand for using the ts-mls TextEncoder
 function encodeText(text: string) {
 	return new TextEncoder().encode(text)
 }
 
-// decodeText is a shorthand for using the ts-mls TextDecoder
+// decodeText is a shorthand for using the ts-mls TextDecoder.
 function decodeText(bytes: Uint8Array) {
 	return new TextDecoder().decode(bytes)
 }
