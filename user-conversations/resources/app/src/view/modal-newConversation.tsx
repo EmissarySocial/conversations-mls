@@ -18,6 +18,7 @@ interface NewConversationState {
 	actors: Actor[]
 	content: string
 	canBeEncrypted: boolean
+	sending: boolean
 }
 
 export class NewConversation {
@@ -26,6 +27,7 @@ export class NewConversation {
 		vnode.state.actors = []
 		vnode.state.content = ""
 		vnode.state.canBeEncrypted = false
+		vnode.state.sending = false
 	}
 
 	view(vnode: NewConversationVnode) {
@@ -110,6 +112,16 @@ export class NewConversation {
 	}
 
 	submitButton(vnode: NewConversationVnode): JSX.Element {
+
+		if (vnode.state.sending) {
+			return (
+				<button class="primary" disabled>
+					<span class="spin"><i class="bi bi-arrow-clockwise"></i></span> Sending
+				</button>
+			)
+		}
+
+
 		if (vnode.state.actors.length == 0) {
 			return (
 				<button type="submit" class="primary" disabled>
@@ -119,6 +131,7 @@ export class NewConversation {
 		}
 
 		if (vnode.state.canBeEncrypted) {
+
 			return (
 				<button type="submit" class="primary" tabIndex="0">
 					<i class="bi bi-lock"></i> Send Encrypted
@@ -159,6 +172,9 @@ export class NewConversation {
 		if (vnode.state.actors.length == 0) {
 			return
 		}
+
+		// Give visual feedback and disable the "send" button
+		vnode.state.sending = true
 
 		// Collect variables
 		const participants = vnode.state.actors.map((actor) => actor.id())
