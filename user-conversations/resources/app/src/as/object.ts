@@ -1,4 +1,5 @@
 import { toString } from "./utils"
+import * as convert from "./convert"
 import * as vocab from "./vocab"
 
 type map = { [key: string]: any }
@@ -107,57 +108,23 @@ export class Object {
 
 	getInteger = (namespace: string, property: string) => {
 		const result = this.get(namespace, property)
-
-		if (result == undefined) {
-			return 0
-		}
-
-		switch (typeof result) {
-			case "number":
-				return Math.floor(result)
-
-			case "string":
-				const parsed = parseInt(result)
-				if (!isNaN(parsed)) {
-					return parsed
-				}
-		}
-
-		return 0
+		return convert.toInteger(result)
 	}
 
 	getBoolean = (namespace: string, property: string) => {
 		const result = this.get(namespace, property)
-
-		if (result == undefined) {
-			return false
-		}
-
-		switch (typeof result) {
-			case "boolean":
-				return result
-
-			case "string":
-				return result.toLowerCase() === "true"
-		}
-
-		return false
+		return convert.toBoolean(result)
 	}
 
 	getArray = (namespace: string, property: string) => {
 		const result = this.get(namespace, property)
-
-		if (result == undefined) {
-			return []
-		}
-
-		if (Array.isArray(result)) {
-			return result
-		}
-
-		return [result]
+		return convert.toArray(result)
 	}
 
+	getMap = (namespace: string, property: string): { [key: string]: any } => {
+		const result = this.get(namespace, property)
+		return convert.toMap(result)
+	}
 
 	///////////////////////////////////
 	// Properties
