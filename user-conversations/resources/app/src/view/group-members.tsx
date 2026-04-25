@@ -2,6 +2,7 @@ import m from "mithril"
 import { Controller } from "../service/controller"
 import { type Group } from "../model/group"
 import { type Vnode, type VnodeDOM, type Component } from "mithril"
+import type { Contact } from "../model/contact"
 
 type GroupMembersVnode = Vnode<GroupMembersArgs, GroupMembersState>
 
@@ -65,17 +66,7 @@ export class GroupMembers {
 										<div class="text-gray">{contact.username}</div>
 									</div>
 									<div class="align-right">
-										{
-											(contact.id == controller.actorId())
-												?
-												<button class="text-sm text-red" tabIndex="0" onclick={() => this.leaveGroup(vnode)} >
-													Leave Group
-												</button>
-												:
-												<button class="text-sm" tabIndex="0" onclick={() => this.removeGroupMember(vnode, contact.id)} >
-													Remove
-												</button>
-										}
+										{this.drawActionButton(vnode, group, contact)}
 									</div>
 								</div>
 							)
@@ -97,15 +88,34 @@ export class GroupMembers {
 		)
 	}
 
+	drawActionButton(vnode: GroupMembersVnode, group: Group, contact: Contact): JSX.Element {
+		const controller = vnode.attrs.controller
+
+		if (group.stateId == "CLOSED") {
+			return <></>
+		}
+
+		if (contact.id == controller.actorId()) {
+			return (
+				<button class="text-sm text-red" tabIndex="0" onclick={() => this.leaveGroup(vnode)} >
+					Leave Group
+				</button>
+			)
+		}
+
+		return (
+			<button class="text-sm" tabIndex="0" onclick={() => this.removeGroupMember(vnode, contact.id)} >
+				Remove
+			</button>
+		)
+	}
+
 	async leaveGroup(vnode: GroupMembersVnode) {
-		console.log("confirm: leave group")
 
 		if (!confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
-			console.log("NOT leaving group")
 			return
 		}
 
-		console.log("leaving group")
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
 		await controller.leaveGroup(group.id)
@@ -118,7 +128,8 @@ export class GroupMembers {
 			return
 		}
 
-		await vnode.attrs.controller.removeGroupMember(contactId)
+		const controller = vnode.attrs.controller
+		await controller.removeGroupMember(contactId)
 	}
 
 	close(vnode: GroupMembersVnode) {
