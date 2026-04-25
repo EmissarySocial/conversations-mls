@@ -1178,13 +1178,15 @@ export class Controller {
 
 		} catch (error) {
 			console.error("Unable to decode MLS message:", error)
-			if (retryCount < 3) {
+			if (retryCount < 120) { // retry every half-second for up to 1 minute
 				console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
 				setTimeout(() => {
 					this.receiveActivity(activity, retryCount + 1)
-				}, 1000 * (retryCount + 1))
+				}, 500)
 				return
 			}
+
+			console.log("Giving up on message after 1 minute", error)
 			return
 		}
 
