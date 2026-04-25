@@ -391,43 +391,37 @@ export class MLS {
 	// null is returned.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
-		try {
-			const message = object.content()
-			const uintArray = base64ToUint8Array(message)
-			const mlsMessage = decode(mlsMessageDecoder, uintArray)!
+		const message = object.content()
+		const uintArray = base64ToUint8Array(message)
+		const mlsMessage = decode(mlsMessageDecoder, uintArray)!
 
-			// Require that the we have a valid decoded message before proceeding
-			// TODO: Here's where we send a "Failure" message to the group.
-			if (mlsMessage == undefined) {
-				console.error("Unable to decode MLS message", message)
-				return null
-			}
-
-			// Execute the appropriate handler 
-			switch (mlsMessage.wireformat) {
-
-				case wireformats.mls_group_info:
-					return await this.#receiveActivity_GroupInfo(object, mlsMessage)
-
-				case wireformats.mls_key_package:
-					return null
-
-				case wireformats.mls_private_message:
-					return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
-
-				case wireformats.mls_public_message:
-					return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
-
-				case wireformats.mls_welcome:
-					return await this.#receiveActivity_Welcome(mlsMessage)
-
-				default:
-					throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
-			}
-
-		} catch (error) {
-			console.error("Unable to decode MLS message::::", error)
+		// Require that the we have a valid decoded message before proceeding
+		// TODO: Here's where we send a "Failure" message to the group.
+		if (mlsMessage == undefined) {
+			throw new Error("Unable to decode message: " + message)
 			return null
+		}
+
+		// Execute the appropriate handler 
+		switch (mlsMessage.wireformat) {
+
+			case wireformats.mls_group_info:
+				return await this.#receiveActivity_GroupInfo(object, mlsMessage)
+
+			case wireformats.mls_key_package:
+				return null
+
+			case wireformats.mls_private_message:
+				return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
+
+			case wireformats.mls_public_message:
+				return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
+
+			case wireformats.mls_welcome:
+				return await this.#receiveActivity_Welcome(mlsMessage)
+
+			default:
+				throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
 		}
 	}
 

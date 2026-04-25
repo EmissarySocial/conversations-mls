@@ -1137,7 +1137,7 @@ export class Controller {
 	// Receiving Activities
 	//////////////////////////////////////////
 
-	receiveActivity = async (activity: Activity) => {
+	receiveActivity = async (activity: Activity, retryCount: number = 0) => {
 
 		console.log("Received activity:", activity.toObject())
 		var object: Document
@@ -1178,6 +1178,13 @@ export class Controller {
 
 		} catch (error) {
 			console.error("Unable to decode MLS message:", error)
+			if (retryCount < 3) {
+				console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
+				setTimeout(() => {
+					this.receiveActivity(activity, retryCount + 1)
+				}, 1000 * (retryCount + 1))
+				return
+			}
 			return
 		}
 

@@ -16167,31 +16167,26 @@
     // If no further action is required (such as processing a GroupInfo or Welcome message) then
     // null is returned.
     async receiveActivity(activity, object) {
-      try {
-        const message = object.content();
-        const uintArray = base64ToUint8Array(message);
-        const mlsMessage = decode(mlsMessageDecoder, uintArray);
-        if (mlsMessage == void 0) {
-          console.error("Unable to decode MLS message", message);
-          return null;
-        }
-        switch (mlsMessage.wireformat) {
-          case wireformats.mls_group_info:
-            return await this.#receiveActivity_GroupInfo(object, mlsMessage);
-          case wireformats.mls_key_package:
-            return null;
-          case wireformats.mls_private_message:
-            return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
-          case wireformats.mls_public_message:
-            return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
-          case wireformats.mls_welcome:
-            return await this.#receiveActivity_Welcome(mlsMessage);
-          default:
-            throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
-        }
-      } catch (error) {
-        console.error("Unable to decode MLS message::::", error);
+      const message = object.content();
+      const uintArray = base64ToUint8Array(message);
+      const mlsMessage = decode(mlsMessageDecoder, uintArray);
+      if (mlsMessage == void 0) {
+        throw new Error("Unable to decode message: " + message);
         return null;
+      }
+      switch (mlsMessage.wireformat) {
+        case wireformats.mls_group_info:
+          return await this.#receiveActivity_GroupInfo(object, mlsMessage);
+        case wireformats.mls_key_package:
+          return null;
+        case wireformats.mls_private_message:
+          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
+        case wireformats.mls_public_message:
+          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
+        case wireformats.mls_welcome:
+          return await this.#receiveActivity_Welcome(mlsMessage);
+        default:
+          throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
       }
     }
     // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
@@ -17958,7 +17953,7 @@
     //////////////////////////////////////////
     // Receiving Activities
     //////////////////////////////////////////
-    receiveActivity = async (activity) => {
+    receiveActivity = async (activity, retryCount = 0) => {
       console.log("Received activity:", activity.toObject());
       var object;
       try {
@@ -17980,6 +17975,13 @@
         }
       } catch (error) {
         console.error("Unable to decode MLS message:", error);
+        if (retryCount < 3) {
+          console.log("Retrying activity reception... Attempt #" + (retryCount + 1));
+          setTimeout(() => {
+            this.receiveActivity(activity, retryCount + 1);
+          }, 1e3 * (retryCount + 1));
+          return;
+        }
         return;
       }
       try {
