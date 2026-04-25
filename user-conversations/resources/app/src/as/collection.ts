@@ -99,6 +99,7 @@ async function* range(url: string, after: string = "", options: RequestInit = {}
 	// Fetch the collection
 	var collection: Collection
 	try {
+		console.log("Fetching collection:", url)
 		collection = await new Collection().fromURL(url, options)
 	} catch (error) {
 		console.error("Error fetching collection:", url, error)

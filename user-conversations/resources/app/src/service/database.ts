@@ -93,13 +93,11 @@ export class Database {
 	}
 
 	erase = () => {
-		console.log("Erasing database: ", this.#db.name)
 
 		this.#db.close()
 		var req = window.indexedDB.deleteDatabase(this.#db.name)
 
 		req.onsuccess = (event) => {
-			console.log("Database erased successfully: ", event)
 			this.#host.reload()
 		}
 
@@ -166,20 +164,17 @@ export class Database {
 	// saveGroup saves a group to the database
 	saveGroup = async (group: Group) => {
 
-		console.log("saveGroup", group)
 
 		// Load the previous group members for comparison later
 		const previousGroup = await this.loadGroup(group.id)
 		const previousMembers = previousGroup?.members || []
-		console.log(previousGroup, previousMembers)
 		const { added, removed } = diffArrays(previousMembers, group.members)
-
-		console.log(added, removed)
 
 		// Add a status message to the conversation for
 		// each new member that was added.
 		added.forEach(member => {
 
+			console.log("Adding member to group:", member)
 			const statusMessage = NewMessage({
 				id: newId(),
 				groupId: group.id,
@@ -194,6 +189,7 @@ export class Database {
 		// each member that was removed.
 		removed.forEach(member => {
 
+			console.log("Removing member from group:", member)
 			const statusMessage = NewMessage({
 				id: newId(),
 				groupId: group.id,
