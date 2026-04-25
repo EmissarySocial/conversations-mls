@@ -100,17 +100,17 @@ export class AppSettings {
 					</div>
 
 					<div class="card padding margin-top">
-						<div class="text-lg bold margin-bottom">Sign Out</div>
+						<div class="text-lg bold margin-bottom">Close Conversations</div>
 						<div class="layout-vertical margin-top">
 							<div class="layout-elements">
 								<div class="layout-element">
-									Clear out your current session to safeguard your private data. Only encrypted
-									data will remain on this device.
+									Close out this current session.
+									Your data will remain on this device, but cannot be accessed without a passcode.
 								</div>
 							</div>
 						</div>
 
-						<button class="text-red" onclick={() => controller.page_signout()}>Sign Out</button>
+						<button class="text-red" onclick={() => controller.page_signout()}>Close</button>
 					</div>
 
 					<div class="card padding margin-top">
