@@ -138,6 +138,7 @@ export class NewConversation {
 	selectActors(vnode: NewConversationVnode, actors: Actor[], canBeEncrypted: boolean) {
 		vnode.state.actors = actors
 		vnode.state.canBeEncrypted = canBeEncrypted
+		m.redraw()
 	}
 
 	// setPlaintext updates the content message in the component state as the user types
