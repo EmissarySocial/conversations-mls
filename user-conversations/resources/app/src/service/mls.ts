@@ -1,5 +1,5 @@
 // MLS functions
-import { bytesToBase64, leafNodeSources, nodeTypes } from "ts-mls"
+import { bytesToBase64, getOwnLeafNode, leafNodeSources, nodeTypes, type IncomingMessageAction, type LeafIndex, type ProposalWithSender } from "ts-mls"
 import { createProposal } from "ts-mls"
 import { defaultCredentialTypes } from "ts-mls"
 import { createApplicationMessage } from "ts-mls"
@@ -23,6 +23,7 @@ import { type ClientState } from "ts-mls"
 import { type CredentialBasic } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
 import { type LeafNode } from "ts-mls"
+import { type Node } from "ts-mls"
 import { type MlsContext } from "ts-mls"
 import { type MlsGroupInfo } from "ts-mls"
 import { type MlsMessage } from "ts-mls"
@@ -234,7 +235,35 @@ export class MLS {
 	// for this user from the group, then sends a PROPOSAL to 
 	// remove THIS DEVICE from the group.
 	async leaveGroup(group: EncryptedGroup): Promise<void> {
+
+		// Remove all of "my" devices EXCEPT the current one...
 		await this.removeGroupMember(group, this.#actor.id())
+
+		// AFTER all of my other devices have been removed, 
+		// remove THIS device via a PROPOSAL that others will commit.
+
+		// Find my leaf node in the ratchet tree
+		const ownLeafNode = getOwnLeafNode(group.clientState)
+		const matcher = matchLeafNode(ownLeafNode)
+		const ownLeafIndex = group.clientState.ratchetTree.findIndex(node => matcher(node))
+
+		const proposal = await createProposal({
+			context: this.#context(),
+			state: group.clientState,
+			proposal: {
+				proposalType: defaultProposalTypes.remove,
+				remove: { removed: ownLeafIndex },
+			},
+		})
+
+		console.log("proposal", proposal)
+
+		// Send a message to the group members
+		await this.#sendMlsMessage(
+			vocab.ObjectTypeMlsGroupInfo,
+			group.members,
+			proposal.message,
+		)
 	}
 
 	// removeGroupMember removes all clients for the specified actorId. This function cannot be used
@@ -245,23 +274,26 @@ export class MLS {
 		console.log(group.clientState.ratchetTree)
 
 		// inspect each node in the group's ratchetTree
-		for (var index = 0; index < group.clientState.ratchetTree.length; index++) {
-
-			const node = group.clientState.ratchetTree[index]
+		var proposals = group.clientState.ratchetTree.map((node: Node, ratchetIndex: number) => {
 
 			// Skip undefined nodes
 			if (node == undefined) {
-				continue
+				return null
 			}
 
-			// Skip parent nodes
+			// RULE: Skip parent nodes
 			if (node.nodeType != nodeTypes.leaf) {
-				continue
+				return null
 			}
 
-			// Guarantee that we're working with a basic credential (not X.509 or something else)
+			// RULE: Guarantee that we're working with a basic credential (not X.509 or something else)
 			if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
-				continue
+				return null
+			}
+
+			// RULE: Can't remove THIS DEVICE from the group.
+			if (node.leaf.signature === this.#publicKeyPackage.signature) {
+				return null
 			}
 
 			// Get the credential and decode the identity
@@ -270,84 +302,25 @@ export class MLS {
 
 			// If this leaf node doesn't match the specified actorId, then do nothing.
 			if (leafNodeActorId != actorId) {
-				continue
+				return null
 			}
 
-			// Remove the leaf node and send commits to other group members.
-			await this.removeLeafNode(group, index / 2)
-		}
+			const leafIndex = ratchetIndex / 2
 
-		// Recalculate all members in the group
-		group.members = this.getGroupMembers(group)
+			return {
+				proposalType: defaultProposalTypes.remove,
+				remove: { removed: leafIndex },
+			} as Proposal
 
-		// Save the group to the database
-		await this.#database.saveGroup(group)
+		}).filter((proposal: Proposal) => proposal != null)
 
-		// Return the updated group (sans-actor)
-		return group
-	}
-
-	// removeLeafNode removes a single indexed leaf node from the group's clientState
-	async removeLeafNode(group: EncryptedGroup, leafIndex: number): Promise<void> {
-
-		const ratchetTreeIndex = leafIndex * 2
-
-		// BOUNDS CHECK
-		if ((ratchetTreeIndex < 0) || (ratchetTreeIndex >= group.clientState.ratchetTree.length)) {
-			return
-		}
-
-		// Find the leaf node in the clientState
-		const node = group.clientState.ratchetTree[ratchetTreeIndex]
-
-		// RULE: Guard against invalid leaf nodes
-		if (node == undefined) {
-			return
-		}
-
-		// RULE: Only process leaf nodes, not parent nodes
-		if (node.nodeType != nodeTypes.leaf) {
-			return
-		}
-
-
-		// Special case for removing THIS DEVICE from the group:
-		// create an send a proposal for someone else to remove this device.
-		if (node.leaf.signature === this.#publicKeyPackage.signature) {
-
-			console.log("Removing THIS DEVICE from the group. Sending proposal to remove leaf index " + leafIndex)
-
-			const proposal = await createProposal({
-				context: this.#context(),
-				state: group.clientState,
-				proposal: {
-					proposalType: defaultProposalTypes.remove,
-					remove: { removed: leafIndex },
-				},
-			})
-
-			// Send a message to the group members
-			await this.#sendMlsMessage(
-				vocab.ObjectTypeMlsGroupInfo,
-				group.members,
-				proposal.message,
-			)
-
-			return
-		}
-
-		// Fall through means we're removing SOMEONE ELSE from the group
-		console.log("Removing SOMEONE ELSE from the group. Sending commit to remove leaf index " + leafIndex)
-		console.log(new TextDecoder().decode((node.leaf.credential as CredentialBasic).identity))
+		console.log("Proposals:", proposals)
 
 		// Create a proper commit to remove this device
 		const commitResult = await createCommit({
 			context: this.#context(),
 			state: group.clientState,
-			extraProposals: [{
-				proposalType: defaultProposalTypes.remove,
-				remove: { removed: leafIndex },
-			}],
+			extraProposals: proposals,
 			ratchetTreeExtension: true,
 		})
 
@@ -365,6 +338,15 @@ export class MLS {
 			group.members,
 			commitResult.commit,
 		)
+
+		// Recalculate all members in the group
+		group.members = this.getGroupMembers(group)
+
+		// Save the group to the database
+		await this.#database.saveGroup(group)
+
+		// Return the updated group (sans-actor)
+		return group
 	}
 
 
@@ -501,6 +483,8 @@ export class MLS {
 
 		var groupId: string
 
+		console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", mlsMessage)
+
 		switch (mlsMessage.wireformat) {
 
 			case wireformats.mls_private_message:
@@ -515,6 +499,7 @@ export class MLS {
 				console.error("Invalid message type for PrivateMessage decoder")
 				return null
 		}
+
 
 		// Load the group from the database so we can get the current client state for decryption
 		const group = await this.#database.loadGroup(groupId)
@@ -547,8 +532,7 @@ export class MLS {
 			state: group.clientState,
 			message: mlsMessage,
 			callback: (message) => {
-				console.log("Received MLS message with callback", message)
-				return "accept"
+				return this.#incomingMessageCallback(group, message)
 			}
 		})
 
@@ -584,6 +568,25 @@ export class MLS {
 
 		// Create a result object and embed additional context data
 		return new Activity().fromJSON(plaintext)
+	}
+
+	#incomingMessageCallback(group: EncryptedGroup, incoming: incomingMessage): IncomingMessageAction {
+
+		console.log(incoming)
+
+		// Always accept commit messages
+		if (incoming.kind == "commit") {
+			return "accept"
+		}
+
+		switch (incoming.proposal.proposal.proposalType) {
+			case defaultProposalTypes.remove:
+
+			// begin async work here.
+			// how to handle collisions?
+		}
+
+		return "accept"
 	}
 
 	//////////////////////////////////////////
@@ -682,6 +685,16 @@ export class MLS {
 // Helpers
 //////////////////////////////////////////
 
+// incomingMessage is a type that is passed to an IncomingMessageCallback function.
+type incomingMessage = {
+	kind: "commit";
+	senderLeafIndex: LeafIndex | undefined;
+	proposals: ProposalWithSender[];
+} | {
+	kind: "proposal";
+	proposal: ProposalWithSender;
+}
+
 // encodeText is a shorthand for using the ts-mls TextEncoder
 function encodeText(text: string) {
 	return new TextEncoder().encode(text)
@@ -697,5 +710,28 @@ function addClientState(group: Group, clientState: ClientState): EncryptedGroup 
 	return {
 		...group,
 		clientState: clientState,
+	}
+}
+
+// matchLeafNode returns a "matcher" function that matches the provided LeafNode with another Node.
+// The matcher function returns TRUE if the other Node is not undefined, contains a LeafNode, 
+// and that LeafNode has the same signature as the provided LeafNode.
+function matchLeafNode(a: LeafNode) {
+
+	return function (b: Node | undefined): boolean {
+
+		if (b == undefined) {
+			return false
+		}
+
+		if (b.nodeType != nodeTypes.leaf) {
+			return false
+		}
+
+		if (b.leaf == undefined) {
+			return false
+		}
+
+		return (a.signature == b.leaf.signature)
 	}
 }

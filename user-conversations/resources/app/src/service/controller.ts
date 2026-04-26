@@ -828,7 +828,7 @@ export class Controller {
 			}
 
 			// Remove the member using MLS
-			group = await this.#mls.removeGroupMember(group, actorId)
+			await this.#mls.removeGroupMember(group, actorId)
 
 		} else {
 
