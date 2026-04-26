@@ -661,7 +661,7 @@ export class Controller {
 		})
 
 		// Asynchronously send a private message to my other devices
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "SYNC GROUP")
 	}
 
 	// leaveGroup leaves/deletes the specified group from the database
@@ -915,7 +915,7 @@ export class Controller {
 		})
 
 		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "SEND MESSAGE")
 	}
 
 	// sendFile sends a base64-encoded file to the specified group
@@ -957,7 +957,7 @@ export class Controller {
 		})
 
 		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "SEND FILE")
 	}
 
 	updateMessage = async (message: Message) => {
@@ -983,7 +983,7 @@ export class Controller {
 		})
 
 		// Send the activity
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "UPDATE MESSAGE")
 
 		// Update the message in the database, and reload to refresh the UX
 		await this.#database.saveMessage(message)
@@ -1029,7 +1029,7 @@ export class Controller {
 			"object": message.id,
 		})
 
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, 'DELETE MESSAGE')
 
 		// Delete the message
 		await this.#database.deleteMessage(messageId)
@@ -1072,7 +1072,7 @@ export class Controller {
 		})
 
 		// Send the activity to the outbox
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "REACTION")
 	}
 
 	// undoReaction removes a "reaction" from the specified message
@@ -1119,7 +1119,7 @@ export class Controller {
 		})
 
 		// (asynchronously) send the activity to the outbox
-		this.#sendActivity(group, activity)
+		this.#sendActivity(group, activity, "UNDO REACTION")
 	}
 
 
@@ -1345,7 +1345,7 @@ export class Controller {
 			to: [message.sender],
 			object: object.id(),
 			context: group.id,
-		})
+		}, "ACK")
 
 	}
 
@@ -1505,7 +1505,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// sendActivity sends an activity to the Actor's outbox
-	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }) => {
+	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }, debug?: any) => {
 
 		// RULE: If the activity is not already an Activity object, convert it to one
 		if (!(activity instanceof Activity)) {
@@ -1528,7 +1528,7 @@ export class Controller {
 		}
 
 		// Send the activity MLS service
-		return await this.#mls.sendActivity(group, activity)
+		return await this.#mls.sendActivity(group, activity, debug)
 	}
 
 
