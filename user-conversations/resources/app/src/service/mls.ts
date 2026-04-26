@@ -274,7 +274,7 @@ export class MLS {
 		console.log(group.clientState.ratchetTree)
 
 		// inspect each node in the group's ratchetTree
-		var proposals = group.clientState.ratchetTree.map((node: Node, ratchetIndex: number) => {
+		var proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
 
 			// Skip undefined nodes
 			if (node == undefined) {
@@ -312,7 +312,7 @@ export class MLS {
 				remove: { removed: leafIndex },
 			} as Proposal
 
-		}).filter((proposal: Proposal) => proposal != null)
+		}).filter((proposal) => proposal != null)
 
 		console.log("Proposals:", proposals)
 
