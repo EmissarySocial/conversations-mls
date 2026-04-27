@@ -12030,13 +12030,6 @@
     ...publicState,
     ...state
   }));
-  function getOwnLeafNode(state) {
-    const idx = leafToNodeIndex(toLeafIndex(state.privatePath.leafIndex));
-    const leaf = state.ratchetTree[idx];
-    if (leaf?.nodeType !== nodeTypes.leaf)
-      throw new InternalError("Expected leaf node");
-    return leaf.leaf;
-  }
   function getGroupMembers(state) {
     return extractFromGroupMembers(state, () => false, (l) => l);
   }
@@ -16958,7 +16951,6 @@
       const previousMembers = previousGroup?.members || [];
       const { added, removed } = diffArrays(previousMembers, group.members);
       added.forEach((member) => {
-        console.log("Adding member to group:", member);
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
@@ -16968,7 +16960,6 @@
         this.saveMessage(statusMessage);
       });
       removed.forEach((member) => {
-        console.log("Removing member from group:", member);
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
@@ -17687,14 +17678,16 @@
         this.#sendMlsMessage(
           ObjectTypeMlsWelcome,
           newMembers,
-          commitResult.welcome
+          commitResult.welcome,
+          "welcome: " + newMembers.join(", ")
         );
       }
       if (currentMembers.length > 0) {
         this.#sendMlsMessage(
           ObjectTypeMlsGroupInfo,
           currentMembers,
-          commitResult.commit
+          commitResult.commit,
+          "add members: " + newMembers.join(", ")
         );
       }
       return group;
@@ -17704,9 +17697,7 @@
     // remove THIS DEVICE from the group.
     async leaveGroup(group) {
       await this.removeGroupMember(group, this.#actor.id());
-      const ownLeafNode = getOwnLeafNode(group.clientState);
-      const matcher = matchLeafNode(ownLeafNode);
-      const ownLeafIndex = group.clientState.ratchetTree.findIndex((node) => matcher(node));
+      const ownLeafIndex = group.clientState.privatePath.leafIndex;
       const proposal = await createProposal({
         context: this.#context(),
         state: group.clientState,
@@ -17715,18 +17706,16 @@
           remove: { removed: ownLeafIndex }
         }
       });
-      console.log("proposal", proposal);
       await this.#sendMlsMessage(
         ObjectTypeMlsGroupInfo,
         group.members,
-        proposal.message
+        proposal.message,
+        "leave group:" + this.#actor.id()
       );
     }
     // removeGroupMember removes all clients for the specified actorId. This function cannot be used
     // to remove the current signed-in actor; use leaveGroup() for this operation instead.
     async removeGroupMember(group, actorId) {
-      console.log("removeGroupMember: " + actorId);
-      console.log(group.clientState.ratchetTree);
       var proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
         if (node == void 0) {
           return null;
@@ -17734,10 +17723,11 @@
         if (node.nodeType != nodeTypes.leaf) {
           return null;
         }
-        if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
+        const leafIndex = ratchetIndex / 2;
+        if (leafIndex == group.clientState.privatePath.leafIndex) {
           return null;
         }
-        if (node.leaf.signature === this.#publicKeyPackage.signature) {
+        if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
           return null;
         }
         const credential = node.leaf.credential;
@@ -17745,31 +17735,12 @@
         if (leafNodeActorId != actorId) {
           return null;
         }
-        const leafIndex = ratchetIndex / 2;
         return {
           proposalType: defaultProposalTypes.remove,
           remove: { removed: leafIndex }
         };
       }).filter((proposal) => proposal != null);
-      console.log("Proposals:", proposals);
-      const commitResult = await createCommit({
-        context: this.#context(),
-        state: group.clientState,
-        extraProposals: proposals,
-        ratchetTreeExtension: true
-      });
-      commitResult.consumed.forEach(zeroOutUint8Array);
-      console.log("previous epoch", group.clientState.groupContext.epoch);
-      group.clientState = commitResult.newState;
-      console.log("new epoch", group.clientState.groupContext.epoch);
-      await this.#sendMlsMessage(
-        ObjectTypeMlsGroupInfo,
-        group.members,
-        commitResult.commit
-      );
-      group.members = this.getGroupMembers(group);
-      await this.#database.saveGroup(group);
-      return group;
+      await this.#commitProposals(group, proposals, "remove member: " + actorId);
     }
     //////////////////////////////////////////
     // Key Packages
@@ -17836,7 +17807,6 @@
       var encryptedGroup = addClientState(group, clientState);
       encryptedGroup.members = this.getGroupMembers(encryptedGroup);
       await this.#database.saveGroup(encryptedGroup);
-      console.log("mls.#receiveActivity_Welcome: Added group. epoch", encryptedGroup.clientState.groupContext.epoch);
       await this.#cycleKeyPackages();
       return null;
     }
@@ -17850,7 +17820,7 @@
     // ActivityStreams messages.
     async #receiveActivity_PublicPrivateMessage(document2, mlsMessage) {
       var groupId;
-      console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", mlsMessage);
+      console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", document2.toObject());
       switch (mlsMessage.wireformat) {
         case wireformats.mls_private_message:
           groupId = decodeText(mlsMessage.privateMessage.groupId);
@@ -17876,50 +17846,92 @@
       if (group.stateId == "CLOSED") {
         return null;
       }
-      console.log("About to process Private Message. Epoch", group.clientState.groupContext.epoch);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: group epoch:", group.clientState.groupContext.epoch);
+      const _this = this;
       const decodedMessage = await processMessage({
         context: this.#context(),
         state: group.clientState,
         message: mlsMessage,
         callback: (message) => {
-          return this.#incomingMessageCallback(group, message);
+          return _this.#processMessageCallback(message, group);
         }
       });
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Decoded message:", decodedMessage);
+      if (decodedMessage.kind == "newState") {
+        if (decodedMessage.actionTaken == "reject") {
+          console.log("mls.#receiveActivity_PublicPrivateMessage: 'Rejected' message based on callback rules. No state changes applied to the group.");
+          return null;
+        }
+      }
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
       group.updateDate = Date.now();
       group.members = this.getGroupMembers(group);
-      console.log("mls.#receiveActivity_PublicPrivateMessage: Processed message. New epoch", group.clientState.groupContext.epoch);
       if (!group.members.includes(this.#actor.id())) {
-        console.log("mls.#receiveActivity_PublicPrivateMessage: Current actor has been removed from the group.");
         group.stateId = "CLOSED";
         await this.#database.saveGroup(group);
         return null;
       }
       await this.#database.saveGroup(group);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group. epoch:", group.clientState.groupContext.epoch);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group members:", group.members);
       if (decodedMessage.kind != "applicationMessage") {
         return null;
       }
       const plaintext = decodeText(decodedMessage.message);
-      console.log("mls.#receiveActivity_PublicPrivateMessage: Decrypted message plaintext", plaintext);
       return new Activity().fromJSON(plaintext);
     }
-    #incomingMessageCallback(group, incoming) {
-      console.log(incoming);
-      if (incoming.kind == "commit") {
+    #processMessageCallback(message, group) {
+      if (message.kind == "commit") {
         return "accept";
       }
-      switch (incoming.proposal.proposal.proposalType) {
-        case defaultProposalTypes.remove:
+      const proposal = message.proposal.proposal;
+      if (proposal.proposalType == defaultProposalTypes.remove) {
+        console.log("mls.#processMessageCallback: Received remove proposal. Delaying commit based on leaf index to reduce collisions.");
+        const myLeafIndex = group.clientState.privatePath.leafIndex;
+        const waitMs = myLeafIndex * 1e3;
+        console.log("myLeafIndex:", myLeafIndex);
+        console.log("waiting ms:", waitMs);
+        console.log("epoch:", group.clientState.groupContext.epoch);
+        window.setTimeout(() => {
+          console.log("mls.#processMessageCallback: Finished waiting. Processing remove proposal now....");
+          this.#processMessageCallback_RemoveProposal(group.id, proposal);
+        }, waitMs);
       }
-      return "accept";
+      return "reject";
+    }
+    // #processMessageCallback_RemoveProposal is triggered when we receive a "remove" proposal (after a timeout based on our leaf index). 
+    // This method checks commits the sender's proposal to the group IF they have not already been removed by another network node.
+    async #processMessageCallback_RemoveProposal(groupId, proposal) {
+      var group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        console.error("mls.#processMessageCallback_RemoveProposal: Unable to load group for remove proposal", groupId);
+        return;
+      }
+      if (!groupIsEncrypted(group)) {
+        console.error("mls.#processMessageCallback_RemoveProposal: Received remove proposal for unencrypted group", groupId);
+        return;
+      }
+      console.log("mls.#processMessageCallback_RemoveProposal: Processing 'remove myself' proposal", proposal);
+      console.log("mls.#processMessageCallback_RemoveProposal: group: ", group.clientState);
+      const leafIndex = proposal.remove.removed;
+      const ratchetTreeIndex = leafIndex * 2;
+      const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex];
+      if (deviceToRemove == void 0) {
+        console.log("mls.#processMessageCallback_RemoveProposal: Proposal deviceToRemove has already been removed from the group.");
+        return;
+      }
+      const credential = deviceToRemove.leaf.credential;
+      console.log("mls.#processMessageCallback_RemoveProposal: deviceToRemove ", deviceToRemove, decodeText(credential.identity));
+      console.log("mls.#processMessageCallback_RemoveProposal: Committing 'remove myself' proposal to other group members.", proposal);
+      await this.#commitProposals(group, [proposal], "Async process self-removal proposal for " + leafIndex);
     }
     //////////////////////////////////////////
     // Sending Messages
     //////////////////////////////////////////
     // sendActivity encodes an Activity as an MLS message and sends it to 
     // updated as a result of this message.
-    async sendActivity(group, activity) {
+    async sendActivity(group, activity, debug) {
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
@@ -17934,18 +17946,44 @@
       applicationMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = applicationMessage.newState;
       group.updateDate = Date.now();
-      console.log("mls.sendActivity: Created message. epoch", group.clientState.groupContext.epoch);
+      console.log("mls.sendActivity: Created message. epoch:", group.clientState.groupContext.epoch);
       await this.#database.saveGroup(group);
       return await this.#sendMlsMessage(
         ObjectTypeMlsPrivateMessage,
         activity.getArray("as", PropertyTo),
-        applicationMessage.message
+        applicationMessage.message,
+        debug
       );
     }
+    // commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
+    async #commitProposals(group, proposals, debug) {
+      const commitResult = await createCommit({
+        context: this.#context(),
+        state: group.clientState,
+        extraProposals: proposals,
+        ratchetTreeExtension: true
+      });
+      commitResult.consumed.forEach(zeroOutUint8Array);
+      console.log("mls.#commitProposals. previous epoch", group.clientState.groupContext.epoch);
+      group.clientState = commitResult.newState;
+      console.log("mls.#commitProposals. new epoch", group.clientState.groupContext.epoch);
+      this.#sendMlsMessage(
+        ObjectTypeMlsGroupInfo,
+        group.members,
+        commitResult.commit,
+        debug
+      );
+      group.members = this.getGroupMembers(group);
+      await this.#database.saveGroup(group);
+      console.log("#commitProposals. Group saved:", group);
+    }
     // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    async #sendMlsMessage(type, recipients, message) {
+    async #sendMlsMessage(type, recipients, message, debug) {
       if (recipients.length === 0) {
         return;
+      }
+      if (debug == void 0) {
+        debug = "MLS message: " + type;
       }
       const contentBytes = encode(mlsMessageEncoder, message);
       const contentBase64 = bytesToBase64(contentBytes);
@@ -17955,6 +17993,7 @@
         actor: this.#actor.id(),
         to: recipients,
         instrument: this.#generatorId,
+        debug,
         object: {
           type,
           attributedTo: this.#actor.id(),
@@ -17988,20 +18027,6 @@
     return {
       ...group,
       clientState
-    };
-  }
-  function matchLeafNode(a) {
-    return function(b) {
-      if (b == void 0) {
-        return false;
-      }
-      if (b.nodeType != nodeTypes.leaf) {
-        return false;
-      }
-      if (b.leaf == void 0) {
-        return false;
-      }
-      return a.signature == b.leaf.signature;
     };
   }
 
@@ -18141,7 +18166,6 @@
     }
     var collection;
     try {
-      console.log("Fetching collection:", url);
       collection = await new Collection().fromURL(url, options);
     } catch (error) {
       console.error("Error fetching collection:", url, error);
@@ -18486,11 +18510,9 @@
       for await (const activity of activities) {
         lastMessageId = activity.id();
         if (activity.instrument() === this.#generatorId) {
-          console.log("Receiver.#poll: Skipping reflected message.");
           continue;
         }
         try {
-          console.log("Receiver.#poll: Processing message", activity.toJSON());
           await this.#activityHandler(activity);
         } catch (error) {
           console.error("Receiver.#poll: Unable to process incoming message:", activity.toJSON(), error);
@@ -19296,7 +19318,7 @@
           "unread": group.unread
         }
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "SYNC GROUP");
     };
     // leaveGroup leaves/deletes the specified group from the database
     leaveGroup = async (groupId) => {
@@ -19319,14 +19341,12 @@
           console.error("Error leaving group:", error);
         }
       }
-      console.log("Notifying other devices to delete this group from their database");
       await this.#delivery.sendActivity(new Activity({
         to: this.#actor.id(),
         actor: this.#actor.id(),
         type: ActivityTypeLeave,
         object: group.id
       }));
-      console.log("Deleting group from THIS device database.");
       await this.#database.deleteGroup(groupId);
       await this.#database.deleteMessagesByGroup(groupId);
       await this.loadGroups();
@@ -19391,7 +19411,6 @@
       return group;
     };
     removeGroupMember = async (actorId) => {
-      console.log("removeGroupMember: " + actorId);
       var group = this.groupStream();
       if (groupIsEncrypted(group)) {
         if (this.#mls == void 0) {
@@ -19454,7 +19473,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "SEND MESSAGE");
     };
     // sendFile sends a base64-encoded file to the specified group
     sendFile = async (file) => {
@@ -19481,7 +19500,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "SEND FILE");
     };
     updateMessage = async (message) => {
       var group = this.groupStream();
@@ -19497,7 +19516,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "UPDATE MESSAGE");
       await this.#database.saveMessage(message);
       await this.loadMessages();
     };
@@ -19526,7 +19545,7 @@
         "type": ActivityTypeDelete,
         "object": message.id
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "DELETE MESSAGE");
       await this.#database.deleteMessage(messageId);
       await this.loadMessages();
     };
@@ -19554,7 +19573,7 @@
         to: group.members,
         object: message.id
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "REACTION");
     };
     // undoReaction removes a "reaction" from the specified message
     undoReaction = async (messageId) => {
@@ -19584,7 +19603,7 @@
           object: messageId
         }
       });
-      this.#sendActivity(group, activity);
+      this.#sendActivity(group, activity, "UNDO REACTION");
     };
     //////////////////////////////////////////
     // Contacts
@@ -19597,37 +19616,36 @@
     // Receiving Activities
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
-      console.log("Received activity:", activity.toObject());
       var object;
-      try {
-        var object = await activity.object();
-        if (object.isMLSMessage()) {
+      var object = await activity.object();
+      if (object.isMLSMessage()) {
+        try {
           if (this.#mls == void 0) {
-            throw new Error("MLS service is not initialized");
+            throw new Error("MLS service is not initialized (will retry shortly)");
           }
           const decodedActivity = await this.#mls.receiveActivity(activity, object);
           if (decodedActivity == null) {
             return;
           }
           if (decodedActivity.actorId() != activity.actorId()) {
-            console.error("Decrypted activity actor must match outer activity actor");
+            console.error("Rejecting message: Decrypted activity actor must match outer activity actor");
             return;
           }
           activity = decodedActivity;
           object = await activity.object();
-        }
-      } catch (error) {
-        console.error("Unable to decode MLS message:", error);
-        if (retryCount < 120) {
-          console.log("Retrying activity reception... Attempt #" + (retryCount + 1));
-          setTimeout(() => {
-            this.receiveActivity(activity, retryCount + 1);
-          }, 500);
+        } catch (error) {
+          if (retryCount < 120) {
+            console.log("Retrying activity reception... Attempt #" + (retryCount + 1));
+            setTimeout(() => {
+              this.receiveActivity(activity, retryCount + 1);
+            }, 500);
+            return;
+          }
+          console.log("Giving up on message after 1 minute", error);
           return;
         }
-        console.log("Giving up on message after 1 minute", error);
-        return;
       }
+      console.log("controller.receiveActivity", activity.toObject());
       try {
         switch (activity.type()) {
           case ActivityTypeAcknowledge:
@@ -19725,7 +19743,7 @@
         to: [message.sender],
         object: object.id(),
         context: group.id
-      });
+      }, "ACK");
     };
     #receiveActivity_Failure = async (activity) => {
     };
@@ -19741,7 +19759,6 @@
       await this.loadMessages();
     };
     #receiveActivity_Leave = async (activity) => {
-      console.log("Received 'Leave' activity:", activity);
       if (activity.actorId() != this.actorId()) {
         return;
       }
@@ -19816,7 +19833,7 @@
     // Network Stuff
     //////////////////////////////////////////
     // sendActivity sends an activity to the Actor's outbox
-    #sendActivity = async (group, activity) => {
+    #sendActivity = async (group, activity, debug) => {
       if (!(activity instanceof Activity)) {
         activity = new Activity(activity);
       }
@@ -19827,7 +19844,7 @@
       if (this.#mls == void 0) {
         throw new Error("MLS service is not initialized");
       }
-      return await this.#mls.sendActivity(group, activity);
+      return await this.#mls.sendActivity(group, activity, debug);
     };
     //////////////////////////////////////////
     // Other Helpers

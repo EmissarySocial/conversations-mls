@@ -699,7 +699,6 @@ export class Controller {
 		}
 
 		// (3/4) Send a message to my other devices to delete this group from their database.
-		console.log("Notifying other devices to delete this group from their database")
 		await this.#delivery.sendActivity(new Activity({
 			to: this.#actor.id(),
 			actor: this.#actor.id(),
@@ -708,7 +707,6 @@ export class Controller {
 		}))
 
 		// (4/4) Delete the group from THIS database
-		console.log("Deleting group from THIS device database.")
 		await this.#database.deleteGroup(groupId)
 		await this.#database.deleteMessagesByGroup(groupId)
 		await this.loadGroups()
@@ -814,8 +812,6 @@ export class Controller {
 	}
 
 	removeGroupMember = async (actorId: string) => {
-
-		console.log("removeGroupMember: " + actorId)
 
 		var group = this.groupStream()
 
@@ -1139,21 +1135,21 @@ export class Controller {
 
 	receiveActivity = async (activity: Activity, retryCount: number = 0) => {
 
-		console.log("Received activity:", activity.toObject())
 		var object: Document
 
-		// Part 1: Parse and possibly decode the received activity
-		try {
-			// Retrieve the object from the activity. This should be embedded,
-			// but we can load from the network if needed.
-			var object = await activity.object()
+		// Retrieve the object from the activity. This should be embedded,
+		// but we can load from the network if needed.
+		var object = await activity.object()
 
-			// Decode MLS-encrypted messages
-			if (object.isMLSMessage()) {
+		// Decode MLS-encrypted messages
+		if (object.isMLSMessage()) {
+
+			// Part 1: Parse and possibly decode the received activity
+			try {
 
 				// Guarantee dependency
 				if (this.#mls == undefined) {
-					throw new Error("MLS service is not initialized")
+					throw new Error("MLS service is not initialized (will retry shortly)")
 				}
 
 				// Decode the message embedded in the object.content.
@@ -1167,28 +1163,30 @@ export class Controller {
 
 				// RULE: guarantee that the actorIds match the encrypted content
 				if (decodedActivity.actorId() != activity.actorId()) {
-					console.error("Decrypted activity actor must match outer activity actor")
+					console.error("Rejecting message: Decrypted activity actor must match outer activity actor")
 					return
 				}
 
 				// Update activity and object to continue processing using the decoded values.
 				activity = decodedActivity
 				object = await activity.object()
-			}
 
-		} catch (error) {
-			console.error("Unable to decode MLS message:", error)
-			if (retryCount < 120) { // retry every half-second for up to 1 minute
-				console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
-				setTimeout(() => {
-					this.receiveActivity(activity, retryCount + 1)
-				}, 500)
+			} catch (error) {
+
+				if (retryCount < 120) { // retry every half-second for up to 1 minute
+					console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
+					setTimeout(() => {
+						this.receiveActivity(activity, retryCount + 1)
+					}, 500)
+					return
+				}
+
+				console.log("Giving up on message after 1 minute", error)
 				return
 			}
-
-			console.log("Giving up on message after 1 minute", error)
-			return
 		}
+
+		console.log("controller.receiveActivity", activity.toObject())
 
 		// Part 2: Route the activity based on its type, and apply changes to the local database and UX as needed.
 		try {
@@ -1375,8 +1373,6 @@ export class Controller {
 	}
 
 	#receiveActivity_Leave = async (activity: Activity) => {
-
-		console.log("Received 'Leave' activity:", activity)
 
 		// RULE: Only listen to "Leave" activities from myself.
 		if (activity.actorId() != this.actorId()) {

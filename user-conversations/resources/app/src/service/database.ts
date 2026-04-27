@@ -174,7 +174,6 @@ export class Database {
 		// each new member that was added.
 		added.forEach(member => {
 
-			console.log("Adding member to group:", member)
 			const statusMessage = NewMessage({
 				id: newId(),
 				groupId: group.id,
@@ -189,7 +188,6 @@ export class Database {
 		// each member that was removed.
 		removed.forEach(member => {
 
-			console.log("Removing member from group:", member)
 			const statusMessage = NewMessage({
 				id: newId(),
 				groupId: group.id,
