@@ -73,3 +73,14 @@ export function formatFileSize(bytes: number): string {
 	const i = Math.floor(Math.log(bytes) / Math.log(1024));
 	return `${Math.round(bytes / Math.pow(1024, i))} ${units[i]}`;
 }
+
+export function formatHTML(html: string): string {
+
+	// strip all HTML tags
+	html = html.replace(/<\/?[^>]+(>|$)/g, "");
+
+	// convert newlines to <br> tags
+	html = html.replace(/\n/g, "<br>");
+
+	return html
+}

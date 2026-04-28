@@ -20016,6 +20016,11 @@
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return `${Math.round(bytes / Math.pow(1024, i))} ${units[i]}`;
   }
+  function formatHTML(html) {
+    html = html.replace(/<\/?[^>]+(>|$)/g, "");
+    html = html.replace(/\n/g, "<br>");
+    return html;
+  }
 
   // src/view/modal.tsx
   var Modal = class {
@@ -20484,7 +20489,7 @@
       throw new Error(`Unknown message type: ${message.type}`);
     }
     drawContent(message) {
-      return /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, message.attachments.map((attachment) => attachment.startsWith("data:image") ? /* @__PURE__ */ (0, import_mithril12.default)("img", { src: attachment, class: "width-100% rounded" }) : /* @__PURE__ */ (0, import_mithril12.default)("a", { href: attachment, class: "attachment", target: "_blank", rel: "noopener noreferrer" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(attachment.length), ")")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, message.content));
+      return /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, message.attachments.map((attachment) => attachment.startsWith("data:image") ? /* @__PURE__ */ (0, import_mithril12.default)("img", { src: attachment, class: "width-100% rounded" }) : /* @__PURE__ */ (0, import_mithril12.default)("a", { href: attachment, class: "attachment", target: "_blank", rel: "noopener noreferrer" }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(attachment.length), ")")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, import_mithril12.default.trust(formatHTML(message.content))));
     }
     drawReactions(vnode) {
       const controller2 = vnode.attrs.controller;
