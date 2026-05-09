@@ -1,17 +1,4 @@
-import { type MlsGroupInfo, type MlsMessage } from "ts-mls"
-import { type MlsFramedMessage } from "ts-mls"
-import { type MlsWelcomeMessage } from "ts-mls"
-
-import { bytesToBase64, type Encoder } from "ts-mls"
-import { encode } from "ts-mls"
-import { decode } from "ts-mls"
-import { mlsMessageEncoder } from "ts-mls"
-import { mlsMessageDecoder } from "ts-mls"
-
-import { MLS } from "./mls"
 import { Activity } from "../as/activity"
-import * as vocab from "../as/vocab"
-import { groupIsEncrypted, type Group } from "../model/group"
 import type { Actor } from "../as/actor"
 
 // Delivery service sends messages via ActivityPub

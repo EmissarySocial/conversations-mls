@@ -2,8 +2,6 @@
 import { defaultLifetime, getCiphersuiteImpl, type CiphersuiteName, type Credential } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
 import { decode } from "ts-mls"
-import { defaultCredentialTypes } from "ts-mls"
-import { generateKeyPackage } from "ts-mls"
 import { mlsMessageDecoder } from "ts-mls"
 import { wireformats } from "ts-mls"
 

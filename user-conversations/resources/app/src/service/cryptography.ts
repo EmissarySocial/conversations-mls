@@ -28,11 +28,15 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 		identity: new TextEncoder().encode(actorId),
 	}
 
+	// Make an extra-long lifetime for this KeyPackage
+	var lifetime = defaultLifetime()
+	lifetime.notAfter = lifetime.notBefore + 14n + 30n * 24n * 60n * 60n // 14 months in seconds
+
 	// Generate initial key package for this user
 	return await generateKeyPackage({
 		credential: credential,
 		cipherSuite: cipherSuite,
-		lifetime: defaultLifetime(),
+		lifetime: lifetime,
 	})
 }
 

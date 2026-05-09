@@ -27,7 +27,6 @@ export class Object {
 
 	// fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
 	fromURL = async (url: string, options: RequestInit = {}) => {
-		//
 
 		// Require Accept: header for ActivityPub
 		options["headers"] = {
