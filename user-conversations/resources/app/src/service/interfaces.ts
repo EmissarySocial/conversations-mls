@@ -7,23 +7,35 @@
 import Stream from "mithril/stream"
 
 // ts-mls types
-import { type MlsFramedMessage, type PrivateKeyPackage } from "ts-mls"
-import { type MlsGroupInfo } from "ts-mls"
-import { type MlsWelcomeMessage } from "ts-mls"
+import { type PrivateKeyPackage } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
 
 // ActivityStreams types
 import { type Activity } from "../as/activity"
+import { type Document } from "../as/document"
 import { type Actor } from "../as/actor"
 
 // Model types
-import { type APKeyPackage } from "../model/ap-keypackage"
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
 import { type Group } from "../model/group"
 import { type EncryptedGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
+
+// ICodec wraps all of the encoding/decoding methods 
+// for generating and managing messages.  The MLS codec
+// generates MLS messages, and the Plaintext codec sends
+// regular ActivityPub "direct messages".
+export interface ICodec {
+	createGroup(group: Group): Promise<Group>
+	getGroupMembers(group: Group): string[]
+	addGroupMembers(group: Group, newMembers: string[]): Promise<Group>
+	leaveGroup(group: Group): Promise<void>
+	removeGroupMember(group: Group, actorId: string): Promise<void>
+	receiveActivity(activity: Activity, object: Document): Promise<Activity | null>
+	sendActivity(group: Group, activity: Activity): Promise<void>
+}
 
 export interface IContacts {
 	getContactStream(id: string): Stream<Contact>

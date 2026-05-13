@@ -16706,10 +16706,11 @@
   }
 
   // src/model/group.ts
-  function NewGroup() {
+  function NewGroup(codec) {
     return {
       id: "uri:uuid:" + crypto.randomUUID(),
       stateId: "ACTIVE",
+      codec,
       name: "",
       defaultName: "",
       summary: "",
@@ -16724,7 +16725,7 @@
     };
   }
   function groupIsEncrypted(group) {
-    return group.clientState !== void 0;
+    return group.codec === "MLS" && group.clientState !== void 0;
   }
 
   // src/model/message.ts
@@ -17530,506 +17531,6 @@
     return new Activity();
   }
 
-  // src/service/interfaces.ts
-  var import_stream = __toESM(require_stream2(), 1);
-
-  // src/model/ap-keypackage.ts
-  function NewAPKeyPackage(keyPackageId, generatorId, generatorName, actorID, publicPackage) {
-    const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
-    return {
-      id: keyPackageId,
-      type: "mls:KeyPackage",
-      to: "as:Public",
-      attributedTo: actorID,
-      mediaType: "message/mls",
-      encoding: "base64",
-      generator: {
-        id: generatorId,
-        type: "Application",
-        name: generatorName
-      },
-      content: keyPackageAsBase64
-    };
-  }
-  function encodeKeyPackage(keyPackage) {
-    const keyPackageMessage = encode(mlsMessageEncoder, {
-      keyPackage,
-      wireformat: wireformats.mls_key_package,
-      version: protocolVersions.mls10
-    });
-    return bytesToBase64(keyPackageMessage);
-  }
-
-  // src/model/contact.ts
-  function NewContact(id) {
-    return {
-      id,
-      name: "",
-      icon: "",
-      username: "",
-      known: false,
-      updated: 0
-    };
-  }
-  function ContactFromActor(actor) {
-    return {
-      id: actor.id(),
-      name: actor.name(),
-      icon: actor.icon(),
-      username: actor.computedUsername(),
-      known: false,
-      updated: Date.now()
-    };
-  }
-
-  // src/service/mls.ts
-  var MLS = class {
-    #controller;
-    #database;
-    #delivery;
-    #directory;
-    #cipherSuite;
-    #keyPackageId;
-    #publicKeyPackage;
-    #privateKeyPackage;
-    #generatorId;
-    #actor;
-    constructor(controller2, database, delivery, directory, cipherSuite, keyPackageId, publicKeyPackage, privateKeyPackage, actor, generatorId) {
-      this.#controller = controller2;
-      this.#database = database;
-      this.#delivery = delivery;
-      this.#directory = directory;
-      this.#cipherSuite = cipherSuite;
-      this.#actor = actor;
-      this.#generatorId = generatorId;
-      this.#keyPackageId = keyPackageId;
-      this.#publicKeyPackage = publicKeyPackage;
-      this.#privateKeyPackage = privateKeyPackage;
-    }
-    stop = () => {
-      this.#publicKeyPackage = null;
-      this.#privateKeyPackage = null;
-      this.#actor = null;
-    };
-    //////////////////////////////////////////
-    // Group Management
-    //////////////////////////////////////////
-    // createGroup is an encoder hook that is called when an encrypted group is created.
-    async createGroup(group) {
-      const clientState = await createGroup({
-        context: this.#context(),
-        groupId: encodeText(group.id),
-        keyPackage: this.#publicKeyPackage,
-        privateKeyPackage: this.#privateKeyPackage
-      });
-      const encryptedGroup = addClientState(group, clientState);
-      await this.addGroupMembers(encryptedGroup, [this.#actor.id()]);
-      await this.#database.saveGroup(encryptedGroup);
-      await this.#cycleKeyPackages();
-      return encryptedGroup;
-    }
-    // getGroupMembers returns the list of member IDs for a given group
-    getGroupMembers(group) {
-      const leafNodes = getGroupMembers(group.clientState);
-      const members = leafNodes.map((leaf) => {
-        const credential = leaf.credential;
-        if (credential.identity != void 0) {
-          return decodeText(credential.identity);
-        }
-        return "";
-      }).filter((identity) => identity != "");
-      const result = [...new Set(members)];
-      return result;
-    }
-    // #getGroupSignatures retrieves all KeyPackage signatures from the group state.
-    #getGroupSignatures(group) {
-      const leafNodes = getGroupMembers(group.clientState);
-      const keyPackages = leafNodes.map((leafNode) => leafNode.signature);
-      return keyPackages.filter((keyPackage) => keyPackage !== void 0);
-    }
-    // addGroupMembers updates the group state.  It sends a Commit
-    // message to existing members, and a Welcome message to new members,
-    async addGroupMembers(group, newMembers) {
-      const currentMembers = group.members;
-      var addKeyPackages = await this.#directory.getKeyPackages(newMembers);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
-      const signatures = this.#getGroupSignatures(group);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
-      if (addKeyPackages.length == 0) {
-        return group;
-      }
-      const addProposals = addKeyPackages.map((newKeyPackage3) => ({
-        proposalType: defaultProposalTypes.add,
-        add: {
-          keyPackage: newKeyPackage3
-        }
-      }));
-      const commitResult = await createCommit({
-        context: this.#context(),
-        state: group.clientState,
-        extraProposals: addProposals,
-        ratchetTreeExtension: true
-      });
-      commitResult.consumed.forEach(zeroOutUint8Array);
-      group.clientState = commitResult.newState;
-      group.members = this.getGroupMembers(group);
-      await this.#database.saveGroup(group);
-      if (commitResult.welcome != void 0) {
-        this.#sendMlsMessage(
-          ObjectTypeMlsWelcome,
-          newMembers,
-          commitResult.welcome,
-          "welcome: " + newMembers.join(", ")
-        );
-      }
-      if (currentMembers.length > 0) {
-        this.#sendMlsMessage(
-          ObjectTypeMlsGroupInfo,
-          currentMembers,
-          commitResult.commit,
-          "add members: " + newMembers.join(", ")
-        );
-      }
-      return group;
-    }
-    // leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
-    // for this user from the group, then sends a PROPOSAL to 
-    // remove THIS DEVICE from the group.
-    async leaveGroup(group) {
-      await this.removeGroupMember(group, this.#actor.id());
-      const ownLeafIndex = group.clientState.privatePath.leafIndex;
-      const proposal = await createProposal({
-        context: this.#context(),
-        state: group.clientState,
-        proposal: {
-          proposalType: defaultProposalTypes.remove,
-          remove: { removed: ownLeafIndex }
-        }
-      });
-      await this.#sendMlsMessage(
-        ObjectTypeMlsGroupInfo,
-        group.members,
-        proposal.message,
-        "leave group:" + this.#actor.id()
-      );
-    }
-    // removeGroupMember removes all clients for the specified actorId. This function cannot be used
-    // to remove the current signed-in actor; use leaveGroup() for this operation instead.
-    async removeGroupMember(group, actorId) {
-      var proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
-        if (node == void 0) {
-          return null;
-        }
-        if (node.nodeType != nodeTypes.leaf) {
-          return null;
-        }
-        const leafIndex = ratchetIndex / 2;
-        if (leafIndex == group.clientState.privatePath.leafIndex) {
-          return null;
-        }
-        if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
-          return null;
-        }
-        const credential = node.leaf.credential;
-        const leafNodeActorId = decodeText(credential.identity);
-        if (leafNodeActorId != actorId) {
-          return null;
-        }
-        return {
-          proposalType: defaultProposalTypes.remove,
-          remove: { removed: leafIndex }
-        };
-      }).filter((proposal) => proposal != null);
-      await this.#commitProposals(group, proposals, "remove member: " + actorId);
-    }
-    //////////////////////////////////////////
-    // Key Packages
-    //////////////////////////////////////////
-    async #cycleKeyPackages() {
-      const dbKeyPackage = await this.#controller.createOrUpdateKeyPackage();
-      this.#publicKeyPackage = dbKeyPackage.publicKeyPackage;
-      this.#privateKeyPackage = dbKeyPackage.privateKeyPackage;
-    }
-    //////////////////////////////////////////
-    // Receiving Messages
-    //////////////////////////////////////////
-    // receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
-    // If no further action is required (such as processing a GroupInfo or Welcome message) then
-    // null is returned.
-    async receiveActivity(activity, object) {
-      const message = object.content();
-      const uintArray = base64ToUint8Array(message);
-      const mlsMessage = decode(mlsMessageDecoder, uintArray);
-      if (mlsMessage == void 0) {
-        throw new Error("Unable to decode message: " + message);
-        return null;
-      }
-      switch (mlsMessage.wireformat) {
-        case wireformats.mls_group_info:
-          return await this.#receiveActivity_GroupInfo(object, mlsMessage);
-        case wireformats.mls_key_package:
-          return null;
-        case wireformats.mls_private_message:
-          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
-        case wireformats.mls_public_message:
-          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
-        case wireformats.mls_welcome:
-          return await this.#receiveActivity_Welcome(mlsMessage);
-        default:
-          throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
-      }
-    }
-    // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-    async #receiveActivity_Welcome(message) {
-      var clientState;
-      try {
-        clientState = await joinGroup({
-          context: this.#context(),
-          welcome: message.welcome,
-          keyPackage: this.#publicKeyPackage,
-          privateKeys: this.#privateKeyPackage
-        });
-      } catch (error) {
-        console.error("Unable to process welcome message", error);
-        return null;
-      }
-      if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
-        return null;
-      }
-      const groupId = decodeText(clientState.groupContext.groupId);
-      const previousGroup = await this.#database.loadGroup(groupId);
-      if (previousGroup != void 0) {
-        console.warn("Received welcome message for a group that already exists locally.");
-        return null;
-      }
-      const group = NewGroup();
-      group.id = groupId;
-      var encryptedGroup = addClientState(group, clientState);
-      encryptedGroup.members = this.getGroupMembers(encryptedGroup);
-      await this.#database.saveGroup(encryptedGroup);
-      await this.#cycleKeyPackages();
-      return null;
-    }
-    // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-    async #receiveActivity_GroupInfo(document2, message) {
-      var clientState;
-      return null;
-    }
-    // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
-    // application messages for this user.  These messages are decrypted and then processes as
-    // ActivityStreams messages.
-    async #receiveActivity_PublicPrivateMessage(document2, mlsMessage) {
-      var groupId;
-      console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", document2.toObject());
-      switch (mlsMessage.wireformat) {
-        case wireformats.mls_private_message:
-          groupId = decodeText(mlsMessage.privateMessage.groupId);
-          break;
-        case wireformats.mls_public_message:
-          groupId = decodeText(mlsMessage.publicMessage.content.groupId);
-          break;
-        default:
-          console.error("Invalid message type for PrivateMessage decoder");
-          return null;
-      }
-      const group = await this.#database.loadGroup(groupId);
-      if (group == void 0) {
-        console.error("Received message for unknown group", groupId);
-        return null;
-      }
-      if (!groupIsEncrypted(group)) {
-        throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
-      }
-      if (!group.members.includes(document2.attributedToId())) {
-        throw new Error("Received MLS message from a sender that is not a member of the group: " + document2.toJSON());
-      }
-      if (group.stateId == "CLOSED") {
-        return null;
-      }
-      console.log("mls.#receiveActivity_PublicPrivateMessage: group epoch:", group.clientState.groupContext.epoch);
-      const _this = this;
-      const decodedMessage = await processMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: mlsMessage,
-        callback: (message) => {
-          return _this.#processMessageCallback(message, group);
-        }
-      });
-      console.log("mls.#receiveActivity_PublicPrivateMessage: Decoded message:", decodedMessage);
-      if (decodedMessage.kind == "newState") {
-        if (decodedMessage.actionTaken == "reject") {
-          console.log("mls.#receiveActivity_PublicPrivateMessage: 'Rejected' message based on callback rules. No state changes applied to the group.");
-          return null;
-        }
-      }
-      decodedMessage.consumed.forEach(zeroOutUint8Array);
-      group.clientState = decodedMessage.newState;
-      group.updateDate = Date.now();
-      group.members = this.getGroupMembers(group);
-      if (!group.members.includes(this.#actor.id())) {
-        group.stateId = "CLOSED";
-        await this.#database.saveGroup(group);
-        return null;
-      }
-      await this.#database.saveGroup(group);
-      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group. epoch:", group.clientState.groupContext.epoch);
-      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group members:", group.members);
-      if (decodedMessage.kind != "applicationMessage") {
-        return null;
-      }
-      const plaintext = decodeText(decodedMessage.message);
-      return new Activity().fromJSON(plaintext);
-    }
-    #processMessageCallback(message, group) {
-      if (message.kind == "commit") {
-        return "accept";
-      }
-      const proposal = message.proposal.proposal;
-      if (proposal.proposalType == defaultProposalTypes.remove) {
-        console.log("mls.#processMessageCallback: Received remove proposal. Delaying commit based on leaf index to reduce collisions.");
-        const myLeafIndex = group.clientState.privatePath.leafIndex;
-        const waitMs = myLeafIndex * 1e3;
-        console.log("myLeafIndex:", myLeafIndex);
-        console.log("waiting ms:", waitMs);
-        console.log("epoch:", group.clientState.groupContext.epoch);
-        window.setTimeout(() => {
-          console.log("mls.#processMessageCallback: Finished waiting. Processing remove proposal now....");
-          this.#processMessageCallback_RemoveProposal(group.id, proposal);
-        }, waitMs);
-      }
-      return "reject";
-    }
-    // #processMessageCallback_RemoveProposal is triggered when we receive a "remove" proposal (after a timeout based on our leaf index). 
-    // This method checks commits the sender's proposal to the group IF they have not already been removed by another network node.
-    async #processMessageCallback_RemoveProposal(groupId, proposal) {
-      var group = await this.#database.loadGroup(groupId);
-      if (group == void 0) {
-        console.error("mls.#processMessageCallback_RemoveProposal: Unable to load group for remove proposal", groupId);
-        return;
-      }
-      if (!groupIsEncrypted(group)) {
-        console.error("mls.#processMessageCallback_RemoveProposal: Received remove proposal for unencrypted group", groupId);
-        return;
-      }
-      console.log("mls.#processMessageCallback_RemoveProposal: Processing 'remove myself' proposal", proposal);
-      console.log("mls.#processMessageCallback_RemoveProposal: group: ", group.clientState);
-      const leafIndex = proposal.remove.removed;
-      const ratchetTreeIndex = leafIndex * 2;
-      const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex];
-      if (deviceToRemove == void 0) {
-        console.log("mls.#processMessageCallback_RemoveProposal: Proposal deviceToRemove has already been removed from the group.");
-        return;
-      }
-      const credential = deviceToRemove.leaf.credential;
-      console.log("mls.#processMessageCallback_RemoveProposal: deviceToRemove ", deviceToRemove, decodeText(credential.identity));
-      console.log("mls.#processMessageCallback_RemoveProposal: Committing 'remove myself' proposal to other group members.", proposal);
-      await this.#commitProposals(group, [proposal], "Async process self-removal proposal for " + leafIndex);
-    }
-    //////////////////////////////////////////
-    // Sending Messages
-    //////////////////////////////////////////
-    // sendActivity encodes an Activity as an MLS message and sends it to 
-    // updated as a result of this message.
-    async sendActivity(group, activity, debug) {
-      if (!(activity instanceof Activity)) {
-        activity = new Activity(activity);
-      }
-      console.log("mls.sendActivity: ", activity.toObject());
-      const messageText = activity.toJSON();
-      const messageBytes = encodeText(messageText);
-      const applicationMessage = await createApplicationMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: messageBytes
-      });
-      applicationMessage.consumed.forEach(zeroOutUint8Array);
-      group.clientState = applicationMessage.newState;
-      group.updateDate = Date.now();
-      console.log("mls.sendActivity: Created message. epoch:", group.clientState.groupContext.epoch);
-      await this.#database.saveGroup(group);
-      return await this.#sendMlsMessage(
-        ObjectTypeMlsPrivateMessage,
-        activity.getArray("as", PropertyTo),
-        applicationMessage.message,
-        debug
-      );
-    }
-    // commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
-    async #commitProposals(group, proposals, debug) {
-      const commitResult = await createCommit({
-        context: this.#context(),
-        state: group.clientState,
-        extraProposals: proposals,
-        ratchetTreeExtension: true
-      });
-      commitResult.consumed.forEach(zeroOutUint8Array);
-      console.log("mls.#commitProposals. previous epoch", group.clientState.groupContext.epoch);
-      group.clientState = commitResult.newState;
-      console.log("mls.#commitProposals. new epoch", group.clientState.groupContext.epoch);
-      this.#sendMlsMessage(
-        ObjectTypeMlsGroupInfo,
-        group.members,
-        commitResult.commit,
-        debug
-      );
-      group.members = this.getGroupMembers(group);
-      await this.#database.saveGroup(group);
-      console.log("#commitProposals. Group saved:", group);
-    }
-    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    async #sendMlsMessage(type, recipients, message, debug) {
-      if (recipients.length === 0) {
-        return;
-      }
-      if (debug == void 0) {
-        debug = "MLS message: " + type;
-      }
-      const contentBytes = encode(mlsMessageEncoder, message);
-      const contentBase64 = bytesToBase64(contentBytes);
-      const activity = new Activity({
-        "@context": [ContextActivityStreams, { mls: ContextMLS }],
-        type: ActivityTypeCreate,
-        actor: this.#actor.id(),
-        to: recipients,
-        instrument: this.#generatorId,
-        debug,
-        object: {
-          type,
-          attributedTo: this.#actor.id(),
-          to: recipients,
-          content: contentBase64,
-          mediaType: MediaTypeMLSMessage,
-          "mls:encoding": EncodingTypeBase64
-        }
-      });
-      this.#delivery.sendActivity(activity);
-      return activity;
-    }
-    //////////////////////////////////////////
-    // Helpers
-    //////////////////////////////////////////
-    // #context returns an MlsContext with the current cipher suite and authentication service.
-    #context() {
-      return {
-        cipherSuite: this.#cipherSuite,
-        authService: unsafeTestingAuthenticationService
-      };
-    }
-  };
-  function encodeText(text) {
-    return new TextEncoder().encode(text);
-  }
-  function decodeText(bytes) {
-    return new TextDecoder().decode(bytes);
-  }
-  function addClientState(group, clientState) {
-    return {
-      ...group,
-      clientState
-    };
-  }
-
   // src/service/delivery.ts
   var Delivery = class {
     // The URL of the current user's outbox
@@ -18108,6 +17609,55 @@
       }
     }
   };
+
+  // src/model/ap-keypackage.ts
+  function NewAPKeyPackage(keyPackageId, generatorId, generatorName, actorID, publicPackage) {
+    const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
+    return {
+      id: keyPackageId,
+      type: "mls:KeyPackage",
+      to: "as:Public",
+      attributedTo: actorID,
+      mediaType: "message/mls",
+      encoding: "base64",
+      generator: {
+        id: generatorId,
+        type: "Application",
+        name: generatorName
+      },
+      content: keyPackageAsBase64
+    };
+  }
+  function encodeKeyPackage(keyPackage) {
+    const keyPackageMessage = encode(mlsMessageEncoder, {
+      keyPackage,
+      wireformat: wireformats.mls_key_package,
+      version: protocolVersions.mls10
+    });
+    return bytesToBase64(keyPackageMessage);
+  }
+
+  // src/model/contact.ts
+  function NewContact(id) {
+    return {
+      id,
+      name: "",
+      icon: "",
+      username: "",
+      known: false,
+      updated: 0
+    };
+  }
+  function ContactFromActor(actor) {
+    return {
+      id: actor.id(),
+      name: actor.name(),
+      icon: actor.icon(),
+      username: actor.computedUsername(),
+      known: false,
+      updated: Date.now()
+    };
+  }
 
   // src/as/collection.ts
   var Collection = class extends Object2 {
@@ -18206,10 +17756,12 @@
       credentialType: defaultCredentialTypes.basic,
       identity: new TextEncoder().encode(actorId)
     };
+    var lifetime = defaultLifetime();
+    lifetime.notAfter = lifetime.notBefore + 14n + 30n * 24n * 60n * 60n;
     return await generateKeyPackage({
       credential,
       cipherSuite,
-      lifetime: defaultLifetime()
+      lifetime
     });
   }
   async function generateAESKey() {
@@ -18438,6 +17990,9 @@
       return response.headers.get("Location") || "";
     };
   };
+
+  // src/service/interfaces.ts
+  var import_stream = __toESM(require_stream2(), 1);
 
   // src/service/receiver.ts
   var Receiver = class {
@@ -18914,6 +18469,472 @@
     ["\u{1FABB}", "Hyacinth"]
   ];
 
+  // src/service/codecMls.ts
+  var CodecMls = class {
+    #controller;
+    #database;
+    #delivery;
+    #directory;
+    #cipherSuite;
+    #keyPackageId;
+    #publicKeyPackage;
+    #privateKeyPackage;
+    #generatorId;
+    #actor;
+    constructor(controller2, database, delivery, directory, cipherSuite, keyPackageId, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+      this.#controller = controller2;
+      this.#database = database;
+      this.#delivery = delivery;
+      this.#directory = directory;
+      this.#cipherSuite = cipherSuite;
+      this.#actor = actor;
+      this.#generatorId = generatorId;
+      this.#keyPackageId = keyPackageId;
+      this.#publicKeyPackage = publicKeyPackage;
+      this.#privateKeyPackage = privateKeyPackage;
+    }
+    stop = () => {
+      this.#publicKeyPackage = null;
+      this.#privateKeyPackage = null;
+      this.#actor = null;
+    };
+    //////////////////////////////////////////
+    // Group Management
+    //////////////////////////////////////////
+    // createGroup is an encoder hook that is called when an encrypted group is created.
+    async createGroup() {
+      var group = NewGroup("MLS");
+      const clientState = await createGroup({
+        context: this.#context(),
+        groupId: encodeText(group.id),
+        keyPackage: this.#publicKeyPackage,
+        privateKeyPackage: this.#privateKeyPackage
+      });
+      const encryptedGroup = addClientState(group, clientState);
+      await this.addGroupMembers(encryptedGroup, [this.#actor.id()]);
+      await this.#database.saveGroup(encryptedGroup);
+      await this.#cycleKeyPackages();
+      return encryptedGroup;
+    }
+    // getGroupMembers returns the list of member IDs for a given group
+    getGroupMembers(group) {
+      const leafNodes = getGroupMembers(group.clientState);
+      const members = leafNodes.map((leaf) => {
+        const credential = leaf.credential;
+        if (credential.identity != void 0) {
+          return decodeText(credential.identity);
+        }
+        return "";
+      }).filter((identity) => identity != "");
+      const result = [...new Set(members)];
+      return result;
+    }
+    // #getGroupSignatures retrieves all KeyPackage signatures from the group state.
+    #getGroupSignatures(group) {
+      const leafNodes = getGroupMembers(group.clientState);
+      const keyPackages = leafNodes.map((leafNode) => leafNode.signature);
+      return keyPackages.filter((keyPackage) => keyPackage !== void 0);
+    }
+    // addGroupMembers updates the group state.  It sends a Commit
+    // message to existing members, and a Welcome message to new members,
+    async addGroupMembers(group, newMembers) {
+      const currentMembers = group.members;
+      var addKeyPackages = await this.#directory.getKeyPackages(newMembers);
+      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
+      const signatures = this.#getGroupSignatures(group);
+      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
+      if (addKeyPackages.length == 0) {
+        return group;
+      }
+      const addProposals = addKeyPackages.map((newKeyPackage3) => ({
+        proposalType: defaultProposalTypes.add,
+        add: {
+          keyPackage: newKeyPackage3
+        }
+      }));
+      const commitResult = await createCommit({
+        context: this.#context(),
+        state: group.clientState,
+        extraProposals: addProposals,
+        ratchetTreeExtension: true
+      });
+      commitResult.consumed.forEach(zeroOutUint8Array);
+      group.clientState = commitResult.newState;
+      group.members = this.getGroupMembers(group);
+      await this.#database.saveGroup(group);
+      if (commitResult.welcome != void 0) {
+        this.#sendMlsMessage(
+          ObjectTypeMlsWelcome,
+          newMembers,
+          commitResult.welcome
+        );
+      }
+      if (currentMembers.length > 0) {
+        this.#sendMlsMessage(
+          ObjectTypeMlsGroupInfo,
+          currentMembers,
+          commitResult.commit
+        );
+      }
+      return group;
+    }
+    // leaveGroup sends a COMMIT that removes ALL OTHER DEVICES 
+    // for this user from the group, then sends a PROPOSAL to 
+    // remove THIS DEVICE from the group.
+    async leaveGroup(group) {
+      await this.removeGroupMember(group, this.#actor.id());
+      const ownLeafIndex = group.clientState.privatePath.leafIndex;
+      const proposal = await createProposal({
+        context: this.#context(),
+        state: group.clientState,
+        proposal: {
+          proposalType: defaultProposalTypes.remove,
+          remove: { removed: ownLeafIndex }
+        }
+      });
+      await this.#sendMlsMessage(
+        ObjectTypeMlsGroupInfo,
+        group.members,
+        proposal.message
+      );
+    }
+    // removeGroupMember removes all clients for the specified actorId. This function cannot be used
+    // to remove the current signed-in actor; use leaveGroup() for this operation instead.
+    async removeGroupMember(group, actorId) {
+      var proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
+        if (node == void 0) {
+          return null;
+        }
+        if (node.nodeType != nodeTypes.leaf) {
+          return null;
+        }
+        const leafIndex = ratchetIndex / 2;
+        if (leafIndex == group.clientState.privatePath.leafIndex) {
+          return null;
+        }
+        if (node.leaf.credential.credentialType != defaultCredentialTypes.basic) {
+          return null;
+        }
+        const credential = node.leaf.credential;
+        const leafNodeActorId = decodeText(credential.identity);
+        if (leafNodeActorId != actorId) {
+          return null;
+        }
+        return {
+          proposalType: defaultProposalTypes.remove,
+          remove: { removed: leafIndex }
+        };
+      }).filter((proposal) => proposal != null);
+      await this.#commitProposals(group, proposals);
+    }
+    //////////////////////////////////////////
+    // Key Packages
+    //////////////////////////////////////////
+    async #cycleKeyPackages() {
+      const dbKeyPackage = await this.#controller.createOrUpdateKeyPackage();
+      this.#publicKeyPackage = dbKeyPackage.publicKeyPackage;
+      this.#privateKeyPackage = dbKeyPackage.privateKeyPackage;
+    }
+    //////////////////////////////////////////
+    // Receiving Messages
+    //////////////////////////////////////////
+    // receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
+    // If no further action is required (such as processing a GroupInfo or Welcome message) then
+    // null is returned.
+    async receiveActivity(_activity, object) {
+      const message = object.content();
+      const uintArray = base64ToUint8Array(message);
+      const mlsMessage = decode(mlsMessageDecoder, uintArray);
+      if (mlsMessage == void 0) {
+        throw new Error("Unable to decode message: " + message);
+        return null;
+      }
+      switch (mlsMessage.wireformat) {
+        case wireformats.mls_group_info:
+          return await this.#receiveActivity_GroupInfo(object, mlsMessage);
+        case wireformats.mls_key_package:
+          return null;
+        case wireformats.mls_private_message:
+          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
+        case wireformats.mls_public_message:
+          return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
+        case wireformats.mls_welcome:
+          return await this.#receiveActivity_Welcome(mlsMessage);
+        default:
+          throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
+      }
+    }
+    // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
+    async #receiveActivity_Welcome(message) {
+      var clientState;
+      try {
+        clientState = await joinGroup({
+          context: this.#context(),
+          welcome: message.welcome,
+          keyPackage: this.#publicKeyPackage,
+          privateKeys: this.#privateKeyPackage
+        });
+      } catch (error) {
+        console.error("Unable to process welcome message", error);
+        return null;
+      }
+      if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
+        return null;
+      }
+      const groupId = decodeText(clientState.groupContext.groupId);
+      const previousGroup = await this.#database.loadGroup(groupId);
+      if (previousGroup != void 0) {
+        console.warn("Received welcome message for a group that already exists locally.");
+        return null;
+      }
+      const group = NewGroup("MLS");
+      group.id = groupId;
+      var encryptedGroup = addClientState(group, clientState);
+      encryptedGroup.members = this.getGroupMembers(encryptedGroup);
+      await this.#database.saveGroup(encryptedGroup);
+      await this.#cycleKeyPackages();
+      return null;
+    }
+    // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
+    async #receiveActivity_GroupInfo(document2, message) {
+      var clientState;
+      return null;
+    }
+    // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
+    // application messages for this user.  These messages are decrypted and then processes as
+    // ActivityStreams messages.
+    async #receiveActivity_PublicPrivateMessage(document2, mlsMessage) {
+      var groupId;
+      console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", document2.toObject());
+      switch (mlsMessage.wireformat) {
+        case wireformats.mls_private_message:
+          groupId = decodeText(mlsMessage.privateMessage.groupId);
+          break;
+        case wireformats.mls_public_message:
+          groupId = decodeText(mlsMessage.publicMessage.content.groupId);
+          break;
+        default:
+          console.error("Invalid message type for PrivateMessage decoder");
+          return null;
+      }
+      const group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        console.error("Received message for unknown group", groupId);
+        return null;
+      }
+      if (!groupIsEncrypted(group)) {
+        throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
+      }
+      if (!group.members.includes(document2.attributedToId())) {
+        throw new Error("Received MLS message from a sender that is not a member of the group: " + document2.toJSON());
+      }
+      if (group.stateId == "CLOSED") {
+        return null;
+      }
+      console.log("mls.#receiveActivity_PublicPrivateMessage: group epoch:", group.clientState.groupContext.epoch);
+      const _this = this;
+      const decodedMessage = await processMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: mlsMessage,
+        callback: (message) => {
+          return _this.#processMessageCallback(message, group);
+        }
+      });
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Decoded message:", decodedMessage);
+      if (decodedMessage.kind == "newState") {
+        if (decodedMessage.actionTaken == "reject") {
+          console.log("mls.#receiveActivity_PublicPrivateMessage: 'Rejected' message based on callback rules. No state changes applied to the group.");
+          return null;
+        }
+      }
+      decodedMessage.consumed.forEach(zeroOutUint8Array);
+      group.clientState = decodedMessage.newState;
+      group.updateDate = Date.now();
+      group.members = this.getGroupMembers(group);
+      if (!group.members.includes(this.#actor.id())) {
+        group.stateId = "CLOSED";
+        await this.#database.saveGroup(group);
+        return null;
+      }
+      await this.#database.saveGroup(group);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group. epoch:", group.clientState.groupContext.epoch);
+      console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group members:", group.members);
+      if (decodedMessage.kind != "applicationMessage") {
+        return null;
+      }
+      const plaintext = decodeText(decodedMessage.message);
+      return new Activity().fromJSON(plaintext);
+    }
+    #processMessageCallback(message, group) {
+      if (message.kind == "commit") {
+        return "accept";
+      }
+      const proposal = message.proposal.proposal;
+      if (proposal.proposalType == defaultProposalTypes.remove) {
+        console.log("mls.#processMessageCallback: Received remove proposal. Delaying commit based on leaf index to reduce collisions.");
+        const myLeafIndex = group.clientState.privatePath.leafIndex;
+        const waitMs = myLeafIndex * 1e3;
+        console.log("myLeafIndex:", myLeafIndex);
+        console.log("waiting ms:", waitMs);
+        console.log("epoch:", group.clientState.groupContext.epoch);
+        window.setTimeout(() => {
+          console.log("mls.#processMessageCallback: Finished waiting. Processing remove proposal now....");
+          this.#processMessageCallback_RemoveProposal(group.id, proposal);
+        }, waitMs);
+      }
+      return "reject";
+    }
+    // #processMessageCallback_RemoveProposal is triggered when we receive a "remove" proposal (after a timeout based on our leaf index). 
+    // This method checks commits the sender's proposal to the group IF they have not already been removed by another network node.
+    async #processMessageCallback_RemoveProposal(groupId, proposal) {
+      var group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        console.error("mls.#processMessageCallback_RemoveProposal: Unable to load group for remove proposal", groupId);
+        return;
+      }
+      if (!groupIsEncrypted(group)) {
+        console.error("mls.#processMessageCallback_RemoveProposal: Received remove proposal for unencrypted group", groupId);
+        return;
+      }
+      console.log("mls.#processMessageCallback_RemoveProposal: Processing 'remove myself' proposal", proposal);
+      console.log("mls.#processMessageCallback_RemoveProposal: group: ", group.clientState);
+      const leafIndex = proposal.remove.removed;
+      const ratchetTreeIndex = leafIndex * 2;
+      const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex];
+      if (deviceToRemove == void 0) {
+        console.log("mls.#processMessageCallback_RemoveProposal: Proposal deviceToRemove has already been removed from the group.");
+        return;
+      }
+      const credential = deviceToRemove.leaf.credential;
+      console.log("mls.#processMessageCallback_RemoveProposal: deviceToRemove ", deviceToRemove, decodeText(credential.identity));
+      console.log("mls.#processMessageCallback_RemoveProposal: Committing 'remove myself' proposal to other group members.", proposal);
+      await this.#commitProposals(group, [proposal]);
+    }
+    //////////////////////////////////////////
+    // Sending Messages
+    //////////////////////////////////////////
+    // sendActivity encodes an Activity as an MLS message and sends it to 
+    // updated as a result of this message.
+    async sendActivity(group, activity) {
+      console.log("mls.sendActivity: ", activity.toObject());
+      const messageText = activity.toJSON();
+      const messageBytes = encodeText(messageText);
+      const applicationMessage = await createApplicationMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: messageBytes
+      });
+      applicationMessage.consumed.forEach(zeroOutUint8Array);
+      group.clientState = applicationMessage.newState;
+      group.updateDate = Date.now();
+      console.log("mls.sendActivity: Created message. epoch:", group.clientState.groupContext.epoch);
+      await this.#database.saveGroup(group);
+      await this.#sendMlsMessage(
+        ObjectTypeMlsPrivateMessage,
+        activity.getArray("as", PropertyTo),
+        applicationMessage.message
+      );
+    }
+    // commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
+    async #commitProposals(group, proposals) {
+      const commitResult = await createCommit({
+        context: this.#context(),
+        state: group.clientState,
+        extraProposals: proposals,
+        ratchetTreeExtension: true
+      });
+      commitResult.consumed.forEach(zeroOutUint8Array);
+      console.log("mls.#commitProposals. previous epoch", group.clientState.groupContext.epoch);
+      group.clientState = commitResult.newState;
+      console.log("mls.#commitProposals. new epoch", group.clientState.groupContext.epoch);
+      this.#sendMlsMessage(
+        ObjectTypeMlsGroupInfo,
+        group.members,
+        commitResult.commit
+      );
+      group.members = this.getGroupMembers(group);
+      await this.#database.saveGroup(group);
+      console.log("#commitProposals. Group saved:", group);
+    }
+    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+    async #sendMlsMessage(type, recipients, message) {
+      if (recipients.length === 0) {
+        return;
+      }
+      const contentBytes = encode(mlsMessageEncoder, message);
+      const contentBase64 = bytesToBase64(contentBytes);
+      const activity = new Activity({
+        "@context": [ContextActivityStreams, { mls: ContextMLS }],
+        type: ActivityTypeCreate,
+        actor: this.#actor.id(),
+        to: recipients,
+        instrument: this.#generatorId,
+        object: {
+          type,
+          attributedTo: this.#actor.id(),
+          to: recipients,
+          content: contentBase64,
+          mediaType: MediaTypeMLSMessage,
+          "mls:encoding": EncodingTypeBase64
+        }
+      });
+      this.#delivery.sendActivity(activity);
+      return activity;
+    }
+    //////////////////////////////////////////
+    // Helpers
+    //////////////////////////////////////////
+    // #context returns an MlsContext with the current cipher suite and authentication service.
+    #context() {
+      return {
+        cipherSuite: this.#cipherSuite,
+        authService: unsafeTestingAuthenticationService
+      };
+    }
+  };
+  function encodeText(text) {
+    return new TextEncoder().encode(text);
+  }
+  function decodeText(bytes) {
+    return new TextDecoder().decode(bytes);
+  }
+  function addClientState(group, clientState) {
+    return {
+      ...group,
+      clientState
+    };
+  }
+
+  // src/service/codecPlaintext.ts
+  var CodecPlaintext = class {
+    #delivery;
+    constructor(delivery) {
+      this.#delivery = delivery;
+    }
+    async createGroup() {
+      return NewGroup("PLAINTEXT");
+    }
+    getGroupMembers(group) {
+      return group.members;
+    }
+    async addGroupMembers(group, newMembers) {
+      group.members.push(...newMembers);
+      return group;
+    }
+    async leaveGroup(group) {
+    }
+    async removeGroupMember(group, actorId) {
+      group.members = group.members.filter((member) => member !== actorId);
+    }
+    async receiveActivity(activity, object) {
+      return activity;
+    }
+    async sendActivity(group, activity) {
+      this.#delivery.sendActivity(activity);
+    }
+  };
+
   // src/service/controller.ts
   var Controller = class {
     #actorId;
@@ -18924,9 +18945,10 @@
     #receiver;
     #contacts;
     #host;
-    #mls;
+    #codecMls;
+    #codecPlaintext;
     #allowPlaintextMessages;
-    #allowCiphertextMessages;
+    #allowEncryptedMessages;
     #encryptionKey;
     emojiKey = [];
     config;
@@ -18953,12 +18975,13 @@
       this.#receiver = receiver;
       this.#host = host;
       this.#allowPlaintextMessages = false;
-      this.#allowCiphertextMessages = false;
+      this.#allowEncryptedMessages = false;
+      this.#codecPlaintext = new CodecPlaintext(this.#delivery);
       this.groups = [];
       this.messages = [];
       this.message = void 0;
       this.inReplyTo = void 0;
-      this.groupStream = (0, import_stream2.default)(NewGroup());
+      this.groupStream = (0, import_stream2.default)(NewGroup("PLAINTEXT"));
       this.groupMemberStream = this.groupStream.map((group) => group.members);
       this.groupContactStream = this.groupMemberStream.map((members) => members.map((id) => this.#contacts.getContactStream(id)));
       this.config = NewConfig();
@@ -19001,16 +19024,16 @@
         return;
       }
       this.#allowPlaintextMessages = plaintext;
-      this.#allowCiphertextMessages = ciphertext;
+      this.#allowEncryptedMessages = ciphertext;
       this.#receiver.setActor(this.#actor);
       this.#delivery.setActor(this.#actor);
       this.#directory.setActor(this.#actor);
       this.#directory.setGenerator(this.config.generatorId, this.config.generatorName);
-      if (this.#allowCiphertextMessages) {
+      if (this.#allowEncryptedMessages) {
         try {
           const cipherSuite = await cipherSuiteImplementation();
           const keyPackage = await this.loadOrCreateKeyPackage();
-          this.#mls = new MLS(
+          this.#codecMls = new CodecMls(
             this,
             this.#database,
             this.#delivery,
@@ -19245,6 +19268,9 @@
     createOrUpdateKeyPackage = async () => {
       var activityId;
       var keyPackageId;
+      if (!this.#allowEncryptedMessages) {
+        throw new Error("Server does not support sending of encrypted messages");
+      }
       const keyPackageResult = await newKeyPackage(this.#actor.id());
       const keyPackage = await this.#database.loadKeyPackage();
       if (keyPackage == void 0) {
@@ -19260,6 +19286,9 @@
     // loadOrCreateKeyPackage tries to load the KeyPackage for the 
     // current Actor. If none exists, then a new one is created and returned
     loadOrCreateKeyPackage = async () => {
+      if (!this.#allowEncryptedMessages) {
+        throw new Error("Server does not support sending of encrypted messages");
+      }
       const dbKeyPackage = await this.#database.loadKeyPackage();
       if (dbKeyPackage != void 0) {
         return dbKeyPackage;
@@ -19268,6 +19297,9 @@
     };
     // loadActorKeyPackages loads the KeyPackages for the specified actor
     loadActorKeyPackages = async (actorId) => {
+      if (!this.#allowEncryptedMessages) {
+        throw new Error("Server does not support sending of encrypted messages");
+      }
       return this.#directory.getKeyPackages([actorId]);
     };
     //////////////////////////////////////////
@@ -19276,14 +19308,22 @@
     // createGroup creates a new group and initial message
     createGroup = async (recipients, initialMessage, encrypted) => {
       recipients.push(this.actorId());
-      var group = NewGroup();
+      var group;
       if (encrypted == true) {
-        if (this.#mls == void 0) {
+        if (!this.#allowEncryptedMessages) {
+          throw new Error("Server does not support sending of encrypted messages");
+        }
+        if (this.#codecMls == void 0) {
           throw new Error("MLS service is not initialized");
         }
-        group = await this.#mls.createGroup(group);
-        this.groupStream(group);
+        group = await this.#codecMls.createGroup();
+      } else {
+        if (!this.#allowPlaintextMessages) {
+          throw new Error("Server does not support sending of plaintext messages");
+        }
+        group = await this.#codecPlaintext.createGroup();
       }
+      this.groupStream(group);
       await this.addGroupMembers(recipients);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
@@ -19318,7 +19358,7 @@
           "unread": group.unread
         }
       });
-      this.#sendActivity(group, activity, "SYNC GROUP");
+      this.#sendActivity(group, activity);
     };
     // leaveGroup leaves/deletes the specified group from the database
     leaveGroup = async (groupId) => {
@@ -19331,15 +19371,11 @@
         console.log("Group not found locally. Nothing to leave.");
         return;
       }
-      if (groupIsEncrypted(group)) {
-        if (this.#mls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        try {
-          await this.#mls.leaveGroup(group);
-        } catch (error) {
-          console.error("Error leaving group:", error);
-        }
+      const codec = this.#getCodec(group);
+      try {
+        await codec.leaveGroup(group);
+      } catch (error) {
+        console.error("Error leaving group:", error);
       }
       await this.#delivery.sendActivity(new Activity({
         to: this.#actor.id(),
@@ -19354,7 +19390,7 @@
     // selectGroup updates the "selectedGroupId" and reloads messages for that group
     selectGroup = async (groupId) => {
       if (this.groups.length == 0) {
-        this.groupStream(NewGroup());
+        this.groupStream(NewGroup("PLAINTEXT"));
         this.messages = [];
         return;
       }
@@ -19397,11 +19433,12 @@
       if (actorIds.length == 0) {
         return group;
       }
+      const codec = this.#getCodec(group);
       if (groupIsEncrypted(group)) {
-        if (this.#mls == void 0) {
+        if (this.#codecMls == void 0) {
           throw new Error("MLS service is not initialized");
         }
-        group = await this.#mls.addGroupMembers(group, actorIds);
+        group = await this.#codecMls.addGroupMembers(group, actorIds);
       } else {
         group.members.push(...actorIds);
       }
@@ -19413,10 +19450,10 @@
     removeGroupMember = async (actorId) => {
       var group = this.groupStream();
       if (groupIsEncrypted(group)) {
-        if (this.#mls == void 0) {
+        if (this.#codecMls == void 0) {
           throw new Error("MLS service is not initialized");
         }
-        await this.#mls.removeGroupMember(group, actorId);
+        await this.#codecMls.removeGroupMember(group, actorId);
       } else {
         group.members = group.members.filter((member) => member != actorId);
       }
@@ -19473,7 +19510,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity, "SEND MESSAGE");
+      this.#sendActivity(group, activity);
     };
     // sendFile sends a base64-encoded file to the specified group
     sendFile = async (file) => {
@@ -19500,7 +19537,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity, "SEND FILE");
+      this.#sendActivity(group, activity);
     };
     updateMessage = async (message) => {
       var group = this.groupStream();
@@ -19516,7 +19553,7 @@
         to: group.members,
         object: messageToActivityStream(group, message)
       });
-      this.#sendActivity(group, activity, "UPDATE MESSAGE");
+      this.#sendActivity(group, activity);
       await this.#database.saveMessage(message);
       await this.loadMessages();
     };
@@ -19545,7 +19582,7 @@
         "type": ActivityTypeDelete,
         "object": message.id
       });
-      this.#sendActivity(group, activity, "DELETE MESSAGE");
+      this.#sendActivity(group, activity);
       await this.#database.deleteMessage(messageId);
       await this.loadMessages();
     };
@@ -19573,7 +19610,7 @@
         to: group.members,
         object: message.id
       });
-      this.#sendActivity(group, activity, "REACTION");
+      this.#sendActivity(group, activity);
     };
     // undoReaction removes a "reaction" from the specified message
     undoReaction = async (messageId) => {
@@ -19603,7 +19640,7 @@
           object: messageId
         }
       });
-      this.#sendActivity(group, activity, "UNDO REACTION");
+      this.#sendActivity(group, activity);
     };
     //////////////////////////////////////////
     // Contacts
@@ -19620,10 +19657,10 @@
       var object = await activity.object();
       if (object.isMLSMessage()) {
         try {
-          if (this.#mls == void 0) {
+          if (this.#codecMls == void 0) {
             throw new Error("MLS service is not initialized (will retry shortly)");
           }
-          const decodedActivity = await this.#mls.receiveActivity(activity, object);
+          const decodedActivity = await this.#codecMls.receiveActivity(activity, object);
           if (decodedActivity == null) {
             return;
           }
@@ -19737,13 +19774,13 @@
         }
       }
       await this.saveGroup(group);
-      this.#sendActivity(group, {
+      this.#sendActivity(group, new Activity({
         actor: this.actorId(),
         type: ActivityTypeAcknowledge,
         to: [message.sender],
         object: object.id(),
         context: group.id
-      }, "ACK");
+      }));
     };
     #receiveActivity_Failure = async (activity) => {
     };
@@ -19833,22 +19870,28 @@
     // Network Stuff
     //////////////////////////////////////////
     // sendActivity sends an activity to the Actor's outbox
-    #sendActivity = async (group, activity, debug) => {
-      if (!(activity instanceof Activity)) {
-        activity = new Activity(activity);
-      }
+    #sendActivity = async (group, activity) => {
       activity.set(PropertyInstrument, this.config.generatorId);
       if (!groupIsEncrypted(group)) {
         return this.#delivery.sendActivity(activity);
       }
-      if (this.#mls == void 0) {
+      if (this.#codecMls == void 0) {
         throw new Error("MLS service is not initialized");
       }
-      return await this.#mls.sendActivity(group, activity, debug);
+      return await this.#codecMls.sendActivity(group, activity);
     };
     //////////////////////////////////////////
     // Other Helpers
     //////////////////////////////////////////
+    #getCodec(group) {
+      if (groupIsEncrypted(group)) {
+        if (this.#codecMls == void 0) {
+          throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.");
+        }
+        return this.#codecMls;
+      }
+      return this.#codecPlaintext;
+    }
     // calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
     // internal state and member list.
     #calcGroupDefaultName = async (group) => {
@@ -20081,7 +20124,7 @@
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
         const isSecure = vnode.state.keyPackages[actor.id()] != void 0;
-        return /* @__PURE__ */ (0, import_mithril5.default)("span", { class: isSecure ? "blue tag" : "gray tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) })));
+        return /* @__PURE__ */ (0, import_mithril5.default)("span", { class: isSecure ? "blue tag" : "green tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", onclick: () => this.removeActor(vnode, index) })));
       }), /* @__PURE__ */ (0, import_mithril5.default)(
         "input",
         {
@@ -20238,10 +20281,11 @@
       vnode.state.actors = [];
       vnode.state.content = "";
       vnode.state.canBeEncrypted = false;
+      vnode.state.wantEncryption = true;
       vnode.state.sending = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril7.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril7.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout layout-vertical" }, this.header(vnode), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "" }, "Participants"), /* @__PURE__ */ (0, import_mithril7.default)(
+      return /* @__PURE__ */ (0, import_mithril7.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril7.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-plus" }), " Start a Conversation"), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "" }, "Participants"), /* @__PURE__ */ (0, import_mithril7.default)(
         ActorSearch,
         {
           controller: vnode.attrs.controller,
@@ -20250,25 +20294,19 @@
           endpoint: "/.api/actors",
           onselect: (actors, canBeEncrypted) => this.selectActors(vnode, actors, canBeEncrypted)
         }
-      )), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril7.default)("textarea", { rows: "8", onchange: (event) => this.setPlaintext(vnode, event) }), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
-    }
-    header(vnode) {
-      if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-plus" }), " Start a Conversation");
-      }
-      if (vnode.state.canBeEncrypted) {
-        return /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-shield-lock" }), " Encrypted Message");
-      }
-      return /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-envelope-open" }), " Direct Message");
+      )), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", null, "Message"), /* @__PURE__ */ (0, import_mithril7.default)("textarea", { rows: "8", onchange: (event) => this.setPlaintext(vnode, event) }), vnode.state.canBeEncrypted && /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "wantEncryption" }, /* @__PURE__ */ (0, import_mithril7.default)("input", { id: "wantEncryption", type: "checkbox", checked: vnode.state.wantEncryption, onchange: (event) => this.setWantEncryption(vnode, event) }), "Use Encrypted Messaging"), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     description(vnode) {
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril7.default)("span", null);
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null);
       }
       if (vnode.state.canBeEncrypted) {
-        return /* @__PURE__ */ (0, import_mithril7.default)("div", null, "This will be encrypted before it leaves this device, and will not be readable by anyone other than the recipients.");
+        if (vnode.state.wantEncryption) {
+          return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "Encrypted messages cannot be read by anyone other than the recipients. But, conversations may not be recoverable if you lose access to this device.");
+        }
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.");
       }
-      return /* @__PURE__ */ (0, import_mithril7.default)("div", null, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " One or more of your recipients cannot receive encrypted messages. Others on the Internet may be able to read this message.");
+      return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "One or more recipients (shown above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.");
     }
     submitButton(vnode) {
       if (vnode.state.sending) {
@@ -20277,10 +20315,10 @@
       if (vnode.state.actors.length == 0) {
         return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "primary", disabled: true }, "Start a Conversation");
       }
-      if (vnode.state.canBeEncrypted) {
-        return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-lock" }), " Send Encrypted");
+      if (this.isEncrypted(vnode)) {
+        return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-lock-fill" }), " Send Encrypted Message");
       }
-      return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "selected", disabled: true }, "Send Direct Message");
+      return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "success", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-envelope-open" }), " Send Direct Message");
     }
     // selectActors updates the selected actors when the ActorSearch component adds/removes participants
     selectActors(vnode, actors, canBeEncrypted) {
@@ -20292,6 +20330,10 @@
     setPlaintext(vnode, event) {
       const target = event.target;
       vnode.state.content = target.value;
+    }
+    setWantEncryption(vnode, event) {
+      const target = event.target;
+      vnode.state.wantEncryption = target.checked;
     }
     // onsubmit creates a new group with the selected participants, sends the content message, and closes the dialog
     async onsubmit(event, vnode) {
@@ -20306,8 +20348,11 @@
       const controller2 = vnode.attrs.controller;
       event.preventDefault();
       event.stopPropagation();
-      const group = await controller2.createGroup(participants, vnode.state.content, vnode.state.canBeEncrypted);
+      const group = await controller2.createGroup(participants, vnode.state.content, this.isEncrypted(vnode));
       return this.close(vnode);
+    }
+    isEncrypted(vnode) {
+      return vnode.state.canBeEncrypted && vnode.state.wantEncryption;
     }
     // close resets the component state and closes the modal dialog
     close(vnode) {

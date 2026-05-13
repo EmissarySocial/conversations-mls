@@ -14,20 +14,26 @@ import * as vocab from "../as/vocab"
 // Model objects
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
-import { type EncryptedGroup, type Group } from "../model/group"
+import { type EncryptedGroup } from "../model/group"
+import { type Group } from "../model/group"
 import { NewConfig } from "../model/config"
 import { NewGroup } from "../model/group"
-import { Message, NewMessage } from "../model/message"
+import { Message } from "../model/message"
+import { NewMessage } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
 
 // Services
-import { type IContacts, type IHost } from "./interfaces"
+import { type ICodec } from "./interfaces"
+import { type IContacts } from "./interfaces"
 import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
+import { type IHost } from "./interfaces"
 import { type IReceiver } from "./interfaces"
-import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
-import { MLS } from "./mls"
+import { type EmojiKey } from "./emojikeys"
+import { keyPackageEmojiKey } from "./emojikeys"
+import { CodecMls } from "./codecMls"
+import { CodecPlaintext } from "./codecPlaintext"
 
 // Other utility functions
 import { cipherSuiteImplementation, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, newKeyPackage, unwrapKey, wrapKey } from "./cryptography"
@@ -46,9 +52,10 @@ export class Controller {
 	#receiver: IReceiver
 	#contacts: IContacts
 	#host: IHost
-	#mls?: MLS
+	#codecMls?: CodecMls
+	#codecPlaintext: CodecPlaintext
 	#allowPlaintextMessages: boolean
-	#allowCiphertextMessages: boolean
+	#allowEncryptedMessages: boolean
 	#encryptionKey?: CryptoKey
 	emojiKey: EmojiKey[] = []
 
@@ -89,7 +96,8 @@ export class Controller {
 		this.#receiver = receiver
 		this.#host = host
 		this.#allowPlaintextMessages = false
-		this.#allowCiphertextMessages = false
+		this.#allowEncryptedMessages = false
+		this.#codecPlaintext = new CodecPlaintext(this.#delivery)
 
 		// Application State
 		this.groups = []
@@ -98,7 +106,7 @@ export class Controller {
 		this.inReplyTo = undefined
 
 		// Reactive Streams
-		this.groupStream = Stream(NewGroup())
+		this.groupStream = Stream(NewGroup("PLAINTEXT"))
 		this.groupMemberStream = this.groupStream.map(group => group.members)
 		this.groupContactStream = this.groupMemberStream.map((members) => members.map(id => this.#contacts.getContactStream(id)))
 
@@ -166,7 +174,7 @@ export class Controller {
 
 		// Apply the freshly loaded actor to all of the dependencies
 		this.#allowPlaintextMessages = plaintext
-		this.#allowCiphertextMessages = ciphertext
+		this.#allowEncryptedMessages = ciphertext
 
 		// Wire additional data into each dependency
 		this.#receiver.setActor(this.#actor)
@@ -175,7 +183,7 @@ export class Controller {
 		this.#directory.setGenerator(this.config.generatorId, this.config.generatorName)
 
 		// Initialize MLS (if supported by the server)
-		if (this.#allowCiphertextMessages) {
+		if (this.#allowEncryptedMessages) {
 
 			try {
 
@@ -184,7 +192,7 @@ export class Controller {
 				const keyPackage = await this.loadOrCreateKeyPackage()
 
 				// Create the MLS encoder service
-				this.#mls = new MLS(
+				this.#codecMls = new CodecMls(
 					this,
 					this.#database,
 					this.#delivery,
@@ -527,6 +535,11 @@ export class Controller {
 		var activityId: string
 		var keyPackageId: string
 
+		// RULE: Require server support for encrypted messages
+		if (!this.#allowEncryptedMessages) {
+			throw new Error("Server does not support sending of encrypted messages")
+		}
+
 		// Generate initial key package for this user
 		const keyPackageResult = await newKeyPackage(this.#actor.id())
 
@@ -556,6 +569,11 @@ export class Controller {
 	// current Actor. If none exists, then a new one is created and returned
 	loadOrCreateKeyPackage = async (): Promise<DBKeyPackage> => {
 
+		// RULE: Require server support for encrypted messages
+		if (!this.#allowEncryptedMessages) {
+			throw new Error("Server does not support sending of encrypted messages")
+		}
+
 		// Try to load the KeyPackage from the IndexedDB database
 		const dbKeyPackage = await this.#database.loadKeyPackage()
 
@@ -570,6 +588,12 @@ export class Controller {
 
 	// loadActorKeyPackages loads the KeyPackages for the specified actor
 	loadActorKeyPackages = async (actorId: string): Promise<KeyPackage[]> => {
+
+		// RULE: Require server support for encrypted messages
+		if (!this.#allowEncryptedMessages) {
+			throw new Error("Server does not support sending of encrypted messages")
+		}
+
 		return this.#directory.getKeyPackages([actorId])
 	}
 
@@ -585,20 +609,36 @@ export class Controller {
 		recipients.push(this.actorId())
 
 		// Create a new Group record
-		var group = NewGroup()
+		var group: Group
 
 		// Extra handling for encrypted groups
 		if (encrypted == true) {
 
+			// RULE: Require server support for encrypted messages
+			if (!this.#allowEncryptedMessages) {
+				throw new Error("Server does not support sending of encrypted messages")
+			}
+
 			// Guarantee dependency
-			if (this.#mls == undefined) {
+			if (this.#codecMls == undefined) {
 				throw new Error("MLS service is not initialized")
 			}
 
-			// Add MLS clientState
-			group = await this.#mls.createGroup(group)
-			this.groupStream(group)
+			// Create a new Encrypted group
+			group = await this.#codecMls.createGroup()
+
+		} else {
+
+			// RULE: Require server support for plaintext messages
+			if (!this.#allowPlaintextMessages) {
+				throw new Error("Server does not support sending of plaintext messages")
+			}
+
+			// Create a new Plaintext group
+			group = await this.#codecPlaintext.createGroup()
 		}
+
+		this.groupStream(group)
 
 		// Add new recipients to the list of group members (and save)
 		await this.addGroupMembers(recipients)
@@ -661,7 +701,7 @@ export class Controller {
 		})
 
 		// Asynchronously send a private message to my other devices
-		this.#sendActivity(group, activity, "SYNC GROUP")
+		this.#sendActivity(group, activity)
 	}
 
 	// leaveGroup leaves/deletes the specified group from the database
@@ -683,19 +723,13 @@ export class Controller {
 			return
 		}
 
-		// Encrypted groups then we need to send an MLS "leave" message
-		if (groupIsEncrypted(group)) {
+		// Get the coded for this group (Plaintext or MLS)
+		const codec = this.#getCodec(group)
 
-			if (this.#mls == undefined) {
-				throw new Error("MLS service is not initialized")
-			}
-
-			try {
-				// Send MLS messages to leave the group
-				await this.#mls.leaveGroup(group)
-			} catch (error) {
-				console.error("Error leaving group:", error)
-			}
+		try {
+			await codec.leaveGroup(group)
+		} catch (error) {
+			console.error("Error leaving group:", error)
 		}
 
 		// (3/4) Send a message to my other devices to delete this group from their database.
@@ -717,7 +751,7 @@ export class Controller {
 
 		// If there are no groups, then clear values and exit.
 		if (this.groups.length == 0) {
-			this.groupStream(NewGroup())
+			this.groupStream(NewGroup("PLAINTEXT"))
 			this.messages = []
 			return
 		}
@@ -784,14 +818,16 @@ export class Controller {
 			return group
 		}
 
+		const codec = this.#getCodec(group)
+
 		// Simple path if this is an unencrypted group group
 		if (groupIsEncrypted(group)) {
-			if (this.#mls == undefined) {
+			if (this.#codecMls == undefined) {
 				throw new Error("MLS service is not initialized")
 			}
 
 			// Use MLS to add the members to the group
-			group = await this.#mls.addGroupMembers(group, actorIds)
+			group = await this.#codecMls.addGroupMembers(group, actorIds)
 
 		} else {
 			// Otherwise, just add the actors to the list of group members
@@ -819,12 +855,12 @@ export class Controller {
 		if (groupIsEncrypted(group)) {
 
 			// Guarantee dependency
-			if (this.#mls == undefined) {
+			if (this.#codecMls == undefined) {
 				throw new Error("MLS service is not initialized")
 			}
 
 			// Remove the member using MLS
-			await this.#mls.removeGroupMember(group, actorId)
+			await this.#codecMls.removeGroupMember(group, actorId)
 
 		} else {
 
@@ -911,7 +947,7 @@ export class Controller {
 		})
 
 		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity, "SEND MESSAGE")
+		this.#sendActivity(group, activity)
 	}
 
 	// sendFile sends a base64-encoded file to the specified group
@@ -953,7 +989,7 @@ export class Controller {
 		})
 
 		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity, "SEND FILE")
+		this.#sendActivity(group, activity)
 	}
 
 	updateMessage = async (message: Message) => {
@@ -979,7 +1015,7 @@ export class Controller {
 		})
 
 		// Send the activity
-		this.#sendActivity(group, activity, "UPDATE MESSAGE")
+		this.#sendActivity(group, activity)
 
 		// Update the message in the database, and reload to refresh the UX
 		await this.#database.saveMessage(message)
@@ -1025,7 +1061,7 @@ export class Controller {
 			"object": message.id,
 		})
 
-		this.#sendActivity(group, activity, 'DELETE MESSAGE')
+		this.#sendActivity(group, activity)
 
 		// Delete the message
 		await this.#database.deleteMessage(messageId)
@@ -1068,7 +1104,7 @@ export class Controller {
 		})
 
 		// Send the activity to the outbox
-		this.#sendActivity(group, activity, "REACTION")
+		this.#sendActivity(group, activity)
 	}
 
 	// undoReaction removes a "reaction" from the specified message
@@ -1115,7 +1151,7 @@ export class Controller {
 		})
 
 		// (asynchronously) send the activity to the outbox
-		this.#sendActivity(group, activity, "UNDO REACTION")
+		this.#sendActivity(group, activity)
 	}
 
 
@@ -1148,12 +1184,12 @@ export class Controller {
 			try {
 
 				// Guarantee dependency
-				if (this.#mls == undefined) {
+				if (this.#codecMls == undefined) {
 					throw new Error("MLS service is not initialized (will retry shortly)")
 				}
 
 				// Decode the message embedded in the object.content.
-				const decodedActivity = await this.#mls.receiveActivity(activity, object)
+				const decodedActivity = await this.#codecMls.receiveActivity(activity, object)
 
 				// If the activity is null, then the MLS decoder has done all of the work.
 				// There's nothing more to do, so exit.
@@ -1337,13 +1373,13 @@ export class Controller {
 		await this.saveGroup(group)
 
 		// Send acknowledgement to the sender
-		this.#sendActivity(group, {
+		this.#sendActivity(group, new Activity({
 			actor: this.actorId(),
 			type: vocab.ActivityTypeAcknowledge,
 			to: [message.sender],
 			object: object.id(),
 			context: group.id,
-		}, "ACK")
+		}))
 
 	}
 
@@ -1501,12 +1537,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// sendActivity sends an activity to the Actor's outbox
-	#sendActivity = async (group: Group, activity: Activity | { [key: string]: any }, debug?: any) => {
-
-		// RULE: If the activity is not already an Activity object, convert it to one
-		if (!(activity instanceof Activity)) {
-			activity = new Activity(activity)
-		}
+	#sendActivity = async (group: Group, activity: Activity) => {
 
 		// Apply the "instrument" property to the activity to identify that it came from this client.
 		activity.set(vocab.PropertyInstrument, this.config.generatorId)
@@ -1519,18 +1550,32 @@ export class Controller {
 		// Fallthrough: this is an encrypted group. Require MLS encoding.
 
 		// RULE: Guarantee that MLS service is initialized.
-		if (this.#mls == undefined) {
+		if (this.#codecMls == undefined) {
 			throw new Error("MLS service is not initialized")
 		}
 
 		// Send the activity MLS service
-		return await this.#mls.sendActivity(group, activity, debug)
+		return await this.#codecMls.sendActivity(group, activity)
 	}
 
 
 	//////////////////////////////////////////
 	// Other Helpers
 	//////////////////////////////////////////
+
+	#getCodec(group: Group): ICodec {
+
+		if (groupIsEncrypted(group)) {
+
+			if (this.#codecMls == undefined) {
+				throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.")
+			}
+
+			return this.#codecMls
+		}
+
+		return this.#codecPlaintext
+	}
 
 	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
 	// internal state and member list.

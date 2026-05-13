@@ -43,7 +43,7 @@ export class ActorSearch {
 					{vnode.attrs.value.map((actor, index) => {
 						const isSecure = (vnode.state.keyPackages[actor.id()] != undefined)
 						return (
-							<span class={isSecure ? "blue tag" : "gray tag"}>
+							<span class={isSecure ? "blue tag" : "green tag"}>
 								<span class="flex-row flex-align-center">
 									<img src={actor.icon()} class="circle" style="height:1em;" />
 									<span class="bold">{actor.name()}</span>

@@ -1,8 +1,8 @@
 import { Object } from "./object"
 import { loadDocument } from "./document"
 import { loadActor } from "./actor"
-import * as vocab from "./vocab"
 import { newId } from "../service/utils"
+import * as vocab from "./vocab"
 
 // Activity is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Activity extends Object {

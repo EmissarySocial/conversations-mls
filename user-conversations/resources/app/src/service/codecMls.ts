@@ -58,7 +58,7 @@ const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 // MLS service encrypts/decrypts messages using the MLS protocol.
 // This is intended to be a reusable service that could be called
 // by any software component that needs to use MLS-encrypted messages.
-export class MLS {
+export class CodecMls {
 	#controller: IController
 	#database: IDatabase
 	#delivery: IDelivery
@@ -109,7 +109,9 @@ export class MLS {
 	//////////////////////////////////////////
 
 	// createGroup is an encoder hook that is called when an encrypted group is created.
-	async createGroup(group: Group): Promise<EncryptedGroup> {
+	async createGroup(): Promise<Group> {
+
+		var group = NewGroup("MLS")
 
 		// Generate a new clientState for this group
 		const clientState = await createGroup({
@@ -214,7 +216,6 @@ export class MLS {
 				vocab.ObjectTypeMlsWelcome,
 				newMembers,
 				commitResult.welcome,
-				"welcome: " + newMembers.join(", ")
 			)
 		}
 
@@ -224,7 +225,6 @@ export class MLS {
 				vocab.ObjectTypeMlsGroupInfo,
 				currentMembers,
 				commitResult.commit,
-				"add members: " + newMembers.join(", ")
 			)
 		}
 
@@ -261,7 +261,6 @@ export class MLS {
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			proposal.message,
-			"leave group:" + this.#actor.id()
 		)
 	}
 
@@ -311,7 +310,7 @@ export class MLS {
 
 		// Commit the proposals to remove the specifid member
 		// This MUST have an `await` so that the group is fully updated before exiting, or else leaveGroup() fails.
-		await this.#commitProposals(group, proposals, "remove member: " + actorId)
+		await this.#commitProposals(group, proposals)
 	}
 
 
@@ -336,7 +335,7 @@ export class MLS {
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
 	// null is returned.
-	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
+	async receiveActivity(_activity: Activity, object: Document): Promise<Activity | null> {
 
 		const message = object.content()
 		const uintArray = base64ToUint8Array(message)
@@ -412,7 +411,7 @@ export class MLS {
 		}
 
 		// Create a new EncryptedGroup
-		const group = NewGroup()
+		const group = NewGroup("MLS")
 		group.id = groupId
 
 		var encryptedGroup = addClientState(group, clientState)
@@ -613,7 +612,7 @@ export class MLS {
 
 		// Otherwise, continue removing the deviceToRemove and notifying the rest of the group.
 		console.log("mls.#processMessageCallback_RemoveProposal: Committing 'remove myself' proposal to other group members.", proposal)
-		await this.#commitProposals(group, [proposal], "Async process self-removal proposal for " + leafIndex)
+		await this.#commitProposals(group, [proposal])
 	}
 
 
@@ -623,12 +622,7 @@ export class MLS {
 
 	// sendActivity encodes an Activity as an MLS message and sends it to 
 	// updated as a result of this message.
-	async sendActivity(group: EncryptedGroup, activity: Activity | { [key: string]: any }, debug?: any) {
-
-		// If not already, wrap Objects in an Activity.
-		if (!(activity instanceof Activity)) {
-			activity = new Activity(activity)
-		}
+	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<void> {
 
 		console.log("mls.sendActivity: ", activity.toObject())
 
@@ -653,16 +647,15 @@ export class MLS {
 		await this.#database.saveGroup(group)
 
 		// send the activity to all group members
-		return await this.#sendMlsMessage(
+		await this.#sendMlsMessage(
 			vocab.ObjectTypeMlsPrivateMessage,
 			activity.getArray("as", vocab.PropertyTo),
 			applicationMessage.message,
-			debug,
 		)
 	}
 
 	// commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
-	async #commitProposals(group: EncryptedGroup, proposals: Proposal[], debug?: string): Promise<void> {
+	async #commitProposals(group: EncryptedGroup, proposals: Proposal[]): Promise<void> {
 
 		// Create a proper commit to remove this device
 		const commitResult = await createCommit({
@@ -685,7 +678,6 @@ export class MLS {
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			commitResult.commit,
-			debug,
 		)
 
 		// Recalculate the NEW list of members
@@ -697,15 +689,11 @@ export class MLS {
 	}
 
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage, debug?: any) {
+	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage) {
 
 		// If there are no recipients to send to, just return early
 		if (recipients.length === 0) {
 			return
-		}
-
-		if (debug == undefined) {
-			debug = "MLS message: " + type
 		}
 
 		// Encode the private message as bytes, then to base64
@@ -719,7 +707,6 @@ export class MLS {
 			actor: this.#actor.id(),
 			to: recipients,
 			instrument: this.#generatorId,
-			debug: debug,
 			object: {
 				type: type,
 				attributedTo: this.#actor.id(),
