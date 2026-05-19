@@ -62,6 +62,8 @@ export const PropertyAttachment = "attachment"
 
 export const PropertyAttributedTo = "attributedTo"
 
+export const PropertyCc = "cc"
+
 export const PropertyContent = "content"
 
 export const PropertyContext = "context"
@@ -89,6 +91,8 @@ export const PropertyOutbox = "outbox"
 export const PropertyPreferredUsername = "preferredUsername"
 
 export const PropertySummary = "summary"
+
+export const PropertyTag = "tag"
 
 export const PropertyTarget = "target"
 

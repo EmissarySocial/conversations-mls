@@ -45,9 +45,5 @@ export function NewGroup(codec: "PLAINTEXT" | "MLS"): Group {
 }
 
 export function groupIsEncrypted(group: Group | EncryptedGroup): group is EncryptedGroup {
-	return (group.codec === "MLS") && (group as EncryptedGroup).clientState !== undefined
-}
-
-export function groupNotEncrypted(group: Group | EncryptedGroup): group is Group {
-	return group.codec !== "MLS" || (group as EncryptedGroup).clientState === undefined
+	return (group.codec === "MLS")
 }

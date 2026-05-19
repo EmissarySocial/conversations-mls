@@ -7,6 +7,7 @@ import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
 import type Stream from "mithril/stream"
+import { groupIsEncrypted } from "../model/group"
 
 dayjs.extend(relativeTime)
 
@@ -57,6 +58,8 @@ export class GroupMessages {
 		// Grouping values
 		var lastSender = ""
 
+		var classNames = groupIsEncrypted(group) ? "encrypted" : ""
+
 		// Display messages
 		return (
 			<div id="conversation-details">
@@ -67,7 +70,7 @@ export class GroupMessages {
 						<div role="tab" onclick={() => controller.page_group_members()}>People ({group.members.length})</div>
 					</div>
 				</div>
-				<div id="conversation-messages">
+				<div id="conversation-messages" class={classNames}>
 					<div class="flex-grow padding-sm padding-bottom-lg">
 						{controller.messages.map(message => {
 

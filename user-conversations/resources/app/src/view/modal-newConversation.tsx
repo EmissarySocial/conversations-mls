@@ -127,7 +127,7 @@ export class NewConversation {
 
 		return (
 			<button type="submit" class="success" tabIndex="0">
-				<i class="bi bi-envelope-open"></i> Send Direct Message
+				<i class="bi bi-card-text"></i> Send Direct Message
 			</button>
 		)
 	}

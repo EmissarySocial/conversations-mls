@@ -29,6 +29,7 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 // regular ActivityPub "direct messages".
 export interface ICodec {
 	createGroup(group: Group): Promise<Group>
+	getGroup(groupId: string): Promise<Group>
 	getGroupMembers(group: Group): string[]
 	addGroupMembers(group: Group, newMembers: string[]): Promise<Group>
 	leaveGroup(group: Group): Promise<void>

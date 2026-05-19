@@ -97,7 +97,7 @@ export class Controller {
 		this.#host = host
 		this.#allowPlaintextMessages = false
 		this.#allowEncryptedMessages = false
-		this.#codecPlaintext = new CodecPlaintext(this.#delivery)
+		this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId)
 
 		// Application State
 		this.groups = []
@@ -724,7 +724,7 @@ export class Controller {
 		}
 
 		// Get the coded for this group (Plaintext or MLS)
-		const codec = this.#getCodec(group)
+		const codec = this.#getCodecForGroup(group)
 
 		try {
 			await codec.leaveGroup(group)
@@ -818,7 +818,7 @@ export class Controller {
 			return group
 		}
 
-		const codec = this.#getCodec(group)
+		const codec = this.#getCodecForGroup(group)
 
 		// Simple path if this is an unencrypted group group
 		if (groupIsEncrypted(group)) {
@@ -1177,54 +1177,43 @@ export class Controller {
 		// but we can load from the network if needed.
 		var object = await activity.object()
 
-		// Decode MLS-encrypted messages
-		if (object.isMLSMessage()) {
+		try {
 
-			// Part 1: Parse and possibly decode the received activity
-			try {
+			// Find the codec for this activity
+			const codec = this.#getCodecForActivity(object)
 
-				// Guarantee dependency
-				if (this.#codecMls == undefined) {
-					throw new Error("MLS service is not initialized (will retry shortly)")
-				}
+			// Process the activity through the codec. This will handle decryption and verification of
+			// the activity, and will throw an error if the activity is invalid or cannot be processed
+			const decodedValue = await codec.receiveActivity(activity, object)
 
-				// Decode the message embedded in the object.content.
-				const decodedActivity = await this.#codecMls.receiveActivity(activity, object)
-
-				// If the activity is null, then the MLS decoder has done all of the work.
-				// There's nothing more to do, so exit.
-				if (decodedActivity == null) {
-					return
-				}
-
-				// RULE: guarantee that the actorIds match the encrypted content
-				if (decodedActivity.actorId() != activity.actorId()) {
-					console.error("Rejecting message: Decrypted activity actor must match outer activity actor")
-					return
-				}
-
-				// Update activity and object to continue processing using the decoded values.
-				activity = decodedActivity
-				object = await activity.object()
-
-			} catch (error) {
-
-				if (retryCount < 120) { // retry every half-second for up to 1 minute
-					console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
-					setTimeout(() => {
-						this.receiveActivity(activity, retryCount + 1)
-					}, 500)
-					return
-				}
-
-				console.log("Giving up on message after 1 minute", error)
+			// If this is null, the Codec is saying it has already done all the work,
+			// and there's nothing else for US to process. So just exit.
+			if (decodedValue == null) {
 				return
 			}
+
+			// Otherwise, use the decodedValue as the activity and continue processing
+			activity = decodedValue
+
+		} catch (error) {
+
+			if (retryCount < 120) { // retry every half-second for up to 1 minute
+				console.log("Retrying activity reception... Attempt #" + (retryCount + 1))
+				setTimeout(() => {
+					this.receiveActivity(activity, retryCount + 1)
+				}, 500)
+				return
+			}
+
+			console.log("Giving up on message after 1 minute", error)
+			return
 		}
+
 
 		console.log("controller.receiveActivity", activity.toObject())
 
-		// Part 2: Route the activity based on its type, and apply changes to the local database and UX as needed.
+		// Part 2: Route the activity based on its type, and apply changes to the 
+		// local database and UX as needed.
 		try {
 
 			switch (activity.type()) {
@@ -1313,13 +1302,12 @@ export class Controller {
 			throw new Error("Decrypted activity actor must match object's attributedTo")
 		}
 
+		// Find the codec based on the object
+		const codec = this.#getCodecForActivity(object)
+
 		// Locate the group assigned to this activity
 		const groupId = activity.context()
-		var group = await this.#database.loadGroup(groupId)
-
-		if (group == undefined) {
-			throw new Error("Group not found for incoming message")
-		}
+		const group = await codec.getGroup(groupId)
 
 		// Create a new message record in the database for this incoming message.
 		const sentByMe = (object.attributedToId() == this.actorId())
@@ -1563,7 +1551,7 @@ export class Controller {
 	// Other Helpers
 	//////////////////////////////////////////
 
-	#getCodec(group: Group): ICodec {
+	#getCodecForGroup(group: Group): ICodec {
 
 		if (groupIsEncrypted(group)) {
 
@@ -1571,6 +1559,18 @@ export class Controller {
 				throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.")
 			}
 
+			return this.#codecMls
+		}
+
+		return this.#codecPlaintext
+	}
+
+	#getCodecForActivity(object: Document): ICodec {
+
+		if (object.isMLSMessage()) {
+			if (this.#codecMls == undefined) {
+				throw new Error("No codec available for this message. Either MLS has not initialized properly, or your permissions have changed on the server.")
+			}
 			return this.#codecMls
 		}
 

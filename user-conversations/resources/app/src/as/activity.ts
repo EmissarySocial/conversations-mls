@@ -78,7 +78,22 @@ export class Activity extends Object {
 	// to returns the value of the "to" property
 	to = async () => {
 		const result = this.getArray("as", vocab.PropertyTo)
-		return result.map(async (actor: any) => await loadActor(actor))
+		return await Promise.all(result.map(async (actor: any) => await loadActor(actor)))
+	}
+
+	recipients = () => {
+
+		const toRecipients = this.getArray("as", vocab.PropertyTo)
+		const ccRecipients = this.getArray("as", vocab.PropertyCc)
+		const allRecipients = [...toRecipients, ...ccRecipients]
+
+		const filteredRecipients = allRecipients
+			.filter(recipient => typeof recipient === "string")
+			.filter(recipient => recipient != "https://www.w3.org/ns/activitystreams#Public")
+			.filter(recipient => recipient != "as:Public")
+			.filter(recipient => recipient != "Public")
+
+		return filteredRecipients
 	}
 
 	///////////////////////////////////

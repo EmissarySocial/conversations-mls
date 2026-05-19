@@ -1,6 +1,7 @@
 import m, { type Vnode } from "mithril"
 import type { Controller } from "../service/controller"
 import type { Message } from "../model/message"
+import { groupIsEncrypted } from "../model/group"
 
 type WidgetMessageCreateVnode = Vnode<WidgetMessageCreateAttrs, WidgetMessageCreateState>
 
@@ -22,6 +23,7 @@ export class WidgetMessageCreate {
 
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
+		const isEncrypted = groupIsEncrypted(group)
 
 		// Do not allow the user to add more messages if this group is closed.
 		if (group.stateId === "CLOSED") {
@@ -31,8 +33,21 @@ export class WidgetMessageCreate {
 			</div>
 		}
 
-		return (
-			<div class="flex-row flex-justify">
+		var backgroundStyle = ""
+
+		if (!isEncrypted) {
+			backgroundStyle = `background: repeating-linear-gradient(135deg,rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.1) 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);`
+		}
+
+		return <>
+
+			{isEncrypted ?
+				<div class="text-sm text-gray"><i class="bi bi-lock-fill"></i> encrypted conversation</div>
+				:
+				<div class="text-sm padding-xs bold bg-stripes"><i class="bi bi-exclamation-triangle-fill"></i> NOT ENCRYPTED</div>
+			}
+
+			<div class="flex-row flex-justify" style={backgroundStyle}>
 				<div class="flex-grow">
 					{this.drawReply(vnode)}
 					<div role="input" class="flex-grow flex-row flex-align-center">
@@ -65,7 +80,7 @@ export class WidgetMessageCreate {
 					onchange={(e: Event) => this.sendFile(vnode, e)}>
 				</input>
 			</div>
-		)
+		</>
 	}
 
 	drawReply(vnode: WidgetMessageCreateVnode) {

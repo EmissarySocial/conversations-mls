@@ -1,6 +1,6 @@
 import m from "mithril"
 import { Controller } from "../service/controller"
-import { type Group } from "../model/group"
+import { groupIsEncrypted, type Group } from "../model/group"
 import { type Vnode, type VnodeDOM, type Component } from "mithril"
 import type { Contact } from "../model/contact"
 
@@ -24,6 +24,8 @@ export class GroupMembers {
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
 		const contactStreams = controller.groupContactStream()
+		const isEncrypted = groupIsEncrypted(group)
+		const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:var(--green70)"
 
 		return (
 			<div id="conversation-details">
@@ -39,11 +41,11 @@ export class GroupMembers {
 						{(group.stateId !== "CLOSED") &&
 							<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()}>
 								<div>
-									<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--blue60)"><i class="bi bi-plus"></i></span>
+									<span class="circle width-48 flex-center text-white text-xl margin-none" style={buttonStyle}><i class="bi bi-plus"></i></span>
 								</div>
 								<div class="flex-grow padding-left-sm">
 									<div class="bold">Add People</div>
-									<div class="text-gray">Invite one or more people to this group</div>
+									<div class="text-gray">Invite one or more people to this conversation</div>
 								</div>
 							</div>
 						}
@@ -78,7 +80,7 @@ export class GroupMembers {
 							</div>
 							<div class="flex-grow padding-left-sm">
 								<div class="bold">Leave Group</div>
-								<div class="text-gray">Leave this group and remove it from all your devices.</div>
+								<div class="text-gray">Leave this conversation and remove it from all your devices.</div>
 							</div>
 						</div>
 

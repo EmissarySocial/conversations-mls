@@ -22,8 +22,6 @@ import { type CiphersuiteImpl } from "ts-mls"
 import { type ClientState } from "ts-mls"
 import { type CredentialBasic } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
-import { type LeafNode } from "ts-mls"
-import { type Node } from "ts-mls"
 import { type MlsContext } from "ts-mls"
 import { type MlsGroupInfo } from "ts-mls"
 import { type MlsMessage } from "ts-mls"
@@ -135,6 +133,18 @@ export class CodecMls {
 
 		// Success!
 		return encryptedGroup
+	}
+
+	// getGroup locates the group for the specified ID
+	// Groups must already exist for the the MLS codec to function.
+	async getGroup(groupId: string): Promise<Group> {
+		const result = await this.#database.loadGroup(groupId)
+
+		if (result == undefined) {
+			throw new Error("Group not found for id: " + groupId)
+		}
+
+		return result
 	}
 
 	// getGroupMembers returns the list of member IDs for a given group
@@ -335,7 +345,7 @@ export class CodecMls {
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
 	// null is returned.
-	async receiveActivity(_activity: Activity, object: Document): Promise<Activity | null> {
+	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
 		const message = object.content()
 		const uintArray = base64ToUint8Array(message)
@@ -345,7 +355,6 @@ export class CodecMls {
 		// TODO: Here's where we send a "Failure" message to the group.
 		if (mlsMessage == undefined) {
 			throw new Error("Unable to decode message: " + message)
-			return null
 		}
 
 		// Execute the appropriate handler
@@ -540,7 +549,16 @@ export class CodecMls {
 		const plaintext = decodeText(decodedMessage.message)
 
 		// Create a result object and embed additional context data
-		return new Activity().fromJSON(plaintext)
+		const result = new Activity().fromJSON(plaintext)
+
+		/* TODO: Revisit this to see if we can do this validation
+		/ RULE: guarantee that the actorIds match the encrypted content
+		if (result.actorId() != activity.actorId()) {
+			console.error("Rejecting message: Decrypted activity actor must match outer activity actor")
+			return
+		}*/
+
+		return result
 	}
 
 	#processMessageCallback(message: incomingMessage, group: EncryptedGroup): IncomingMessageAction {

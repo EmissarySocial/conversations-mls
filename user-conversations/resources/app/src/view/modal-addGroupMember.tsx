@@ -35,19 +35,18 @@ export class AddGroupMember {
 				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)}>
 					<div class="layout layout-vertical">
 						<div class="layout-title">
-							<i class={isEncrypted ? "bi bi-shield-lock" : "bi bi-envelope-open"}></i> Add People to this Conversation
+							<i class="bi bi-plus"></i> Add People
 						</div>
 
-						<div class="margin-bottom">
-							{isEncrypted
-								? "To be added to this conversation, new recipients must be able to send and receive encrypted messages."
-								: "Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted."
-							}
-						</div>
+						{isEncrypted ?
+							<div class="margin-bottom"><b>This is an encrypted conversation.</b> New members MUST support encrypted messaging to join.</div>
+							:
+							<div class="margin-bottom"><b>This is an unencrypted conversation.</b> Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted.</div>
+						}
 
 						<div class="layout-elements">
 							<div class="layout-element">
-								<label for="actorIds">Add People</label>
+								<label for="actorIds">Enter Username(s)</label>
 								<ActorSearch
 									controller={vnode.attrs.controller}
 									name="actorIds"
@@ -69,48 +68,31 @@ export class AddGroupMember {
 
 		const group = vnode.attrs.controller.groupStream()
 		const isEncrypted = groupIsEncrypted(group)
-
-		if (vnode.state.actors.length == 0) {
-			return (
-				<div class="margin-top">
-					<button type="submit" class="primary" disabled>
-						{isEncrypted ? <i class="bi bi-shield-lock"></i> : <i class="bi bi-envelope-open"></i>} {" "}
-						Add People to Conversation
-					</button>
-					<button onclick={vnode.attrs.close} tabIndex="0">
-						Close
-					</button>
-					<div class="text-xs text-gray">
-						Enter one or more people to add to this conversation
-					</div>
-				</div>
-			)
-		}
-
+		var disabled = (vnode.state.actors.length == 0)
 
 		if (isEncrypted) {
 
+			if (!vnode.state.canBeEncrypted) {
+				disabled = true
+			}
+
 			return (
 				<div class="margin-top">
-					<button type="submit" class="primary" tabIndex="0" disabled={!vnode.state.canBeEncrypted}>
-						<i class="bi bi-lock"></i> Add People to Conversation
+					<button type="submit" class="primary" tabIndex="0" disabled={disabled}>
+						<i class="bi bi-lock-fill"></i>
+						Add People (Encrypted)
 					</button>
 					<button onclick={vnode.attrs.close} tabIndex="0">
 						Close
 					</button>
-					{!vnode.state.canBeEncrypted && (
-						<div class="text-xs text-gray">
-							Some people don't support encrypted chats.
-						</div>
-					)}
 				</div>
 			)
 		}
 
 		return (
 			<div class="margin-top">
-				<button class="primary" tabIndex="0" disabled>
-					<i class="bi bi-envelope-open"></i> Add People to Conversation
+				<button type="submit" class="success" tabIndex="0" disabled={disabled}>
+					<i class="bi bi-card-text"></i> Add People (Not Encrypted)
 				</button>
 				<button onclick={vnode.attrs.close} tabIndex="0">
 					Close

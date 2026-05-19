@@ -122,7 +122,7 @@ export class ViewMessage {
 								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
 								{contact.name}
 							</span> {" "}
-							JOINED the group at {dayjs(message.createDate).format("h:mm A")}
+							JOINED the conversation at {dayjs(message.createDate).format("h:mm A")}
 						</div>
 					</div>
 				)
@@ -139,7 +139,7 @@ export class ViewMessage {
 								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
 								{contact.name}
 							</span> {" "}
-							left the group at {dayjs(message.createDate).format("h:mm A")}
+							left the conversation at {dayjs(message.createDate).format("h:mm A")}
 						</div>
 					</div>
 				)

@@ -99,8 +99,8 @@
 					justify-content:flex-end;
 
 					.bubble {
-						background-color: var(--blue50);
-						border-color: var(--blue50);
+						background-color: var(--green60);
+						border-color: var(--green60);
 						color:white;
 
 						a, button {
@@ -111,7 +111,7 @@
 							}
 
 							&.selected {
-								outline:solid 1px var(--blue60);
+								outline:solid 1px var(--green60);
 							}
 						}
 					}
@@ -139,6 +139,19 @@
 								outline:solid 1px var(--gray40);
 							}
 						}
+					}
+				}
+			}
+
+			&.encrypted .message.sent .bubble {
+				background-color: var(--blue50);
+				border-color: var(--blue50);
+				color: white;
+
+				& a, button {
+
+					.selected {
+						outline:solid 1px var(--blue60);
 					}
 				}
 			}
