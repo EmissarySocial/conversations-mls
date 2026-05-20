@@ -196,11 +196,13 @@ export class CodecMls {
 			return group
 		}
 
+		console.log("addGroupMembers", addKeyPackages)
+
 		// Create add proposals for each key package
-		const addProposals: Proposal[] = addKeyPackages.map(newKeyPackage => ({
+		const addProposals: Proposal[] = addKeyPackages.map(keyPackage => ({
 			proposalType: defaultProposalTypes.add,
 			add: {
-				keyPackage: newKeyPackage,
+				keyPackage: keyPackage,
 			},
 		}))
 

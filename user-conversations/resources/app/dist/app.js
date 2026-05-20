@@ -18562,10 +18562,11 @@
       if (addKeyPackages.length == 0) {
         return group;
       }
-      const addProposals = addKeyPackages.map((newKeyPackage3) => ({
+      console.log("addGroupMembers", addKeyPackages);
+      const addProposals = addKeyPackages.map((keyPackage) => ({
         proposalType: defaultProposalTypes.add,
         add: {
-          keyPackage: newKeyPackage3
+          keyPackage
         }
       }));
       const commitResult = await createCommit({
