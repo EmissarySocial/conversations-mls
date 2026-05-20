@@ -49,7 +49,8 @@ import { type IDirectory } from "./interfaces"
 import { groupIsEncrypted } from "../model/group"
 
 import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
-import { base64ToUint8Array, newId } from "./utils"
+import { base64ToUint8Array } from "./utils"
+import { validateKeyPackage } from "./cryptography"
 
 const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 
@@ -190,6 +191,9 @@ export class CodecMls {
 		// Filter out KeyPackages that are already in the group state (e.g. from another device of the same user)
 		const signatures = this.#getGroupSignatures(group)
 		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
+
+		// Inspect Lifetime values and remove expired KeyPackages
+		addKeyPackages = addKeyPackages.filter(validateKeyPackage)
 
 		// RULE: Must have at least one valid KeyPackage to add
 		if (addKeyPackages.length == 0) {

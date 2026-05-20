@@ -1,4 +1,4 @@
-import { type CiphersuiteName } from "ts-mls"
+import { type CiphersuiteName, type CredentialBasic } from "ts-mls"
 import { type CiphersuiteImpl } from "ts-mls"
 import { type Credential } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
@@ -19,7 +19,7 @@ export async function cipherSuiteImplementation(): Promise<CiphersuiteImpl> {
 // newKeyPackage generates a new KeyPackage for the specified actor ID, using the common ciphersuite
 export async function newKeyPackage(actorId: string): Promise<{ publicPackage: KeyPackage, privatePackage: PrivateKeyPackage }> {
 
-	// Use the common ciphersuite
+	// Use the common ciphersuite..
 	const cipherSuite = await cipherSuiteImplementation()
 
 	// Create a credential for this User
@@ -30,9 +30,8 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 
 	// Make an extra-long lifetime for this KeyPackage
 	var lifetime = defaultLifetime()
-	const now = BigInt(Math.floor(Date.now() / 1000)) // convert to seconds
-	lifetime.notBefore = 0n
-	lifetime.notAfter = now + 12n + 30n * 24n * 60n * 60n // 12 months in seconds
+	const now = BigInt(Math.floor(Date.now() / 1000)) // current time in seconds
+	lifetime.notAfter = now + (12n * 30n * 24n * 60n * 60n) // plus 12 months in seconds
 
 	// Generate initial key package for this user
 	return await generateKeyPackage({
@@ -135,7 +134,46 @@ export async function decodeKeyFromBase64(base64Key: string): Promise<CryptoKey>
 	);
 }
 
+export function validateKeyPackage(keyPackage: KeyPackage): boolean {
 
+	const identity = keyPackage.leafNode.credential
+
+	if (keyPackage == null) {
+		console.warn("KeyPackage is null or undefined")
+		return false
+	}
+
+	const lifetime = keyPackage?.leafNode?.lifetime
+
+	if (lifetime == null) {
+		console.warn("KeyPackage lifetime is missing, using default lifetime " + keyPackageIdentity(keyPackage))
+		return false
+	}
+
+	// RULE: KeyPackage must have a lifetime that is not expired and not before the current time
+	const now = BigInt(Math.floor(Date.now() / 1000)) // current time in seconds
+	if (lifetime?.notBefore > now) {
+		console.warn("KeyPackage is not valid yet (notBefore is in the future) " + keyPackageIdentity(keyPackage))
+		return false
+	}
+	if (lifetime?.notAfter < now) {
+		console.warn("KeyPackage has expired (notAfter is in the past) " + keyPackageIdentity(keyPackage))
+		return false
+	}
+
+	return true
+}
+
+function keyPackageIdentity(keyPackage: KeyPackage): string {
+	if (keyPackage.leafNode.credential.credentialType !== defaultCredentialTypes.basic) {
+		console.warn("Unsupported credential type in KeyPackage:", keyPackage.leafNode.credential.credentialType)
+		return ""
+	}
+
+	// Get the credential and decode the identity
+	const credential = keyPackage.leafNode.credential as CredentialBasic
+	return new TextDecoder().decode(credential.identity)
+}
 /*
 // conversion helpers
 

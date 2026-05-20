@@ -17765,8 +17765,7 @@
     };
     var lifetime = defaultLifetime();
     const now = BigInt(Math.floor(Date.now() / 1e3));
-    lifetime.notBefore = 0n;
-    lifetime.notAfter = now + 12n + 30n * 24n * 60n * 60n;
+    lifetime.notAfter = now + 12n * 30n * 24n * 60n * 60n;
     return await generateKeyPackage({
       credential,
       cipherSuite,
@@ -17855,6 +17854,36 @@
       true,
       ["encrypt", "decrypt"]
     );
+  }
+  function validateKeyPackage2(keyPackage) {
+    const identity = keyPackage.leafNode.credential;
+    if (keyPackage == null) {
+      console.warn("KeyPackage is null or undefined");
+      return false;
+    }
+    const lifetime = keyPackage?.leafNode?.lifetime;
+    if (lifetime == null) {
+      console.warn("KeyPackage lifetime is missing, using default lifetime " + keyPackageIdentity(keyPackage));
+      return false;
+    }
+    const now = BigInt(Math.floor(Date.now() / 1e3));
+    if (lifetime?.notBefore > now) {
+      console.warn("KeyPackage is not valid yet (notBefore is in the future) " + keyPackageIdentity(keyPackage));
+      return false;
+    }
+    if (lifetime?.notAfter < now) {
+      console.warn("KeyPackage has expired (notAfter is in the past) " + keyPackageIdentity(keyPackage));
+      return false;
+    }
+    return true;
+  }
+  function keyPackageIdentity(keyPackage) {
+    if (keyPackage.leafNode.credential.credentialType !== defaultCredentialTypes.basic) {
+      console.warn("Unsupported credential type in KeyPackage:", keyPackage.leafNode.credential.credentialType);
+      return "";
+    }
+    const credential = keyPackage.leafNode.credential;
+    return new TextDecoder().decode(credential.identity);
   }
 
   // src/service/directory.ts
@@ -18561,6 +18590,7 @@
       addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
       const signatures = this.#getGroupSignatures(group);
       addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
+      addKeyPackages = addKeyPackages.filter(validateKeyPackage2);
       if (addKeyPackages.length == 0) {
         return group;
       }
