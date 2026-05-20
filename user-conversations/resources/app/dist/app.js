@@ -17764,7 +17764,9 @@
       identity: new TextEncoder().encode(actorId)
     };
     var lifetime = defaultLifetime();
-    lifetime.notAfter = lifetime.notBefore + 14n + 30n * 24n * 60n * 60n;
+    const now = BigInt(Math.floor(Date.now() / 1e3));
+    lifetime.notBefore = 0n;
+    lifetime.notAfter = now + 12n + 30n * 24n * 60n * 60n;
     return await generateKeyPackage({
       credential,
       cipherSuite,

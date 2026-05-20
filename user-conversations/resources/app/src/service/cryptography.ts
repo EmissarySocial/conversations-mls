@@ -30,7 +30,9 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 
 	// Make an extra-long lifetime for this KeyPackage
 	var lifetime = defaultLifetime()
-	lifetime.notAfter = lifetime.notBefore + 14n + 30n * 24n * 60n * 60n // 14 months in seconds
+	const now = BigInt(Math.floor(Date.now() / 1000)) // convert to seconds
+	lifetime.notBefore = 0n
+	lifetime.notAfter = now + 12n + 30n * 24n * 60n * 60n // 12 months in seconds
 
 	// Generate initial key package for this user
 	return await generateKeyPackage({
