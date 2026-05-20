@@ -16727,9 +16727,6 @@
   function groupIsEncrypted(group) {
     return group.codec === "MLS";
   }
-  function groupNotEncrypted(group) {
-    return group.codec !== "MLS";
-  }
 
   // src/model/message.ts
   var Message = class {
@@ -16953,6 +16950,10 @@
     };
     // saveGroup saves a group to the database
     saveGroup = async (group) => {
+      console.log("Saving group, ", group);
+      if (group.id == void 0 || group.id == "") {
+        throw new Error("Group must have an ID");
+      }
       const previousGroup = await this.loadGroup(group.id);
       const previousMembers = previousGroup?.members || [];
       const { added, removed } = diffArrays(previousMembers, group.members);
@@ -17590,27 +17591,21 @@
     };
     // sendActivity sends an activity to the Actor's outbox
     sendActivity = async (activity) => {
-      var result;
       if (this.#outboxUrl == "") {
         throw new Error("Outbox URL not set. Cannot send activity.");
       }
       this.#checkCookies();
-      if (activity instanceof Activity) {
-        result = activity;
-      } else {
-        result = new Activity(activity);
-      }
       console.log("Delivery.sendActivity", activity.toObject());
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         headers: { "Content-Type": "application/activity+json" },
         credentials: "include",
-        body: result.toJSON()
+        body: activity.toJSON()
       });
       if (!response.ok) {
         throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
       }
-      return result;
+      return activity;
     };
     // #checkCookies guarantees that we're still signed in as the 
     // original user.  It throws an error if the cookies have changed since 
@@ -18742,7 +18737,7 @@
         console.error("Received message for unknown group", groupId);
         return null;
       }
-      if (groupNotEncrypted(group)) {
+      if (!groupIsEncrypted(group)) {
         throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
       }
       if (!group.members.includes(document2.attributedToId())) {
@@ -18969,6 +18964,7 @@
     async receiveActivity(activity, object) {
       var group;
       const groupId = activity.context();
+      console.log("Receive Activity", activity.toObject(), object.toObject());
       if (activity.type() == ActivityTypeLeave) {
         const dbGroup = await this.#database.loadGroup(groupId);
         if (dbGroup == void 0) {
@@ -18990,8 +18986,10 @@
       return activity;
     }
     async sendActivity(group, activity) {
-      activity.set("to", group.members);
-      this.#addMentions(activity, group.members);
+      if (activity.type() != ActivityTypeAcknowledge) {
+        activity.set("to", group.members);
+        this.#addMentions(activity, group.members);
+      }
       await this.#delivery.sendActivity(activity);
     }
     #addMentions(activity, members) {
@@ -19426,6 +19424,7 @@
         "type": ActivityTypeUpdate,
         "object": {
           "id": group.id,
+          "context": group.id,
           "type": ObjectTypeEmissaryContext,
           "name": group.name,
           "summary": group.summary,
@@ -19679,6 +19678,7 @@
       this.loadMessages();
       var activity = new Activity({
         "@context": ContextActivityStreams,
+        context: group.id,
         id: newId2(),
         actor: this.actorId(),
         type: ActivityTypeLike,
@@ -19731,8 +19731,8 @@
     receiveActivity = async (activity, retryCount = 0) => {
       var object;
       var object = await activity.object();
+      const codec = this.#getCodecForActivity(object);
       try {
-        const codec = this.#getCodecForActivity(object);
         const decodedValue = await codec.receiveActivity(activity, object);
         if (decodedValue == null) {
           return;
@@ -19759,7 +19759,7 @@
               case ObjectTypeMlsKeyPackage:
                 return;
               default:
-                return await this.#receiveActivity_CreateMessage(activity);
+                return await this.#receiveActivity_CreateMessage(codec, activity);
             }
           case ActivityTypeDelete:
             return await this.#receiveActivity_DeleteMessage(activity);
@@ -19797,12 +19797,11 @@
         this.loadMessages();
       }
     };
-    #receiveActivity_CreateMessage = async (activity) => {
+    #receiveActivity_CreateMessage = async (codec, activity) => {
       const object = await activity.object();
       if (object.attributedToId() != activity.actorId()) {
         throw new Error("Decrypted activity actor must match object's attributedTo");
       }
-      const codec = this.#getCodecForActivity(object);
       const groupId = activity.context();
       const group = await codec.getGroup(groupId);
       const sentByMe = object.attributedToId() == this.actorId();
@@ -19937,13 +19936,8 @@
     // sendActivity sends an activity to the Actor's outbox
     #sendActivity = async (group, activity) => {
       activity.set(PropertyInstrument, this.config.generatorId);
-      if (!groupIsEncrypted(group)) {
-        return this.#delivery.sendActivity(activity);
-      }
-      if (this.#codecMls == void 0) {
-        throw new Error("MLS service is not initialized");
-      }
-      return await this.#codecMls.sendActivity(group, activity);
+      const codec = this.#getCodecForGroup(group);
+      await codec.sendActivity(group, activity);
     };
     //////////////////////////////////////////
     // Other Helpers
@@ -20442,6 +20436,7 @@
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
+      console.log(controller2.groups);
       return /* @__PURE__ */ (0, import_mithril9.default)("div", null, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-align-center clickable hover-trigger", tabIndex: "0", onclick: () => controller2.page_settings() }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "circle width-32 hover-show text-lg margin-none align-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-gear" })), /* @__PURE__ */ (0, import_mithril9.default)("img", { src: controller2.actorIcon(), class: "width-32 circle hover-hide" }), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "bold text-lg margin-none" }, "Conversations")), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "link text-lg margin-none", onclick: () => controller2.modal_newConversation(), tabindex: "0" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "input", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril9.default)("label", { class: "bi bi-search", for: "idSearch" }), /* @__PURE__ */ (0, import_mithril9.default)(
         "input",
         {
@@ -20456,8 +20451,18 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row" }, group.name || group.defaultName || ""), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || "")), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-red text-sm" }, group.unread && /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }))));
+        const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green60)";
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { role: "button", class: cssClass, onclick: () => controller2.selectGroup(group.id) }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${color}` }, groupIsEncrypted(group) ? /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" }) : /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-chat-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row bold" }, group.name || group.defaultName || ""), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || "")), this.unreadMarker(vnode, group)));
       }));
+    }
+    unreadMarker(vnode, group) {
+      if (group.unread == false) {
+        return null;
+      }
+      if (groupIsEncrypted(group)) {
+        return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs", style: "color:var(--blue50);" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }));
+      }
+      return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs", style: "color:var(--green50);" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-circle-fill" }));
     }
   };
 

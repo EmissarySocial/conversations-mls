@@ -64,6 +64,8 @@ export class CodecPlaintext {
 		var group: Group
 		const groupId = activity.context()
 
+		console.log("Receive Activity", activity.toObject(), object.toObject())
+
 		// Special case for "Leave" activities.  If we've already left the group, then don't add it to the database
 		if (activity.type() == vocab.ActivityTypeLeave) {
 
@@ -106,11 +108,15 @@ export class CodecPlaintext {
 
 	async sendActivity(group: Group, activity: Activity): Promise<void> {
 
-		// Set group members as "to" recipients of the activity
-		activity.set("to", group.members)
+		// RULE: add addressing to all activities ecept "Acknowledge"
+		if (activity.type() != vocab.ActivityTypeAcknowledge) {
 
-		// Add "Mention" tags so that Mastodon will notify users properly.
-		this.#addMentions(activity, group.members)
+			// Set group members as "to" recipients of the activity
+			activity.set("to", group.members)
+
+			// Add "Mention" tags so that Mastodon will notify users properly.
+			this.#addMentions(activity, group.members)
+		}
 
 		// Send the activity via the delivery service
 		await this.#delivery.sendActivity(activity)

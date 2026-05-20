@@ -164,6 +164,10 @@ export class Database {
 	// saveGroup saves a group to the database
 	saveGroup = async (group: Group) => {
 
+		console.log("Saving group, ", group)
+		if (group.id == undefined || group.id == "") {
+			throw new Error("Group must have an ID")
+		}
 
 		// Load the previous group members for comparison later
 		const previousGroup = await this.loadGroup(group.id)

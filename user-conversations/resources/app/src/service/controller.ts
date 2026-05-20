@@ -691,6 +691,7 @@ export class Controller {
 			"type": vocab.ActivityTypeUpdate,
 			"object": {
 				"id": group.id,
+				"context": group.id,
 				"type": vocab.ObjectTypeEmissaryContext,
 				"name": group.name,
 				"summary": group.summary,
@@ -1095,6 +1096,7 @@ export class Controller {
 		// Send a "like" activity to the actor's outbox
 		var activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
+			context: group.id,
 			id: newId(),
 			actor: this.actorId(),
 			type: vocab.ActivityTypeLike,
@@ -1177,10 +1179,10 @@ export class Controller {
 		// but we can load from the network if needed.
 		var object = await activity.object()
 
-		try {
+		// Find the codec for this activity
+		const codec = this.#getCodecForActivity(object)
 
-			// Find the codec for this activity
-			const codec = this.#getCodecForActivity(object)
+		try {
 
 			// Process the activity through the codec. This will handle decryption and verification of
 			// the activity, and will throw an error if the activity is invalid or cannot be processed
@@ -1227,7 +1229,7 @@ export class Controller {
 						case vocab.ObjectTypeMlsKeyPackage:
 							return
 						default:
-							return await this.#receiveActivity_CreateMessage(activity)
+							return await this.#receiveActivity_CreateMessage(codec, activity)
 					}
 
 				case vocab.ActivityTypeDelete:
@@ -1292,7 +1294,7 @@ export class Controller {
 		}
 	}
 
-	#receiveActivity_CreateMessage = async (activity: Activity) => {
+	#receiveActivity_CreateMessage = async (codec: ICodec, activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1301,9 +1303,6 @@ export class Controller {
 		if (object.attributedToId() != activity.actorId()) {
 			throw new Error("Decrypted activity actor must match object's attributedTo")
 		}
-
-		// Find the codec based on the object
-		const codec = this.#getCodecForActivity(object)
 
 		// Locate the group assigned to this activity
 		const groupId = activity.context()
@@ -1530,20 +1529,11 @@ export class Controller {
 		// Apply the "instrument" property to the activity to identify that it came from this client.
 		activity.set(vocab.PropertyInstrument, this.config.generatorId)
 
-		// If this is a plaintext group, then just send the message without any more processing.
-		if (!groupIsEncrypted(group)) {
-			return this.#delivery.sendActivity(activity)
-		}
+		// Find the codec for this group (plaintext or MLS)
+		const codec = this.#getCodecForGroup(group)
 
-		// Fallthrough: this is an encrypted group. Require MLS encoding.
-
-		// RULE: Guarantee that MLS service is initialized.
-		if (this.#codecMls == undefined) {
-			throw new Error("MLS service is not initialized")
-		}
-
-		// Send the activity MLS service
-		return await this.#codecMls.sendActivity(group, activity)
+		// Send the activity through the codec.
+		await codec.sendActivity(group, activity)
 	}
 
 

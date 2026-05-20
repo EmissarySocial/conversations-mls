@@ -62,9 +62,7 @@ export class Delivery {
 	}
 
 	// sendActivity sends an activity to the Actor's outbox
-	sendActivity = async (activity: Activity | { [key: string]: any }): Promise<Activity> => {
-
-		var result: Activity
+	sendActivity = async (activity: Activity): Promise<Activity> => {
 
 		// Guarantee that we have a valid outbox URL
 		if (this.#outboxUrl == "") {
@@ -74,13 +72,6 @@ export class Delivery {
 		// Confirm that authentication has not changed since the last request.
 		this.#checkCookies()
 
-		// Guarantee that we have an `Activity` object to work with
-		if (activity instanceof Activity) {
-			result = activity
-		} else {
-			result = new Activity(activity)
-		}
-
 		console.log("Delivery.sendActivity", activity.toObject())
 
 		// If necessary, encrypt the activity using MLS before sending
@@ -89,14 +80,14 @@ export class Delivery {
 			method: "POST",
 			headers: { "Content-Type": "application/activity+json" },
 			credentials: "include",
-			body: result.toJSON(),
+			body: activity.toJSON(),
 		})
 
 		if (!response.ok) {
 			throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`)
 		}
 
-		return result
+		return activity
 	}
 
 	// #checkCookies guarantees that we're still signed in as the 

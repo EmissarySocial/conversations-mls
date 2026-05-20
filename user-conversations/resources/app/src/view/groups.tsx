@@ -1,6 +1,8 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
+import { groupIsEncrypted } from "../model/group"
+import { type Group } from "../model/group"
 
 type GroupsVnode = Vnode<GroupsAttrs, GroupsState>
 
@@ -11,8 +13,11 @@ type GroupsAttrs = {
 type GroupsState = {}
 
 export class Groups {
+
 	view(vnode: GroupsVnode) {
 		const controller = vnode.attrs.controller
+
+		console.log(controller.groups)
 
 		return (
 			<div>
@@ -53,24 +58,45 @@ export class Groups {
 						cssClass += " highlight"
 					}
 
+					const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green60)"
+
 					return (
 						<div role="button" class={cssClass} onclick={() => controller.selectGroup(group.id)}>
-							<div class="width-48 circle flex-center">
-								<i class="bi bi-lock-fill"></i>
+							<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${color}`}>
+								{
+									groupIsEncrypted(group) ?
+										<i class="bi bi-lock-fill"></i> :
+										<i class="bi bi-chat-fill"></i>
+								}
 							</div>
 							<div class="flex-row flex-grow nowrap ellipsis pos-relative">
 								<div class="flex-grow">
-									<div class="flex-row">{group.name || group.defaultName || ""}</div>
+									<div class="flex-row bold">{group.name || group.defaultName || ""}</div>
 									<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
 								</div>
-								<div class="text-red text-sm">
-									{group.unread && <i class="bi bi-circle-fill"></i>}
-								</div>
+								{this.unreadMarker(vnode, group)}
 							</div>
 						</div>
 					)
 				})}
 			</div>
 		)
+	}
+
+	unreadMarker(vnode: GroupsVnode, group: Group) {
+
+		if (group.unread == false) {
+			return null
+		}
+
+		if (groupIsEncrypted(group)) {
+			return <div class="text-xs" style="color:var(--blue50);">
+				<i class="bi bi-circle-fill"></i>
+			</div>
+		}
+
+		return <div class="text-xs" style="color:var(--green50);">
+			<i class="bi bi-circle-fill"></i>
+		</div>
 	}
 }
