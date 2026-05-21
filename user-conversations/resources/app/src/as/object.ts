@@ -1,7 +1,6 @@
 import { toString } from "./utils"
 import * as convert from "./convert"
 import * as vocab from "./vocab"
-
 type map = { [key: string]: any }
 
 // JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties

@@ -17262,6 +17262,112 @@
     };
   };
 
+  // src/as/collection.ts
+  var Collection = class extends Object2 {
+    // eventStream returns the value of the "eventStream" property
+    eventStream = () => {
+      return this.getString("sse", "eventStream");
+    };
+    // first returns the value of the "first" property, which is used for pagination in ActivityPub collections
+    first = () => {
+      return this.getString("as", "first");
+    };
+    // items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
+    items = () => {
+      var result = [];
+      switch (this.type()) {
+        case "Collection":
+        case "CollectionPage":
+          return this.getArray("as", "items");
+        case "OrderedCollection":
+        case "OrderedCollectionPage":
+          return this.getArray("as", "orderedItems");
+      }
+      return [];
+    };
+    // next returns the value of the "next" property, which is used for pagination in ActivityPub collections
+    next = () => {
+      return this.getString("as", "next");
+    };
+    totalItems = () => {
+      return this.getInteger("as", "totalItems");
+    };
+    // rangeDocuments returns all of the items in a collection, typed as Documents
+    async *rangeDocuments(options = {}) {
+      const items = range(this, options);
+      for await (const item of items) {
+        yield await loadDocument(item);
+      }
+    }
+  };
+  async function loadCollection(value) {
+    switch (typeof value) {
+      case "string":
+        return await new Collection().fromURL(value);
+      case "object":
+        if (Array.isArray(value)) {
+          if (value.length > 0) {
+            return new Collection(value[0]);
+          }
+        } else {
+          return new Collection(value);
+        }
+    }
+    return new Collection();
+  }
+  async function* rangeActivities(url, after = "", options = {}) {
+    const items = rangeUrl(url, after, options);
+    for await (const item of items) {
+      yield await loadActivity(item);
+    }
+  }
+  async function* rangeUrl(url, after = "", options = {}) {
+    if (url == "") {
+      return;
+    }
+    if (after != "") {
+      if (url.includes("?")) {
+        url = url + "&after=" + encodeURIComponent(after);
+      } else {
+        url = url + "?after=" + encodeURIComponent(after);
+      }
+    }
+    var collection;
+    try {
+      collection = await new Collection().fromURL(url, options);
+    } catch (error) {
+      console.error("Error fetching collection:", url, error);
+      return;
+    }
+    const items = range(collection, options);
+    for await (const item of items) {
+      yield item;
+    }
+  }
+  async function* range(collection, options = {}) {
+    const items = collection.items();
+    if (items.length > 0) {
+      for await (const item of items) {
+        yield item;
+      }
+      return;
+    }
+    var pageUrl = collection.first() || collection.next();
+    while (pageUrl) {
+      var page;
+      try {
+        page = await new Collection().fromURL(pageUrl, options);
+      } catch (error) {
+        console.error("Unable to fetch collection page:", pageUrl, error);
+        return;
+      }
+      for await (const item of page.items()) {
+        yield item;
+      }
+      pageUrl = page.next();
+    }
+  }
+
   // src/as/actor.ts
   var Actor = class extends Object2 {
     //
@@ -17300,7 +17406,11 @@
       return this.getString("mls", PropertyMlsMessages);
     };
     mlsKeyPackages = () => {
-      return this.getString("mls", PropertyMlsKeyPackages);
+      return this.getCollection("mls", PropertyMlsKeyPackages);
+    };
+    getCollection = (namespace, property) => {
+      const value = this.get(namespace, property);
+      return loadCollection(value);
     };
     ///////////////////////////////////
     // Emissary-specific properties
@@ -17644,113 +17754,6 @@
     return bytesToBase64(keyPackageMessage);
   }
 
-  // src/model/contact.ts
-  function NewContact(id) {
-    return {
-      id,
-      name: "",
-      icon: "",
-      username: "",
-      known: false,
-      updated: 0
-    };
-  }
-  function ContactFromActor(actor) {
-    return {
-      id: actor.id(),
-      name: actor.name(),
-      icon: actor.icon(),
-      username: actor.computedUsername(),
-      known: false,
-      updated: Date.now()
-    };
-  }
-
-  // src/as/collection.ts
-  var Collection = class extends Object2 {
-    //
-    // eventStream returns the value of the "eventStream" property
-    eventStream = () => {
-      return this.getString("sse", "eventStream");
-    };
-    // first returns the value of the "first" property, which is used for pagination in ActivityPub collections
-    first = () => {
-      return this.getString("as", "first");
-    };
-    // items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
-    items = () => {
-      var result = [];
-      switch (this.type()) {
-        case "Collection":
-        case "CollectionPage":
-          return this.getArray("as", "items");
-        case "OrderedCollection":
-        case "OrderedCollectionPage":
-          return this.getArray("as", "orderedItems");
-      }
-      return [];
-    };
-    // next returns the value of the "next" property, which is used for pagination in ActivityPub collections
-    next = () => {
-      return this.getString("as", "next");
-    };
-    totalItems = () => {
-      return this.getInteger("as", "totalItems");
-    };
-  };
-  async function* rangeActivities(url, after = "", options = {}) {
-    const items = range(url, after, options);
-    for await (const item of items) {
-      yield await loadActivity(item);
-    }
-  }
-  async function* rangeDocuments(url, after = "", options = {}) {
-    const items = range(url, after, options);
-    for await (const item of items) {
-      yield await loadDocument(item);
-    }
-  }
-  async function* range(url, after = "", options = {}) {
-    if (url == "") {
-      return;
-    }
-    if (after != "") {
-      if (url.includes("?")) {
-        url = url + "&after=" + encodeURIComponent(after);
-      } else {
-        url = url + "?after=" + encodeURIComponent(after);
-      }
-    }
-    var collection;
-    try {
-      collection = await new Collection().fromURL(url, options);
-    } catch (error) {
-      console.error("Error fetching collection:", url, error);
-      return;
-    }
-    const items = collection.items();
-    if (items.length > 0) {
-      for await (const item of items) {
-        yield item;
-      }
-      return;
-    }
-    var pageUrl = collection.first() || collection.next();
-    while (pageUrl) {
-      var page;
-      try {
-        page = await new Collection().fromURL(pageUrl, options);
-      } catch (error) {
-        console.error("Unable to fetch collection page:", pageUrl, error);
-        return;
-      }
-      for await (const item of page.items()) {
-        yield item;
-      }
-      pageUrl = page.next();
-    }
-  }
-
   // src/service/cryptography.ts
   async function cipherSuiteImplementation() {
     const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
@@ -17922,19 +17925,23 @@
       for (const actorId of actorIds) {
         try {
           const actor = await new Actor().fromURL(actorId);
-          const keyPackages = rangeDocuments(actor.mlsKeyPackages());
+          const keyPackageCollection = await actor.mlsKeyPackages();
+          const keyPackages = keyPackageCollection.rangeDocuments();
           for await (const keyPackage of keyPackages) {
             const contentBytes = base64ToUint8Array(keyPackage.content());
-            const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes);
-            if (decodedKeyPackage == void 0) {
+            const mlsMessage = decode(mlsMessageDecoder, contentBytes);
+            if (mlsMessage == void 0) {
               console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject());
               continue;
             }
-            if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-              console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat);
+            if (mlsMessage.wireformat !== wireformats.mls_key_package) {
+              console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", mlsMessage.wireformat);
               continue;
             }
-            result.push(decodedKeyPackage.keyPackage);
+            if (!validateKeyPackage2(mlsMessage.keyPackage)) {
+              continue;
+            }
+            result.push(mlsMessage.keyPackage);
           }
         } catch (error) {
           console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error);
@@ -18031,6 +18038,28 @@
 
   // src/service/interfaces.ts
   var import_stream = __toESM(require_stream2(), 1);
+
+  // src/model/contact.ts
+  function NewContact(id) {
+    return {
+      id,
+      name: "",
+      icon: "",
+      username: "",
+      known: false,
+      updated: 0
+    };
+  }
+  function ContactFromActor(actor) {
+    return {
+      id: actor.id(),
+      name: actor.name(),
+      icon: actor.icon(),
+      username: actor.computedUsername(),
+      known: false,
+      updated: Date.now()
+    };
+  }
 
   // src/service/receiver.ts
   var Receiver = class {
@@ -20029,7 +20058,7 @@
       vnode.state.isHideOnBlur = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Device Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "text", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
+      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Device Passcode"), /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "password", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isEncryptedMessages" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission != "denied" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
     }
     setClientName = (vnode, event) => {
       const target = event.target;

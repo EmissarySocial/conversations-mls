@@ -1,5 +1,6 @@
 import * as vocab from "./vocab"
 import { Object } from "./object"
+import { Collection, loadCollection } from "./collection"
 
 // Actor is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Actor extends Object {
@@ -51,7 +52,12 @@ export class Actor extends Object {
 	}
 
 	mlsKeyPackages = () => {
-		return this.getString("mls", vocab.PropertyMlsKeyPackages)
+		return this.getCollection("mls", vocab.PropertyMlsKeyPackages)
+	}
+
+	getCollection = (namespace: string, property: string): Promise<Collection> => {
+		const value = this.get(namespace, property)
+		return loadCollection(value)
 	}
 
 	///////////////////////////////////

@@ -1,5 +1,4 @@
 // ts-mls TYpes
-import { defaultLifetime, getCiphersuiteImpl, type CiphersuiteName, type Credential } from "ts-mls"
 import { type KeyPackage } from "ts-mls"
 import { decode } from "ts-mls"
 import { mlsMessageDecoder } from "ts-mls"
@@ -8,15 +7,13 @@ import { wireformats } from "ts-mls"
 import * as vocab from "../as/vocab"
 
 // Model Objects
-import { NewAPKeyPackage, type APKeyPackage } from "../model/ap-keypackage"
-import { ContactFromActor, type Contact } from "../model/contact"
+import { NewAPKeyPackage } from "../model/ap-keypackage"
 
 // ActivityPub objects
-import { rangeDocuments } from "../as/collection"
 import { Actor } from "../as/actor"
 import { base64ToUint8Array } from "./utils"
-import { newKeyPackage } from "./cryptography"
 import { newId } from "./utils"
+import { validateKeyPackage } from "./cryptography"
 export class Directory {
 
 	#actorId: string // ID of the local actor 
@@ -57,24 +54,31 @@ export class Directory {
 
 			try {
 				const actor = await new Actor().fromURL(actorId)
-				const keyPackages = rangeDocuments(actor.mlsKeyPackages())
+				const keyPackageCollection = await actor.mlsKeyPackages()
+				const keyPackages = keyPackageCollection.rangeDocuments()
 
 				for await (const keyPackage of keyPackages) {
 
 					const contentBytes = base64ToUint8Array(keyPackage.content())
-					const decodedKeyPackage = decode(mlsMessageDecoder, contentBytes)
+					const mlsMessage = decode(mlsMessageDecoder, contentBytes)
 
-					if (decodedKeyPackage == undefined) {
+					if (mlsMessage == undefined) {
 						console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject())
 						continue
 					}
 
-					if (decodedKeyPackage.wireformat !== wireformats.mls_key_package) {
-						console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", decodedKeyPackage.wireformat)
+					// Guarantee that the message is a KeyPackage
+					if (mlsMessage.wireformat !== wireformats.mls_key_package) {
+						console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", mlsMessage.wireformat)
 						continue
 					}
 
-					result.push(decodedKeyPackage.keyPackage)
+					// RULE: If the KeyPackage is not valid (expired) then skip it.
+					if (!validateKeyPackage(mlsMessage.keyPackage)) {
+						continue
+					}
+
+					result.push(mlsMessage.keyPackage)
 				}
 
 			} catch (error) {

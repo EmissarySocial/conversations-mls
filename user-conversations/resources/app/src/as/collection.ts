@@ -3,7 +3,6 @@ import { loadActivity } from "./activity"
 import { loadDocument } from "./document"
 
 export class Collection extends Object {
-	//
 
 	// eventStream returns the value of the "eventStream" property
 	eventStream = () => {
@@ -40,6 +39,15 @@ export class Collection extends Object {
 	totalItems = () => {
 		return this.getInteger("as", "totalItems")
 	}
+
+	// rangeDocuments returns all of the items in a collection, typed as Documents
+	async *rangeDocuments(options: RequestInit = {}) {
+		const items = range(this, options)
+
+		for await (const item of items) {
+			yield await loadDocument(item)
+		}
+	}
 }
 
 export async function loadCollection(value: any) {
@@ -62,26 +70,17 @@ export async function loadCollection(value: any) {
 
 // rangeActivities returns all of the items in a collection, typed as Activities
 export async function* rangeActivities(url: string, after: string = "", options: RequestInit = {}) {
-	const items = range(url, after, options)
+	const items = rangeUrl(url, after, options)
 
 	for await (const item of items) {
 		yield await loadActivity(item)
 	}
 }
 
-// rangeDocuments returns all of the items in a collection, typed as Documents
-export async function* rangeDocuments(url: string, after: string = "", options: RequestInit = {}) {
-	const items = range(url, after, options)
-
-	for await (const item of items) {
-		yield await loadDocument(item)
-	}
-}
-
-// Async generator that fetches an ActivityPub collection and yields each item one by one.
+// rangeUrl is an async generator that fetches an ActivityPub collection and yields each item one by one.
 // Automatically handles pagination by following 'first' and 'next' links...
-async function* range(url: string, after: string = "", options: RequestInit = {}): AsyncGenerator<any> {
-	//
+async function* rangeUrl(url: string, after: string = "", options: RequestInit = {}): AsyncGenerator<any> {
+
 	// RULE: URL must not be empty
 	if (url == "") {
 		return
@@ -104,6 +103,18 @@ async function* range(url: string, after: string = "", options: RequestInit = {}
 		console.error("Error fetching collection:", url, error)
 		return
 	}
+
+	const items = range(collection, options)
+
+	for await (const item of items) {
+		yield item
+	}
+}
+
+
+// Async generator that fetches an ActivityPub collection and yields each item one by one.
+// Automatically handles pagination by following 'first' and 'next' links...
+async function* range(collection: Collection, options: RequestInit = {}): AsyncGenerator<any> {
 
 	// If items are embedded directly in the page, then just return those
 	const items = collection.items()
