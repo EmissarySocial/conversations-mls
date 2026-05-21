@@ -58,7 +58,7 @@ export class Welcome {
 
 									<div class="layout-element">
 										<label for="passcode">Device Passcode</label>
-										<input id="passcode" type="text" tabIndex="0" value={vnode.state.passcode} oninput={(event: Event) => this.setPasscode(vnode, event)} required autocomplete="off" />
+										<input id="passcode" type="password" tabIndex="0" value={vnode.state.passcode} oninput={(event: Event) => this.setPasscode(vnode, event)} required autocomplete="off" />
 										<div class="text-xs text-gray margin-right-xs">
 											Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.
 										</div>
