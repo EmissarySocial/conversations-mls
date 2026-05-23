@@ -196,6 +196,11 @@ export class ActorSearch {
 	// (async) Maintains a cache that counts the keyPackages for each actor
 	async loadKeyPackages(vnode: ActorSearchVnode, actor: Actor) {
 
+		// If encrypted messages are disallowed, then NEVER use MLS
+		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+			return
+		}
+
 		// See if we already have keyPackages for this actor in the cache
 		if (vnode.state.keyPackages[actor.id()] != undefined) {
 			return
@@ -217,6 +222,13 @@ export class ActorSearch {
 	}
 
 	allActorsHaveKeyPackages(vnode: ActorSearchVnode): boolean {
+
+		// If encrypted messages are disallowed, then NEVER use MLS
+		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+			return false
+		}
+
+		// Check each actor in the value
 		for (const actor of vnode.attrs.value) {
 			if (!this.isActorMLS(vnode, actor.id())) {
 				return false
@@ -227,6 +239,13 @@ export class ActorSearch {
 	}
 
 	isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
+
+		// If encrypted messages are disallowed, then NEVER use MLS
+		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+			return false
+		}
+
+		// Look for KeyPackages for this current actor
 		const keyPackages = vnode.state.keyPackages[actorId]
 
 		if (keyPackages == undefined) {

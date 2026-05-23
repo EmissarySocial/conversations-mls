@@ -523,6 +523,21 @@ export class Controller {
 		return this.config.lastMessageId
 	}
 
+	useEncryptedMessages = (): boolean => {
+
+		// this is set when the USER chooses to send encrypted messages
+		if (this.config.isEncryptedMessages == false) {
+			return false
+		}
+
+		// this is set when the SERVER supports encrypted messages.
+		if (this.#allowEncryptedMessages == false) {
+			return false
+		}
+
+		return true
+	}
+
 	//////////////////////////////////////////
 	// KeyPackages
 	//////////////////////////////////////////
@@ -610,6 +625,11 @@ export class Controller {
 
 		// Create a new Group record
 		var group: Group
+
+		// If encrypted messages are disallowed, then only create plaintext groups
+		if (this.useEncryptedMessages() == false) {
+			encrypted = false
+		}
 
 		// Extra handling for encrypted groups
 		if (encrypted == true) {

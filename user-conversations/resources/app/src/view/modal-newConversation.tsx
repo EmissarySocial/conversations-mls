@@ -82,6 +82,10 @@ export class NewConversation {
 			return <></>
 		}
 
+		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+			return <>Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.</>
+		}
+
 		if (vnode.state.canBeEncrypted) {
 
 			if (vnode.state.wantEncryption) {

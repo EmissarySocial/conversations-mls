@@ -19399,6 +19399,15 @@
       }
       return this.config.lastMessageId;
     };
+    useEncryptedMessages = () => {
+      if (this.config.isEncryptedMessages == false) {
+        return false;
+      }
+      if (this.#allowEncryptedMessages == false) {
+        return false;
+      }
+      return true;
+    };
     //////////////////////////////////////////
     // KeyPackages
     //////////////////////////////////////////
@@ -19449,6 +19458,9 @@
     createGroup = async (recipients, initialMessage, encrypted) => {
       recipients.push(this.actorId());
       var group;
+      if (this.useEncryptedMessages() == false) {
+        encrypted = false;
+      }
       if (encrypted == true) {
         if (!this.#allowEncryptedMessages) {
           throw new Error("Server does not support sending of encrypted messages");
@@ -20371,6 +20383,9 @@
     }
     // (async) Maintains a cache that counts the keyPackages for each actor
     async loadKeyPackages(vnode, actor) {
+      if (vnode.attrs.controller.useEncryptedMessages() == false) {
+        return;
+      }
       if (vnode.state.keyPackages[actor.id()] != void 0) {
         return;
       }
@@ -20384,6 +20399,9 @@
       this.notifyParent(vnode);
     }
     allActorsHaveKeyPackages(vnode) {
+      if (vnode.attrs.controller.useEncryptedMessages() == false) {
+        return false;
+      }
       for (const actor of vnode.attrs.value) {
         if (!this.isActorMLS(vnode, actor.id())) {
           return false;
@@ -20392,6 +20410,9 @@
       return true;
     }
     isActorMLS(vnode, actorId) {
+      if (vnode.attrs.controller.useEncryptedMessages() == false) {
+        return false;
+      }
       const keyPackages = vnode.state.keyPackages[actorId];
       if (keyPackages == void 0) {
         return false;
@@ -20433,6 +20454,9 @@
     description(vnode) {
       if (vnode.state.actors.length == 0) {
         return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null);
+      }
+      if (vnode.attrs.controller.useEncryptedMessages() == false) {
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, 'Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.');
       }
       if (vnode.state.canBeEncrypted) {
         if (vnode.state.wantEncryption) {
