@@ -1,10 +1,10 @@
 import * as vocab from "./vocab"
 import { Object } from "./object"
 import { Collection, loadCollection } from "./collection"
+import { toString } from "./utils"
 
 // Actor is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Actor extends Object {
-	//
 
 	///////////////////////////////////
 	// Property accessors
@@ -64,16 +64,18 @@ export class Actor extends Object {
 	// Emissary-specific properties
 
 	// emissaryMessages returns the URL for the Emissary-specific messages collection
-	// that returns BOTH encrypted and unencrypted messages. This is preferred over mls:messages because it allows the client to receive direct messages that are not encrypted with MLS.
+	// that returns BOTH encrypted and unencrypted messages. 
+	// This is preferred over messages because it allows the client to receive 
+	// direct messages that are not encrypted with MLS.
 	emissaryMessages = () => {
-		return this.getString("emissary", "messages")
+		return toString(this.getWithNamespace("emissary", "messages"))
 	}
 
 	// messages returns the URL for the preferred messages collection,
 	// which may be either the Emissary-specific collection (if supported) or
-	// the standard mls:messages collection (if Emissary-specific collection is not supported).
+	// the standard messages collection (if Emissary-specific collection is not supported).
 	// The boolean return value indicates whether the returned URL is for the
-	// Emissary-specific collection (true) or the standard mls:messages collection (false).
+	// Emissary-specific collection (true) or the standard messages collection (false).
 	messages = () => {
 
 		// Default to "no support". If nothing else is found, then this server doesn't support this messages API.

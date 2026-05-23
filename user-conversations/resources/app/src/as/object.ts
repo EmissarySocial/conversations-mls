@@ -100,6 +100,10 @@ export class Object {
 		return undefined
 	}
 
+	getWithNamespace(namespace: string, property: string): any {
+		return this.#value[namespace + ":" + property]
+	}
+
 	getString = (namespace: string, property: string) => {
 		return toString(this.get(namespace, property))
 	}
