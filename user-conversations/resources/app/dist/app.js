@@ -16790,10 +16790,10 @@
   var MediaTypeMLSMessage = "message/mls";
   var ObjectTypeNote = "Note";
   var ObjectTypeEmissaryContext = "emissary:Context";
-  var ObjectTypeMlsKeyPackage = "mls:KeyPackage";
-  var ObjectTypeMlsPrivateMessage = "mls:PrivateMessage";
-  var ObjectTypeMlsGroupInfo = "mls:GroupInfo";
-  var ObjectTypeMlsWelcome = "mls:Welcome";
+  var ObjectTypeMlsKeyPackage = "KeyPackage";
+  var ObjectTypeMlsPrivateMessage = "PrivateMessage";
+  var ObjectTypeMlsGroupInfo = "GroupInfo";
+  var ObjectTypeMlsWelcome = "Welcome";
   var PropertyActor = "actor";
   var PropertyAttachment = "attachment";
   var PropertyAttributedTo = "attributedTo";
@@ -17233,6 +17233,9 @@
       }
       return void 0;
     }
+    getWithNamespace(namespace, property) {
+      return this.#value[namespace + ":" + property];
+    }
     getString = (namespace, property) => {
       return toString(this.get(namespace, property));
     };
@@ -17370,7 +17373,6 @@
 
   // src/as/actor.ts
   var Actor = class extends Object2 {
-    //
     ///////////////////////////////////
     // Property accessors
     // icon returns the value of the "icon" property
@@ -17415,15 +17417,17 @@
     ///////////////////////////////////
     // Emissary-specific properties
     // emissaryMessages returns the URL for the Emissary-specific messages collection
-    // that returns BOTH encrypted and unencrypted messages. This is preferred over mls:messages because it allows the client to receive direct messages that are not encrypted with MLS.
+    // that returns BOTH encrypted and unencrypted messages. 
+    // This is preferred over messages because it allows the client to receive 
+    // direct messages that are not encrypted with MLS.
     emissaryMessages = () => {
-      return this.getString("emissary", "messages");
+      return toString(this.getWithNamespace("emissary", "messages"));
     };
     // messages returns the URL for the preferred messages collection,
     // which may be either the Emissary-specific collection (if supported) or
-    // the standard mls:messages collection (if Emissary-specific collection is not supported).
+    // the standard messages collection (if Emissary-specific collection is not supported).
     // The boolean return value indicates whether the returned URL is for the
-    // Emissary-specific collection (true) or the standard mls:messages collection (false).
+    // Emissary-specific collection (true) or the standard messages collection (false).
     messages = () => {
       var result = { url: "", plaintext: false, ciphertext: false };
       const mlsMessages = this.mlsMessages();
@@ -17732,8 +17736,8 @@
     const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
     return {
       id: keyPackageId,
-      type: "mls:KeyPackage",
-      to: "as:Public",
+      type: "KeyPackage",
+      to: "Public",
       attributedTo: actorID,
       mediaType: "message/mls",
       encoding: "base64",
@@ -17756,7 +17760,7 @@
 
   // src/service/cryptography.ts
   async function cipherSuiteImplementation() {
-    const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
+    const cipherSuiteName = "MLS_256_DHKEMP521_AES256GCM_SHA512_P521";
     const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
     return cipherSuite;
   }
@@ -18064,7 +18068,7 @@
   // src/service/receiver.ts
   var Receiver = class {
     #messagesUrl;
-    // endpoint for the actor's mls:messages collection
+    // endpoint for the actor's emissary:messages or plain messages collection
     #eventSource;
     // EventSource for listening to server-sent events (SSE)
     #activityHandler;
@@ -18118,7 +18122,7 @@
         this.#eventSource.close();
       }
     };
-    // poll retrieves new messages from the mls:messages collection and calls the
+    // poll retrieves new messages from the messages collection and calls the
     // onMessage callback for each new message
     #poll = async () => {
       if (this.#polling) {
@@ -18943,7 +18947,7 @@
       const contentBytes = encode(mlsMessageEncoder, message);
       const contentBase64 = bytesToBase64(contentBytes);
       const activity = new Activity({
-        "@context": [ContextActivityStreams, { mls: ContextMLS }],
+        "@context": [ContextActivityStreams, ContextMLS],
         type: ActivityTypeCreate,
         actor: this.#actor.id(),
         to: recipients,
@@ -18954,7 +18958,7 @@
           to: recipients,
           content: contentBase64,
           mediaType: MediaTypeMLSMessage,
-          "mls:encoding": EncodingTypeBase64
+          encoding: EncodingTypeBase64
         }
       });
       this.#delivery.sendActivity(activity);
