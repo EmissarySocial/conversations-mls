@@ -13,9 +13,9 @@ import { wireformats } from "ts-mls"
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
 export interface APKeyPackage {
 	id: string
-	type: "mls:KeyPackage"
+	type: "KeyPackage"
 	attributedTo: string
-	to: "as:Public"
+	to: "Public"
 	mediaType: "message/mls"
 	encoding: "base64"
 	content: string
@@ -35,8 +35,8 @@ export function NewAPKeyPackage(keyPackageId: string, generatorId: string, gener
 
 	return {
 		id: keyPackageId,
-		type: "mls:KeyPackage",
-		to: "as:Public",
+		type: "KeyPackage",
+		to: "Public",
 		attributedTo: actorID,
 		mediaType: "message/mls",
 		encoding: "base64",

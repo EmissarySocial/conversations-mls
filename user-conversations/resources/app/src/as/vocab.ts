@@ -44,13 +44,13 @@ export const ObjectTypeNote = "Note"
 
 export const ObjectTypeEmissaryContext = "emissary:Context"
 
-export const ObjectTypeMlsKeyPackage = "mls:KeyPackage"
+export const ObjectTypeMlsKeyPackage = "KeyPackage"
 
-export const ObjectTypeMlsPrivateMessage = "mls:PrivateMessage"
+export const ObjectTypeMlsPrivateMessage = "PrivateMessage"
 
-export const ObjectTypeMlsGroupInfo = "mls:GroupInfo"
+export const ObjectTypeMlsGroupInfo = "GroupInfo"
 
-export const ObjectTypeMlsWelcome = "mls:Welcome"
+export const ObjectTypeMlsWelcome = "Welcome"
 
 // ActivityVocabulary Object Properties
 

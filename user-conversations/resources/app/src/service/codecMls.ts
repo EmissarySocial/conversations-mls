@@ -726,7 +726,7 @@ export class CodecMls {
 
 		// Create an ActivityPub activity for the private message
 		const activity = new Activity({
-			"@context": [vocab.ContextActivityStreams, { mls: vocab.ContextMLS }],
+			"@context": [vocab.ContextActivityStreams, vocab.ContextMLS],
 			type: vocab.ActivityTypeCreate,
 			actor: this.#actor.id(),
 			to: recipients,
@@ -737,7 +737,7 @@ export class CodecMls {
 				to: recipients,
 				content: contentBase64,
 				mediaType: vocab.MediaTypeMLSMessage,
-				"mls:encoding": vocab.EncodingTypeBase64,
+				encoding: vocab.EncodingTypeBase64,
 			},
 		})
 

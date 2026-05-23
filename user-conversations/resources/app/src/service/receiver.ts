@@ -8,7 +8,7 @@ import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfac
 // to the MLS client
 export class Receiver {
 
-	#messagesUrl: string // endpoint for the actor's mls:messages collection
+	#messagesUrl: string // endpoint for the actor's emissary:messages or plain messages collection
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#activityHandler: IActivityHandler // list of registered message handlers
 	#lastMessage: ILastMessageGetterSetter // handler function for getting/setting the last message ID
@@ -64,7 +64,7 @@ export class Receiver {
 		}
 	}
 
-	// poll retrieves new messages from the mls:messages collection and calls the
+	// poll retrieves new messages from the messages collection and calls the
 	// onMessage callback for each new message
 	#poll = async () => {
 
