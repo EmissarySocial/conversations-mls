@@ -18167,9 +18167,7 @@
 
   // src/service/emojikeys.ts
   async function keyPackageEmojiKey(keyPackage) {
-    const keyPackageAsBase64 = encodeKeyPackage(keyPackage);
-    const signature = new TextEncoder().encode(keyPackageAsBase64);
-    return await emojiKey(signature);
+    return await emojiKey(keyPackage.signature);
   }
   async function emojiKey(signature) {
     const checksum = await crypto.subtle.digest("SHA-256", signature.slice(0));

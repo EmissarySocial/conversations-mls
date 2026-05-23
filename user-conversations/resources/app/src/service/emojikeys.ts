@@ -4,9 +4,7 @@ import { encodeKeyPackage } from "../model/ap-keypackage"
 export type EmojiKey = [string, string]
 
 export async function keyPackageEmojiKey(keyPackage: KeyPackage): Promise<EmojiKey[]> {
-	const keyPackageAsBase64 = encodeKeyPackage(keyPackage)
-	const signature = new TextEncoder().encode(keyPackageAsBase64)
-	return await emojiKey(signature)
+	return await emojiKey(keyPackage.signature)
 }
 
 // emojiKey: Uint8Array (raw key bytes) or hex string
