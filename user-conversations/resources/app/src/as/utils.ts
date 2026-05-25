@@ -4,7 +4,6 @@ export function toString(value: any): string {
 	}
 
 	switch (typeof value) {
-		//
 
 		case "bigint":
 			return value.toString()
@@ -47,7 +46,6 @@ export function toString(value: any): string {
 
 	return ""
 }
-
 
 export function isString(value: any): value is string {
 	return typeof value === "string"

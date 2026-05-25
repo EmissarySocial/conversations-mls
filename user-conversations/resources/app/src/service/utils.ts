@@ -1,6 +1,8 @@
 import type { Group } from "../model/group"
 import type { Message } from "../model/message"
 import * as vocab from "../as/vocab"
+import { Document } from "../as/document"
+import type { MlsKeyPackage } from "ts-mls"
 
 // rangeToArray consumes all values from a generator and returns them as an array
 export function rangeToArray<T>(generator: Generator<T>): T[] {

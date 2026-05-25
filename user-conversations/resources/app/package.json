@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
+		"@js-temporal/polyfill": "^0.5.1",
 		"idb": "^8.0.3",
 		"mithril": "^2.3.8",
 		"ts-mls": "^v2.0.0-rc.11",

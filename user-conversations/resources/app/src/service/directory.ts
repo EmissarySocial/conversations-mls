@@ -5,15 +5,17 @@ import { mlsMessageDecoder } from "ts-mls"
 import { wireformats } from "ts-mls"
 
 import * as vocab from "../as/vocab"
+import { Document } from "../as/document"
 
 // Model Objects
 import { NewAPKeyPackage } from "../model/ap-keypackage"
 
 // ActivityPub objects
 import { Actor } from "../as/actor"
-import { base64ToUint8Array } from "./utils"
 import { newId } from "./utils"
-import { validateKeyPackage } from "./cryptography"
+import { decodeKeyPackage } from "./cryptography"
+import { keyPackageIsExpired } from "./cryptography"
+
 export class Directory {
 
 	#actorId: string // ID of the local actor 
@@ -52,40 +54,38 @@ export class Directory {
 
 		for (const actorId of actorIds) {
 
+			// Retrieve all KeyPackage documents for this actor
+			var documents: AsyncGenerator<Document>
+
 			try {
-				const actor = await new Actor().fromURL(actorId)
-				const keyPackageCollection = await actor.mlsKeyPackages()
-				const keyPackages = keyPackageCollection.rangeDocuments()
-
-				for await (const keyPackage of keyPackages) {
-
-					const contentBytes = base64ToUint8Array(keyPackage.content())
-					const mlsMessage = decode(mlsMessageDecoder, contentBytes)
-
-					if (mlsMessage == undefined) {
-						console.warn("getKeyPackages: Failed to decode KeyPackage for item:", keyPackage.toObject())
-						continue
-					}
-
-					// Guarantee that the message is a KeyPackage
-					if (mlsMessage.wireformat !== wireformats.mls_key_package) {
-						console.warn("getKeyPackages: Unexpected wireformat for KeyPackage:", mlsMessage.wireformat)
-						continue
-					}
-
-					// RULE: If the KeyPackage is not valid (expired) then skip it.
-					if (!validateKeyPackage(mlsMessage.keyPackage)) {
-						continue
-					}
-
-					result.push(mlsMessage.keyPackage)
-				}
-
+				documents = this.listAllKeyPackages(actorId)
 			} catch (error) {
 				console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error)
+				continue
+			}
+
+			// Process (and validate) each KeyPackage document before including it in the results
+			for await (const document of documents) {
+
+				try {
+
+					// Decode the ActivityStreams document as a KeyPackage
+					const keyPackage = decodeKeyPackage(document)
+
+					// RULE: Do not include the KeyPackage if it is expired (not valid, not before current time, etc.)
+					if (keyPackageIsExpired(keyPackage)) {
+						continue
+					}
+
+					result.push(keyPackage)
+
+				} catch (error) {
+					console.error("getKeyPackages: Failed to decode KeyPackage document:", document.toObject(), error)
+				}
 			}
 		}
 
+		// Success, or what's left of it.
 		return result
 	}
 
@@ -124,9 +124,26 @@ export class Directory {
 		await this.#updateObject(keyPackage)
 	}
 
+	// deleteKeyPackage removes a single KeyPackage from the server
 	deleteKeyPackage = async (keyPackageId: string) => {
 		return await this.#deleteObject(keyPackageId)
 	}
+
+	// listAllKeyPackages is an async generator that yields all KeyPackage documents for a specific actor.
+	async* listAllKeyPackages(actorId: string): AsyncGenerator<Document> {
+		const actor = await new Actor().fromURL(actorId)
+		const collection = await actor.mlsKeyPackages()
+		const documents = collection.rangeDocuments()
+
+		// Yield each KeyPackage document to the caller
+		for await (const document of documents) {
+			yield document
+		}
+	}
+
+	/******************************************
+	 * ActivityPub Methods
+	 ******************************************/
 
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response

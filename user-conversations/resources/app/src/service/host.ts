@@ -23,6 +23,10 @@ export class Host {
 		window.location.assign("/@me/settings/keyPackages")
 	}
 
+	viewBlockActor(actorId: string) {
+		htmx.ajax("GET", "/@me/settings/rule-edit-actor?action=BLOCK&trigger=" + encodeURIComponent(actorId))
+	}
+
 	//////////////////////////////////////////
 	// State Watcher
 	//////////////////////////////////////////
@@ -33,7 +37,6 @@ export class Host {
 		// to listen for Application state changes
 		if (typeof cookieStore !== "undefined") {
 			cookieStore.addEventListener("change", async () => {
-				console.log("cookies changed (via CookieStore API)")
 				stop("COOKIES-CHANGED")
 			})
 
@@ -46,7 +49,6 @@ export class Host {
 
 		const intervalId = setInterval(() => {
 			if (document.cookie !== originalCookie) {
-				console.log("cookies changed (via polling)")
 				stop("COOKIES-CHANGED")
 			}
 		}, 1000);

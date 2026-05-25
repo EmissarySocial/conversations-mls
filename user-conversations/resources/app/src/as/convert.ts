@@ -11,6 +11,10 @@ export function toArray(value: any): any[] {
 	return [value]
 }
 
+export function toArrayOfString(value: any): string[] {
+	return toArray(value).map(item => toString(item))
+}
+
 export function toBoolean(value: any): boolean {
 
 	switch (typeof value) {

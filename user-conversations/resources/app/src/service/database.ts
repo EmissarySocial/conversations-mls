@@ -164,7 +164,7 @@ export class Database {
 	// saveGroup saves a group to the database
 	saveGroup = async (group: Group) => {
 
-		console.log("Saving group, ", group)
+		// RULE: Group must have an ID
 		if (group.id == undefined || group.id == "") {
 			throw new Error("Group must have an ID")
 		}
@@ -254,12 +254,16 @@ export class Database {
 		return dbKeyPackage
 	}
 
+	deleteKeyPackage = async () => {
+		await this.#db.delete("keyPackage", "self")
+	}
+
 	/////////////////////////////////////////////
 	// Messages
 	/////////////////////////////////////////////
 
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
-	// TODO: This will need to be limited or pagincated for long discussions.
+	// TODO: This will need to be limited or paginated for long discussions.
 	allMessages = async (groupId: string) => {
 
 		// Retrieve the messages from the database

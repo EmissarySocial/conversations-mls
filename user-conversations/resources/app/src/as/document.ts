@@ -55,6 +55,15 @@ export class Document extends Object {
 		return this.getString("as", vocab.PropertyName)
 	}
 
+	published = () => {
+		try {
+			const value = this.getString("as", vocab.PropertyPublished)
+			return Temporal.Instant.from(value)
+		} catch (error) {
+			return Temporal.Instant.from("1970-01-01T00:00:00Z")
+		}
+	}
+
 	// summary returns the value of the "summary" property
 	summary = () => {
 		return this.getString("as", vocab.PropertySummary)

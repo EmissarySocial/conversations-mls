@@ -50,7 +50,7 @@ import { groupIsEncrypted } from "../model/group"
 
 import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array } from "./utils"
-import { validateKeyPackage } from "./cryptography"
+import { keyPackageIsExpired } from "./cryptography"
 
 const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 
@@ -69,7 +69,6 @@ export class CodecMls {
 	#privateKeyPackage: PrivateKeyPackage
 	#generatorId: string
 	#actor: Actor
-
 
 	constructor(
 		controller: IController,
@@ -193,14 +192,12 @@ export class CodecMls {
 		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
 
 		// Inspect Lifetime values and remove expired KeyPackages
-		addKeyPackages = addKeyPackages.filter(validateKeyPackage)
+		addKeyPackages = addKeyPackages.filter(keyPackage => !keyPackageIsExpired(keyPackage))
 
 		// RULE: Must have at least one valid KeyPackage to add
 		if (addKeyPackages.length == 0) {
 			return group
 		}
-
-		console.log("addGroupMembers", addKeyPackages)
 
 		// Create add proposals for each key package
 		const addProposals: Proposal[] = addKeyPackages.map(keyPackage => ({
@@ -329,7 +326,6 @@ export class CodecMls {
 		await this.#commitProposals(group, proposals)
 	}
 
-
 	//////////////////////////////////////////
 	// Key Packages
 	//////////////////////////////////////////
@@ -385,7 +381,6 @@ export class CodecMls {
 				throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
 		}
 	}
-
 
 	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
 	async #receiveActivity_Welcome(message: MlsWelcomeMessage): Promise<null> {
@@ -460,8 +455,6 @@ export class CodecMls {
 
 		var groupId: string
 
-		console.log("################ mls.#receiveActivity_PublicPrivateMessage: Received message", document.toObject())
-
 		switch (mlsMessage.wireformat) {
 
 			case wireformats.mls_private_message:
@@ -476,7 +469,6 @@ export class CodecMls {
 				console.error("Invalid message type for PrivateMessage decoder")
 				return null
 		}
-
 
 		// Load the group from the database so we can get the current client state for decryption
 		const group = await this.#database.loadGroup(groupId)
@@ -501,8 +493,6 @@ export class CodecMls {
 			return null
 		}
 
-		console.log("mls.#receiveActivity_PublicPrivateMessage: group epoch:", group.clientState.groupContext.epoch)
-
 		const _this = this
 
 		// Decode the message using ts-mls
@@ -515,12 +505,9 @@ export class CodecMls {
 			}
 		})
 
-		console.log("mls.#receiveActivity_PublicPrivateMessage: Decoded message:", decodedMessage)
-
 		// If no action is taken, then do not write it to the group.
 		if (decodedMessage.kind == "newState") {
 			if (decodedMessage.actionTaken == "reject") {
-				console.log("mls.#receiveActivity_PublicPrivateMessage: 'Rejected' message based on callback rules. No state changes applied to the group.")
 				return null
 			}
 		}
@@ -543,8 +530,6 @@ export class CodecMls {
 
 		// Save the updated group to the database
 		await this.#database.saveGroup(group)
-		console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group. epoch:", group.clientState.groupContext.epoch)
-		console.log("mls.#receiveActivity_PublicPrivateMessage: Updated group members:", group.members)
 
 		// If this is not an application message, then there are no further actions to take.
 		if (decodedMessage.kind != "applicationMessage") {
@@ -580,17 +565,10 @@ export class CodecMls {
 		// Otherwise, this is a proposal. Special rules for "remove" proposals...
 		if (proposal.proposalType == defaultProposalTypes.remove) {
 
-			console.log("mls.#processMessageCallback: Received remove proposal. Delaying commit based on leaf index to reduce collisions.")
-
 			const myLeafIndex = group.clientState.privatePath.leafIndex
 			const waitMs = myLeafIndex * 1000 // Reduce collisions by waiting 0ms, 1000ms, 2000ms, 3000ms... 
 
-			console.log("myLeafIndex:", myLeafIndex)
-			console.log("waiting ms:", waitMs)
-			console.log("epoch:", group.clientState.groupContext.epoch)
-
 			window.setTimeout(() => {
-				console.log("mls.#processMessageCallback: Finished waiting. Processing remove proposal now....")
 				this.#processMessageCallback_RemoveProposal(group.id, proposal)
 			}, waitMs)
 		}
@@ -617,9 +595,6 @@ export class CodecMls {
 			return
 		}
 
-		console.log("mls.#processMessageCallback_RemoveProposal: Processing 'remove myself' proposal", proposal)
-		console.log("mls.#processMessageCallback_RemoveProposal: group: ", group.clientState)
-
 		const leafIndex = proposal.remove.removed
 
 		// Exit if the sender has already been removed from the group
@@ -627,18 +602,13 @@ export class CodecMls {
 		const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex] as NodeLeaf
 
 		if (deviceToRemove == undefined) {
-			console.log("mls.#processMessageCallback_RemoveProposal: Proposal deviceToRemove has already been removed from the group.")
 			return
 		}
 		const credential = deviceToRemove.leaf.credential as CredentialBasic
 
-		console.log("mls.#processMessageCallback_RemoveProposal: deviceToRemove ", deviceToRemove, decodeText(credential.identity))
-
 		// Otherwise, continue removing the deviceToRemove and notifying the rest of the group.
-		console.log("mls.#processMessageCallback_RemoveProposal: Committing 'remove myself' proposal to other group members.", proposal)
 		await this.#commitProposals(group, [proposal])
 	}
-
 
 	//////////////////////////////////////////
 	// Sending Messages
@@ -647,8 +617,6 @@ export class CodecMls {
 	// sendActivity encodes an Activity as an MLS message and sends it to 
 	// updated as a result of this message.
 	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<void> {
-
-		console.log("mls.sendActivity: ", activity.toObject())
 
 		// Encrypt the message using MLS
 		const messageText = activity.toJSON()
@@ -665,7 +633,6 @@ export class CodecMls {
 		// update the Group with the new group state
 		group.clientState = applicationMessage.newState
 		group.updateDate = Date.now()
-		console.log("mls.sendActivity: Created message. epoch:", group.clientState.groupContext.epoch)
 
 		// save the updated group
 		await this.#database.saveGroup(group)
@@ -673,7 +640,7 @@ export class CodecMls {
 		// send the activity to all group members
 		await this.#sendMlsMessage(
 			vocab.ObjectTypeMlsPrivateMessage,
-			activity.getArray("as", vocab.PropertyTo),
+			activity.getArrayOfString("as", vocab.PropertyTo),
 			applicationMessage.message,
 		)
 	}
@@ -693,9 +660,7 @@ export class CodecMls {
 		commitResult.consumed.forEach(zeroOutUint8Array)
 
 		// Update the group with new state and new list of members
-		console.log("mls.#commitProposals. previous epoch", group.clientState.groupContext.epoch)
 		group.clientState = commitResult.newState
-		console.log("mls.#commitProposals. new epoch", group.clientState.groupContext.epoch)
 
 		// (async) Send commit to all members
 		this.#sendMlsMessage(
@@ -709,7 +674,6 @@ export class CodecMls {
 
 		// Save the group to the database
 		await this.#database.saveGroup(group)
-		console.log("#commitProposals. Group saved:", group)
 	}
 
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
@@ -746,7 +710,6 @@ export class CodecMls {
 		return activity
 	}
 
-
 	//////////////////////////////////////////
 	// Helpers
 	//////////////////////////////////////////
@@ -759,7 +722,6 @@ export class CodecMls {
 		}
 	}
 }
-
 
 //////////////////////////////////////////
 // Helpers

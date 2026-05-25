@@ -17,8 +17,6 @@ export class Groups {
 	view(vnode: GroupsVnode) {
 		const controller = vnode.attrs.controller
 
-		console.log(controller.groups)
-
 		return (
 			<div>
 				<div class="flex-row flex-align-center padding-horizontal">

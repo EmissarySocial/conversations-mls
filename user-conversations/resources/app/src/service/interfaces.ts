@@ -74,6 +74,7 @@ export interface IDatabase {
 	// KeyPackage methods
 	loadKeyPackage(): Promise<DBKeyPackage | undefined>
 	saveKeyPackage(keyPackageId: string, publicPackage: KeyPackage, privatePackage: PrivateKeyPackage): Promise<DBKeyPackage>
+	deleteKeyPackage(): Promise<void>
 
 	// Message methods
 	allMessages(groupId: string): Promise<Message[]>
@@ -116,6 +117,7 @@ export interface IDirectory {
 	setGenerator(generatorId: string, generatorName: string): void
 
 	// KeyPackage methods
+	listAllKeyPackages(actorId: string): AsyncGenerator<Document>
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
 	createKeyPackage(publicPackage: KeyPackage): Promise<[string, string]>
 	updateKeyPackage(keyPackageId: string, publicPackage: KeyPackage): Promise<void>
@@ -123,11 +125,12 @@ export interface IDirectory {
 }
 
 // IHost wraps methods that integrate with the host application, such as viewing an actor's profile
-// or managing keypackages on the serve
+// or managing keypackages on the server
 export interface IHost {
 	reload(): void
 	viewActor(actorId: string): void
 	viewKeyPackages(): void
+	viewBlockActor(actorId: string): void
 }
 
 // IReceiver wraps all of the methods that the Controller uses

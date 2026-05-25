@@ -64,8 +64,6 @@ export class CodecPlaintext {
 		var group: Group
 		const groupId = activity.context()
 
-		console.log("Receive Activity", activity.toObject(), object.toObject())
-
 		// Special case for "Leave" activities.  If we've already left the group, then don't add it to the database
 		if (activity.type() == vocab.ActivityTypeLeave) {
 

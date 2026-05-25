@@ -90,6 +90,8 @@ export const PropertyOutbox = "outbox"
 
 export const PropertyPreferredUsername = "preferredUsername"
 
+export const PropertyPublished = "published"
+
 export const PropertySummary = "summary"
 
 export const PropertyTag = "tag"

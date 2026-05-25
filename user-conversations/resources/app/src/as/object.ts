@@ -123,6 +123,11 @@ export class Object {
 		return convert.toArray(result)
 	}
 
+	getArrayOfString = (namespace: string, property: string) => {
+		const result = this.get(namespace, property)
+		return convert.toArrayOfString(result)
+	}
+
 	getMap = (namespace: string, property: string): { [key: string]: any } => {
 		const result = this.get(namespace, property)
 		return convert.toMap(result)
@@ -133,6 +138,10 @@ export class Object {
 
 	type = () => {
 		return this.getString("as", "type")
+	}
+
+	types = () => {
+		return this.getArrayOfString("as", "type")
 	}
 
 	id = () => {
