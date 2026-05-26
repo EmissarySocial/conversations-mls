@@ -24349,11 +24349,11 @@
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
+      window.sessionStorage.removeItem("key");
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
       this.#directory.stop();
-      window.sessionStorage.removeItem("key");
       this.isApplicationRunning = false;
       this.stopReason = message;
       import_mithril.default.redraw();
