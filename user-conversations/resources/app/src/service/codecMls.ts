@@ -52,8 +52,6 @@ import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array } from "./utils"
 import { keyPackageIsExpired } from "./cryptography"
 
-const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
-
 // MLS service encrypts/decrypts messages using the MLS protocol.
 // This is intended to be a reusable service that could be called
 // by any software component that needs to use MLS-encrypted messages.
