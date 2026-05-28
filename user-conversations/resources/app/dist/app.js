@@ -17979,6 +17979,7 @@
 
   // src/as/object.ts
   var Object2 = class {
+    #proxyUrl = "";
     #value;
     constructor(value) {
       if (value != void 0) {
@@ -17992,8 +17993,34 @@
     }
     ///////////////////////////////////
     // Conversion methods
+    // setProxy sets a proxyUrl for fetching remote objects.
+    setProxy(proxyUrl) {
+      this.#proxyUrl = proxyUrl;
+      return this;
+    }
+    // fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
+    fromProxy = async (proxyUrl, url) => {
+      if (proxyUrl == "") {
+        return this.fromURL(url, {});
+      }
+      this.#proxyUrl = proxyUrl;
+      const response = await fetch(this.#proxyUrl, {
+        method: "POST",
+        body: JSON.stringify({ id: url })
+      });
+      if (!response.ok) {
+        throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`);
+      }
+      const body = await response.text();
+      this.fromJSON(body);
+      return this;
+    };
     // fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
     fromURL = async (url, options = {}) => {
+      if (this.#proxyUrl != "") {
+        return this.fromProxy(this.#proxyUrl, url);
+      }
+      console.warn("Fetching remote URL directly from the server: " + url);
       options["headers"] = {
         Accept: "application/activity+json"
       };
@@ -18821,12 +18848,13 @@
       attributedTo: actorID,
       mediaType: "message/mls",
       encoding: "base64",
+      content: keyPackageAsBase64,
       generator: {
         id: generatorId,
         type: "Application",
         name: generatorName
       },
-      content: keyPackageAsBase64
+      ciphersuite: "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
     };
   }
   function encodeKeyPackage(keyPackage) {
@@ -22917,7 +22945,7 @@
     );
   }
   async function cipherSuiteImplementation() {
-    const cipherSuiteName = "MLS_256_DHKEMP521_AES256GCM_SHA512_P521";
+    const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
     const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
     return cipherSuite;
   }
@@ -24178,6 +24206,26 @@
     }
   };
 
+  // src/service/proxy.ts
+  var Proxy2 = class {
+    #proxyUrl;
+    constructor(proxyUrl = "/.proxy") {
+      this.#proxyUrl = proxyUrl;
+    }
+    Activity(url) {
+      return new Activity().fromProxy(this.#proxyUrl, url);
+    }
+    Actor(url) {
+      return new Actor().fromProxy(this.#proxyUrl, url);
+    }
+    Document(url) {
+      return new Document().fromProxy(this.#proxyUrl, url);
+    }
+    Collection(url) {
+      return new Collection().fromProxy(this.#proxyUrl, url);
+    }
+  };
+
   // src/service/controller.ts
   var Controller = class {
     #actorId;
@@ -24188,6 +24236,7 @@
     #receiver;
     #contacts;
     #host;
+    #proxy;
     #codecMls;
     #codecPlaintext;
     #allowPlaintextMessages;
@@ -24220,6 +24269,7 @@
       this.#allowPlaintextMessages = false;
       this.#allowEncryptedMessages = false;
       this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId);
+      this.#proxy = new Proxy2();
       this.groups = [];
       this.messages = [];
       this.message = void 0;
