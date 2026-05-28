@@ -57,17 +57,18 @@ import { newId } from "./utils"
 
 export class Controller {
 
-	#actorId: string
+	readonly #actorId: string
+	readonly #database: IDatabase
+	readonly #delivery: IDelivery
+	readonly #directory: IDirectory
+	readonly #receiver: IReceiver
+	readonly #contacts: IContacts
+	readonly #host: IHost
+	readonly #codecPlaintext: CodecPlaintext
+
 	#actor: Actor
-	#database: IDatabase
-	#delivery: IDelivery
-	#directory: IDirectory
-	#receiver: IReceiver
-	#contacts: IContacts
-	#host: IHost
 	#proxy: IProxy
 	#codecMls?: CodecMls
-	#codecPlaintext: CodecPlaintext
 	#allowPlaintextMessages: boolean
 	#allowEncryptedMessages: boolean
 	#encryptionKey?: CryptoKey
@@ -139,7 +140,7 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	#start = async () => {
+	readonly #start = async () => {
 
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
@@ -155,7 +156,7 @@ export class Controller {
 		// Try to load the encryption key from sessionStorage (in case of page reload)
 		if (this.#encryptionKey == undefined) {
 
-			const sessionKey = window.sessionStorage.getItem("key")
+			const sessionKey = globalThis.sessionStorage.getItem("key")
 			if (sessionKey) {
 				this.#encryptionKey = await decodeKeyFromBase64(sessionKey)
 			}
@@ -303,7 +304,7 @@ export class Controller {
 			this.#encryptionKey = await unwrapKey(this.config.encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer as ArrayBuffer)
 
 			// Save the key in the session
-			window.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey))
+			globalThis.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey))
 
 			// If you've made it this far, then the passcode is valid and you can proceed with the app
 			await this.#start()
@@ -324,7 +325,7 @@ export class Controller {
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
 
-		window.sessionStorage.removeItem("key")
+		globalThis.sessionStorage.removeItem("key")
 
 		this.#database.stop()
 		this.#delivery.stop()
@@ -346,13 +347,13 @@ export class Controller {
 		}
 
 		// Erase the session key from sessionStorage
-		window.sessionStorage.removeItem("key")
+		globalThis.sessionStorage.removeItem("key")
 
 		// Erase all local data
 		this.#database.erase()
 
 		// Reload the application
-		window.document.location.reload()
+		globalThis.document.location.reload()
 	}
 
 
@@ -547,12 +548,12 @@ export class Controller {
 	useEncryptedMessages = (): boolean => {
 
 		// this is set when the USER chooses to send encrypted messages
-		if (this.config.isEncryptedMessages == false) {
+		if (!this.config.isEncryptedMessages) {
 			return false
 		}
 
 		// this is set when the SERVER supports encrypted messages.
-		if (this.#allowEncryptedMessages == false) {
+		if (!this.#allowEncryptedMessages) {
 			return false
 		}
 
@@ -565,7 +566,7 @@ export class Controller {
 
 
 	// #validateKeyPackages checks all KeyPackages owned by the current actor and removes any that have expired.
-	#validateKeyPackages = async (): Promise<void> => {
+	readonly #validateKeyPackages = async (): Promise<void> => {
 
 		// RULE: Only validate KeyPackages if the server supports encrypted messages.
 		if (!this.useEncryptedMessages()) {
@@ -573,7 +574,7 @@ export class Controller {
 		}
 
 		const documents = this.#directory.listAllKeyPackages(this.#actorId)
-		var shouldCreateKeyPackage = true
+		let shouldCreateKeyPackage = true
 
 		for await (const document of documents) {
 			try {
@@ -619,8 +620,8 @@ export class Controller {
 	// existing KeyPackage, then the new one is created
 	createOrUpdateKeyPackage = async (): Promise<DBKeyPackage> => {
 
-		var activityId: string
-		var keyPackageId: string
+		let activityId: string
+		let keyPackageId: string
 
 		// RULE: Require server support for encrypted messages
 		if (!this.#allowEncryptedMessages) {
@@ -695,15 +696,15 @@ export class Controller {
 		recipients.push(this.actorId())
 
 		// Create a new Group record
-		var group: Group
+		let group: Group
 
 		// If encrypted messages are disallowed, then only create plaintext groups
-		if (this.useEncryptedMessages() == false) {
+		if (!this.useEncryptedMessages()) {
 			encrypted = false
 		}
 
 		// Extra handling for encrypted groups
-		if (encrypted == true) {
+		if (encrypted) {
 
 			// RULE: Require server support for encrypted messages
 			if (!this.#allowEncryptedMessages) {
@@ -776,7 +777,7 @@ export class Controller {
 	syncGroup = async (group: Group) => {
 
 		// Send a "Group:Update" activity to my other devices
-		var activity = new Activity({
+		const activity = new Activity({
 			"to": [this.actorId()],
 			"actor": this.actorId(),
 			"type": vocab.ActivityTypeUpdate,
@@ -846,7 +847,7 @@ export class Controller {
 		}
 
 		// Find the group with the specified ID
-		var group = this.groups.find((group) => group.id == groupId)
+		let group = this.groups.find((group) => group.id == groupId)
 
 		// If the group can't be found, then just use the first group in the list
 		if (group == undefined) {
@@ -897,7 +898,7 @@ export class Controller {
 	addGroupMembers = async (actorIds: string[]) => {
 
 		// Read the current value of the "selected group"
-		var group = this.groupStream()
+		const group = this.groupStream()
 
 		// RULE: Remove actors who are already in the group
 		actorIds = actorIds.filter(actorId => !group.members.includes(actorId))
@@ -907,21 +908,9 @@ export class Controller {
 			return group
 		}
 
+		// Specific logic for encrypted/unencrypted groups
 		const codec = this.#getCodecForGroup(group)
-
-		// Simple path if this is an unencrypted group group
-		if (groupIsEncrypted(group)) {
-			if (this.#codecMls == undefined) {
-				throw new Error("MLS service is not initialized")
-			}
-
-			// Use MLS to add the members to the group
-			group = await this.#codecMls.addGroupMembers(group, actorIds)
-
-		} else {
-			// Otherwise, just add the actors to the list of group members
-			group.members.push(...actorIds)
-		}
+		codec.addGroupMembers(group, actorIds)
 
 		// Re-calculate the default name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -938,24 +927,11 @@ export class Controller {
 
 	removeGroupMember = async (actorId: string) => {
 
-		var group = this.groupStream()
+		const group = this.groupStream()
 
-		// Special logic for encrypted groups
-		if (groupIsEncrypted(group)) {
-
-			// Guarantee dependency
-			if (this.#codecMls == undefined) {
-				throw new Error("MLS service is not initialized")
-			}
-
-			// Remove the member using MLS
-			await this.#codecMls.removeGroupMember(group, actorId)
-
-		} else {
-
-			// Remove the member from the regular group list
-			group.members = group.members.filter((member) => member != actorId)
-		}
+		// Specific logic for encrypted/unencrypted groups
+		const codec = this.#getCodecForGroup(group)
+		codec.removeGroupMember(group, actorId)
 
 		// Recalculate the default group name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -986,7 +962,7 @@ export class Controller {
 	startReply = (message: Message) => {
 		this.inReplyTo = message
 		m.redraw()
-		window.requestAnimationFrame(() => {
+		globalThis.requestAnimationFrame(() => {
 			document.getElementById("message-input")?.focus()
 		})
 	}
@@ -1000,14 +976,14 @@ export class Controller {
 	sendMessage = async (content: string) => {
 
 		// Get the currently selected group
-		var group = this.groupStream()
+		const group = this.groupStream()
 
 		if (group.id == "") {
 			throw new Error("No group selected")
 		}
 
 		// Create a new Message record and save to the database
-		var message = NewMessage()
+		const message = NewMessage()
 		message.groupId = group.id
 		message.sender = this.#actor.id()
 		message.content = content
@@ -1027,7 +1003,7 @@ export class Controller {
 		await this.saveGroup(group)
 
 		// Create an ActivityPub activity 
-		var activity = new Activity({
+		const activity = new Activity({
 			context: group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
@@ -1043,14 +1019,14 @@ export class Controller {
 	sendFile = async (file: string) => {
 
 		// Get the currently selected group
-		var group = this.groupStream()
+		const group = this.groupStream()
 
 		if (group.id == "") {
 			throw new Error("No group selected")
 		}
 
 		// Create a new Message record and save to the database
-		var message = NewMessage()
+		const message = NewMessage()
 		message.groupId = group.id
 		message.sender = this.#actor.id()
 		message.attachments = [file]
@@ -1069,7 +1045,7 @@ export class Controller {
 		await this.saveGroup(group)
 
 		// Create an ActivityPub activity 
-		var activity = new Activity({
+		const activity = new Activity({
 			context: group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
@@ -1083,7 +1059,7 @@ export class Controller {
 
 	updateMessage = async (message: Message) => {
 
-		var group = this.groupStream()
+		const group = this.groupStream()
 
 		// RULE: Only the original sender can update a message
 		if (message.sender != this.actorId()) {
@@ -1133,7 +1109,7 @@ export class Controller {
 		}
 
 		// Get the currently selected group
-		var group = this.groupStream()
+		const group = this.groupStream()
 
 		// RULE: Can only delete messages in the current group.
 		if (message.groupId != group.id) {
@@ -1182,7 +1158,7 @@ export class Controller {
 		this.loadMessages()
 
 		// Send a "like" activity to the actor's outbox
-		var activity = new Activity({
+		const activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
 			context: group.id,
 			id: newId(),
@@ -1227,7 +1203,7 @@ export class Controller {
 		this.loadMessages()
 
 		// (async ok) Send an "undo" activity to the actor's outbox
-		var activity = new Activity({
+		const activity = new Activity({
 			"@context": vocab.ContextActivityStreams,
 			id: newId(),
 			actor: this.actorId(),
@@ -1261,11 +1237,9 @@ export class Controller {
 
 	receiveActivity = async (activity: Activity, retryCount: number = 0) => {
 
-		var object: Document
-
 		// Retrieve the object from the activity. This should be embedded,
 		// but we can load from the network if needed.
-		var object = await activity.object()
+		const object = await activity.object()
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(object)
@@ -1288,16 +1262,16 @@ export class Controller {
 		} catch (error) {
 
 			if (retryCount < 120) { // retry every half-second for up to 1 minute
+				console.log("Retrying error processing activity with codec:", error)
 				setTimeout(() => {
 					this.receiveActivity(activity, retryCount + 1)
 				}, 500)
 				return
 			}
 
+			console.error("Failed to process activity after multiple attempts:", error)
 			return
 		}
-
-
 
 		// Part 2: Route the activity based on its type, and apply changes to the 
 		// local database and UX as needed.
@@ -1310,12 +1284,11 @@ export class Controller {
 
 				case vocab.ActivityTypeCreate:
 
-					switch (object.type()) {
-						case vocab.ObjectTypeMlsKeyPackage:
-							return
-						default:
-							return await this.#receiveActivity_CreateMessage(codec, activity)
+					if (object.type() == vocab.ObjectTypeMlsKeyPackage) {
+						return
 					}
+
+					return await this.#receiveActivity_CreateMessage(codec, activity)
 
 				case vocab.ActivityTypeDelete:
 					return await this.#receiveActivity_DeleteMessage(activity)
@@ -1334,15 +1307,12 @@ export class Controller {
 
 				case vocab.ActivityTypeUpdate:
 
-					switch (object.type()) {
-
-						// Group updates are handled differently than message updates, so we need to check the object type to route properly.
-						case vocab.ObjectTypeEmissaryContext:
-							return await this.#receiveActivity_UpdateContext(activity)
-
-						default:
-							return await this.#receiveActivity_UpdateMessage(activity)
+					// Group updates are handled differently than message updates, so we need to check the object type to route properly.
+					if (object.type() == vocab.ObjectTypeEmissaryContext) {
+						return await this.#receiveActivity_UpdateContext(activity)
 					}
+
+					return await this.#receiveActivity_UpdateMessage(activity)
 
 				default:
 					return
@@ -1361,7 +1331,7 @@ export class Controller {
 		}
 	}
 
-	#receiveActivity_Acknowledge = async (activity: Activity) => {
+	readonly #receiveActivity_Acknowledge = async (activity: Activity) => {
 
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
@@ -1379,7 +1349,7 @@ export class Controller {
 		}
 	}
 
-	#receiveActivity_CreateMessage = async (codec: ICodec, activity: Activity) => {
+	readonly #receiveActivity_CreateMessage = async (codec: ICodec, activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1430,12 +1400,8 @@ export class Controller {
 
 				// Send desktop notifications (if requested)
 				if (this.config.isDesktopNotifications) {
-					if (Notification.permission === "granted") {
-						if (this.isWindowFocused == false) {
-							new Notification(message.sender, {
-								body: message.content,
-							})
-						}
+					if (!this.isWindowFocused) {
+						this.#host.notify(message.sender, message.content)
 					}
 				}
 			}
@@ -1455,10 +1421,10 @@ export class Controller {
 
 	}
 
-	#receiveActivity_Failure = async (activity: Activity) => {
+	readonly #receiveActivity_Failure = async (activity: Activity) => {
 	}
 
-	#receiveActivity_DeleteMessage = async (activity: Activity) => {
+	readonly #receiveActivity_DeleteMessage = async (activity: Activity) => {
 
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
@@ -1480,7 +1446,7 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	#receiveActivity_Leave = async (activity: Activity) => {
+	readonly #receiveActivity_Leave = async (activity: Activity) => {
 
 		// RULE: Only listen to "Leave" activities from myself.
 		if (activity.actorId() != this.actorId()) {
@@ -1494,7 +1460,7 @@ export class Controller {
 		this.loadGroups()
 	}
 
-	#receiveActivity_Like = async (activity: Activity) => {
+	readonly #receiveActivity_Like = async (activity: Activity) => {
 
 		const message = await this.#database.loadMessage(activity.objectId())
 
@@ -1517,7 +1483,7 @@ export class Controller {
 		}
 	}
 
-	#receiveActivity_Undo = async (activity: Activity) => {
+	readonly #receiveActivity_Undo = async (activity: Activity) => {
 
 		const originalLike = await activity.objectAsActivity()
 
@@ -1532,7 +1498,7 @@ export class Controller {
 		}
 
 		// The object of an "Undo" activity is the activity being undone. In this case, it should be a "Like" activity.
-		var message = await this.#database.loadMessage(originalLike.objectId())
+		const message = await this.#database.loadMessage(originalLike.objectId())
 		if (message == undefined) {
 			return
 		}
@@ -1547,11 +1513,11 @@ export class Controller {
 		}
 	}
 
-	#receiveActivity_UpdateContext = async (activity: Activity) => {
+	readonly #receiveActivity_UpdateContext = async (activity: Activity) => {
 
 		const object = await activity.object()
 
-		var group = await this.#database.loadGroup(object.id())
+		const group = await this.#database.loadGroup(object.id())
 
 		if (group == undefined) {
 			return
@@ -1566,7 +1532,7 @@ export class Controller {
 		await this.saveGroup(group)
 	}
 
-	#receiveActivity_UpdateMessage = async (activity: Activity) => {
+	readonly #receiveActivity_UpdateMessage = async (activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1577,7 +1543,7 @@ export class Controller {
 		}
 
 		// Load the message from the database
-		var message = await this.#database.loadMessage(object.id())
+		const message = await this.#database.loadMessage(object.id())
 
 		// RULE: Don't make new messages.  If not found, then ignore.
 		if (message == undefined) {
@@ -1609,7 +1575,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// sendActivity sends an activity to the Actor's outbox
-	#sendActivity = async (group: Group, activity: Activity) => {
+	readonly #sendActivity = async (group: Group, activity: Activity) => {
 
 		// Apply the "instrument" property to the activity to identify that it came from this client.
 		activity.set(vocab.PropertyInstrument, this.config.generatorId)
@@ -1626,7 +1592,7 @@ export class Controller {
 	// Other Helpers
 	//////////////////////////////////////////
 
-	#getCodecForGroup(group: Group): ICodec {
+	readonly #getCodecForGroup = (group: Group): ICodec => {
 
 		if (groupIsEncrypted(group)) {
 
@@ -1640,7 +1606,7 @@ export class Controller {
 		return this.#codecPlaintext
 	}
 
-	#getCodecForActivity(object: Document): ICodec {
+	readonly #getCodecForActivity = (object: Document): ICodec => {
 
 		if (object.isMLSMessage()) {
 			if (this.#codecMls == undefined) {
@@ -1654,7 +1620,7 @@ export class Controller {
 
 	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
 	// internal state and member list.
-	#calcGroupDefaultName = async (group: Group): Promise<string> => {
+	readonly #calcGroupDefaultName = async (group: Group): Promise<string> => {
 
 		const contactPromises = group.members.map(actorId => this.#contacts.loadContact(actorId))
 		const contacts = await Promise.all(contactPromises)

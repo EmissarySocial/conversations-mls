@@ -11,10 +11,10 @@ export class Object {
 
 	constructor(value?: map) {
 
-		if (value != undefined) {
-			this.#value = value
-		} else {
+		if (value == undefined) {
 			this.#value = {}
+		} else {
+			this.#value = value
 		}
 
 		// Default @context to ActivityStreams if not provided
@@ -115,7 +115,7 @@ export class Object {
 	// Property conversion methods
 
 	get(namespace: string, property: string): any {
-		var result = this.#value[property]
+		let result = this.#value[property]
 		if (result != undefined) {
 			return result
 		}

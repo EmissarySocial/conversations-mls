@@ -17982,10 +17982,10 @@
     #proxyUrl = "";
     #value;
     constructor(value) {
-      if (value != void 0) {
-        this.#value = value;
-      } else {
+      if (value == void 0) {
         this.#value = {};
+      } else {
+        this.#value = value;
       }
       if (this.#value["@context"] == void 0) {
         this.#value["@context"] = ContextActivityStreams;
@@ -18054,7 +18054,7 @@
     ///////////////////////////////////
     // Property conversion methods
     get(namespace, property) {
-      var result = this.#value[property];
+      let result = this.#value[property];
       if (result != void 0) {
         return result;
       }
@@ -18377,7 +18377,7 @@
     // The boolean return value indicates whether the returned URL is for the
     // Emissary-specific collection (true) or the standard messages collection (false).
     messages = () => {
-      var result = { url: "", plaintext: false, ciphertext: false };
+      let result = { url: "", plaintext: false, ciphertext: false };
       const mlsMessages = this.mlsMessages();
       if (mlsMessages != "") {
         result.url = mlsMessages;
@@ -18393,8 +18393,8 @@
     ///////////////////////////////////
     // Computed Properties
     computedUsername = () => {
-      var username = this.preferredUsername();
-      if (username.charAt(0) == "@") {
+      let username = this.preferredUsername();
+      if (username.startsWith("@")) {
         username = username.substring(1);
       }
       username = username.split("@")[0];
@@ -24134,7 +24134,7 @@
       return NewGroup("PLAINTEXT");
     }
     async getGroup(groupId) {
-      var group = await this.#database.loadGroup(groupId);
+      let group = await this.#database.loadGroup(groupId);
       if (group != void 0) {
         if (group.codec !== "PLAINTEXT") {
           throw new Error("Group with id " + groupId + " is not a PLAINTEXT group");
@@ -24155,12 +24155,13 @@
       return group;
     }
     async leaveGroup(group) {
+      return void 0;
     }
     async removeGroupMember(group, actorId) {
       group.members = group.members.filter((member) => member !== actorId);
     }
     async receiveActivity(activity, object) {
-      var group;
+      let group;
       const groupId = activity.context();
       if (activity.type() == ActivityTypeLeave) {
         const dbGroup = await this.#database.loadGroup(groupId);
@@ -24194,7 +24195,7 @@
       if (!allowedActivities.includes(activity.type())) {
         return;
       }
-      var object = activity.objectAsMap();
+      let object = activity.objectAsMap();
       if (object[PropertyType] != ObjectTypeNote) {
         return;
       }
@@ -24229,16 +24230,16 @@
   // src/service/controller.ts
   var Controller = class {
     #actorId;
-    #actor;
     #database;
     #delivery;
     #directory;
     #receiver;
     #contacts;
     #host;
+    #codecPlaintext;
+    #actor;
     #proxy;
     #codecMls;
-    #codecPlaintext;
     #allowPlaintextMessages;
     #allowEncryptedMessages;
     #encryptionKey;
@@ -24293,7 +24294,7 @@
         return;
       }
       if (this.#encryptionKey == void 0) {
-        const sessionKey = window.sessionStorage.getItem("key");
+        const sessionKey = globalThis.sessionStorage.getItem("key");
         if (sessionKey) {
           this.#encryptionKey = await decodeKeyFromBase64(sessionKey);
         }
@@ -24385,7 +24386,7 @@
       try {
         const wrappingKey = await deriveKeyFromPassword(passcode, this.config.encryptionKeySalt.buffer);
         this.#encryptionKey = await unwrapKey(this.config.encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer);
-        window.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey));
+        globalThis.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey));
         await this.#start();
         return true;
       } catch (error) {
@@ -24399,7 +24400,7 @@
     // stop halts all services and listeners and clears local memory. It is like
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
-      window.sessionStorage.removeItem("key");
+      globalThis.sessionStorage.removeItem("key");
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -24414,9 +24415,9 @@
       if (keyPackage != void 0) {
         await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL);
       }
-      window.sessionStorage.removeItem("key");
+      globalThis.sessionStorage.removeItem("key");
       this.#database.erase();
-      window.document.location.reload();
+      globalThis.document.location.reload();
     };
     //////////////////////////////////////////
     // Window Focus/Blur
@@ -24554,10 +24555,10 @@
       return this.config.lastMessageId;
     };
     useEncryptedMessages = () => {
-      if (this.config.isEncryptedMessages == false) {
+      if (!this.config.isEncryptedMessages) {
         return false;
       }
-      if (this.#allowEncryptedMessages == false) {
+      if (!this.#allowEncryptedMessages) {
         return false;
       }
       return true;
@@ -24571,7 +24572,7 @@
         return;
       }
       const documents = this.#directory.listAllKeyPackages(this.#actorId);
-      var shouldCreateKeyPackage = true;
+      let shouldCreateKeyPackage = true;
       for await (const document2 of documents) {
         try {
           const keyPackage = decodeKeyPackage(document2);
@@ -24600,8 +24601,8 @@
     // to the server to replaces the current one. If there is no 
     // existing KeyPackage, then the new one is created
     createOrUpdateKeyPackage = async () => {
-      var activityId;
-      var keyPackageId;
+      let activityId;
+      let keyPackageId;
       if (!this.#allowEncryptedMessages) {
         throw new Error("Server does not support sending of encrypted messages");
       }
@@ -24642,11 +24643,11 @@
     // createGroup creates a new group and initial message
     createGroup = async (recipients, initialMessage, encrypted) => {
       recipients.push(this.actorId());
-      var group;
-      if (this.useEncryptedMessages() == false) {
+      let group;
+      if (!this.useEncryptedMessages()) {
         encrypted = false;
       }
-      if (encrypted == true) {
+      if (encrypted) {
         if (!this.#allowEncryptedMessages) {
           throw new Error("Server does not support sending of encrypted messages");
         }
@@ -24681,7 +24682,7 @@
       await this.loadGroups();
     };
     syncGroup = async (group) => {
-      var activity = new Activity({
+      const activity = new Activity({
         "to": [this.actorId()],
         "actor": this.actorId(),
         "type": ActivityTypeUpdate,
@@ -24730,7 +24731,7 @@
         this.messages = [];
         return;
       }
-      var group = this.groups.find((group2) => group2.id == groupId);
+      let group = this.groups.find((group2) => group2.id == groupId);
       if (group == void 0) {
         group = this.groups[0];
       }
@@ -24764,35 +24765,22 @@
     //////////////////////////////////////////
     // addGroupMember adds a new actorId to the currently selected group
     addGroupMembers = async (actorIds) => {
-      var group = this.groupStream();
+      const group = this.groupStream();
       actorIds = actorIds.filter((actorId) => !group.members.includes(actorId));
       if (actorIds.length == 0) {
         return group;
       }
       const codec = this.#getCodecForGroup(group);
-      if (groupIsEncrypted(group)) {
-        if (this.#codecMls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        group = await this.#codecMls.addGroupMembers(group, actorIds);
-      } else {
-        group.members.push(...actorIds);
-      }
+      codec.addGroupMembers(group, actorIds);
       group.defaultName = await this.#calcGroupDefaultName(group);
       await this.saveGroup(group);
       this.groupStream(group);
       return group;
     };
     removeGroupMember = async (actorId) => {
-      var group = this.groupStream();
-      if (groupIsEncrypted(group)) {
-        if (this.#codecMls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        await this.#codecMls.removeGroupMember(group, actorId);
-      } else {
-        group.members = group.members.filter((member) => member != actorId);
-      }
+      const group = this.groupStream();
+      const codec = this.#getCodecForGroup(group);
+      codec.removeGroupMember(group, actorId);
       group.defaultName = await this.#calcGroupDefaultName(group);
       await this.#database.saveGroup(group);
       this.groupStream(group);
@@ -24812,7 +24800,7 @@
     startReply = (message) => {
       this.inReplyTo = message;
       import_mithril.default.redraw();
-      window.requestAnimationFrame(() => {
+      globalThis.requestAnimationFrame(() => {
         document.getElementById("message-input")?.focus();
       });
     };
@@ -24822,11 +24810,11 @@
     };
     // sendMessage sends a message to the specified group
     sendMessage = async (content) => {
-      var group = this.groupStream();
+      const group = this.groupStream();
       if (group.id == "") {
         throw new Error("No group selected");
       }
-      var message = NewMessage();
+      const message = NewMessage();
       message.groupId = group.id;
       message.sender = this.#actor.id();
       message.content = content;
@@ -24839,7 +24827,7 @@
       await this.loadMessages();
       group.lastMessage = content;
       await this.saveGroup(group);
-      var activity = new Activity({
+      const activity = new Activity({
         context: group.id,
         actor: this.actorId(),
         type: ActivityTypeCreate,
@@ -24850,11 +24838,11 @@
     };
     // sendFile sends a base64-encoded file to the specified group
     sendFile = async (file) => {
-      var group = this.groupStream();
+      const group = this.groupStream();
       if (group.id == "") {
         throw new Error("No group selected");
       }
-      var message = NewMessage();
+      const message = NewMessage();
       message.groupId = group.id;
       message.sender = this.#actor.id();
       message.attachments = [file];
@@ -24866,7 +24854,7 @@
       await this.#database.saveMessage(message);
       await this.loadMessages();
       await this.saveGroup(group);
-      var activity = new Activity({
+      const activity = new Activity({
         context: group.id,
         actor: this.actorId(),
         type: ActivityTypeCreate,
@@ -24876,7 +24864,7 @@
       this.#sendActivity(group, activity);
     };
     updateMessage = async (message) => {
-      var group = this.groupStream();
+      const group = this.groupStream();
       if (message.sender != this.actorId()) {
         return;
       }
@@ -24906,7 +24894,7 @@
       if (message.sender != this.actorId()) {
         return;
       }
-      var group = this.groupStream();
+      const group = this.groupStream();
       if (message.groupId != group.id) {
         return;
       }
@@ -24937,7 +24925,7 @@
       message.setReaction(this.actorId(), content);
       await this.#database.saveMessage(message);
       this.loadMessages();
-      var activity = new Activity({
+      const activity = new Activity({
         "@context": ContextActivityStreams,
         context: group.id,
         id: newId2(),
@@ -24965,7 +24953,7 @@
       }
       await this.#database.saveMessage(message);
       this.loadMessages();
-      var activity = new Activity({
+      const activity = new Activity({
         "@context": ContextActivityStreams,
         id: newId2(),
         actor: this.actorId(),
@@ -24990,8 +24978,7 @@
     // Receiving Activities
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
-      var object;
-      var object = await activity.object();
+      const object = await activity.object();
       const codec = this.#getCodecForActivity(object);
       try {
         const decodedValue = await codec.receiveActivity(activity, object);
@@ -25001,11 +24988,13 @@
         activity = decodedValue;
       } catch (error) {
         if (retryCount < 120) {
+          console.log("Retrying error processing activity with codec:", error);
           setTimeout(() => {
             this.receiveActivity(activity, retryCount + 1);
           }, 500);
           return;
         }
+        console.error("Failed to process activity after multiple attempts:", error);
         return;
       }
       try {
@@ -25013,12 +25002,10 @@
           case ActivityTypeAcknowledge:
             return await this.#receiveActivity_Acknowledge(activity);
           case ActivityTypeCreate:
-            switch (object.type()) {
-              case ObjectTypeMlsKeyPackage:
-                return;
-              default:
-                return await this.#receiveActivity_CreateMessage(codec, activity);
+            if (object.type() == ObjectTypeMlsKeyPackage) {
+              return;
             }
+            return await this.#receiveActivity_CreateMessage(codec, activity);
           case ActivityTypeDelete:
             return await this.#receiveActivity_DeleteMessage(activity);
           case ActivityTypeFailure:
@@ -25030,13 +25017,10 @@
           case ActivityTypeUndo:
             return await this.#receiveActivity_Undo(activity);
           case ActivityTypeUpdate:
-            switch (object.type()) {
-              // Group updates are handled differently than message updates, so we need to check the object type to route properly.
-              case ObjectTypeEmissaryContext:
-                return await this.#receiveActivity_UpdateContext(activity);
-              default:
-                return await this.#receiveActivity_UpdateMessage(activity);
+            if (object.type() == ObjectTypeEmissaryContext) {
+              return await this.#receiveActivity_UpdateContext(activity);
             }
+            return await this.#receiveActivity_UpdateMessage(activity);
           default:
             return;
         }
@@ -25085,12 +25069,8 @@
         if (groupId != this.selectedGroupId()) {
           group.unread = true;
           if (this.config.isDesktopNotifications) {
-            if (Notification.permission === "granted") {
-              if (this.isWindowFocused == false) {
-                new Notification(message.sender, {
-                  body: message.content
-                });
-              }
+            if (!this.isWindowFocused) {
+              this.#host.notify(message.sender, message.content);
             }
           }
         }
@@ -25145,7 +25125,7 @@
       if (originalLike.type() != ActivityTypeLike) {
         return;
       }
-      var message = await this.#database.loadMessage(originalLike.objectId());
+      const message = await this.#database.loadMessage(originalLike.objectId());
       if (message == void 0) {
         return;
       }
@@ -25157,7 +25137,7 @@
     };
     #receiveActivity_UpdateContext = async (activity) => {
       const object = await activity.object();
-      var group = await this.#database.loadGroup(object.id());
+      const group = await this.#database.loadGroup(object.id());
       if (group == void 0) {
         return;
       }
@@ -25173,7 +25153,7 @@
       if (object.attributedToId() != activity.actorId()) {
         throw new Error("Decrypted activity actor must match object's attributedTo");
       }
-      var message = await this.#database.loadMessage(object.id());
+      const message = await this.#database.loadMessage(object.id());
       if (message == void 0) {
         return;
       }
@@ -25200,7 +25180,7 @@
     //////////////////////////////////////////
     // Other Helpers
     //////////////////////////////////////////
-    #getCodecForGroup(group) {
+    #getCodecForGroup = (group) => {
       if (groupIsEncrypted(group)) {
         if (this.#codecMls == void 0) {
           throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.");
@@ -25208,8 +25188,8 @@
         return this.#codecMls;
       }
       return this.#codecPlaintext;
-    }
-    #getCodecForActivity(object) {
+    };
+    #getCodecForActivity = (object) => {
       if (object.isMLSMessage()) {
         if (this.#codecMls == void 0) {
           throw new Error("No codec available for this message. Either MLS has not initialized properly, or your permissions have changed on the server.");
@@ -25217,7 +25197,7 @@
         return this.#codecMls;
       }
       return this.#codecPlaintext;
-    }
+    };
     // calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
     // internal state and member list.
     #calcGroupDefaultName = async (group) => {
@@ -26659,16 +26639,23 @@
   // src/service/host.ts
   var Host = class {
     reload() {
-      window.location.reload();
+      globalThis.location.reload();
     }
     viewActor(actorId) {
       htmx.ajax("GET", "/@me/newsfeed/browse-actor?url=" + encodeURIComponent(actorId));
     }
     viewKeyPackages() {
-      window.location.assign("/@me/settings/keyPackages");
+      globalThis.location.assign("/@me/settings/keyPackages");
     }
     viewBlockActor(actorId) {
       htmx.ajax("GET", "/@me/settings/rule-edit-actor?action=BLOCK&trigger=" + encodeURIComponent(actorId));
+    }
+    notify(title, message) {
+      if (Notification.permission === "granted") {
+        new Notification(title, {
+          body: message
+        });
+      }
     }
     //////////////////////////////////////////
     // State Watcher

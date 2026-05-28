@@ -79,7 +79,7 @@ export class Actor extends Object {
 	messages = () => {
 
 		// Default to "no support". If nothing else is found, then this server doesn't support this messages API.
-		var result = { url: "", plaintext: false, ciphertext: false }
+		let result = { url: "", plaintext: false, ciphertext: false }
 
 		// First, check to see if an MLS-only endpoint is available. If so, 
 		// then this account can send/receive encrypted messages
@@ -108,8 +108,8 @@ export class Actor extends Object {
 	computedUsername = () => {
 
 		// Get JUST the username (and not potential "@" or domain)
-		var username = this.preferredUsername()
-		if (username.charAt(0) == "@") {
+		let username = this.preferredUsername()
+		if (username.startsWith("@")) {
 			username = username.substring(1)
 		}
 		username = username.split("@")[0]!

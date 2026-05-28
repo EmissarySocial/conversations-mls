@@ -1,7 +1,4 @@
 // Quick and dirty wrapper for htmx, which the host app is guaranteed to have running.
-
-import type { Actor } from "../as/actor"
-
 // If you're using a non-Emissary host app, then you'll need to redefine these host bindings.
 declare const htmx: {
 	ajax(method: string, url: string): void
@@ -12,7 +9,7 @@ declare const htmx: {
 export class Host {
 
 	reload() {
-		window.location.reload()
+		globalThis.location.reload()
 	}
 
 	viewActor(actorId: string) {
@@ -20,11 +17,19 @@ export class Host {
 	}
 
 	viewKeyPackages() {
-		window.location.assign("/@me/settings/keyPackages")
+		globalThis.location.assign("/@me/settings/keyPackages")
 	}
 
 	viewBlockActor(actorId: string) {
 		htmx.ajax("GET", "/@me/settings/rule-edit-actor?action=BLOCK&trigger=" + encodeURIComponent(actorId))
+	}
+
+	notify(title: string, message: string) {
+		if (Notification.permission === "granted") {
+			new Notification(title, {
+				body: message,
+			})
+		}
 	}
 
 	//////////////////////////////////////////

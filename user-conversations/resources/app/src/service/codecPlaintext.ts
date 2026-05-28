@@ -7,9 +7,9 @@ import type { IDatabase, IDelivery } from "./interfaces"
 
 export class CodecPlaintext {
 
-	#database: IDatabase
-	#delivery: IDelivery
-	#actorId: string
+	readonly #database: IDatabase
+	readonly #delivery: IDelivery
+	readonly #actorId: string
 
 	constructor(database: IDatabase, delivery: IDelivery, actorId: string) {
 		this.#database = database
@@ -23,7 +23,7 @@ export class CodecPlaintext {
 
 	async getGroup(groupId: string): Promise<Group> {
 
-		var group = await this.#database.loadGroup(groupId)
+		let group = await this.#database.loadGroup(groupId)
 
 		// If the group already exists, then validate and return
 		if (group != undefined) {
@@ -52,7 +52,7 @@ export class CodecPlaintext {
 	}
 
 	async leaveGroup(group: Group): Promise<void> {
-
+		return undefined
 	}
 
 	async removeGroupMember(group: Group, actorId: string): Promise<void> {
@@ -61,7 +61,7 @@ export class CodecPlaintext {
 
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
-		var group: Group
+		let group: Group
 		const groupId = activity.context()
 
 		// Special case for "Leave" activities.  If we've already left the group, then don't add it to the database
@@ -130,7 +130,7 @@ export class CodecPlaintext {
 		}
 
 		// Get the "object" of the activity 
-		var object = activity.objectAsMap()
+		let object = activity.objectAsMap()
 
 		if (object[vocab.PropertyType] != vocab.ObjectTypeNote) {
 			return
