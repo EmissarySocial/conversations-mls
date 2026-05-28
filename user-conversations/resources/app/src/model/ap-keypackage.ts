@@ -24,6 +24,7 @@ export interface APKeyPackage {
 		type: "Application",
 		name: string,
 	}
+	ciphersuite: string
 }
 
 // NewAPKeyPackage creates a fully initialized KeyPackage object
@@ -40,12 +41,13 @@ export function NewAPKeyPackage(keyPackageId: string, generatorId: string, gener
 		attributedTo: actorID,
 		mediaType: "message/mls",
 		encoding: "base64",
+		content: keyPackageAsBase64,
 		generator: {
 			id: generatorId,
 			type: "Application",
 			name: generatorName,
 		},
-		content: keyPackageAsBase64,
+		ciphersuite: "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 	}
 }
 
