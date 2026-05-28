@@ -100,7 +100,8 @@ export async function unwrapKey(wrappedKey: ArrayBuffer, wrappingKey: CryptoKey,
 
 // cipherSuiteImplementation returns the common ciphersuite implementation used by this app
 export async function cipherSuiteImplementation(): Promise<CiphersuiteImpl> {
-	const cipherSuiteName: CiphersuiteName = "MLS_256_DHKEMP521_AES256GCM_SHA512_P521"
+	// const cipherSuiteName: CiphersuiteName = "MLS_256_DHKEMP521_AES256GCM_SHA512_P521"
+	const cipherSuiteName: CiphersuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
 	const cipherSuite = await getCiphersuiteImpl(cipherSuiteName)
 	return cipherSuite;
 }
