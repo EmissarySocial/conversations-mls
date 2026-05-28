@@ -22,6 +22,7 @@ import { type Group } from "../model/group"
 import { type EncryptedGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
+import type { Collection } from "../as/collection"
 
 // ICodec wraps all of the encoding/decoding methods 
 // for generating and managing messages.  The MLS codec
@@ -131,6 +132,13 @@ export interface IHost {
 	viewActor(actorId: string): void
 	viewKeyPackages(): void
 	viewBlockActor(actorId: string): void
+}
+
+export interface IProxy {
+	Activity(url: string): Promise<Activity>
+	Actor(url: string): Promise<Actor>
+	Document(url: string): Promise<Document>
+	Collection(url: string): Promise<Collection>
 }
 
 // IReceiver wraps all of the methods that the Controller uses

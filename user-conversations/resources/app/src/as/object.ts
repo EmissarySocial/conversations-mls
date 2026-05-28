@@ -6,9 +6,11 @@ type map = { [key: string]: any }
 // JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class Object {
 
+	#proxyUrl: string = ""
 	#value: map
 
 	constructor(value?: map) {
+
 		if (value != undefined) {
 			this.#value = value
 		} else {
@@ -24,8 +26,48 @@ export class Object {
 	///////////////////////////////////
 	// Conversion methods
 
+	// setProxy sets a proxyUrl for fetching remote objects.
+	setProxy(proxyUrl: string) {
+		this.#proxyUrl = proxyUrl
+		return this
+	}
+
+	// fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
+	fromProxy = async (proxyUrl: string, url: string): Promise<this> => {
+
+		// If a proxy URL is not available, just fetch the document directly
+		if (proxyUrl == "") {
+			return this.fromURL(url, {})
+		}
+
+		// Save the proxyUrl for subsequent requests
+		this.#proxyUrl = proxyUrl
+
+		// Send a request to the proxy server
+		const response = await fetch(this.#proxyUrl, {
+			method: "POST",
+			body: JSON.stringify({ id: url })
+		})
+
+		if (!response.ok) {
+			throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`)
+		}
+
+		// Parse the response and return
+		const body = await response.text()
+		this.fromJSON(body)
+		return this
+	}
+
 	// fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
-	fromURL = async (url: string, options: RequestInit = {}) => {
+	fromURL = async (url: string, options: RequestInit = {}): Promise<this> => {
+
+		if (this.#proxyUrl != "") {
+			return this.fromProxy(this.#proxyUrl, url)
+		}
+
+		// Otherwise, fetch the document directly from the URL
+		console.warn("Fetching remote URL directly from the server: " + url)
 
 		// Require Accept: header for ActivityPub
 		options["headers"] = {

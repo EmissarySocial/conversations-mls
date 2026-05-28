@@ -31,11 +31,13 @@ import { type IDelivery } from "./interfaces"
 import { type IDirectory } from "./interfaces"
 import { type IDatabase } from "./interfaces"
 import { type IHost } from "./interfaces"
+import { type IProxy } from "./interfaces"
 import { type IReceiver } from "./interfaces"
 import { type EmojiKey } from "./emojikeys"
 import { keyPackageEmojiKey } from "./emojikeys"
 import { CodecMls } from "./codecMls"
 import { CodecPlaintext } from "./codecPlaintext"
+import { Proxy } from "./proxy"
 
 // Other utility functions
 import { cipherSuiteImplementation } from "./cryptography"
@@ -63,6 +65,7 @@ export class Controller {
 	#receiver: IReceiver
 	#contacts: IContacts
 	#host: IHost
+	#proxy: IProxy
 	#codecMls?: CodecMls
 	#codecPlaintext: CodecPlaintext
 	#allowPlaintextMessages: boolean
@@ -109,6 +112,7 @@ export class Controller {
 		this.#allowPlaintextMessages = false
 		this.#allowEncryptedMessages = false
 		this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId)
+		this.#proxy = new Proxy()
 
 		// Application State
 		this.groups = []
@@ -173,6 +177,8 @@ export class Controller {
 			this.stop("SERVER-DOWN")
 			return
 		}
+
+		// this.#proxy = new Proxy(this.#actor.proxyUrl())
 
 		// Collect the messages API information
 		const { url, plaintext, ciphertext } = this.#actor.messages()
