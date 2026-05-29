@@ -4,6 +4,7 @@ import { type Vnode } from "mithril"
 import { type Group } from "../model/group"
 import { Controller } from "../service/controller"
 import { haltEvent } from "./utils"
+import { synthClick } from "./utils"
 
 type GroupNotesVnode = Vnode<GroupNotesArgs, GroupNotesState>
 
@@ -33,9 +34,9 @@ export class GroupNotes {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => controller.page_group_messages()}>{group.name || group.defaultName || "Messages"}</div>
+						<div role="tab" tabIndex="0" onclick={() => controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" aria-selected="true">Notes</div>
-						<div role="tab" onclick={() => controller.page_group_members()}>People ({group.members.length})</div>
+						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
@@ -44,7 +45,7 @@ export class GroupNotes {
 							<div class="layout layout-vertical">
 								<div class="layout-elements">
 									<div class="layout-element">
-										<label for="idGroupName">Custom Name</label>
+										<label for="idGroupName">Custom Name</label> {/* NOSONAR:typescript:S6853 "for" works fine in Mithril */}
 										<input
 											id="idGroupName"
 											type="text"
@@ -54,12 +55,12 @@ export class GroupNotes {
 										<div class="text-xs text-gray">(PRIVATE) helps you organize conversations. If empty, member list is displayed.</div>
 									</div>
 									<div class="layout-element">
-										<label for="idGroupNotes">Notes</label>
+										<label for="idGroupNotes">Notes</label> {/* NOSONAR:typescript:S6853 "for" works fine in Mithril */}
 										<textarea
 											id="idGroupNotes"
-											value={vnode.state.group.description}
+											value={vnode.state.group.summary}
 											rows="8"
-											oninput={(event: Event) => this.setDescription(vnode, event)}
+											oninput={(event: Event) => this.setSummary(vnode, event)}
 										/>
 										<div class="text-xs text-gray">(PRIVATE) Notes about this conversation. Not shared with other group members.</div>
 									</div>
@@ -67,7 +68,7 @@ export class GroupNotes {
 									{this.widgetState(vnode)}
 
 									<div class="layout-element">
-										<label for="idGroupTags">Tags</label>
+										<label for="idGroupTags">Tags</label> {/* NOSONAR:typescript:S6853 "for" works fine in Mithril */}
 										<input
 											id="idGroupTags"
 											type="text"
@@ -100,7 +101,7 @@ export class GroupNotes {
 		if (vnode.state.group.stateId === "CLOSED") {
 
 			return <div class="layout-element" >
-				<label for="idGroupState">Status</label>
+				<label for="idGroupState">Status</label> {/* NOSONAR:typescript:S6853 "for" works fine in Mithril */}
 
 				<select disabled>
 					<option>Closed</option>
@@ -111,7 +112,7 @@ export class GroupNotes {
 
 		// Otherwise, show a select box to change the state
 		return <div class="layout-element" >
-			<label for="idGroupState">Status</label>
+			<label for="idGroupState">Status</label> {/* NOSONAR:typescript:S6853 "for" works fine in Mithril */}
 
 			<select
 				id="idGroupState"
@@ -131,9 +132,9 @@ export class GroupNotes {
 		vnode.state.group.name = target.value
 	}
 
-	setDescription(vnode: GroupNotesVnode, event: Event) {
+	setSummary(vnode: GroupNotesVnode, event: Event) {
 		const target = event.target as HTMLTextAreaElement
-		vnode.state.group.description = target.value
+		vnode.state.group.summary = target.value
 	}
 
 	setState(vnode: GroupNotesVnode, event: Event) {

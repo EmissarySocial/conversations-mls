@@ -43,7 +43,6 @@
 				margin-bottom:12px;
 
 				&.status {
-					align-items: center;
 					font-size:12px;
 					color:var(--gray60);
 					margin:calc(var(--rhythm)*3) 0px;

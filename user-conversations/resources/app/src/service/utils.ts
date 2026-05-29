@@ -1,12 +1,10 @@
 import type { Group } from "../model/group"
 import type { Message } from "../model/message"
 import * as vocab from "../as/vocab"
-import { Document } from "../as/document"
-import type { MlsKeyPackage } from "ts-mls"
 
 // rangeToArray consumes all values from a generator and returns them as an array
 export function rangeToArray<T>(generator: Generator<T>): T[] {
-	var result = []
+	let result = []
 	for (let value of generator) {
 		result.push(value)
 	}
@@ -16,7 +14,7 @@ export function rangeToArray<T>(generator: Generator<T>): T[] {
 // rangeFirst returns the first value from a generator
 // or throws an error if the generator is empty
 export function rangeFirst<T>(generator: Generator<T>): T {
-	for (const value of generator) {
+	for (const value of generator) { // NOSONAR: typescript:S1751 - Yes, I want to just get the first value from the generator
 		return value
 	}
 	throw new Error("Generator is empty.")
@@ -33,11 +31,11 @@ export function stripTrailingNulls(tree: any[]): any[] {
 
 // base64ToUint8Array converts a base64-encoded string to a Uint8Array
 export function base64ToUint8Array(base64: string): Uint8Array {
-	const binary_string = window.atob(base64)
+	const binary_string = globalThis.atob(base64)
 	const len = binary_string.length
 	const bytes = new Uint8Array(len)
 	for (let i = 0; i < len; i++) {
-		bytes[i] = binary_string.charCodeAt(i)
+		bytes[i] = binary_string.codePointAt(i)!
 	}
 	return bytes
 }

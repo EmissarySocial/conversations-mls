@@ -1,8 +1,8 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
-import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
+import { synthClick } from "./utils"
 
 type EditMessageVnode = Vnode<EditMessageAttrs, EditMessageState>
 
@@ -47,7 +47,7 @@ export class EditMessage {
 							<button onclick={vnode.attrs.close} tabIndex="0">Close</button>
 						</div>
 						<div>
-							<span role="button" class="text-red" tabIndex="0" onclick={() => this.delete(vnode)}>Delete</span>
+							<span class="text-red" role="button" tabIndex="0" onclick={() => this.delete(vnode)} onkeypress={synthClick}>Delete</span>
 						</div>
 					</div>
 				</form>
@@ -68,7 +68,7 @@ export class EditMessage {
 
 		// Collect variables
 		const controller = vnode.attrs.controller
-		var message = controller.message!
+		const message = controller.message!
 
 		// Update the message content
 		message.content = vnode.state.content
