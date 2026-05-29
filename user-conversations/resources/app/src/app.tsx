@@ -63,4 +63,4 @@ async function startup() {
 }
 
 // 3..2..1.. Go!
-await startup()
+startup() // NOSONAR: typescript:S7758 - cannot use `await` on this because we're in an IIFE
