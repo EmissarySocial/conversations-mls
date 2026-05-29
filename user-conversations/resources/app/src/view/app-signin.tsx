@@ -3,7 +3,7 @@ import { type Vnode } from "mithril"
 
 import { Controller } from "../service/controller"
 import { haltEvent } from "./utils"
-
+import { synthClick } from "./utils"
 
 type AppSignInVnode = Vnode<AppSignInArgs, AppSignInState>
 
@@ -51,7 +51,7 @@ export class AppSignIn {
 					}
 					{vnode.state.message && <p class="text-red margin-vertical">{vnode.state.message}</p>}
 					<p class="margin-vertical">To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations.</p>
-					<p class="margin-vertical">You can <span class="link" tabIndex="0" onclick={() => this.reset(vnode)}>reset your passcode</span> if you don't remember it, but all encrypted messages will be lost.</p>
+					<p class="margin-vertical">You can <span class="link" role="link" tabIndex="0" onclick={() => this.reset(vnode)} onkeypress={synthClick}>reset your passcode</span> if you don't remember it, but all encrypted messages will be lost.</p>
 				</div>
 			</div>
 		)
@@ -73,7 +73,7 @@ export class AppSignIn {
 			vnode.state.requestPending = false
 			vnode.state.message = "Passcode incorrect. You cannot continue without the valid passcode."
 			m.redraw()
-			window.requestAnimationFrame(() => {
+			globalThis.requestAnimationFrame(() => {
 				document.getElementById("passcode")?.focus()
 			})
 		}

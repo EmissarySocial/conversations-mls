@@ -1,5 +1,4 @@
 import { type KeyPackage } from "ts-mls"
-import { encodeKeyPackage } from "../model/ap-keypackage"
 
 export type EmojiKey = [string, string]
 
@@ -16,9 +15,9 @@ export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<
 		throw new Error("Checksum must be 32 characters long")
 	}
 
-	var result: EmojiKey[] = new Array(5)
+	let result: EmojiKey[] = new Array(5)
 
-	for (var i = 0; i < 5; i++) {
+	for (let i = 0; i < 5; i++) {
 		const first = checksumHash[i * 2] // First byte
 		const second = checksumHash[i * 2 + 1] // Second byte
 		const combined = (first! << 8 | second!) // Shift and combine (bitwise-OR)

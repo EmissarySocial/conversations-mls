@@ -6,6 +6,7 @@ import { Delivery } from "./service/delivery"
 import { Directory } from "./service/directory"
 import { Receiver } from "./service/receiver"
 import { Controller } from "./service/controller"
+import { Proxy } from "./service/proxy"
 
 // Views
 import { App } from "./view/app"
@@ -13,7 +14,7 @@ import { Contacts } from "./service/contacts"
 import { Host } from "./service/host"
 
 // Global controller instance
-var controller: Controller
+let controller: Controller
 
 // startup initializes the application and mounts the Mithril components.
 async function startup() {
@@ -35,14 +36,16 @@ async function startup() {
 	// Build dependencies
 	const indexedDB = await NewIndexedDB(actorId)
 	const host = new Host()
+	const proxy = new Proxy()
 	const contacts = new Contacts()
 	const database = new Database(host, indexedDB)
 	const delivery = new Delivery()
-	const directory = new Directory(actorId)
+	const directory = new Directory(proxy, actorId)
 	const receiver = new Receiver()
 
 	// Build the controller
-	controller = new Controller(actorId, contacts, database, delivery, directory, receiver, host)
+	controller = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host)
+	controller.start()
 
 	// Pass the controller to the App component and mount the main application
 	m.mount(root, { view: () => <App controller={controller} /> })
@@ -60,4 +63,4 @@ async function startup() {
 }
 
 // 3..2..1.. Go!
-startup()
+await startup()

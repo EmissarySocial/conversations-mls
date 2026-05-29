@@ -1,8 +1,8 @@
 import m from "mithril"
 import { Controller } from "../service/controller"
 import { type Group } from "../model/group"
-import { type Vnode, type VnodeDOM, type Component } from "mithril"
-
+import { type Vnode } from "mithril"
+import { synthClick } from "./utils"
 
 type GroupLeaveVnode = Vnode<GroupLeaveArgs, GroupLeaveState>
 
@@ -31,9 +31,9 @@ export class GroupLeave {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{groupName}</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_members()}>People ({controller.groupMemberStream().length})</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_messages()} onkeypress={synthClick}>{groupName}</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_members()} onkeypress={synthClick}>People ({controller.groupMemberStream().length})</div>
 						<div role="tab" aria-selected="true">Leave</div>
 					</div>
 				</div>
@@ -45,7 +45,7 @@ export class GroupLeave {
 							<br />
 							Other group members will still have access to the conversation and its history.
 						</div>
-						<button class="text-red" onclick={() => this.delete(vnode)}>
+						<button class="text-red" tabIndex="0" onclick={() => this.delete(vnode)}>
 							Leave Group
 						</button>
 					</div>

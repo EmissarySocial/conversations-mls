@@ -32,6 +32,12 @@ export class Actor extends Object {
 		return this.getString("as", vocab.PropertyPreferredUsername)
 	}
 
+	proxyUrl = () => {
+		const endpoints = this.getMap("as", vocab.PropertyEndpoints)
+		const result = toString(endpoints[vocab.PropertyProxyUrl])
+		return result
+	}
+
 	summary = () => {
 		return this.getString("as", vocab.PropertySummary)
 	}

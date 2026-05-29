@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type Emoji, emojiKey } from "./emojikeys"
+import { emojiKey } from "./emojikeys"
 
 test('test key A => Mosque, Watermelon, Juice Box, X-Ray, Peanut', async () => {
 	const buffer = new TextEncoder().encode("test key A")

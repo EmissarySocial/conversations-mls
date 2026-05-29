@@ -1,13 +1,16 @@
 import m from "mithril"
+import type Stream from "mithril/stream"
 import { type VnodeDOM } from "mithril"
+
+import dayjs from "dayjs"
+
 import { Controller } from "../service/controller"
 import { WidgetMessageCreate } from "./widget-message-create"
 import { ViewMessage } from "./message"
-import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
-import type Stream from "mithril/stream"
 import { groupIsEncrypted } from "../model/group"
+import { synthClick } from "./utils"
 
 dayjs.extend(relativeTime)
 
@@ -56,9 +59,9 @@ export class GroupMessages {
 		const group = controller.groupStream()
 
 		// Grouping values
-		var lastSender = ""
+		let lastSender = ""
 
-		var classNames = groupIsEncrypted(group) ? "encrypted" : ""
+		const classNames = groupIsEncrypted(group) ? "encrypted" : ""
 
 		// Display messages
 		return (
@@ -66,22 +69,22 @@ export class GroupMessages {
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
 						<div role="tab" aria-selected="true">{group.name || group.defaultName || "Messages"}</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
-						<div role="tab" onclick={() => controller.page_group_members()}>People ({group.members.length})</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
+						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class={classNames}>
 					<div class="flex-grow padding-sm padding-bottom-lg">
 						{controller.messages.map(message => {
 
-							var sender: Stream<Contact> | undefined
+							let sender: Stream<Contact> | undefined
 
 							if (message.sender != lastSender) {
 								sender = vnode.state.contacts.find(contact => contact().id == message.sender)
 								lastSender = message.sender
 							}
 
-							return <ViewMessage controller={controller} message={message} sender={sender} showDate="" />
+							return <ViewMessage key={message.id} controller={controller} message={message} sender={sender} showDate="" />
 						})}
 					</div>
 				</div>

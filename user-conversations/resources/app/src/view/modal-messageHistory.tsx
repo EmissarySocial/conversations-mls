@@ -1,7 +1,6 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
-import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
 
 type MessageHistoryVnode = Vnode<MessageHistoryAttrs, MessageHistoryState>
@@ -33,9 +32,9 @@ export class MessageHistory {
 				<h1><i class="bi bi-clock-history"></i> Message History</h1>
 				<div class="table scroll-vertical margin-bottom" style="max-height:600px;">
 					{message.history.map((content, index) => (
-						<div>{index + 1}. {content}</div>
+						<div key={content}>{index + 1}. {content}</div>
 					))}
-					<div>{message.history.length + 1}. {message.content}</div>
+					<div key={message.content}>{message.history.length + 1}. {message.content}</div>
 				</div>
 				<button onclick={() => this.close(vnode)} tabIndex="0">Close</button>
 			</Modal>

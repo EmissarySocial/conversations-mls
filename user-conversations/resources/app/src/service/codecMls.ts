@@ -1,5 +1,5 @@
 // MLS functions
-import { bytesToBase64, getOwnLeafNode, leafNodeSources, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender } from "ts-mls"
 import { createProposal } from "ts-mls"
 import { defaultCredentialTypes } from "ts-mls"
 import { createApplicationMessage } from "ts-mls"
@@ -56,16 +56,15 @@ import { keyPackageIsExpired } from "./cryptography"
 // This is intended to be a reusable service that could be called
 // by any software component that needs to use MLS-encrypted messages.
 export class CodecMls {
-	#controller: IController
-	#database: IDatabase
-	#delivery: IDelivery
-	#directory: IDirectory
-	#cipherSuite: CiphersuiteImpl
+	readonly #controller: IController
+	readonly #database: IDatabase
+	readonly #delivery: IDelivery
+	readonly #directory: IDirectory
+	readonly #cipherSuite: CiphersuiteImpl
+	readonly #generatorId: string
 
-	#keyPackageId: string
 	#publicKeyPackage: KeyPackage
 	#privateKeyPackage: PrivateKeyPackage
-	#generatorId: string
 	#actor: Actor
 
 	constructor(
@@ -75,7 +74,6 @@ export class CodecMls {
 		directory: IDirectory,
 		cipherSuite: CiphersuiteImpl,
 
-		keyPackageId: string,
 		publicKeyPackage: KeyPackage,
 		privateKeyPackage: PrivateKeyPackage,
 		actor: Actor,
@@ -89,7 +87,6 @@ export class CodecMls {
 
 		this.#actor = actor
 		this.#generatorId = generatorId
-		this.#keyPackageId = keyPackageId
 		this.#publicKeyPackage = publicKeyPackage
 		this.#privateKeyPackage = privateKeyPackage
 	}
@@ -107,7 +104,7 @@ export class CodecMls {
 	// createGroup is an encoder hook that is called when an encrypted group is created.
 	async createGroup(): Promise<Group> {
 
-		var group = NewGroup("MLS")
+		let group = NewGroup("MLS")
 
 		// Generate a new clientState for this group
 		const clientState = await createGroup({
@@ -180,7 +177,7 @@ export class CodecMls {
 
 		// Look up all KeyPackages for the new Members
 		const currentMembers = group.members
-		var addKeyPackages = await this.#directory.getKeyPackages(newMembers)
+		let addKeyPackages = await this.#directory.getKeyPackages(newMembers)
 
 		// Filter out the KeyPackage for THIS device
 		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
@@ -280,7 +277,7 @@ export class CodecMls {
 	async removeGroupMember(group: EncryptedGroup, actorId: string): Promise<void> {
 
 		// inspect each node in the group's ratchetTree
-		var proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
+		let proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
 
 			// Skip undefined nodes
 			if (node == undefined) {
@@ -315,7 +312,7 @@ export class CodecMls {
 			return {
 				proposalType: defaultProposalTypes.remove,
 				remove: { removed: leafIndex },
-			} as Proposal
+			}
 
 		}).filter((proposal) => proposal != null)
 
@@ -352,7 +349,6 @@ export class CodecMls {
 		const mlsMessage = decode(mlsMessageDecoder, uintArray)!
 
 		// Require that the we have a valid decoded message before proceeding
-		// TODO: Here's where we send a "Failure" message to the group.
 		if (mlsMessage == undefined) {
 			throw new Error("Unable to decode message: " + message)
 		}
@@ -373,7 +369,8 @@ export class CodecMls {
 				return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
 
 			case wireformats.mls_welcome:
-				return await this.#receiveActivity_Welcome(mlsMessage)
+				await this.#receiveActivity_Welcome(mlsMessage)
+				return null
 
 			default:
 				throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
@@ -381,9 +378,9 @@ export class CodecMls {
 	}
 
 	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-	async #receiveActivity_Welcome(message: MlsWelcomeMessage): Promise<null> {
+	async #receiveActivity_Welcome(message: MlsWelcomeMessage): Promise<void> {
 
-		var clientState: ClientState
+		let clientState: ClientState
 
 		try {
 
@@ -399,13 +396,13 @@ export class CodecMls {
 			// Errors mean that the private keys probably don't match, so
 			// this welcome wasn't intended for this device, so just quit.
 			console.error("Unable to process welcome message", error)
-			return null
+			return
 		}
 
 		// RULE: Require that the private key signatures match before proceeding.
 		// This guarantees that the welcome message was encrypted for THIS device.
 		if (!uint8ArrayEqual(clientState.signaturePrivateKey, this.#privateKeyPackage.signaturePrivateKey)) {
-			return null
+			return
 		}
 
 		// Create a new group record
@@ -415,14 +412,14 @@ export class CodecMls {
 		const previousGroup = await this.#database.loadGroup(groupId)
 		if (previousGroup != undefined) {
 			console.warn("Received welcome message for a group that already exists locally.")
-			return null
+			return
 		}
 
 		// Create a new EncryptedGroup
 		const group = NewGroup("MLS")
 		group.id = groupId
 
-		var encryptedGroup = addClientState(group, clientState)
+		let encryptedGroup = addClientState(group, clientState)
 		encryptedGroup.members = this.getGroupMembers(encryptedGroup)
 
 		// Save the group to the database
@@ -430,16 +427,12 @@ export class CodecMls {
 
 		// Cycle the KeyPackage
 		await this.#cycleKeyPackages()
-
-		// Returning `null` means that the controller won't take 
-		// any additional actions to process this message.
-		return null
 	}
 
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
 	async #receiveActivity_GroupInfo(document: Document, message: MlsGroupInfo) {
 
-		var clientState: ClientState
+		// var clientState: ClientState
 
 		// Returning `null` means that the controller won't take 
 		// any additional actions to process this message.
@@ -451,7 +444,7 @@ export class CodecMls {
 	// ActivityStreams messages.
 	async #receiveActivity_PublicPrivateMessage(document: Document, mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
 
-		var groupId: string
+		let groupId: string
 
 		switch (mlsMessage.wireformat) {
 
@@ -491,7 +484,7 @@ export class CodecMls {
 			return null
 		}
 
-		const _this = this
+		const _this = this // NOSONAR: typescript:S7740 (this is required to make the callback work correctly... IDK man.)
 
 		// Decode the message using ts-mls
 		const decodedMessage = await processMessage({
@@ -540,20 +533,11 @@ export class CodecMls {
 		// Create a result object and embed additional context data
 		const result = new Activity().fromJSON(plaintext)
 
-		/* TODO: Revisit this to see if we can do this validation
-		/ RULE: guarantee that the actorIds match the encrypted content
-		if (result.actorId() != activity.actorId()) {
-			console.error("Rejecting message: Decrypted activity actor must match outer activity actor")
-			return
-		}*/
-
 		return result
 	}
 
 	#processMessageCallback(message: incomingMessage, group: EncryptedGroup): IncomingMessageAction {
 
-		// TODO: Rollback "remove" commits IF we've also committed a "remove" proposal 
-		// for the same leaf AND the sender has a lower leaf index than us.
 		if (message.kind == "commit") {
 			return "accept"
 		}
@@ -566,7 +550,7 @@ export class CodecMls {
 			const myLeafIndex = group.clientState.privatePath.leafIndex
 			const waitMs = myLeafIndex * 1000 // Reduce collisions by waiting 0ms, 1000ms, 2000ms, 3000ms... 
 
-			window.setTimeout(() => {
+			globalThis.setTimeout(() => {
 				this.#processMessageCallback_RemoveProposal(group.id, proposal)
 			}, waitMs)
 		}
@@ -580,7 +564,7 @@ export class CodecMls {
 	async #processMessageCallback_RemoveProposal(groupId: string, proposal: ProposalRemove) {
 
 		// Load the group from the database
-		var group = await this.#database.loadGroup(groupId)
+		let group = await this.#database.loadGroup(groupId)
 
 		if (group == undefined) {
 			console.error("mls.#processMessageCallback_RemoveProposal: Unable to load group for remove proposal", groupId)
@@ -602,7 +586,6 @@ export class CodecMls {
 		if (deviceToRemove == undefined) {
 			return
 		}
-		const credential = deviceToRemove.leaf.credential as CredentialBasic
 
 		// Otherwise, continue removing the deviceToRemove and notifying the rest of the group.
 		await this.#commitProposals(group, [proposal])

@@ -2,7 +2,7 @@ import m, { type Vnode } from "mithril"
 import type { Group } from "../model/group"
 import type { Controller } from "../service/controller"
 import { haltEvent } from "./utils"
-import { emojiKey } from "../service/emojikeys"
+import { synthClick } from "./utils"
 
 type AppSettingsVnode = Vnode<AppSettingsArgs, AppSettingsState>
 
@@ -40,7 +40,12 @@ export class AppSettings {
 			<div id="conversations" class="app-content">
 				<div class="padding width-800">
 					<div class="flex-row flex-align-center margin-bottom">
-						<div class="clickable circle width-32 margin-none flex-center" onclick={() => controller.page_index()} tabIndex="0"><i class="bi bi-arrow-left"></i></div>
+						<div
+							class="clickable circle width-32 margin-none flex-center"
+							onclick={() => controller.page_index()}
+							onkeypress={synthClick}
+							role="button"
+							tabIndex="0"><i class="bi bi-arrow-left"></i></div>
 						<div class="text-lg bold margin-none">Conversation Settings</div>
 					</div>
 
@@ -51,14 +56,14 @@ export class AppSettings {
 
 									<div class="layout-element flex-row">
 										<input type="checkbox" tabIndex="0" id="isEncryptedMessages" checked={vnode.state.isEncryptedMessages} onchange={(event: Event) => this.setEncryptedMessages(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isEncryptedMessages">
+										<label for="isEncryptedMessages"> {/* NOSONOR: typescript:S6853 */}
 											<div>Send Encrypted Messages When Possible</div>
 										</label>
 									</div>
 
 									<div class="layout-element flex-row">
 										<input type="checkbox" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isHideOnBlur">
+										<label for="isHideOnBlur"> {/* NOSONOR: typescript:S6853 */}
 											<div>Hide When Window Loses Focus</div>
 										</label>
 									</div>
@@ -66,7 +71,7 @@ export class AppSettings {
 									<div class="layout-element flex-row">
 										<input type="checkbox" id="isDesktopNotifications" checked={vnode.state.isDesktopNotifications} disabled={vnode.state.isDesktopNotificationsPermission === "denied"} onchange={(event: Event) => this.setDesktopNotifications(vnode, event)} style="height:1em; width:1em;" />
 										<label for="isDesktopNotifications">
-											<div>{(vnode.state.isDesktopNotificationsPermission != "denied") ? "Allow Desktop Notifications" : "Desktop Notifications Denied"}</div>
+											<div>{(vnode.state.isDesktopNotificationsPermission == "granted") ? "Allow Desktop Notifications" : "Desktop Notifications Denied"}</div>
 											{vnode.state.isDesktopNotificationsPermission === "denied" && <div class="text-xs text-gray margin-right-xs">To re-enable desktop notifications, go to your browser settings.</div>}
 										</label>
 									</div>
@@ -86,12 +91,12 @@ export class AppSettings {
 							When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey.
 							EmojiKey change frequently, so make sure you're comparing the most recent one.
 							{" "}
-							<span class="link" tabIndex="0" onclick={() => controller.host_keyPackages()}>View all registered devices &rarr;</span>
+							<span role="link" class="link" tabIndex="0" onclick={() => controller.host_keyPackages()} onkeypress={synthClick}>View all registered devices &rarr;</span>
 						</div>
 
 						<div class="flex-row">
 							{controller.emojiKey.map(([emoji, name]) => (
-								<div class="layout-vertical align-center padding-horizontal">
+								<div key={emoji} class="layout-vertical align-center padding-horizontal">
 									<div style="font-size: 32px; line-height:1em;">{emoji}</div>
 									<div class="text-xs text-gray">{name}</div>
 								</div>

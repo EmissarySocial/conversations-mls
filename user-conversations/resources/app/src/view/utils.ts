@@ -1,8 +1,3 @@
-import type { Actor } from "../as/actor"
-import { Collection } from "../as/collection"
-import { type APActor } from "../model/ap-actor"
-import type { Contact } from "../model/contact"
-import type { Group } from "../model/group"
 
 // haltEvent prevents the default behavior of an event and stops its propagation
 export function haltEvent(event: Event) {
@@ -10,17 +5,24 @@ export function haltEvent(event: Event) {
 	event.stopPropagation()
 }
 
-export function keyCode(evt: KeyboardEvent): string {
-	var result = ""
+// synthClick is an event handler that turns "Enter" and "Space" keypresses into click events for accessibility
+export function synthClick(evt: KeyboardEvent) {
+	if (evt.key === "Enter" || evt.key === " ") {
+		evt.preventDefault()
+		evt.stopPropagation()
+		evt.target?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
+	}
+}
 
-	if (window.navigator.userAgent.indexOf("Macintosh") >= 0) {
+export function keyCode(evt: KeyboardEvent): string {
+	let result = ""
+
+	if (globalThis.navigator.userAgent.includes("Macintosh")) {
 		if (evt.metaKey) {
 			result += "Ctrl+"
 		}
-	} else {
-		if (evt.ctrlKey) {
-			result += "Ctrl+"
-		}
+	} else if (evt.ctrlKey) {
+		result += "Ctrl+"
 	}
 
 	if (evt.shiftKey) {
@@ -44,23 +46,6 @@ export function getFocusElements(node: Element): [HTMLInputElement | undefined, 
 	return [firstElement, lastElement]
 }
 
-// actorHasKeyPackages checks if an Actor has any MLS KeyPackages
-export function actorHasKeyPackages(actor: Actor): boolean {
-	const keyPackagesUrl = actor.mlsKeyPackages()
-	return keyPackagesUrl != ""
-}
-
-// allActorsHaveKeyPackages checks if all Actors in a list have MLS KeyPackages
-export function allActorsHaveKeyPackages(actors: Actor[]): boolean {
-	for (const actor of actors) {
-		if (!actorHasKeyPackages(actor)) {
-			return false
-		}
-	}
-
-	return true
-}
-
 export function isEmoji(char: string): boolean {
 	return /\p{Extended_Pictographic}/u.test(char);
 }
@@ -80,7 +65,7 @@ export function formatHTML(html: string): string {
 	html = html.replace(/<\/?[^>]+(>|$)/g, "");
 
 	// convert newlines to <br> tags
-	html = html.replace(/\n/g, "<br>");
+	html = html.replaceAll('\n', "<br>");
 
 	return html
 }

@@ -136,6 +136,7 @@ export interface IHost {
 }
 
 export interface IProxy {
+	setProxyUrl(proxyUrl: string): void
 	Activity(url: string): Promise<Activity>
 	Actor(url: string): Promise<Actor>
 	Document(url: string): Promise<Document>

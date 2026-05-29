@@ -18,10 +18,10 @@ import { wireformats } from "ts-mls"
 import * as vocab from "../as/vocab"
 import { Document } from "../as/document"
 
+
 /******************************************
  * System Encryption Password functions
  ******************************************/
-
 
 // generateAESKey generates a new random AES-GCM key for encrypting messages
 export async function generateAESKey() {
@@ -67,8 +67,6 @@ export async function deriveKeyFromPassword(passcode: string, salt: ArrayBuffer)
 		["wrapKey", "unwrapKey"]
 	)
 }
-
-
 
 // wrapKey wraps the actual AES encryption key using the wrapping key (derived from a passcode) and the initial value
 export async function wrapKey(encryptionKey: CryptoKey, wrappingKey: CryptoKey, iv: ArrayBuffer): Promise<ArrayBuffer> {
@@ -119,7 +117,7 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 	}
 
 	// Make an extra-long lifetime for this KeyPackage
-	var lifetime = defaultLifetime()
+	let lifetime = defaultLifetime()
 	const now = BigInt(Math.floor(Date.now() / 1000)) // current time in seconds
 	lifetime.notAfter = now + (12n * 30n * 24n * 60n * 60n) // plus 12 months in seconds
 
@@ -133,8 +131,6 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 
 // keyPackageIsExpired returns TRUE if the provided KeyPackage is expired (not valid, not before current time, etc.)
 export function keyPackageIsExpired(keyPackage: KeyPackage): boolean {
-
-	const identity = keyPackage.leafNode.credential
 
 	if (keyPackage == null) {
 		console.warn("KeyPackage is null or undefined")
@@ -237,7 +233,7 @@ export function decodeKeyPackage(document: Document): KeyPackage {
 export async function encodeKeyToBase64(key: CryptoKey): Promise<string> {
 	const exported = await crypto.subtle.exportKey("raw", key)
 	const keyBytes = new Uint8Array(exported);
-	const keyString = String.fromCharCode(...keyBytes);
+	const keyString = String.fromCodePoint(...keyBytes);
 	const base64Key = btoa(keyString);
 	return base64Key;
 }
@@ -246,7 +242,7 @@ export async function encodeKeyToBase64(key: CryptoKey): Promise<string> {
 export async function decodeKeyFromBase64(base64Key: string): Promise<CryptoKey> {
 
 	const keyString = atob(base64Key)
-	const rawKey = Uint8Array.from(keyString, c => c.charCodeAt(0));
+	const rawKey = Uint8Array.from(keyString, c => c.codePointAt(0)!);
 	return crypto.subtle.importKey(
 		"raw",
 		rawKey,

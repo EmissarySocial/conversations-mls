@@ -8,18 +8,17 @@ import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfac
 // to the MLS client
 export class Receiver {
 
-	#messagesUrl: string // endpoint for the actor's emissary:messages or plain messages collection
+	#messagesUrl: string = "" // endpoint for the actor's emissary:messages or plain messages collection
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#activityHandler: IActivityHandler // list of registered message handlers
 	#lastMessage: ILastMessageGetterSetter // handler function for getting/setting the last message ID
 	#generatorId: string // ID of this MLS client, used for the generator field of outgoing messages
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
-	#originalCookie: string // The original cookie string, used for detecting changes in cookies
+	readonly #originalCookie: string // The original cookie string, used for detecting changes in cookies
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor() {
-		this.#messagesUrl = ""
 		this.#activityHandler = async (activity: Activity) => { }
 		this.#lastMessage = async (messageId?: string) => { return "" }
 		this.#polling = false
@@ -31,12 +30,12 @@ export class Receiver {
 	// setActor configures the Receiver with the given Actor's information,
 	// once it has been loaded from the network.
 	setActor(actor: Actor) {
-		const { url, plaintext } = actor.messages()
+		const { url } = actor.messages()
 		this.#messagesUrl = url
 	}
 
 	// start begins polling for new messages and processing them with the registered handlers
-	start = async (generatorId: string, activityHandler: IActivityHandler, lastMessage: ILastMessageGetterSetter) => {
+	async start(generatorId: string, activityHandler: IActivityHandler, lastMessage: ILastMessageGetterSetter) {
 
 		// Set the handler function to be called with each new message
 		this.#activityHandler = activityHandler
@@ -58,7 +57,7 @@ export class Receiver {
 		}
 	}
 
-	stop = () => {
+	stop() {
 		if (this.#eventSource) {
 			this.#eventSource.close()
 		}
@@ -66,7 +65,7 @@ export class Receiver {
 
 	// poll retrieves new messages from the messages collection and calls the
 	// onMessage callback for each new message
-	#poll = async () => {
+	async #poll() {
 
 		// If already polling, set #pollAgain flag and exit.
 		if (this.#polling) {
@@ -81,7 +80,7 @@ export class Receiver {
 		this.#polling = true
 
 		// Fetch NEW messages from the server
-		var lastMessageId = await this.#lastMessage()
+		let lastMessageId = await this.#lastMessage()
 		const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" })
 
 		// Process each activity sequentially

@@ -31,7 +31,7 @@ export class Index {
 	}
 
 	public view(vnode: IndexVnode) {
-		var page: JSX.Element
+		let page: JSX.Element
 
 		switch (vnode.attrs.controller.pageView) {
 
@@ -47,13 +47,14 @@ export class Index {
 				page = <GroupLeave controller={vnode.attrs.controller} />
 				break
 
-			default:
+			default: {
 				const groups = vnode.attrs.controller.groups
 				if (groups.length == 0) {
 					page = <Empty controller={vnode.attrs.controller} />
 				} else {
 					page = <GroupMessages controller={vnode.attrs.controller} />
 				}
+			}
 		}
 
 		return (
@@ -101,7 +102,7 @@ export class Index {
 	closeModal(vnode: IndexVnode) {
 		document.getElementById("modal")?.classList.remove("ready")
 
-		window.setTimeout(() => {
+		globalThis.setTimeout(() => {
 			vnode.attrs.controller.modal_close()
 			m.redraw()
 		}, 240)

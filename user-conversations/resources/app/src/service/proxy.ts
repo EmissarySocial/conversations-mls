@@ -5,9 +5,13 @@ import { Document } from "../as/document"
 
 export class Proxy {
 
-	readonly #proxyUrl: string
+	#proxyUrl: string
 
 	constructor(proxyUrl: string = "/.proxy") {
+		this.#proxyUrl = proxyUrl
+	}
+
+	setProxyUrl(proxyUrl: string) {
 		this.#proxyUrl = proxyUrl
 	}
 

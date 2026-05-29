@@ -78,9 +78,9 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 }
 
 export class Database {
-	#db: IDBPDatabase<Schema>
+	readonly #db: IDBPDatabase<Schema>
+	readonly #host: IHost
 	#onchange: callbackFunction
-	#host: IHost
 
 	constructor(host: IHost, db: IDBPDatabase<Schema>) {
 		this.#host = host
@@ -95,7 +95,7 @@ export class Database {
 	erase = () => {
 
 		this.#db.close()
-		var req = window.indexedDB.deleteDatabase(this.#db.name)
+		let req = globalThis.indexedDB.deleteDatabase(this.#db.name)
 
 		req.onsuccess = (event) => {
 			this.#host.reload()
@@ -121,7 +121,7 @@ export class Database {
 
 	// loadConfig retrieves the config record from the database
 	loadConfig = async () => {
-		var result = await this.#db.get("config", ConfigID)
+		const result = await this.#db.get("config", ConfigID)
 		if (result != undefined) {
 			return result
 		}
@@ -143,7 +143,7 @@ export class Database {
 	async allGroups(): Promise<Group[]> {
 
 		// List all groups, sorted by updateDate descending
-		var groups = await this.#db.getAll("group")
+		const groups = await this.#db.getAll("group")
 		groups.sort((a, b) => b.updateDate - a.updateDate)
 		return groups
 	}
@@ -263,11 +263,10 @@ export class Database {
 	/////////////////////////////////////////////
 
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
-	// TODO: This will need to be limited or paginated for long discussions.
 	allMessages = async (groupId: string) => {
 
 		// Retrieve the messages from the database
-		var messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
+		let messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
 
 		// Sort by createDate ascending
 		messageData.sort((a, b) => a.createDate - b.createDate)
@@ -315,7 +314,7 @@ export class Database {
 	likeMessage = async (actorId: string, messageId: string, content: string) => {
 
 		// Retrieve the message from the database
-		var message = await this.loadMessage(messageId)
+		let message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
@@ -334,7 +333,7 @@ export class Database {
 	undoLikeMessage = async (actorId: string, messageId: string) => {
 
 		// Retrieve the message from the database
-		var message = await this.loadMessage(messageId)
+		let message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {

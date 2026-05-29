@@ -1,8 +1,10 @@
+import { type Vnode } from "mithril"
+import { type Contact } from "../model/contact"
+
 import m from "mithril"
 import { Controller } from "../service/controller"
 import { groupIsEncrypted, type Group } from "../model/group"
-import { type Vnode, type VnodeDOM, type Component } from "mithril"
-import type { Contact } from "../model/contact"
+import { synthClick } from "./utils"
 
 type GroupMembersVnode = Vnode<GroupMembersArgs, GroupMembersState>
 
@@ -16,6 +18,7 @@ interface GroupMembersState {
 export class GroupMembers {
 
 	oninit(vnode: GroupMembersVnode) {
+		return undefined
 	}
 
 	view(vnode: GroupMembersVnode) {
@@ -31,15 +34,15 @@ export class GroupMembers {
 			<div id="conversation-details">
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_messages()}>{group.name || group.defaultName || "Messages"}</div>
-						<div role="tab" onclick={() => vnode.attrs.controller.page_group_notes()}>Notes</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>
+						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
 						<div role="tab" aria-selected="true">People ({contactStreams.length})</div>
 					</div>
 				</div>
 				<div id="conversation-messages" class="padding">
 					<div class="table">
 						{(group.stateId !== "CLOSED") &&
-							<div role="link" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()}>
+							<div role="link" tabIndex="0" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()} onkeypress={synthClick}>
 								<div>
 									<span class="circle width-48 flex-center text-white text-xl margin-none" style={buttonStyle}><i class="bi bi-plus"></i></span>
 								</div>
@@ -59,11 +62,11 @@ export class GroupMembers {
 
 							return (
 
-								<div class="flex-row" role="button">
-									<div onclick={() => controller.host_actor(contact.id)}>
-										<img src={contact.icon} class="circle width-48" />
+								<div key={contact.id} class="flex-row" role="button">
+									<div role="link" tabIndex="0" onclick={() => controller.host_actor(contact.id)} onkeypress={synthClick}>
+										<img src={contact.icon} class="circle width-48" alt="" />
 									</div>
-									<div class="flex-grow padding-left-sm" onclick={() => controller.host_actor(contact.id)}>
+									<div class="flex-grow padding-left-sm" role="link" tabIndex="0" onclick={() => controller.host_actor(contact.id)} onkeypress={synthClick}>
 										<div class="bold">{contact.name}</div>
 										<div class="text-gray">{contact.username}</div>
 									</div>
@@ -74,7 +77,7 @@ export class GroupMembers {
 							)
 						})}
 
-						<div role="link" class="flex-row" onclick={() => this.leaveGroup(vnode)}>
+						<div role="link" tabIndex="0" class="flex-row" onclick={() => this.leaveGroup(vnode)} onkeypress={synthClick}>
 							<div>
 								<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--red60)"><i class="bi bi-x"></i></span>
 							</div>

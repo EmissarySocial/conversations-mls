@@ -68,6 +68,8 @@ export const PropertyContent = "content"
 
 export const PropertyContext = "context"
 
+export const PropertyEndpoints = "endpoints"
+
 export const PropertyGenerator = "generator"
 
 export const PropertyIcon = "icon"
@@ -89,6 +91,8 @@ export const PropertyObject = "object"
 export const PropertyOutbox = "outbox"
 
 export const PropertyPreferredUsername = "preferredUsername"
+
+export const PropertyProxyUrl = "proxyUrl"
 
 export const PropertyPublished = "published"
 

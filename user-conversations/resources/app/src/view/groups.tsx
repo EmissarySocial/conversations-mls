@@ -3,6 +3,7 @@ import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
 import { groupIsEncrypted } from "../model/group"
 import { type Group } from "../model/group"
+import { synthClick } from "./utils"
 
 type GroupsVnode = Vnode<GroupsAttrs, GroupsState>
 
@@ -20,20 +21,20 @@ export class Groups {
 		return (
 			<div>
 				<div class="flex-row flex-align-center padding-horizontal">
-					<div class="flex-row flex-align-center clickable hover-trigger" tabIndex="0" onclick={() => controller.page_settings()}>
+					<div class="flex-row flex-align-center clickable hover-trigger" role="link" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
 						<div class="circle width-32 hover-show text-lg margin-none align-center"><i class="bi bi-gear"></i></div>
-						<img src={controller.actorIcon()} class="width-32 circle hover-hide" />
+						<img src={controller.actorIcon()} class="width-32 circle hover-hide" alt="" />
 						<div class="bold text-lg margin-none">Conversations</div>
 					</div>
 					<div class="flex-grow"></div>
-					<div class="link text-lg margin-none" onclick={() => controller.modal_newConversation()} tabindex="0">
+					<div class="link text-lg margin-none" role="button" tabindex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
 						<i class="bi bi-plus-circle-fill"></i>
 					</div>
 				</div>
 
 				<div class="flex-row flex-align-center padding text-sm">
-					<div role="input" class="flex-grow flex-row flex-align-center">
-						<label class="bi bi-search" for="idSearch"></label>
+					<div role="textbox" class="flex-grow flex-row flex-align-center">
+						<label class="bi bi-search" for="idSearch">{/* NOSONOR typescript:S6853 */}</label>
 						<input
 							id="idSearch"
 							type="text"
@@ -42,7 +43,7 @@ export class Groups {
 							style="border:none; outline:none;"
 						/>
 					</div>
-					<div class="text-lg text-gray margin-none clickable" tabindex="0">
+					<div class="text-lg text-gray margin-none clickable" role="button" tabindex="0" onkeypress={synthClick}>
 						<i class="bi bi-filter-circle"></i>
 					</div>
 				</div>
@@ -50,7 +51,7 @@ export class Groups {
 				<hr class="margin-vertical-sm" />
 
 				{controller.groups.map((group) => {
-					var cssClass = "flex-row flex-align-center padding hover-trigger"
+					let cssClass = "flex-row flex-align-center padding hover-trigger"
 
 					if (group.id == controller.selectedGroupId()) {
 						cssClass += " highlight"
@@ -59,7 +60,7 @@ export class Groups {
 					const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green60)"
 
 					return (
-						<div role="button" class={cssClass} onclick={() => controller.selectGroup(group.id)}>
+						<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
 							<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${color}`}>
 								{
 									groupIsEncrypted(group) ?
@@ -83,7 +84,7 @@ export class Groups {
 
 	unreadMarker(vnode: GroupsVnode, group: Group) {
 
-		if (group.unread == false) {
+		if (!group.unread) {
 			return null
 		}
 

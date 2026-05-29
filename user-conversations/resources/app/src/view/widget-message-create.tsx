@@ -2,6 +2,7 @@ import m, { type Vnode } from "mithril"
 import type { Controller } from "../service/controller"
 import type { Message } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
+import { synthClick } from "./utils"
 
 type WidgetMessageCreateVnode = Vnode<WidgetMessageCreateAttrs, WidgetMessageCreateState>
 
@@ -29,11 +30,11 @@ export class WidgetMessageCreate {
 		if (group.stateId === "CLOSED") {
 			return <div class="card padding-vertical-xl padding-horizontal align-center bg-stripes">
 				This conversation is closed. You can no longer send messages here.
-				But you can <span class="link" onclick={() => controller.modal_newConversation()}>start a new conversation</span>.
+				But you can <span class="link" role="button" tabIndex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>start a new conversation</span>.
 			</div>
 		}
 
-		var backgroundStyle = ""
+		let backgroundStyle = ""
 
 		if (!isEncrypted) {
 			backgroundStyle = `background: repeating-linear-gradient(135deg,rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.1) 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);`
@@ -50,7 +51,7 @@ export class WidgetMessageCreate {
 			<div class="flex-row flex-justify" style={backgroundStyle}>
 				<div class="flex-grow">
 					{this.drawReply(vnode)}
-					<div role="input" class="flex-grow flex-row flex-align-center">
+					<div role="textbox" class="flex-grow flex-row flex-align-center">
 
 						<textarea
 							id="message-input"
@@ -64,10 +65,10 @@ export class WidgetMessageCreate {
 							onclick={() => controller.modal_sendEmoji()}
 							style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
 
-						<label
+						{/* NOSONAR: typescript:S6853 */} <label
 							for="fileInput"
 							class="button"
-							tabIndex="0"
+							aria-label="Attach a File"
 							style="font-size:16px;"><i class="bi bi-image"></i></label>
 
 					</div>
@@ -92,7 +93,7 @@ export class WidgetMessageCreate {
 
 		return (
 			<div id="reply-panel" oncreate={() => document.getElementById("message-input")}>
-				<div><i class="bi bi-x-circle-fill clickable" tabIndex="0" onclick={() => vnode.attrs.controller.removeReply()}></i></div>
+				<div><i class="bi bi-x-circle-fill clickable" role="button" tabIndex="0" onclick={() => vnode.attrs.controller.removeReply()} onkeypress={synthClick}></i></div>
 				<div class="margin-horizontal-sm bold">Replying To:</div>
 				<div class="flex-grow">{vnode.attrs.inReplyTo.content}</div>
 			</div>
@@ -105,7 +106,6 @@ export class WidgetMessageCreate {
 		if (event.key === "Enter" && !event.shiftKey) {
 			event.preventDefault()
 			this.sendMessage(vnode)
-			return
 		}
 	}
 
@@ -143,7 +143,7 @@ export class WidgetMessageCreate {
 
 		const reader = new FileReader()
 		reader.onload = () => {
-			var base64: string = reader.result as string
+			let base64: string = reader.result as string
 
 			if (reader.result == null) {
 				return

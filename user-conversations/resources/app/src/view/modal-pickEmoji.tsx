@@ -5,6 +5,7 @@ import { type VnodeDOM } from "mithril"
 import { Controller } from "../service/controller"
 import { Modal } from "./modal"
 import { type Emoji, type EmojiGroup } from "../model/emoji"
+import { synthClick } from "./utils"
 
 type PickEmojiVnode = VnodeDOM<PickEmojiAttrs, PickEmojiState>
 
@@ -39,7 +40,7 @@ export class PickEmoji {
 
 	// Focus the search input when the modal opens
 	oncreate(vnode: PickEmojiVnode) {
-		window.requestAnimationFrame(() => {
+		globalThis.requestAnimationFrame(() => {
 			const input = document.getElementById("emoji-search") as HTMLInputElement
 			if (input) {
 				input.focus()
@@ -49,7 +50,7 @@ export class PickEmoji {
 
 	view(vnode: PickEmojiVnode) {
 
-		var emojiGroups = vnode.state.emojiGroups()
+		let emojiGroups = vnode.state.emojiGroups()
 
 		if (!vnode.state.emojiGroups.end()) {
 			return (
@@ -68,7 +69,7 @@ export class PickEmoji {
 			)
 		}
 
-		var filteredGroups: EmojiGroup[]
+		let filteredGroups: EmojiGroup[]
 
 		// IF we hav a search query, then filter emojis accordingly.
 		if (vnode.state.searchQuery) {
@@ -109,23 +110,43 @@ export class PickEmoji {
 					{vnode.state.recentEmojis.length > 0 && (
 						<div class="emoji-group">
 							<div class="emoji-group-title">
-								Recently Used
-								<span class="link margin-left-xs" tabIndex="0" role="button" onclick={() => this.clearRecentEmojis(vnode)}>clear</span>
+								<span>Recently Used </span>
+								<span
+									class="link margin-left-xs"
+									role="button"
+									tabIndex="0"
+									onclick={() => this.clearRecentEmojis(vnode)}
+									onkeyup={synthClick}>clear</span>
 							</div>
 							<div class="emoji-grid">
 								{vnode.state.recentEmojis.map(emoji => (
-									<div class="emoji" title={emoji.name} onclick={() => this.select(vnode, emoji)}>{emoji.emoji}</div>
+									<div
+										key={emoji.emoji}
+										class="emoji"
+										title={emoji.name}
+										role="button"
+										tabIndex="0"
+										onclick={() => this.select(vnode, emoji)}
+										onkeyup={synthClick}>{emoji.emoji}</div>
 								))}
 							</div>
 						</div>
 					)}
 
 					{filteredGroups.map(emojiGroup => (
-						<div class="emoji-group">
+						<div key={emojiGroup.slug} class="emoji-group">
 							<div class="emoji-group-title">{emojiGroup.name}</div>
 							<div class="emoji-grid">
 								{emojiGroup.emojis.map(emoji => (
-									<div class="emoji" title={emoji.name} onclick={() => this.select(vnode, emoji)}>{emoji.emoji}</div>
+									<div
+										key={emoji.emoji}
+										class="emoji"
+										title={emoji.name}
+										role="button"
+										tabIndex="0"
+										onclick={() => this.select(vnode, emoji)}
+										onkeyup={synthClick}
+									>{emoji.emoji}</div>
 								))}
 							</div>
 						</div>
@@ -142,7 +163,7 @@ export class PickEmoji {
 	select(vnode: PickEmojiVnode, emoji: Emoji) {
 
 		// Save emoji to "recently used" list in localStorage
-		var recentEmojis = vnode.state.recentEmojis
+		let recentEmojis = vnode.state.recentEmojis
 
 		// Add the emoji to the beginning of the array, and remove duplicates
 		recentEmojis = [emoji, ...recentEmojis.filter(e => e.emoji !== emoji.emoji)]

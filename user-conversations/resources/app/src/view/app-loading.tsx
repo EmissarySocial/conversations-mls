@@ -21,8 +21,8 @@ export class AppLoading {
 						</div>
 
 						<div class="flex-row flex-align-center padding text-sm">
-							<div role="input" class="flex-grow flex-row flex-align-center">
-								<label class="bi bi-search"></label>
+							<div role="textbox" class="flex-grow flex-row flex-align-center">
+								<label class="bi bi-search">{/* NOSONAR typescript:S6853 */}</label>
 								<input
 									id="idSearch"
 									type="text"
@@ -31,10 +31,11 @@ export class AppLoading {
 									style="border:none; outline:none;"
 								/>
 							</div>
-							<div class="text-lg text-light-gray margin-none clickable" tabindex="0">
+							<div class="text-lg text-light-gray margin-none clickable">
 								<i class="bi bi-filter-circle"></i>
 							</div>
 						</div>
+
 					</div>
 				</div>
 

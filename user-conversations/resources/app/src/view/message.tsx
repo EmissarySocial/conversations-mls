@@ -6,11 +6,13 @@ import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
 import { formatFileSize, formatHTML, isEmoji } from "./utils"
+import { synthClick } from "./utils"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
 type ViewMessageAttrs = {
 	controller: Controller
+	key: string
 	message: Message
 	showDate: string
 	sender?: Stream<Contact>
@@ -27,7 +29,7 @@ export class ViewMessage {
 
 		const controller = vnode.attrs.controller
 		const message = vnode.attrs.message
-		var sender: Contact | undefined
+		let sender: Contact | undefined
 
 		if (vnode.attrs.sender != undefined) {
 			sender = vnode.attrs.sender()
@@ -41,7 +43,7 @@ export class ViewMessage {
 
 				if (isEmoji(message.content)) {
 					return (
-						<div class="message sent">
+						<div key={vnode.attrs.key} class="message sent">
 							<div>
 								<div class="align-center margin-none padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
 								<div class="message-options flex-row flex-align-center">
@@ -57,7 +59,7 @@ export class ViewMessage {
 				}
 
 				return (
-					<div class="message sent">
+					<div key={vnode.attrs.key} class="message sent">
 						<div class="bubble">
 							{this.drawContent(message)}
 							{this.drawReactions(vnode)}
@@ -70,7 +72,7 @@ export class ViewMessage {
 
 				if (isEmoji(message.content)) {
 					return (
-						<div class="message received">
+						<div key={vnode.attrs.key} class="message received">
 
 							<div class="sender-icon"></div>
 
@@ -92,10 +94,10 @@ export class ViewMessage {
 				}
 
 				return (
-					<div class="message received">
+					<div key={vnode.attrs.key} class="message received">
 
 						<div class="sender-icon">
-							{(sender != undefined) && <img src={sender.icon} class="circle width-48" />}
+							{(sender != undefined) && <img src={sender.icon} class="circle width-48" alt="" />}
 						</div>
 
 						<div class="flex-grow">
@@ -116,10 +118,10 @@ export class ViewMessage {
 				const contact = vnode.attrs.controller.getContactStream(message.sender)()
 
 				return (
-					<div class="message status">
+					<div key={vnode.attrs.key} class="message status">
 						<div>
-							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>
-								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
+							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>
+								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" alt="" />
 								{contact.name}
 							</span> {" "}
 							JOINED the conversation at {dayjs(message.createDate).format("h:mm A")}
@@ -135,8 +137,8 @@ export class ViewMessage {
 				return (
 					<div class="message status">
 						<div>
-							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>
-								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" />
+							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>
+								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" alt="" />
 								{contact.name}
 							</span> {" "}
 							left the conversation at {dayjs(message.createDate).format("h:mm A")}
@@ -146,11 +148,10 @@ export class ViewMessage {
 			}
 
 			case "ADD-DEVICE": {
-				const contact = vnode.attrs.controller.getContactStream(message.sender)
 
 				return (
 					<div class="message status">
-						<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)}>{senderName}</span> {" "}
+						<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>{senderName}</span> {" "}
 						ADDED a new device
 					</div>
 				)
@@ -167,9 +168,9 @@ export class ViewMessage {
 		return <>
 			{message.attachments.map(attachment => (
 				attachment.startsWith("data:image") ? (
-					<img src={attachment} class="width-100% rounded" />
+					<><img src={attachment} class="width-100% rounded" alt="" /> {/* NOSONAR: typescript:S6853 */}</>
 				) : (
-					<a href={attachment} class="attachment" target="_blank" rel="noopener noreferrer">
+					<a href={attachment} class="attachment" target="_blank" rel="noopener noreferrer"> {/* NOSONAR: typescript:S6853 */}
 						<i class="bi bi-file-earmark-arrow-down"></i> Download File ({formatFileSize(attachment.length)})
 					</a>
 				)
@@ -196,16 +197,16 @@ export class ViewMessage {
 
 							// READ ONLY: I cannot react to messages sent by myself.
 							if (isSentByMe) {
-								return <button>{content} {reactionCount}</button>
+								return <button key={content}>{content} {reactionCount}</button>
 							}
 
 							// Show my reaction as selected and allow me to undo
 							if (hasReacted) {
-								return <button class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
+								return <button key={content} class="selected" onclick={() => controller.undoReaction(message.id)}>{content} {reactionCount}</button>
 							}
 
 							// Show unselected reactions that I can also join
-							return <button tabIndex="0" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
+							return <button key={content} tabIndex="0" onclick={() => controller.reactToMessage(message.id, content)}>{content} {reactionCount}</button>
 						})}
 					</div>
 				}
@@ -236,7 +237,7 @@ export class ViewMessage {
 		if (vnode.attrs.message.received.length < 5) {
 			return (
 				<span>
-					{vnode.attrs.message.received.map(actorId => <i class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
+					{vnode.attrs.message.received.map(actorId => <i key={actorId} class="bi bi-check-circle" style="margin-right:2px;" title={`Received by ${actorId}`}></i>)}
 					<span class="margin-horizontal-xs">&middot;</span>
 				</span>
 			)
@@ -260,7 +261,10 @@ export class ViewMessage {
 
 		return (
 			<span class="clickable"
-				onclick={() => vnode.attrs.controller.modal_messageHistory(message.id)}>
+				role="button"
+				tabIndex="0"
+				onclick={() => vnode.attrs.controller.modal_messageHistory(message.id)}
+				onkeypress={synthClick}>
 				<span class="nowrap text-underline margin-right-xs"><i class="bi bi-clock-history"></i> Edited</span>
 				<span class="nowrap">{dayjs(message.updateDate).format("hh:mm A")}</span>
 			</span>

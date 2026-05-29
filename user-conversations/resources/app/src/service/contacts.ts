@@ -5,8 +5,8 @@ import Stream from "mithril/stream"
 
 export class Contacts {
 
-	#contacts: Map<string, Contact> // Map of contact ID to Contact object
-	#maxAge: number // Maximum age (in ms) for a contact to be considered "fresh"
+	readonly #contacts: Map<string, Contact> // Map of contact ID to Contact object
+	readonly #maxAge: number // Maximum age (in ms) for a contact to be considered "fresh"
 
 	constructor() {
 		this.#contacts = new Map()
@@ -14,12 +14,12 @@ export class Contacts {
 	}
 
 	// stop clears the in-memory contacts map
-	stop = () => {
+	stop() {
 		this.#contacts.clear()
 	}
 
 	// loadContact retrieves a contact by ID, using the in-memory cache if possible.
-	loadContact = async (id: string): Promise<Contact> => {
+	async loadContact(id: string): Promise<Contact> {
 
 		// If the contact exists in the cache, then return it
 		if (this.#contacts.has(id)) {
@@ -41,10 +41,10 @@ export class Contacts {
 	}
 
 	// getContactStream retrieves a contact by ID from the in-memory map
-	getContactStream = (id: string): Stream<Contact> => {
+	getContactStream(id: string): Stream<Contact> {
 
 		// Create an empty contact
-		var result = Stream(NewContact(id))
+		let result = Stream(NewContact(id))
 
 		// If the contact exists and is fresh, return it as a stream
 		const cachedValue = this.#contacts.get(id)
@@ -72,7 +72,7 @@ export class Contacts {
 	}
 
 	// saveContact adds or updates a contact in the in-memory map
-	saveContact = (contact: Contact) => {
+	saveContact(contact: Contact) {
 		this.#contacts.set(contact.id, contact)
 	}
 }

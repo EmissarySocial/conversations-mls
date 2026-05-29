@@ -37,7 +37,6 @@ import { type EmojiKey } from "./emojikeys"
 import { keyPackageEmojiKey } from "./emojikeys"
 import { CodecMls } from "./codecMls"
 import { CodecPlaintext } from "./codecPlaintext"
-import { Proxy } from "./proxy"
 
 // Other utility functions
 import { cipherSuiteImplementation } from "./cryptography"
@@ -65,9 +64,9 @@ export class Controller {
 	readonly #contacts: IContacts
 	readonly #host: IHost
 	readonly #codecPlaintext: CodecPlaintext
+	readonly #proxy: IProxy
 
 	#actor: Actor
-	#proxy: IProxy
 	#codecMls?: CodecMls
 	#allowPlaintextMessages: boolean
 	#allowEncryptedMessages: boolean
@@ -98,6 +97,7 @@ export class Controller {
 		database: IDatabase,
 		delivery: IDelivery,
 		directory: IDirectory,
+		proxy: IProxy,
 		receiver: IReceiver,
 		host: IHost,
 	) {
@@ -113,7 +113,7 @@ export class Controller {
 		this.#allowPlaintextMessages = false
 		this.#allowEncryptedMessages = false
 		this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId)
-		this.#proxy = new Proxy()
+		this.#proxy = proxy
 
 		// Application State
 		this.groups = []
@@ -128,9 +128,6 @@ export class Controller {
 
 		// Application Configuration
 		this.config = NewConfig() // Empty placeholder until loaded
-
-		// window.setTimeout(() => this.#start(), 1000) // Start the app after a short delay (for testing)
-		this.#start()
 	}
 
 
@@ -140,7 +137,7 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	readonly #start = async () => {
+	readonly start = async () => {
 
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
@@ -179,7 +176,8 @@ export class Controller {
 			return
 		}
 
-		// this.#proxy = new Proxy(this.#actor.proxyUrl())
+		// Update the proxy endpoint with the exact value from the actor
+		this.#proxy.setProxyUrl(this.#actor.proxyUrl())
 
 		// Collect the messages API information
 		const { url, plaintext, ciphertext } = this.#actor.messages()
@@ -219,7 +217,6 @@ export class Controller {
 					this.#delivery,
 					this.#directory,
 					cipherSuite,
-					keyPackage.id,
 					keyPackage.publicKeyPackage,
 					keyPackage.privateKeyPackage,
 					this.#actor,
@@ -277,7 +274,7 @@ export class Controller {
 		await this.#database.saveConfig(this.config)
 
 		// Call start again.  Since we've set config.ready to true, this will skip the welcome screen and initialize the app.
-		await this.#start()
+		await this.start()
 	}
 
 	// saveConfiguration is called when the user submits their options from the initial welcome screen
@@ -307,7 +304,7 @@ export class Controller {
 			globalThis.sessionStorage.setItem("key", await encodeKeyToBase64(this.#encryptionKey))
 
 			// If you've made it this far, then the passcode is valid and you can proceed with the app
-			await this.#start()
+			await this.start()
 			return true
 
 		} catch (error) {

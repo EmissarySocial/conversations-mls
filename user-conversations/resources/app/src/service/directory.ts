@@ -1,8 +1,5 @@
 // ts-mls TYpes
 import { type KeyPackage } from "ts-mls"
-import { decode } from "ts-mls"
-import { mlsMessageDecoder } from "ts-mls"
-import { wireformats } from "ts-mls"
 
 import * as vocab from "../as/vocab"
 import { Document } from "../as/document"
@@ -15,19 +12,22 @@ import { Actor } from "../as/actor"
 import { newId } from "./utils"
 import { decodeKeyPackage } from "./cryptography"
 import { keyPackageIsExpired } from "./cryptography"
+import type { IProxy } from "./interfaces"
 
 export class Directory {
 
+	readonly #proxy: IProxy
 	#actorId: string // ID of the local actor 
 	#outboxUrl: string // Outbox URL of the local actor
 	#generatorId: string // ID of the generator
 	#generatorName: string // Name of the generator
 
-	constructor(actorId: string) {
+	constructor(proxy: IProxy, actorId: string) {
 		this.#actorId = actorId
 		this.#outboxUrl = ""
 		this.#generatorId = ""
 		this.#generatorName = ""
+		this.#proxy = proxy
 	}
 
 	stop = () => {
@@ -50,12 +50,12 @@ export class Directory {
 	// getKeyPackage loads the KeyPackages published by a single actor
 	getKeyPackages = async (actorIds: string[]): Promise<KeyPackage[]> => {
 
-		var result: KeyPackage[] = []
+		let result: KeyPackage[] = []
 
 		for (const actorId of actorIds) {
 
 			// Retrieve all KeyPackage documents for this actor
-			var documents: AsyncGenerator<Document>
+			let documents: AsyncGenerator<Document>
 
 			try {
 				documents = this.listAllKeyPackages(actorId)
@@ -88,7 +88,6 @@ export class Directory {
 		// Success, or what's left of it.
 		return result
 	}
-
 
 	// createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
 	// It returns the ID of the newly created KeyPackage or throws an error on failure.
@@ -131,7 +130,7 @@ export class Directory {
 
 	// listAllKeyPackages is an async generator that yields all KeyPackage documents for a specific actor.
 	async* listAllKeyPackages(actorId: string): AsyncGenerator<Document> {
-		const actor = await new Actor().fromURL(actorId)
+		const actor = await this.#proxy.Actor(actorId)
 		const collection = await actor.mlsKeyPackages()
 		const documents = collection.rangeDocuments()
 
@@ -147,7 +146,7 @@ export class Directory {
 
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#createObject = async <T>(object: T): Promise<[string, string]> => {
+	readonly #createObject = async <T>(object: T): Promise<[string, string]> => {
 
 		const activityId = newId()
 		const result = await this.#send(this.#outboxUrl, {
@@ -169,7 +168,7 @@ export class Directory {
 
 	// updateObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#updateObject = async <T>(object: T): Promise<string> => {
+	readonly #updateObject = async <T>(object: T): Promise<string> => {
 		return await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeUpdate,
@@ -182,7 +181,7 @@ export class Directory {
 
 	// deleteObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	#deleteObject = async <T>(object: T): Promise<void> => {
+	readonly #deleteObject = async <T>(object: T): Promise<void> => {
 		await this.#send(this.#outboxUrl, {
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeDelete,
@@ -197,7 +196,7 @@ export class Directory {
 	// returns the location of the affected Object.
 	// It throws an error if the fetch fails or if the response 
 	// does not provide a Location header.
-	#send = async <T>(outbox: string, activity: T): Promise<string> => {
+	readonly #send = async <T>(outbox: string, activity: T): Promise<string> => {
 
 		// Send the Activity to the server
 		const response = await fetch(outbox, {

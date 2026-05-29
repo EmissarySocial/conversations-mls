@@ -23,8 +23,8 @@ export class Modal {
 
 	view(vnode: ModalVnode) {
 		return (
-			<div id="modal" onkeydown={(event: KeyboardEvent) => this.onkeydown(event, vnode)}>
-				<div id="modal-underlay" onclick={vnode.attrs.close}></div>
+			<div id="modal" onkeydown={(event: KeyboardEvent) => this.onkeydown(event, vnode)}> {/* NOSONAR: This is for visible pop-ups only. Keyboard accessibility is handled separately. */}
+				<div id="modal-underlay" onclick={vnode.attrs.close}>{/* NOSONAR */}</div>
 				<div id="modal-window">{vnode.children}</div>
 			</div>
 		)
@@ -32,6 +32,7 @@ export class Modal {
 
 	onkeydown(event: KeyboardEvent, vnode: ModalVnode) {
 		switch (keyCode(event)) {
+
 			// Trap tab focus
 			case "Tab": {
 				const [firstElement, lastElement] = getFocusElements(vnode.dom)
@@ -63,6 +64,4 @@ export class Modal {
 			}
 		}
 	}
-
-	// TODO: Need handlers for TAB, SHIFT+TAB, ESCAPE
 }

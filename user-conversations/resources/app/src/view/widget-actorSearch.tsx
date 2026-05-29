@@ -9,6 +9,7 @@ type ActorSearchVnode = VnodeDOM<ActorSearchAttrs, ActorSearchState>
 
 interface ActorSearchAttrs {
 	controller: Controller
+	id: string
 	name: string
 	value: Actor[]
 	endpoint: string
@@ -43,17 +44,17 @@ export class ActorSearch {
 					{vnode.attrs.value.map((actor, index) => {
 						const isSecure = (vnode.state.keyPackages[actor.id()] != undefined)
 						return (
-							<span class={isSecure ? "blue tag" : "green tag"}>
+							<span key={actor.id()} class={isSecure ? "blue tag" : "green tag"}>
 								<span class="flex-row flex-align-center">
-									<img src={actor.icon()} class="circle" style="height:1em;" />
+									<img src={actor.icon()} alt={actor.name()} class="circle" style="height:1em;" />
 									<span class="bold">{actor.name()}</span>
-									<i class="margin-left-sm clickable bi bi-x-lg" onclick={() => this.removeActor(vnode, index)}></i>
+									<i class="margin-left-sm clickable bi bi-x-lg" role="button" tabindex="0" onclick={() => this.removeActor(vnode, index)} onkeydown={(event: KeyboardEvent) => { if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index) }}></i>
 								</span>
 							</span>
 						)
 					})}
 					<input
-						id="idActorSearch"
+						id={vnode.attrs.id}
 						name={vnode.attrs.name}
 						class="padding-none"
 						style="min-width:200px;"
@@ -75,21 +76,21 @@ export class ActorSearch {
 					<div class="options" style={`position:${vnode.attrs.position || "absolute"};`}>
 						<div role="menu" class="menu">
 							{vnode.state.actors.map((actor, index) => {
-								return (
-									<div
-										role="menuitem"
-										class="flex-row padding-xs"
-										onmousedown={() => this.selectActor(vnode, index)}
-										aria-selected={index == vnode.state.highlightedOption ? "true" : null}>
-										<div class="width-32">
-											<img src={actor.icon()} class="width-32 circle" />
-										</div>
-										<div>
-											<div>{actor.name()}</div>
-											<div class="margin-none text-xs text-light-gray">{actor.computedUsername()}</div>
-										</div>
+								return <div
+									key={actor.id()}
+									role="menuitem"
+									tabIndex="0"
+									class="flex-row padding-xs"
+									onmousedown={() => this.selectActor(vnode, index)}
+									aria-selected={index == vnode.state.highlightedOption ? "true" : null}>
+									<div class="width-32">
+										<img src={actor.icon()} alt={actor.name()} class="width-32 circle" />
 									</div>
-								)
+									<div>
+										<div>{actor.name()}</div>
+										<div class="margin-none text-xs text-light-gray">{actor.computedUsername()}</div>
+									</div>
+								</div>
 							})}
 						</div>
 					</div>
@@ -102,13 +103,15 @@ export class ActorSearch {
 
 		switch (keyCode(event)) {
 			case "Backspace":
-				const target = event.target as HTMLInputElement
+				{
+					const target = event.target as HTMLInputElement
 
-				if (target?.selectionStart == 0) {
-					this.removeActor(vnode, vnode.attrs.value.length - 1)
-					event.stopPropagation()
+					if (target?.selectionStart == 0) {
+						this.removeActor(vnode, vnode.attrs.value.length - 1)
+						event.stopPropagation()
+					}
+					return
 				}
-				return
 
 			case "ArrowDown":
 				vnode.state.highlightedOption = Math.min(vnode.state.highlightedOption + 1, vnode.state.actors.length - 1)
@@ -197,7 +200,7 @@ export class ActorSearch {
 	async loadKeyPackages(vnode: ActorSearchVnode, actor: Actor) {
 
 		// If encrypted messages are disallowed, then NEVER use MLS
-		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+		if (!vnode.attrs.controller.useEncryptedMessages()) {
 			return
 		}
 
@@ -224,7 +227,7 @@ export class ActorSearch {
 	allActorsHaveKeyPackages(vnode: ActorSearchVnode): boolean {
 
 		// If encrypted messages are disallowed, then NEVER use MLS
-		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+		if (!vnode.attrs.controller.useEncryptedMessages()) {
 			return false
 		}
 
@@ -241,7 +244,7 @@ export class ActorSearch {
 	isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
 
 		// If encrypted messages are disallowed, then NEVER use MLS
-		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+		if (!vnode.attrs.controller.useEncryptedMessages()) {
 			return false
 		}
 

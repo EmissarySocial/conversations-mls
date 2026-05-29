@@ -1,11 +1,9 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
-import { type APActor } from "../model/ap-actor"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"
-import { Collection } from "../as/collection"
 
 type NewConversationVnode = Vnode<NewConversationAttrs, NewConversationState>
 
@@ -43,8 +41,9 @@ export class NewConversation {
 						</div>
 						<div class="layout-elements">
 							<div class="layout-element">
-								<label for="">Participants</label>
+								<label for="actorSearch">Participants</label> {/* NOSONAR: "for" works fine in Mithril */}
 								<ActorSearch
+									id="actorSearch"
 									controller={vnode.attrs.controller}
 									name="actorIds"
 									value={vnode.state.actors}
@@ -52,13 +51,18 @@ export class NewConversation {
 									onselect={(actors: Actor[], canBeEncrypted: boolean) => this.selectActors(vnode, actors, canBeEncrypted)}></ActorSearch>
 							</div>
 							<div class="layout-element">
-								<label>Message</label>
-								<textarea rows="8" onchange={(event: Event) => this.setPlaintext(vnode, event)}></textarea>
+								<label for="message">Message</label> {/* NOSONAR: "for" works fine in Mithril */}
+								<textarea id="message" rows="8" onchange={(event: Event) => this.setPlaintext(vnode, event)}></textarea>
 								{
 									(vnode.state.canBeEncrypted &&
 										<label for="wantEncryption">
-											<input id="wantEncryption" type="checkbox" checked={vnode.state.wantEncryption} onchange={(event: Event) => this.setWantEncryption(vnode, event)} />
-											Use Encrypted Messaging
+											<input
+												id="wantEncryption"
+												type="checkbox"
+												checked={vnode.state.wantEncryption}
+												onchange={(event: Event) => this.setWantEncryption(vnode, event)}>
+											</input>
+											<span>Use Encrypted Messaging</span>
 										</label>
 									)
 								}
@@ -82,7 +86,7 @@ export class NewConversation {
 			return <></>
 		}
 
-		if (vnode.attrs.controller.useEncryptedMessages() == false) {
+		if (!vnode.attrs.controller.useEncryptedMessages()) {
 			return <>Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.</>
 		}
 
@@ -180,7 +184,7 @@ export class NewConversation {
 		event.stopPropagation()
 
 		// Create a new group and send an encrypted message
-		const group = await controller.createGroup(participants, vnode.state.content, this.isEncrypted(vnode))
+		await controller.createGroup(participants, vnode.state.content, this.isEncrypted(vnode))
 		return this.close(vnode)
 	}
 
