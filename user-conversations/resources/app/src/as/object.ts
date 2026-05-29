@@ -46,7 +46,12 @@ export class Object {
 		// Send a request to the proxy server
 		const response = await fetch(this.#proxyUrl, {
 			method: "POST",
-			body: JSON.stringify({ id: url })
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: new URLSearchParams({
+				"id": url
+			})
 		})
 
 		if (!response.ok) {

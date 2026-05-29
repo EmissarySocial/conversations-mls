@@ -18265,7 +18265,12 @@
       this.#proxyUrl = proxyUrl;
       const response = await fetch(this.#proxyUrl, {
         method: "POST",
-        body: JSON.stringify({ id: url })
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          "id": url
+        })
       });
       if (!response.ok) {
         throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`);
