@@ -18647,19 +18647,24 @@
     };
     ///////////////////////////////////
     // MLS-specific properties
+    ciphersuite = () => {
+      return this.getString("mls", "ciphersuite");
+    };
     encoding = () => {
       return this.getString("mls", "encoding");
     };
     // isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
     isMLSMessage = () => {
-      if (this.mediaType() == MediaTypeMLSMessage) {
-        if (this.encoding() == EncodingTypeBase64) {
-          if (this.content() != "") {
-            return true;
-          }
-        }
+      if (this.mediaType() != MediaTypeMLSMessage) {
+        return false;
       }
-      return false;
+      if (this.encoding() != EncodingTypeBase64) {
+        return false;
+      }
+      if (this.content() == "") {
+        return false;
+      }
+      return true;
     };
     mediaType = () => {
       return this.getString("mls", "mediaType");
@@ -22896,6 +22901,36 @@
     (t2.configurable || t2.enumerable || t2.writable) && (t2.configurable = false, t2.enumerable = false, t2.writable = false, Object.defineProperty(e2, "prototype", t2));
   }
 
+  // src/service/algorithms.ts
+  var algorithms = [
+    {
+      "rank": 6,
+      "id": "0xf00e",
+      "name": "MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519",
+      "kem": "X-Wing",
+      "aead": "CHACHA20POLY1305",
+      "kdf": "HKDF-SHA512",
+      "hash": "SHA-512",
+      "signature": "Ed25519",
+      "security_level": 256,
+      "post_quantum": false,
+      "deps": ["@hpke/ml-kem", "@hpke/chacha20poly1305", "@noble/curves"]
+    },
+    {
+      "rank": 17,
+      "id": "1",
+      "name": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+      "kem": "DHKEM-X25519-HKDF-SHA256",
+      "aead": "AES128GCM",
+      "kdf": "HKDF-SHA256",
+      "hash": "SHA-256",
+      "signature": "Ed25519",
+      "security_level": 128,
+      "post_quantum": false,
+      "deps": []
+    }
+  ];
+
   // src/service/cryptography.ts
   async function generateAESKey() {
     return await crypto.subtle.generateKey(
@@ -22981,6 +23016,26 @@
       cipherSuite,
       lifetime
     });
+  }
+  function keyPackageIsSupported(document2) {
+    if (!document2.types().includes(ObjectTypeMlsKeyPackage)) {
+      console.warn("Document must have type 'KeyPackage':", document2.toObject());
+      return false;
+    }
+    if (document2.mediaType() != "message/mls") {
+      console.warn("KeyPackage must use mediaType 'message/mls': ", document2.toObject());
+      return false;
+    }
+    if (document2.encoding() != "base64") {
+      console.warn("KeyPackage must use encoding 'base64': ", document2.toObject());
+      return false;
+    }
+    const ciphersuite = document2.ciphersuite();
+    if (!algorithms.some((algorithm) => algorithm.name === ciphersuite)) {
+      console.warn("KeyPackage must use supported ciphersuite: ", ciphersuite);
+      return false;
+    }
+    return true;
   }
   function keyPackageIsExpired(keyPackage) {
     if (keyPackage == null) {
@@ -23103,6 +23158,9 @@
         }
         for await (const document2 of documents) {
           try {
+            if (!keyPackageIsSupported(document2)) {
+              continue;
+            }
             const keyPackage = decodeKeyPackage(document2);
             if (keyPackageIsExpired(keyPackage)) {
               continue;
