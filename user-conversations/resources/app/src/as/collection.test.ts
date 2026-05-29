@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { Collection, loadCollection, rangeActivities } from "./collection"
 import { loadActivity } from "./activity"
 import { loadDocument } from "./document"
@@ -414,7 +414,7 @@ describe("rangeActivities()", () => {
 		}
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(data)))
 
-		let results: any[] = []
+		let results: any[] = [] // NOSONAR
 		for await (const a of rangeActivities("https://example.com/outbox")) {
 			results.push(a)
 		}
@@ -433,7 +433,7 @@ describe("rangeActivities()", () => {
 			// drain
 		}
 
-		const calledUrl = fetchMock.mock.calls[0][0]
+		const calledUrl = fetchMock?.mock?.calls[0]![0]
 		expect(calledUrl).toBe("https://example.com/outbox?after=cursor-xyz")
 
 		vi.unstubAllGlobals()
@@ -449,7 +449,7 @@ describe("rangeActivities()", () => {
 			// drain
 		}
 
-		const calledUrl = fetchMock.mock.calls[0][0]
+		const calledUrl = fetchMock?.mock?.calls[0]![0]
 		expect(calledUrl).toBe("https://example.com/outbox?page=1&after=cursor-xyz")
 
 		vi.unstubAllGlobals()
@@ -465,7 +465,7 @@ describe("rangeActivities()", () => {
 			// drain
 		}
 
-		const calledUrl = fetchMock.mock.calls[0][0]
+		const calledUrl = fetchMock?.mock?.calls[0]![0]
 		expect(calledUrl).toBe("https://example.com/outbox?after=hello%20world%2Fcursor")
 
 		vi.unstubAllGlobals()
@@ -481,7 +481,7 @@ describe("rangeActivities()", () => {
 			// drain
 		}
 
-		const calledUrl = fetchMock.mock.calls[0][0]
+		const calledUrl = fetchMock?.mock?.calls[0]![0]
 		expect(calledUrl).toBe("https://example.com/outbox")
 		expect(calledUrl).not.toContain("after=")
 
@@ -571,7 +571,7 @@ describe("rangeActivities()", () => {
 		}
 
 		expect(fetchMock).toHaveBeenCalledTimes(2)
-		const secondUrl = fetchMock.mock.calls[1][0]
+		const secondUrl = fetchMock?.mock?.calls[1]![0]
 		expect(secondUrl).toBe("https://example.com/outbox?page=1")
 		expect(results).toHaveLength(1)
 

@@ -1,8 +1,7 @@
-// KeyPackage is the ActivityPub representation of a KeyPackage
+import type { KeyPackage } from "ts-mls"
 
 import { bytesToBase64 } from "ts-mls"
 import { encode } from "ts-mls"
-import type { KeyPackage } from "ts-mls"
 import { mlsMessageEncoder } from "ts-mls"
 import { protocolVersions } from "ts-mls"
 import { wireformats } from "ts-mls"
