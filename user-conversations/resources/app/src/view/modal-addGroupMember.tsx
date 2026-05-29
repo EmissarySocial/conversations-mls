@@ -4,7 +4,7 @@ import { Controller } from "../service/controller"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"
-import { groupIsEncrypted, type Group } from "../model/group"
+import { groupIsEncrypted } from "../model/group"
 
 type AddGroupMemberVnode = Vnode<AddGroupMemberAttrs, AddGroupMemberState>
 
@@ -46,7 +46,7 @@ export class AddGroupMember {
 
 						<div class="layout-elements">
 							<div class="layout-element">
-								<label for="actorIds">Enter Username(s)</label>
+								<label for="actorIds">Enter Username(s)</label> {/* NOSONAR: "for" works fine in Mithril */}
 								<ActorSearch
 									controller={vnode.attrs.controller}
 									name="actorIds"
@@ -68,7 +68,7 @@ export class AddGroupMember {
 
 		const group = vnode.attrs.controller.groupStream()
 		const isEncrypted = groupIsEncrypted(group)
-		var disabled = (vnode.state.actors.length == 0)
+		let disabled = (vnode.state.actors.length == 0)
 
 		if (isEncrypted) {
 
@@ -80,7 +80,7 @@ export class AddGroupMember {
 				<div class="margin-top">
 					<button type="submit" class="primary" tabIndex="0" disabled={disabled}>
 						<i class="bi bi-lock-fill"></i>
-						Add People (Encrypted)
+						<span>Add People (Encrypted)</span>
 					</button>
 					<button onclick={vnode.attrs.close} tabIndex="0">
 						Close
