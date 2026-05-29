@@ -37,11 +37,14 @@ export function toInteger(value: any): number {
 		case "number":
 			return Math.floor(value)
 
-		case "string":
-			const parsed = parseInt(value)
-			if (!isNaN(parsed)) {
+		case "string": {
+			const parsed = Number.parseInt(value)
+			if (!Number.isNaN(parsed)) {
 				return parsed
 			}
+			return 0
+		}
+
 		case "object":
 
 			if (Array.isArray(value)) {

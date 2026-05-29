@@ -15,27 +15,7 @@ export function toString(value: any): string {
 			return value.toString()
 
 		case "object":
-			if (Array.isArray(value)) {
-				if (value.length == 0) {
-					return ""
-				}
-
-				return toString(value[0])
-			}
-
-			if (value instanceof Object) {
-				if (typeof value.id === "string") {
-					return value.id
-				}
-
-				if (typeof value.url === "string") {
-					return value.url
-				}
-
-				if (typeof value.href === "string") {
-					return value.href
-				}
-			}
+			return toString_Object(value)
 
 		case "string":
 			return value
@@ -45,6 +25,33 @@ export function toString(value: any): string {
 	}
 
 	return ""
+}
+
+function toString_Object(value: any): string {
+
+	if (Array.isArray(value)) {
+		if (value.length == 0) {
+			return ""
+		}
+
+		return toString(value[0])
+	}
+
+	if (value instanceof Object) {
+		if (typeof value.id === "string") {
+			return value.id
+		}
+
+		if (typeof value.url === "string") {
+			return value.url
+		}
+
+		if (typeof value.href === "string") {
+			return value.href
+		}
+	}
+	return ""
+
 }
 
 export function isString(value: any): value is string {

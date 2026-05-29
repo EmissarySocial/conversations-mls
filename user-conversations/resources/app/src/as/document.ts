@@ -60,6 +60,7 @@ export class Document extends Object {
 			const value = this.getString("as", vocab.PropertyPublished)
 			return Temporal.Instant.from(value)
 		} catch (error) {
+			console.warn("Unable to parse published date: " + error)
 			return Temporal.Instant.from("1970-01-01T00:00:00Z")
 		}
 	}
@@ -71,7 +72,7 @@ export class Document extends Object {
 
 	// to returns the value of the "to" property
 	to = async () => {
-		const result = await this.getArray("as", vocab.PropertyTo)
+		const result = this.getArray("as", vocab.PropertyTo)
 		return result.map(async (actor: any) => await loadActor(actor))
 	}
 

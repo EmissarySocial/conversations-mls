@@ -16,7 +16,7 @@ export class Collection extends Object {
 
 	// items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
 	items = () => {
-		var result = []
+		let result = []
 
 		switch (this.type()) {
 			case "Collection":
@@ -96,7 +96,7 @@ async function* rangeUrl(url: string, after: string = "", options: RequestInit =
 	}
 
 	// Fetch the collection
-	var collection: Collection
+	let collection: Collection
 	try {
 		collection = await new Collection().fromURL(url, options)
 	} catch (error) {
@@ -119,17 +119,17 @@ async function* range(collection: Collection, options: RequestInit = {}): AsyncG
 	// If items are embedded directly in the page, then just return those
 	const items = collection.items()
 	if (items.length > 0) {
-		for await (const item of items) {
+		for (const item of items) {
 			yield item
 		}
 		return
 	}
 
 	// Iterate on CollectionPages, starting with the "first" page
-	var pageUrl = collection.first() || collection.next()
+	let pageUrl = collection.first() || collection.next()
 
 	while (pageUrl) {
-		var page: Collection
+		let page: Collection
 
 		try {
 			page = await new Collection().fromURL(pageUrl, options)
@@ -138,7 +138,7 @@ async function* range(collection: Collection, options: RequestInit = {}): AsyncG
 			return
 		}
 
-		for await (const item of page.items()) {
+		for (const item of page.items()) {
 			yield item
 		}
 

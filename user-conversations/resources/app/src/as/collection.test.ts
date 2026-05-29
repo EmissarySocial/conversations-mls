@@ -414,7 +414,7 @@ describe("rangeActivities()", () => {
 		}
 		vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockResponse(data)))
 
-		const results: any[] = []
+		let results: any[] = []
 		for await (const a of rangeActivities("https://example.com/outbox")) {
 			results.push(a)
 		}
