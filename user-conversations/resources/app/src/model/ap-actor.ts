@@ -9,6 +9,5 @@ export type APActor = {
 	icon: string
 	inbox: string
 	outbox: string
-	"keyPackages": string
 	"messages": string
 }
