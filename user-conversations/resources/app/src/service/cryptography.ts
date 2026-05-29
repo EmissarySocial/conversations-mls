@@ -17,6 +17,7 @@ import { wireformats } from "ts-mls"
 
 import * as vocab from "../as/vocab"
 import { Document } from "../as/document"
+import { algorithms } from "./algorithms"
 
 
 /******************************************
@@ -127,6 +128,37 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 		cipherSuite: cipherSuite,
 		lifetime: lifetime,
 	})
+}
+
+export function keyPackageIsSupported(document: Document): boolean {
+
+	// RULE: Document MUST have type "KeyPackage"
+	if (!document.types().includes(vocab.ObjectTypeMlsKeyPackage)) {
+		console.warn("Document must have type 'KeyPackage':", document.toObject())
+		return false
+	}
+
+	// RULE: Document MUST have mediaType "message/mls"
+	if (document.mediaType() != "message/mls") {
+		console.warn("KeyPackage must use mediaType 'message/mls': ", document.toObject())
+		return false
+	}
+
+	// RULE: Document MUST have encoding "base64"
+	if (document.encoding() != "base64") {
+		console.warn("KeyPackage must use encoding 'base64': ", document.toObject())
+		return false
+	}
+
+	// RULE: Document MUST use a supported ciphersuite
+	const ciphersuite = document.ciphersuite()
+
+	if (!algorithms.some(algorithm => algorithm.name === ciphersuite)) {
+		console.warn("KeyPackage must use supported ciphersuite: ", ciphersuite)
+		return false
+	}
+
+	return true
 }
 
 // keyPackageIsExpired returns TRUE if the provided KeyPackage is expired (not valid, not before current time, etc.)

@@ -79,21 +79,30 @@ export class Document extends Object {
 	///////////////////////////////////
 	// MLS-specific properties
 
+	ciphersuite = () => {
+		return this.getString("mls", "ciphersuite")
+	}
+
 	encoding = () => {
 		return this.getString("mls", "encoding")
 	}
 
 	// isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
 	isMLSMessage = () => {
-		if (this.mediaType() == vocab.MediaTypeMLSMessage) {
-			if (this.encoding() == vocab.EncodingTypeBase64) {
-				if (this.content() != "") {
-					return true
-				}
-			}
+
+		if (this.mediaType() != vocab.MediaTypeMLSMessage) {
+			return false
 		}
 
-		return false
+		if (this.encoding() != vocab.EncodingTypeBase64) {
+			return false
+		}
+
+		if (this.content() == "") {
+			return false
+		}
+
+		return true
 	}
 
 	mediaType = () => {

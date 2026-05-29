@@ -12,6 +12,7 @@ import { Actor } from "../as/actor"
 import { newId } from "./utils"
 import { decodeKeyPackage } from "./cryptography"
 import { keyPackageIsExpired } from "./cryptography"
+import { keyPackageIsSupported } from "./cryptography"
 import type { IProxy } from "./interfaces"
 
 export class Directory {
@@ -68,6 +69,11 @@ export class Directory {
 			for await (const document of documents) {
 
 				try {
+
+					// RULE: Do not parse KeyPackages if we do not recognize the format
+					if (!keyPackageIsSupported(document)) {
+						continue
+					}
 
 					// Decode the ActivityStreams document as a KeyPackage
 					const keyPackage = decodeKeyPackage(document)
