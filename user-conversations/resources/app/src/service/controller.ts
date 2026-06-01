@@ -220,7 +220,6 @@ export class Controller {
 					keyPackage.publicKeyPackage,
 					keyPackage.privateKeyPackage,
 					this.#actor,
-					this.config.generatorId,
 				)
 
 				// Calculate EmojiKey
@@ -234,7 +233,7 @@ export class Controller {
 		}
 
 		// Start the realtime message receiver
-		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage)
+		this.#receiver.start(this.receiveActivity, this.lastMessage)
 
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {
@@ -679,6 +678,7 @@ export class Controller {
 			throw new Error("Server does not support sending of encrypted messages")
 		}
 
+		// Look for KeyPackages for this current actor
 		return this.#directory.getKeyPackages([actorId])
 	}
 
@@ -1573,9 +1573,6 @@ export class Controller {
 
 	// sendActivity sends an activity to the Actor's outbox
 	readonly #sendActivity = async (group: Group, activity: Activity) => {
-
-		// Apply the "instrument" property to the activity to identify that it came from this client.
-		activity.set(vocab.PropertyInstrument, this.config.generatorId)
 
 		// Find the codec for this group (plaintext or MLS)
 		const codec = this.#getCodecForGroup(group)

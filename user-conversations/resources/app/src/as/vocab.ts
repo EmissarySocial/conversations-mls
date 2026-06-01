@@ -78,8 +78,6 @@ export const PropertyId = "id"
 
 export const PropertyInReplyTo = "inReplyTo"
 
-export const PropertyInstrument = "instrument"
-
 export const PropertyMlsKeyPackages = "keyPackages"
 
 export const PropertyMlsMessages = "messages"

@@ -61,7 +61,6 @@ export class CodecMls {
 	readonly #delivery: IDelivery
 	readonly #directory: IDirectory
 	readonly #cipherSuite: CiphersuiteImpl
-	readonly #generatorId: string
 
 	#publicKeyPackage: KeyPackage
 	#privateKeyPackage: PrivateKeyPackage
@@ -77,7 +76,6 @@ export class CodecMls {
 		publicKeyPackage: KeyPackage,
 		privateKeyPackage: PrivateKeyPackage,
 		actor: Actor,
-		generatorId: string,
 	) {
 		this.#controller = controller
 		this.#database = database
@@ -86,7 +84,6 @@ export class CodecMls {
 		this.#cipherSuite = cipherSuite
 
 		this.#actor = actor
-		this.#generatorId = generatorId
 		this.#publicKeyPackage = publicKeyPackage
 		this.#privateKeyPackage = privateKeyPackage
 	}
@@ -213,10 +210,12 @@ export class CodecMls {
 		// Zero out the keys used to encrypt the commit message
 		commitResult.consumed.forEach(zeroOutUint8Array)
 
+		/* DO NOT SAVE GROUP. THIS WILL BE DONE WHEN WE RECEIVE THE MESSAGE REFLECTED BY THE SERVER
 		// Update the group with new state and new list of members
 		group.clientState = commitResult.newState
 		group.members = this.getGroupMembers(group)
 		await this.#database.saveGroup(group)
+		*/
 
 		// Send welcome to new members
 		if (commitResult.welcome != undefined) {
@@ -675,7 +674,6 @@ export class CodecMls {
 			type: vocab.ActivityTypeCreate,
 			actor: this.#actor.id(),
 			to: recipients,
-			instrument: this.#generatorId,
 			object: {
 				type: type,
 				attributedTo: this.#actor.id(),
