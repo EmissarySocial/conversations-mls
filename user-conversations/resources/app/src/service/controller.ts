@@ -220,6 +220,7 @@ export class Controller {
 					keyPackage.publicKeyPackage,
 					keyPackage.privateKeyPackage,
 					this.#actor,
+					this.config.generatorId,
 				)
 
 				// Calculate EmojiKey
@@ -233,7 +234,7 @@ export class Controller {
 		}
 
 		// Start the realtime message receiver
-		this.#receiver.start(this.receiveActivity, this.lastMessage)
+		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage)
 
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {
@@ -678,7 +679,6 @@ export class Controller {
 			throw new Error("Server does not support sending of encrypted messages")
 		}
 
-		// Look for KeyPackages for this current actor
 		return this.#directory.getKeyPackages([actorId])
 	}
 
@@ -907,7 +907,7 @@ export class Controller {
 
 		// Specific logic for encrypted/unencrypted groups
 		const codec = this.#getCodecForGroup(group)
-		codec.addGroupMembers(group, actorIds)
+		await codec.addGroupMembers(group, actorIds)
 
 		// Re-calculate the default name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -928,7 +928,7 @@ export class Controller {
 
 		// Specific logic for encrypted/unencrypted groups
 		const codec = this.#getCodecForGroup(group)
-		codec.removeGroupMember(group, actorId)
+		await codec.removeGroupMember(group, actorId)
 
 		// Recalculate the default group name
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -972,6 +972,8 @@ export class Controller {
 	// sendMessage sends a message to the specified group
 	sendMessage = async (content: string) => {
 
+		console.log("sendMessage called with content:", content)
+
 		// Get the currently selected group
 		const group = this.groupStream()
 
@@ -1008,8 +1010,10 @@ export class Controller {
 			object: messageToActivityStream(group, message),
 		})
 
-		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity)
+		console.log("Constructed activity:", activity.toObject())
+
+		// Send the activity through the delivery service
+		await this.#sendActivity(group, activity)
 	}
 
 	// sendFile sends a base64-encoded file to the specified group
@@ -1573,6 +1577,9 @@ export class Controller {
 
 	// sendActivity sends an activity to the Actor's outbox
 	readonly #sendActivity = async (group: Group, activity: Activity) => {
+
+		// Apply the "instrument" property to the activity to identify that it came from this client.
+		activity.set(vocab.PropertyInstrument, this.config.generatorId)
 
 		// Find the codec for this group (plaintext or MLS)
 		const codec = this.#getCodecForGroup(group)
