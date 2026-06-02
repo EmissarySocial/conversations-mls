@@ -40,7 +40,7 @@ async function startup() {
 	const contacts = new Contacts()
 	const database = new Database(host, indexedDB)
 	const delivery = new Delivery()
-	const directory = new Directory(proxy, actorId)
+	const directory = new Directory(delivery, proxy, actorId)
 	const receiver = new Receiver()
 
 	// Build the controller

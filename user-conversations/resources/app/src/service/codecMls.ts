@@ -343,6 +343,7 @@ export class CodecMls {
 	// null is returned.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
+		// Parse the message content
 		const message = object.content()
 		const uintArray = base64ToUint8Array(message)
 		const mlsMessage = decode(mlsMessageDecoder, uintArray)!

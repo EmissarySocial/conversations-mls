@@ -1,5 +1,5 @@
 import * as vocab from "../as/vocab"
-import { type Activity } from "../as/activity"
+import { Activity } from "../as/activity"
 import { type Document } from "../as/document"
 import { type Group } from "../model/group"
 import { NewGroup } from "../model/group"
@@ -18,7 +18,26 @@ export class CodecPlaintext {
 	}
 
 	async createGroup(): Promise<Group> {
-		return NewGroup("PLAINTEXT")
+
+		// Activity to create a new group on the server
+		const createGroupActivity = new Activity({
+			"@context": "https://www.w3.org/ns/activitystreams",
+			type: vocab.ActivityTypeCreate,
+			actor: this.#actorId,
+			to: [this.#actorId],
+			object: {
+				type: vocab.CoreTypeOrderedCollection,
+				attributedTo: this.#actorId,
+				to: [this.#actorId],
+				name: "Conversation",
+			}
+		})
+
+		// Send the activity and receive the group's ID
+		const groupId = await this.#delivery.sendActivity(createGroupActivity)
+
+		// Create a new plaintext group
+		return this.#createGroup(groupId)
 	}
 
 	async getGroup(groupId: string): Promise<Group> {
@@ -34,12 +53,8 @@ export class CodecPlaintext {
 			return group
 		}
 
-		// It's OK for the PLAINTEXT codec to create new groups
-		group = NewGroup("PLAINTEXT")
-		group.id = groupId
-		group.members = [this.#actorId]
-		await this.#database.saveGroup(group)
-		return group
+		// Otherwise, create a new plaintext group
+		return this.#createGroup(groupId)
 	}
 
 	getGroupMembers(group: Group): string[] {
@@ -118,6 +133,21 @@ export class CodecPlaintext {
 
 		// Send the activity via the delivery service
 		await this.#delivery.sendActivity(activity)
+	}
+
+	// createGroup creates/returns a new PLAINTEXT group with the given ID
+	async #createGroup(groupId: string): Promise<Group> {
+
+		// Create a group record for this device
+		let plaintextGroup = NewGroup("PLAINTEXT")
+		plaintextGroup.id = groupId
+		plaintextGroup.members = [this.#actorId]
+
+		// Save the group to the local database
+		await this.#database.saveGroup(plaintextGroup)
+
+		// Success
+		return plaintextGroup
 	}
 
 	#addMentions(activity: Activity, members: string[]): void {

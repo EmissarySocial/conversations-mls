@@ -103,7 +103,7 @@ export interface IDelivery {
 	setActor(actor: Actor): void
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
-	sendActivity(activity: Activity): Promise<Activity>
+	sendActivity(activity: Activity): Promise<string>
 }
 
 // IDirectory wraps all of the methods that the MLS service

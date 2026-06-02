@@ -40,6 +40,9 @@ export class Object {
 			return this.fromURL(url, {})
 		}
 
+		// Otherwise, fetch the document via the proxy server
+		console.log("Fetching remote URL via proxy: " + url)
+
 		// Save the proxyUrl for subsequent requests
 		this.#proxyUrl = proxyUrl
 
@@ -60,6 +63,7 @@ export class Object {
 
 		// Parse the response and return
 		const body = await response.text()
+		console.log("Received: " + url, body)
 		this.fromJSON(body)
 		return this
 	}
@@ -67,12 +71,13 @@ export class Object {
 	// fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
 	fromURL = async (url: string, options: RequestInit = {}): Promise<this> => {
 
+		// If we have a proxy URL, then use it to fetch the document
 		if (this.#proxyUrl != "") {
 			return this.fromProxy(this.#proxyUrl, url)
 		}
 
 		// Otherwise, fetch the document directly from the URL
-		console.warn("Fetching remote URL directly from the server: " + url)
+		console.log("Fetching remote URL directly from the server: " + url)
 
 		// Require Accept: header for ActivityPub
 		options["headers"] = {
@@ -88,6 +93,7 @@ export class Object {
 
 		// Parse the JSON response into a JSONLD
 		const body = await response.text()
+		console.log("Received: " + url, body)
 		this.fromJSON(body)
 		return this
 	}

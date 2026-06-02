@@ -82,10 +82,13 @@ export class NewConversation {
 	}
 
 	description(vnode: NewConversationVnode): JSX.Element {
+
+		// RULE: Cannot send message if there are no recipients
 		if (vnode.state.actors.length == 0) {
 			return <></>
 		}
 
+		// RULE: If encrypted messages are disallowed, then show plaintext description
 		if (!vnode.attrs.controller.useEncryptedMessages()) {
 			return <>Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.</>
 		}
@@ -102,7 +105,7 @@ export class NewConversation {
 			return <>If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.</>
 		}
 
-		return <>One or more recipients (shown above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.</>
+		return <>One or more recipients (above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.</>
 	}
 
 	submitButton(vnode: NewConversationVnode): JSX.Element {

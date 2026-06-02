@@ -30,6 +30,11 @@ export class GroupMembers {
 		const isEncrypted = groupIsEncrypted(group)
 		const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:var(--green70)"
 
+		const contacts = contactStreams
+			.map(contactStream => contactStream())
+			.filter(contact => contact !== undefined)
+			.filter(contact => contact.id != controller.actorId())
+
 		return (
 			<div id="conversation-details">
 				<div id="conversation-header">
@@ -41,7 +46,7 @@ export class GroupMembers {
 				</div>
 				<div id="conversation-messages" class="padding">
 					<div class="table">
-						{(group.stateId !== "CLOSED") &&
+						{(group.stateId === "CLOSED") ? null :
 							<div role="link" tabIndex="0" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()} onkeypress={synthClick}>
 								<div>
 									<span class="circle width-48 flex-center text-white text-xl margin-none" style={buttonStyle}><i class="bi bi-plus"></i></span>
@@ -53,12 +58,7 @@ export class GroupMembers {
 							</div>
 						}
 
-						{contactStreams.map(contactStream => {
-							const contact = contactStream()
-
-							if (contact.id == controller.actorId()) {
-								return null
-							}
+						{contacts.map(contact => {
 
 							return (
 
@@ -94,18 +94,9 @@ export class GroupMembers {
 	}
 
 	drawActionButton(vnode: GroupMembersVnode, group: Group, contact: Contact): JSX.Element {
-		const controller = vnode.attrs.controller
 
 		if (group.stateId == "CLOSED") {
-			return <></>
-		}
-
-		if (contact.id == controller.actorId()) {
-			return (
-				<button class="text-sm text-red" tabIndex="0" onclick={() => this.leaveGroup(vnode)} >
-					Leave Group
-				</button>
-			)
+			return <button disabled>Remote</button>
 		}
 
 		return (

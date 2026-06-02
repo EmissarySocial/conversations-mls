@@ -17829,6 +17829,7 @@
   var ActivityTypeUpdate = "Update";
   var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
   var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var CoreTypeOrderedCollection = "OrderedCollection";
   var EncodingTypeBase64 = "base64";
   var MediaTypeMLSMessage = "message/mls";
   var ObjectTypeNote = "Note";
@@ -18262,6 +18263,7 @@
       if (proxyUrl == "") {
         return this.fromURL(url, {});
       }
+      console.log("Fetching remote URL via proxy: " + url);
       this.#proxyUrl = proxyUrl;
       const response = await fetch(this.#proxyUrl, {
         method: "POST",
@@ -18276,6 +18278,7 @@
         throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`);
       }
       const body = await response.text();
+      console.log("Received: " + url, body);
       this.fromJSON(body);
       return this;
     };
@@ -18284,7 +18287,7 @@
       if (this.#proxyUrl != "") {
         return this.fromProxy(this.#proxyUrl, url);
       }
-      console.warn("Fetching remote URL directly from the server: " + url);
+      console.log("Fetching remote URL directly from the server: " + url);
       options["headers"] = {
         Accept: "application/activity+json"
       };
@@ -18293,6 +18296,7 @@
         throw new Error(`Unable to fetch url:'${url}': ${response.status} ${response.statusText}`);
       }
       const body = await response.text();
+      console.log("Received: " + url, body);
       this.fromJSON(body);
       return this;
     };
@@ -18792,50 +18796,22 @@
   // src/service/delivery.ts
   var Delivery = class {
     // The URL of the current user's outbox
-    #outboxUrl;
+    #outboxUrl = "";
     // The cookie string present when this instance was created
     // used to detect changes to cookies/authentication state
-    #originalCookie;
-    constructor() {
-      this.#originalCookie = document.cookie;
-      this.#outboxUrl = "";
-    }
+    #originalCookie = document.cookie;
     // stop clears this service and prevents it from sending any more messages.
-    stop = () => {
+    stop() {
       this.#outboxUrl = "";
       this.#originalCookie = "";
-    };
+    }
     // setActor is used to configure the Delivery service
     // after the Actor has been loaded by the Controller.
     setActor(actor) {
       this.#outboxUrl = actor.outbox();
     }
-    /**
-     * load GETs an ActivityPub resource with proper Accept headers.
-     * If a URL is provided, then it fetches the resource from the network.
-     * If an object is provided, it simply returns it.
-     *
-     * @param url - The URL to fetch
-     * @returns The parsed JSON response
-     * @throws Error if the fetch fails
-     */
-    load = async (url) => {
-      this.#checkCookies();
-      if (typeof url != "string") {
-        return url;
-      }
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/activity+json, application/ld+json; profile="https://www.w3.org/ns/activitystreams"'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Unable to fetch ${url}: ${response.status} ${response.statusText}`);
-      }
-      return response.json();
-    };
     // sendActivity sends an activity to the Actor's outbox
-    sendActivity = async (activity) => {
+    async sendActivity(activity) {
       if (this.#outboxUrl == "") {
         throw new Error("Outbox URL not set. Cannot send activity.");
       }
@@ -18849,8 +18825,8 @@
       if (!response.ok) {
         throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
       }
-      return activity;
-    };
+      return response.headers.get("Location") || "";
+    }
     // #checkCookies guarantees that we're still signed in as the 
     // original user.  It throws an error if the cookies have changed since 
     // this component was created, halting whatever operation was in progress..
@@ -23115,31 +23091,28 @@
 
   // src/service/directory.ts
   var Directory = class {
+    #delivery;
     #proxy;
     #actorId;
     // ID of the local actor 
-    #outboxUrl;
-    // Outbox URL of the local actor
     #generatorId;
     // ID of the generator
     #generatorName;
     // Name of the generator
-    constructor(proxy, actorId) {
+    constructor(delivery, proxy, actorId) {
+      this.#delivery = delivery;
       this.#actorId = actorId;
-      this.#outboxUrl = "";
       this.#generatorId = "";
       this.#generatorName = "";
       this.#proxy = proxy;
     }
     stop = () => {
       this.#actorId = "";
-      this.#outboxUrl = "";
       this.#generatorId = "";
       this.#generatorName = "";
     };
     setActor = (actor) => {
       this.#actorId = actor.id();
-      this.#outboxUrl = actor.outbox();
     };
     setGenerator = (generatorId, generatorName) => {
       this.#generatorId = generatorId;
@@ -23218,15 +23191,14 @@
     // and returns the Location header from the response
     #createObject = async (object) => {
       const activityId = newId2();
-      const result = await this.#send(this.#outboxUrl, {
+      const result = await this.#delivery.sendActivity(new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
         type: ActivityTypeCreate,
         id: activityId,
         actor: this.#actorId,
         to: [this.#actorId],
-        object,
-        instrument: this.#generatorId
-      });
+        object
+      }));
       if (result == "") {
         throw new Error("Server MUST return an id for the created object.");
       }
@@ -23235,41 +23207,24 @@
     // updateObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #updateObject = async (object) => {
-      return await this.#send(this.#outboxUrl, {
+      return await this.#delivery.sendActivity(new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
         type: ActivityTypeUpdate,
         id: newId2(),
         actor: this.#actorId,
-        object,
-        instrument: this.#generatorId
-      });
+        object
+      }));
     };
     // deleteObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     #deleteObject = async (object) => {
-      await this.#send(this.#outboxUrl, {
+      await this.#delivery.sendActivity(new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
         type: ActivityTypeDelete,
         id: newId2(),
         actor: this.#actorId,
-        object,
-        instrument: this.#generatorId
-      });
-    };
-    // send POSTs an ActivityPub activity to the Actor's outbox
-    // returns the location of the affected Object.
-    // It throws an error if the fetch fails or if the response 
-    // does not provide a Location header.
-    #send = async (outbox, activity) => {
-      const response = await fetch(outbox, {
-        method: "POST",
-        body: JSON.stringify(activity),
-        credentials: "include"
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`);
-      }
-      return response.headers.get("Location") || "";
+        object
+      }));
     };
   };
 
@@ -23308,8 +23263,6 @@
     // list of registered message handlers
     #lastMessage;
     // handler function for getting/setting the last message ID
-    #generatorId;
-    // ID of this MLS client, used for the generator field of outgoing messages
     #polling;
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
@@ -23325,7 +23278,6 @@
       };
       this.#polling = false;
       this.#pollAgain = false;
-      this.#generatorId = "";
       this.#originalCookie = document.cookie;
     }
     // setActor configures the Receiver with the given Actor's information,
@@ -23335,10 +23287,9 @@
       this.#messagesUrl = url;
     }
     // start begins polling for new messages and processing them with the registered handlers
-    async start(generatorId, activityHandler, lastMessage) {
+    async start(activityHandler, lastMessage) {
       this.#activityHandler = activityHandler;
       this.#lastMessage = lastMessage;
-      this.#generatorId = generatorId;
       this.#poll();
       const collection = await new Collection().fromURL(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
@@ -23367,9 +23318,6 @@
       const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" });
       for await (const activity of activities) {
         lastMessageId = activity.id();
-        if (activity.instrument() === this.#generatorId) {
-          continue;
-        }
         try {
           await this.#activityHandler(activity);
         } catch (error) {
@@ -23777,18 +23725,16 @@
     #delivery;
     #directory;
     #cipherSuite;
-    #generatorId;
     #publicKeyPackage;
     #privateKeyPackage;
     #actor;
-    constructor(controller2, database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+    constructor(controller2, database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor) {
       this.#controller = controller2;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
       this.#cipherSuite = cipherSuite;
       this.#actor = actor;
-      this.#generatorId = generatorId;
       this.#publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
     }
@@ -23868,9 +23814,6 @@
         ratchetTreeExtension: true
       });
       commitResult.consumed.forEach(zeroOutUint8Array);
-      group.clientState = commitResult.newState;
-      group.members = this.getGroupMembers(group);
-      await this.#database.saveGroup(group);
       if (commitResult.welcome != void 0) {
         this.#sendMlsMessage(
           ObjectTypeMlsWelcome,
@@ -24155,7 +24098,6 @@
         type: ActivityTypeCreate,
         actor: this.#actor.id(),
         to: recipients,
-        instrument: this.#generatorId,
         object: {
           type,
           attributedTo: this.#actor.id(),
@@ -24203,7 +24145,20 @@
       this.#actorId = actorId;
     }
     async createGroup() {
-      return NewGroup("PLAINTEXT");
+      const createGroupActivity = new Activity({
+        "@context": "https://www.w3.org/ns/activitystreams",
+        type: ActivityTypeCreate,
+        actor: this.#actorId,
+        to: [this.#actorId],
+        object: {
+          type: CoreTypeOrderedCollection,
+          attributedTo: this.#actorId,
+          to: [this.#actorId],
+          name: "Conversation"
+        }
+      });
+      const groupId = await this.#delivery.sendActivity(createGroupActivity);
+      return this.#createGroup(groupId);
     }
     async getGroup(groupId) {
       let group = await this.#database.loadGroup(groupId);
@@ -24213,11 +24168,7 @@
         }
         return group;
       }
-      group = NewGroup("PLAINTEXT");
-      group.id = groupId;
-      group.members = [this.#actorId];
-      await this.#database.saveGroup(group);
-      return group;
+      return this.#createGroup(groupId);
     }
     getGroupMembers(group) {
       return group.members;
@@ -24261,6 +24212,14 @@
         this.#addMentions(activity, group.members);
       }
       await this.#delivery.sendActivity(activity);
+    }
+    // createGroup creates/returns a new PLAINTEXT group with the given ID
+    async #createGroup(groupId) {
+      let plaintextGroup = NewGroup("PLAINTEXT");
+      plaintextGroup.id = groupId;
+      plaintextGroup.members = [this.#actorId];
+      await this.#database.saveGroup(plaintextGroup);
+      return plaintextGroup;
     }
     #addMentions(activity, members) {
       const allowedActivities = [ActivityTypeCreate, ActivityTypeUpdate];
@@ -24388,8 +24347,7 @@
             cipherSuite,
             keyPackage.publicKeyPackage,
             keyPackage.privateKeyPackage,
-            this.#actor,
-            this.config.generatorId
+            this.#actor
           );
           this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage);
         } catch (error) {
@@ -24398,7 +24356,7 @@
           return;
         }
       }
-      this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage);
+      this.#receiver.start(this.receiveActivity, this.lastMessage);
       this.#database.onchange(async () => {
         await this.loadGroups();
         await this.loadMessages();
@@ -25224,7 +25182,6 @@
     //////////////////////////////////////////
     // sendActivity sends an activity to the Actor's outbox
     #sendActivity = async (group, activity) => {
-      activity.set(PropertyInstrument, this.config.generatorId);
       const codec = this.#getCodecForGroup(group);
       await codec.sendActivity(group, activity);
     };
@@ -25508,7 +25465,7 @@
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
         const isSecure = vnode.state.keyPackages[actor.id()] != void 0;
-        return /* @__PURE__ */ (0, import_mithril5.default)("span", { key: actor.id(), class: isSecure ? "blue tag" : "green tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: actor.name(), class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", role: "button", tabindex: "0", onclick: () => this.removeActor(vnode, index), onkeydown: (event) => {
+        return /* @__PURE__ */ (0, import_mithril5.default)("span", { key: actor.id(), class: isSecure ? "blue tag" : "green tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: "", class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", role: "button", tabindex: "0", onclick: () => this.removeActor(vnode, index), onkeydown: (event) => {
           if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index);
         } })));
       }), /* @__PURE__ */ (0, import_mithril5.default)(
@@ -25520,13 +25477,13 @@
           style: "min-width:200px;",
           value: vnode.state.search,
           tabindex: "0",
-          onkeydown: async (event) => {
+          onkeydown: (event) => {
             this.onkeydown(event, vnode);
           },
-          onkeypress: async (event) => {
+          onkeypress: (event) => {
             this.onkeypress(event, vnode);
           },
-          oninput: async (event) => {
+          oninput: (event) => {
             this.oninput(event, vnode);
           },
           onfocus: () => this.loadOptions(vnode),
@@ -25543,7 +25500,7 @@
             onmousedown: () => this.selectActor(vnode, index),
             "aria-selected": index == vnode.state.highlightedOption ? "true" : null
           },
-          /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: actor.name(), class: "width-32 circle" })),
+          /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32", "aria-hidden": "true" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: "", class: "width-32 circle" })),
           /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
         );
       }))) : null);
@@ -25604,6 +25561,7 @@
       vnode.state.actors = actors.map((object) => new Actor(object));
       vnode.state.loading = false;
       vnode.state.highlightedOption = -1;
+      import_mithril5.default.redraw();
     }
     onblur(vnode) {
       requestAnimationFrame(() => {
@@ -25624,7 +25582,7 @@
       this.notifyParent(vnode);
       this.loadKeyPackages(vnode, selected);
     }
-    // (async) Maintains a cache that counts the keyPackages for each actor
+    // loadKeyPackages maintains a cache that counts the KeyPackages for each actor
     async loadKeyPackages(vnode, actor) {
       if (!vnode.attrs.controller.useEncryptedMessages()) {
         return;
@@ -25646,16 +25604,13 @@
         return false;
       }
       for (const actor of vnode.attrs.value) {
-        if (!this.isActorMLS(vnode, actor.id())) {
+        if (!this.#isActorMLS(vnode, actor.id())) {
           return false;
         }
       }
       return true;
     }
-    isActorMLS(vnode, actorId) {
-      if (!vnode.attrs.controller.useEncryptedMessages()) {
-        return false;
-      }
+    #isActorMLS(vnode, actorId) {
       const keyPackages = vnode.state.keyPackages[actorId];
       if (keyPackages == void 0) {
         return false;
@@ -25664,9 +25619,9 @@
     }
     removeActor(vnode, index) {
       vnode.attrs.value.splice(index, 1);
-      this.notifyParent(vnode);
-      requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus());
       vnode.state.highlightedOption = -1;
+      requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus());
+      this.notifyParent(vnode);
     }
     notifyParent(vnode) {
       vnode.attrs.onselect(vnode.attrs.value, this.allActorsHaveKeyPackages(vnode));
@@ -25716,7 +25671,7 @@
         }
         return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.");
       }
-      return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "One or more recipients (shown above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.");
+      return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "One or more recipients (above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.");
     }
     submitButton(vnode) {
       if (vnode.state.sending) {
@@ -26175,21 +26130,14 @@
       const contactStreams = controller2.groupContactStream();
       const isEncrypted = groupIsEncrypted(group);
       const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:var(--green70)";
-      return /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_messages(), onkeypress: synthClick }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_notes(), onkeypress: synthClick }, "Notes"), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"))), /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "table" }, group.stateId !== "CLOSED" && /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: buttonStyle }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-plus" }))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, "Invite one or more people to this conversation"))), contactStreams.map((contactStream) => {
-        const contact = contactStream();
-        if (contact.id == controller2.actorId()) {
-          return null;
-        }
+      const contacts = contactStreams.map((contactStream) => contactStream()).filter((contact) => contact !== void 0).filter((contact) => contact.id != controller2.actorId());
+      return /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_messages(), onkeypress: synthClick }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_notes(), onkeypress: synthClick }, "Notes"), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "tab", "aria-selected": "true" }, "People (", contactStreams.length, ")"))), /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "table" }, group.stateId === "CLOSED" ? null : /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: buttonStyle }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-plus" }))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, "Invite one or more people to this conversation"))), contacts.map((contact) => {
         return /* @__PURE__ */ (0, import_mithril19.default)("div", { key: contact.id, class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("img", { src: contact.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm", role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "align-right" }, this.drawActionButton(vnode, group, contact)));
       }), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => this.leaveGroup(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--red60)" }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-x" }))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, "Leave Group"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, "Leave this conversation and remove it from all your devices."))))));
     }
     drawActionButton(vnode, group, contact) {
-      const controller2 = vnode.attrs.controller;
       if (group.stateId == "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril19.default)(import_mithril19.default.Fragment, null);
-      }
-      if (contact.id == controller2.actorId()) {
-        return /* @__PURE__ */ (0, import_mithril19.default)("button", { class: "text-sm text-red", tabIndex: "0", onclick: () => this.leaveGroup(vnode) }, "Leave Group");
+        return /* @__PURE__ */ (0, import_mithril19.default)("button", { disabled: true }, "Remote");
       }
       return /* @__PURE__ */ (0, import_mithril19.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove");
     }
@@ -26833,7 +26781,7 @@
     const contacts = new Contacts();
     const database = new Database(host, indexedDB2);
     const delivery = new Delivery();
-    const directory = new Directory(proxy, actorId);
+    const directory = new Directory(delivery, proxy, actorId);
     const receiver = new Receiver();
     controller = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
     controller.start();

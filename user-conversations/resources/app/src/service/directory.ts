@@ -2,6 +2,7 @@
 import { type KeyPackage } from "ts-mls"
 
 import * as vocab from "../as/vocab"
+import { Activity } from "../as/activity"
 import { Document } from "../as/document"
 
 // Model Objects
@@ -13,19 +14,20 @@ import { newId } from "./utils"
 import { decodeKeyPackage } from "./cryptography"
 import { keyPackageIsExpired } from "./cryptography"
 import { keyPackageIsSupported } from "./cryptography"
-import type { IProxy } from "./interfaces"
+import type { IDelivery, IProxy } from "./interfaces"
 
 export class Directory {
 
+	readonly #delivery: IDelivery
 	readonly #proxy: IProxy
+
 	#actorId: string // ID of the local actor 
-	#outboxUrl: string // Outbox URL of the local actor
 	#generatorId: string // ID of the generator
 	#generatorName: string // Name of the generator
 
-	constructor(proxy: IProxy, actorId: string) {
+	constructor(delivery: IDelivery, proxy: IProxy, actorId: string) {
+		this.#delivery = delivery
 		this.#actorId = actorId
-		this.#outboxUrl = ""
 		this.#generatorId = ""
 		this.#generatorName = ""
 		this.#proxy = proxy
@@ -33,14 +35,12 @@ export class Directory {
 
 	stop = () => {
 		this.#actorId = ""
-		this.#outboxUrl = ""
 		this.#generatorId = ""
 		this.#generatorName = ""
 	}
 
 	setActor = (actor: Actor) => {
 		this.#actorId = actor.id()
-		this.#outboxUrl = actor.outbox()
 	}
 
 	setGenerator = (generatorId: string, generatorName: string) => {
@@ -155,15 +155,14 @@ export class Directory {
 	readonly #createObject = async <T>(object: T): Promise<[string, string]> => {
 
 		const activityId = newId()
-		const result = await this.#send(this.#outboxUrl, {
+		const result = await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeCreate,
 			id: activityId,
 			actor: this.#actorId,
 			to: [this.#actorId],
 			object: object,
-			instrument: this.#generatorId,
-		})
+		}))
 
 		if (result == "") {
 			throw new Error("Server MUST return an id for the created object.")
@@ -175,46 +174,24 @@ export class Directory {
 	// updateObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
 	readonly #updateObject = async <T>(object: T): Promise<string> => {
-		return await this.#send(this.#outboxUrl, {
+		return await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeUpdate,
 			id: newId(),
 			actor: this.#actorId,
 			object: object,
-			instrument: this.#generatorId,
-		})
+		}))
 	}
 
 	// deleteObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
 	readonly #deleteObject = async <T>(object: T): Promise<void> => {
-		await this.#send(this.#outboxUrl, {
+		await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeDelete,
 			id: newId(),
 			actor: this.#actorId,
 			object: object,
-			instrument: this.#generatorId,
-		})
-	}
-
-	// send POSTs an ActivityPub activity to the Actor's outbox
-	// returns the location of the affected Object.
-	// It throws an error if the fetch fails or if the response 
-	// does not provide a Location header.
-	readonly #send = async <T>(outbox: string, activity: T): Promise<string> => {
-
-		// Send the Activity to the server
-		const response = await fetch(outbox, {
-			method: "POST",
-			body: JSON.stringify(activity),
-			credentials: "include",
-		})
-
-		if (!response.ok) {
-			throw new Error(`Failed to fetch ${outbox}: ${response.status} ${response.statusText}`)
-		}
-
-		return response.headers.get("Location") || ""
+		}))
 	}
 }

@@ -24,6 +24,17 @@ export const ContextMLS = "https://purl.archive.org/socialweb/mls"
 
 export const ContextSSE = "https://purl.archive.org/socialweb/sse"
 
+// Core Object Types
+
+export const CoreTypeCollection = "Collection"
+
+export const CoreTypeCollectionPage = "CollectionPage"
+
+export const CoreTypeOrderedCollection = "OrderedCollection"
+
+export const CoreTypeOrderedCollectionPage = "OrderedCollectionPage"
+
+
 // Encoding Values
 
 export const EncodingTypeBase64 = "base64"
@@ -77,6 +88,8 @@ export const PropertyIcon = "icon"
 export const PropertyId = "id"
 
 export const PropertyInReplyTo = "inReplyTo"
+
+export const PropertyInstrument = "instrument"
 
 export const PropertyMlsKeyPackages = "keyPackages"
 

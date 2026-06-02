@@ -46,7 +46,7 @@ export class ActorSearch {
 						return (
 							<span key={actor.id()} class={isSecure ? "blue tag" : "green tag"}>
 								<span class="flex-row flex-align-center">
-									<img src={actor.icon()} alt={actor.name()} class="circle" style="height:1em;" />
+									<img src={actor.icon()} alt="" class="circle" style="height:1em;" />
 									<span class="bold">{actor.name()}</span>
 									<i class="margin-left-sm clickable bi bi-x-lg" role="button" tabindex="0" onclick={() => this.removeActor(vnode, index)} onkeydown={(event: KeyboardEvent) => { if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index) }}></i>
 								</span>
@@ -60,13 +60,13 @@ export class ActorSearch {
 						style="min-width:200px;"
 						value={vnode.state.search}
 						tabindex="0"
-						onkeydown={async (event: KeyboardEvent) => {
+						onkeydown={(event: KeyboardEvent) => {
 							this.onkeydown(event, vnode)
 						}}
-						onkeypress={async (event: KeyboardEvent) => {
+						onkeypress={(event: KeyboardEvent) => {
 							this.onkeypress(event, vnode)
 						}}
-						oninput={async (event: KeyboardEvent) => {
+						oninput={(event: KeyboardEvent) => {
 							this.oninput(event, vnode)
 						}}
 						onfocus={() => this.loadOptions(vnode)}
@@ -83,8 +83,8 @@ export class ActorSearch {
 									class="flex-row padding-xs"
 									onmousedown={() => this.selectActor(vnode, index)}
 									aria-selected={index == vnode.state.highlightedOption ? "true" : null}>
-									<div class="width-32">
-										<img src={actor.icon()} alt={actor.name()} class="width-32 circle" />
+									<div class="width-32" aria-hidden="true">
+										<img src={actor.icon()} alt="" class="width-32 circle" />
 									</div>
 									<div>
 										<div>{actor.name()}</div>
@@ -168,6 +168,7 @@ export class ActorSearch {
 
 		vnode.state.loading = false
 		vnode.state.highlightedOption = -1
+		m.redraw()
 	}
 
 	onblur(vnode: ActorSearchVnode) {
@@ -196,7 +197,7 @@ export class ActorSearch {
 		this.loadKeyPackages(vnode, selected)
 	}
 
-	// (async) Maintains a cache that counts the keyPackages for each actor
+	// loadKeyPackages maintains a cache that counts the KeyPackages for each actor
 	async loadKeyPackages(vnode: ActorSearchVnode, actor: Actor) {
 
 		// If encrypted messages are disallowed, then NEVER use MLS
@@ -233,7 +234,7 @@ export class ActorSearch {
 
 		// Check each actor in the value
 		for (const actor of vnode.attrs.value) {
-			if (!this.isActorMLS(vnode, actor.id())) {
+			if (!this.#isActorMLS(vnode, actor.id())) {
 				return false
 			}
 		}
@@ -241,12 +242,7 @@ export class ActorSearch {
 		return true
 	}
 
-	isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
-
-		// If encrypted messages are disallowed, then NEVER use MLS
-		if (!vnode.attrs.controller.useEncryptedMessages()) {
-			return false
-		}
+	#isActorMLS(vnode: ActorSearchVnode, actorId: string): boolean {
 
 		// Look for KeyPackages for this current actor
 		const keyPackages = vnode.state.keyPackages[actorId]
@@ -260,9 +256,9 @@ export class ActorSearch {
 
 	removeActor(vnode: ActorSearchVnode, index: number) {
 		vnode.attrs.value.splice(index, 1)
-		this.notifyParent(vnode)
-		requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus())
 		vnode.state.highlightedOption = -1
+		requestAnimationFrame(() => document.getElementById("idActorSearch")?.focus())
+		this.notifyParent(vnode)
 	}
 
 	notifyParent(vnode: ActorSearchVnode) {
