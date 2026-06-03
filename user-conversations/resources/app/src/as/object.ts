@@ -33,6 +33,10 @@ export class ASObject {
 		return this
 	}
 
+	getProxyUrl(): string {
+		return this.#proxyUrl
+	}
+
 	// #fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
 	async #fromProxy(url: string): Promise<this> {
 
@@ -111,8 +115,11 @@ export class ASObject {
 			return this
 		}
 
-		console.warn("Unable to convert value to Object:", value)
-		return this
+		if (value == undefined) {
+			return this.fromMap({})
+		}
+
+		throw new Error("Unable to convert value to Object: " + JSON.stringify(value))
 	}
 
 	// fromJSON parses a JSON string into the JSONLD struct

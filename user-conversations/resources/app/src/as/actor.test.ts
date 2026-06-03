@@ -827,3 +827,97 @@ describe("Actor — Bonfire rangeDocuments()", () => {
 		expect(fetchMock).toHaveBeenCalledTimes(3)
 	})
 })
+
+// ---------------------------------------------------------------------------
+// Proxy URL — all fetches go through the proxyUrl when present
+// ---------------------------------------------------------------------------
+
+const testProxyUrl = "https://example.com/.proxy"
+const testKeyPackagesUrl = "https://example.com/users/alice/keyPackages"
+const testKeyPackageItemUrl = "https://example.com/users/alice/keyPackages/abc123"
+
+// Routes fetch calls through the proxy mock: inspects the POSTed `id` param
+// and returns the matching canned response.
+function makeProxyFetchMock(responses: Record<string, object>) {
+	return vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+		if (url === testProxyUrl) {
+			const body = options?.body as URLSearchParams
+			const targetUrl = body?.get("id") ?? ""
+			const data = responses[targetUrl]
+			if (data !== undefined) return mockResponse(data)
+			return mockErrorResponse(404, "Not Found")
+		}
+		throw new Error(`Unexpected direct fetch (proxy should have been used) to: ${url}`)
+	})
+}
+
+describe("Actor — mlsKeyPackages() uses proxyUrl when present", () => {
+	it("fetches the keyPackages collection via POST to the proxy URL", async () => {
+		const fetchMock = makeProxyFetchMock({
+			[testKeyPackagesUrl]: { type: "Collection", totalItems: 1, items: [testKeyPackageItemUrl] },
+		})
+		vi.stubGlobal("fetch", fetchMock)
+
+		const a = makeActor({ "mls:keyPackages": testKeyPackagesUrl }).withProxy(testProxyUrl)
+
+		const collection = await a.mlsKeyPackages()
+
+		expect(collection).toBeInstanceOf(Collection)
+		expect(collection.totalItems()).toBe(1)
+		expect(fetchMock).toHaveBeenCalledWith(testProxyUrl, expect.objectContaining({ method: "POST" }))
+	})
+
+	it("does not fetch the keyPackages URL directly when a proxyUrl is set", async () => {
+		const fetchMock = makeProxyFetchMock({
+			[testKeyPackagesUrl]: { type: "Collection", totalItems: 0, items: [] },
+		})
+		vi.stubGlobal("fetch", fetchMock)
+
+		const a = makeActor({ "mls:keyPackages": testKeyPackagesUrl }).withProxy(testProxyUrl)
+
+		await a.mlsKeyPackages()
+
+		for (const [url] of fetchMock.mock.calls) {
+			expect(url).toBe(testProxyUrl)
+		}
+	})
+
+	it("rangeDocuments() also fetches each item URL via the proxy", async () => {
+		const fetchMock = makeProxyFetchMock({
+			[testKeyPackagesUrl]: { type: "Collection", totalItems: 1, items: [testKeyPackageItemUrl] },
+			[testKeyPackageItemUrl]: { type: "KeyPackage", id: testKeyPackageItemUrl },
+		})
+		vi.stubGlobal("fetch", fetchMock)
+
+		const a = makeActor({ "mls:keyPackages": testKeyPackagesUrl }).withProxy(testProxyUrl)
+
+		const collection = await a.mlsKeyPackages()
+		const docs: Document[] = []
+		for await (const doc of collection.rangeDocuments()) {
+			docs.push(doc)
+		}
+
+		expect(docs).toHaveLength(1)
+		expect(docs[0]).toBeInstanceOf(Document)
+		expect(docs[0]!.type()).toBe("KeyPackage")
+
+		for (const [url] of fetchMock.mock.calls) {
+			expect(url).toBe(testProxyUrl)
+		}
+	})
+
+	it("fetches the keyPackages URL directly when no proxyUrl is set", async () => {
+		const fetchMock = vi.fn().mockResolvedValue(mockResponse({
+			type: "Collection",
+			totalItems: 1,
+			items: [testKeyPackageItemUrl],
+		}))
+		vi.stubGlobal("fetch", fetchMock)
+
+		const a = makeActor({ "mls:keyPackages": testKeyPackagesUrl })
+
+		await a.mlsKeyPackages()
+
+		expect(fetchMock).toHaveBeenCalledWith(testKeyPackagesUrl, expect.anything())
+	})
+})

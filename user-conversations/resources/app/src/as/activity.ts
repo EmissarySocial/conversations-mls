@@ -53,14 +53,14 @@ export class Activity extends ASObject {
 	// object returns the value of the "object" property, which may be either a string URL or an embedded object
 	object = async () => {
 		const object = this.get("as", vocab.PropertyObject)
-		return loadDocument(object)
+		return loadDocument(object, this.getProxyUrl())
 	}
 
 	// objectAsActivity returns the value of the "object" property as an Activity-typed object.
 	// this is useful for "Undo" activities, whose "object" is itself an activity that should be undone.
 	objectAsActivity = async () => {
 		const object = this.get("as", vocab.PropertyObject)
-		return loadActivity(object)
+		return loadActivity(object, this.getProxyUrl())
 	}
 
 	// objectAsMap returns the value of the "object" property as a map.
@@ -72,13 +72,13 @@ export class Activity extends ASObject {
 	// target returns the value of the "target" property
 	target = async () => {
 		const target = this.get("as", vocab.PropertyTarget)
-		return loadDocument(target)
+		return loadDocument(target, this.getProxyUrl())
 	}
 
 	// to returns the value of the "to" property
 	to = async (): Promise<Actor[]> => {
 		const result = this.getArray("as", vocab.PropertyTo)
-		return Promise.all(result.map(async (actor: any) => await loadActor(actor)))
+		return Promise.all(result.map(async (actor: any) => await loadActor(actor, this.getProxyUrl())))
 	}
 
 	recipients = () => {

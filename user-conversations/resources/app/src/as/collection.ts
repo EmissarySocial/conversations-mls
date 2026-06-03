@@ -44,7 +44,7 @@ export class Collection extends ASObject {
 		const items = this.#range()
 
 		for await (const item of items) {
-			yield loadActivity(item)
+			yield loadActivity(item, this.getProxyUrl())
 		}
 	}
 
@@ -53,7 +53,7 @@ export class Collection extends ASObject {
 		const items = this.#range()
 
 		for await (const item of items) {
-			yield loadActor(item)
+			yield loadActor(item, this.getProxyUrl())
 		}
 	}
 
@@ -62,7 +62,7 @@ export class Collection extends ASObject {
 		const items = this.#range()
 
 		for await (const item of items) {
-			yield loadDocument(item)
+			yield loadDocument(item, this.getProxyUrl())
 		}
 	}
 
@@ -85,7 +85,7 @@ export class Collection extends ASObject {
 		while (pageUrl) {
 
 			try {
-				let page = await loadCollection(pageUrl)
+				let page = await loadCollection(pageUrl, this.getProxyUrl())
 
 				for (const item of page.items()) {
 					yield item

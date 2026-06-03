@@ -1,7 +1,8 @@
 import { type Actor } from "../as/actor"
 import { Activity } from "../as/activity"
-import { Collection, newCollection } from "../as/collection"
+import { Collection } from "../as/collection"
 import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfaces"
+import { loadCollectionAfter } from "../as/loaders"
 
 // Receiver service receives messages from an ActivityPub actor and forwards them
 // to the MLS client
@@ -80,7 +81,7 @@ export class Receiver {
 
 		// Fetch NEW messages from the server
 		let lastMessageId = await this.#lastMessage()
-		const collection = await newCollection(this.#messagesUrl, lastMessageId)
+		const collection = await loadCollectionAfter(this.#messagesUrl, lastMessageId)
 
 		// Process each activity sequentially
 		for await (const activity of collection.rangeActivities()) {

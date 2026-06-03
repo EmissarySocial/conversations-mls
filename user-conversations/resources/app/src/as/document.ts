@@ -13,7 +13,7 @@ export class Document extends ASObject {
 	// attributedTo returns the value of the "attributedTo" property
 	attributedTo = async () => {
 		const attributedTo = this.get("as", vocab.PropertyAttributedTo)
-		return loadActor(attributedTo)
+		return loadActor(attributedTo, this.getProxyUrl())
 	}
 
 	// attributedToId returns the string/id value of the "attributedTo" property
@@ -46,8 +46,7 @@ export class Document extends ASObject {
 
 	// inReplyTo returns the value of the "inReplyTo" property
 	inReplyTo = () => {
-		const inReplyTo = this.get("as", vocab.PropertyInReplyTo)
-		return loadDocument(inReplyTo)
+		return loadDocument(this.inReplyToId(), this.getProxyUrl())
 	}
 
 	// name returns the value of the "name" property
@@ -73,7 +72,7 @@ export class Document extends ASObject {
 	// to returns the value of the "to" property
 	to = async () => {
 		const result = this.getArray("as", vocab.PropertyTo)
-		return Promise.all(result.map(async (actor: any) => loadActor(actor)))
+		return Promise.all(result.map(async (actor: any) => loadActor(actor, this.getProxyUrl())))
 	}
 
 	///////////////////////////////////
