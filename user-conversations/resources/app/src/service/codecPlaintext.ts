@@ -4,6 +4,7 @@ import { type Document } from "../as/document"
 import { type Group } from "../model/group"
 import { NewGroup } from "../model/group"
 import type { IDatabase, IDelivery } from "./interfaces"
+import { newId } from "./utils"
 
 export class CodecPlaintext {
 
@@ -77,6 +78,7 @@ export class CodecPlaintext {
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
 		let group: Group
+		await this.#calculateContext(activity, object)
 		const groupId = activity.context()
 
 		// Special case for "Leave" activities.  If we've already left the group, then don't add it to the database
@@ -117,6 +119,40 @@ export class CodecPlaintext {
 
 		// Done.
 		return activity
+	}
+
+	async #calculateContext(activity: Activity, object: Document): Promise<void> {
+
+		console.log("#calculateContext....")
+
+		// If this is a "reply" then use the same group as the parent message
+		let inReplyToId = object.inReplyToId()
+
+		if (inReplyToId != "") {
+			console.log("Loading parent message: ", inReplyToId)
+
+			try {
+				let parentMessage = await this.#database.loadMessage(inReplyToId)
+
+				if (parentMessage != undefined) {
+					activity.setContext(parentMessage.groupId)
+					return
+				}
+			} catch (error) {
+				console.log("Failed to load parent message from database:", inReplyToId, error)
+			}
+		}
+
+		// If the message already has a context, then use that as the group ID
+		let groupId = activity.context()
+
+		if (groupId != "") {
+			console.log("Activity already has context:", groupId)
+			return
+		}
+
+		// Otherwise, generate a new group ID
+		activity.setContext(newId())
 	}
 
 	async sendActivity(group: Group, activity: Activity): Promise<void> {
