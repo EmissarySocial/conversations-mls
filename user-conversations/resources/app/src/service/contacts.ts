@@ -29,7 +29,7 @@ export class Contacts {
 		try {
 
 			// Load the Actor from the provided ID
-			const actor = await new Actor().fromURL(id)
+			const actor = await new Actor().fromUrl(id)
 			return ContactFromActor(actor)
 
 		} catch (error) {
@@ -61,7 +61,7 @@ export class Contacts {
 
 		// Fall through means the cached value is missing or stale.
 		// Load it from the network, add it to the cache, then update the stream
-		new Actor().fromURL(id).then(response => {
+		new Actor().fromUrl(id).then(response => {
 			const contact = ContactFromActor(response)
 			this.#contacts.set(id, contact)
 			result(contact)

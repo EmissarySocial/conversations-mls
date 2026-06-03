@@ -168,7 +168,7 @@ export class Controller {
 
 		// Try to load the Actor and locate their messages collection
 		try {
-			this.#actor = await new Actor().fromURL(this.#actorId)
+			this.#actor = await new Actor().fromUrl(this.#actorId)
 
 		} catch (error) {
 			console.error("Unable to load the Actor record", error)

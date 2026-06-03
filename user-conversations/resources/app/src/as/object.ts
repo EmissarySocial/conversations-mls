@@ -1,10 +1,11 @@
-import { toString } from "./utils"
+import { isArray, isObject, isString, toString } from "./utils"
 import * as convert from "./convert"
 import * as vocab from "./vocab"
+
 type map = { [key: string]: any }
 
 // JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
-export class Object {
+export class ASObject {
 
 	#proxyUrl: string = ""
 	#value: map
@@ -26,22 +27,16 @@ export class Object {
 	///////////////////////////////////
 	// Conversion methods
 
-	// setProxy sets a proxyUrl for fetching remote objects.
-	setProxy(proxyUrl: string) {
+	// withProxy sets a proxyUrl for fetching remote objects.
+	withProxy(proxyUrl: string) {
 		this.#proxyUrl = proxyUrl
 		return this
 	}
 
-	// fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
-	fromProxy = async (proxyUrl: string, url: string): Promise<this> => {
+	// #fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
+	async #fromProxy(url: string): Promise<this> {
 
-		// If a proxy URL is not available, just fetch the document directly
-		if (proxyUrl == "") {
-			return this.fromURL(url, {})
-		}
-
-		// Save the proxyUrl for subsequent requests
-		this.#proxyUrl = proxyUrl
+		console.log("fromProxy:", url)
 
 		// Send a request to the proxy server
 		const response = await fetch(this.#proxyUrl, {
@@ -64,17 +59,21 @@ export class Object {
 		return this
 	}
 
-	// fromURL retrieves a JSON document from the specified URL and parses it into the JSONLD struct
-	fromURL = async (url: string, options: RequestInit = {}): Promise<this> => {
+	// fromUrl retrieves a JSON document from the specified URL and parses it into the JSONLD struct
+	async fromUrl(url: string): Promise<this> {
+
+		console.log("fromUrl:", url)
 
 		// If we have a proxy URL, then use it to fetch the document
 		if (this.#proxyUrl != "") {
-			return this.fromProxy(this.#proxyUrl, url)
+			return this.#fromProxy(url)
 		}
 
 		// Require Accept: header for ActivityPub
-		options["headers"] = {
-			Accept: "application/activity+json",
+		const options = {
+			"headers": {
+				Accept: "application/activity+json",
+			}
 		}
 
 		const response = await fetch(url, options)
@@ -90,19 +89,45 @@ export class Object {
 		return this
 	}
 
+	fromMap(value: map): this {
+		this.#value = value
+		return this
+	}
+
+	async fromValue(value: any): Promise<this> {
+
+		if (isString(value)) {
+			return this.fromUrl(value)
+		}
+
+		if (isObject(value)) {
+			return this.fromMap(value)
+		}
+
+		if (isArray(value)) {
+			if (value.length > 0) {
+				return await this.fromValue(value[0])
+			}
+			return this
+		}
+
+		console.warn("Unable to convert value to Object:", value)
+		return this
+	}
+
 	// fromJSON parses a JSON string into the JSONLD struct
-	fromJSON = (json: string) => {
+	fromJSON(json: string): this {
 		this.#value = JSON.parse(json)
 		return this
 	}
 
 	// toObject returns the raw JSON object represented by this JSONLD struct
-	toObject = () => {
+	toObject(): map {
 		return this.#value
 	}
 
 	// toJSON returns a JSON string representation of the JSONLD struct
-	toJSON = () => {
+	toJSON(): string {
 		return JSON.stringify(this.#value)
 	}
 
@@ -110,7 +135,7 @@ export class Object {
 	// Setters
 
 	// set sets a property on the JSONLD struct with the given name and value
-	set = (name: string, value: any) => {
+	set(name: string, value: any) {
 		this.#value[name] = value
 	}
 
@@ -149,31 +174,31 @@ export class Object {
 		return this.#value[namespace + ":" + property]
 	}
 
-	getString = (namespace: string, property: string) => {
+	getString(namespace: string, property: string): string {
 		return toString(this.get(namespace, property))
 	}
 
-	getInteger = (namespace: string, property: string) => {
+	getInteger(namespace: string, property: string): number {
 		const result = this.get(namespace, property)
 		return convert.toInteger(result)
 	}
 
-	getBoolean = (namespace: string, property: string) => {
+	getBoolean(namespace: string, property: string): boolean {
 		const result = this.get(namespace, property)
 		return convert.toBoolean(result)
 	}
 
-	getArray = (namespace: string, property: string) => {
+	getArray(namespace: string, property: string): any[] {
 		const result = this.get(namespace, property)
 		return convert.toArray(result)
 	}
 
-	getArrayOfString = (namespace: string, property: string) => {
+	getArrayOfString(namespace: string, property: string): string[] {
 		const result = this.get(namespace, property)
 		return convert.toArrayOfString(result)
 	}
 
-	getMap = (namespace: string, property: string): { [key: string]: any } => {
+	getMap(namespace: string, property: string): { [key: string]: any } {
 		const result = this.get(namespace, property)
 		return convert.toMap(result)
 	}
@@ -181,15 +206,37 @@ export class Object {
 	///////////////////////////////////
 	// Properties
 
-	type = () => {
+	type(): string {
 		return this.getString("as", "type")
 	}
 
-	types = () => {
+	types(): string[] {
 		return this.getArrayOfString("as", "type")
 	}
 
-	id = () => {
+	id(): string {
 		return this.getString("as", "id")
 	}
+
+	/*
+	///////////////////////////////////
+	// Additional ActivityStreams objects
+
+	async newActor(value: any): Promise<Actor> {
+		return new Actor().withProxy(this.#proxyUrl).fromValue(value)
+	}
+
+	async newActivity(value: any): Promise<Activity> {
+		return new Activity().withProxy(this.#proxyUrl).fromValue(value)
+	}
+
+	async newCollection(value: any): Promise<Collection> {
+		return new Collection().withProxy(this.#proxyUrl).fromValue(value)
+	}
+
+	async newDocument(value: any): Promise<Document> {
+		return new Document().withProxy(this.#proxyUrl).fromValue(value)
+	}
+	*/
+
 }

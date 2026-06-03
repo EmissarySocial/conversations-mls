@@ -1,11 +1,11 @@
-import { Object } from "./object"
-import { loadDocument } from "./document"
-import { loadActor } from "./actor"
+import { Actor } from "./actor"
+import { ASObject } from "./object"
 import { newId } from "../service/utils"
 import * as vocab from "./vocab"
+import { loadActivity, loadActor, loadDocument } from "./loaders"
 
 // Activity is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
-export class Activity extends Object {
+export class Activity extends ASObject {
 
 	constructor(value?: { [key: string]: any }) {
 		super(value)
@@ -27,7 +27,7 @@ export class Activity extends Object {
 	// actor returns the value of the "actor" property
 	actor = async () => {
 		const actor = this.get("as", vocab.PropertyActor)
-		return await loadActor(actor)
+		return loadActor(actor)
 	}
 
 	// content returns the string value of the "content" property.
@@ -53,14 +53,14 @@ export class Activity extends Object {
 	// object returns the value of the "object" property, which may be either a string URL or an embedded object
 	object = async () => {
 		const object = this.get("as", vocab.PropertyObject)
-		return await loadDocument(object)
+		return loadDocument(object)
 	}
 
 	// objectAsActivity returns the value of the "object" property as an Activity-typed object.
 	// this is useful for "Undo" activities, whose "object" is itself an activity that should be undone.
 	objectAsActivity = async () => {
 		const object = this.get("as", vocab.PropertyObject)
-		return await loadActivity(object)
+		return loadActivity(object)
 	}
 
 	// objectAsMap returns the value of the "object" property as a map.
@@ -72,13 +72,13 @@ export class Activity extends Object {
 	// target returns the value of the "target" property
 	target = async () => {
 		const target = this.get("as", vocab.PropertyTarget)
-		return await loadDocument(target)
+		return loadDocument(target)
 	}
 
 	// to returns the value of the "to" property
-	to = async () => {
+	to = async (): Promise<Actor[]> => {
 		const result = this.getArray("as", vocab.PropertyTo)
-		return await Promise.all(result.map(async (actor: any) => await loadActor(actor)))
+		return Promise.all(result.map(async (actor: any) => await loadActor(actor)))
 	}
 
 	recipients = () => {
@@ -105,7 +105,7 @@ export class Activity extends Object {
 	}
 
 	// setObject sets the object property of this Activity
-	setObject = (object: Object) => {
+	setObject = (object: ASObject) => {
 		this.set(vocab.PropertyObject, object.toObject())
 	}
 
@@ -113,23 +113,4 @@ export class Activity extends Object {
 	setObjectId = (id: string) => {
 		this.set(vocab.PropertyObject, id)
 	}
-}
-
-export async function loadActivity(value: any) {
-	switch (typeof value) {
-		case "string":
-			return await new Activity().fromURL(value)
-
-		case "object":
-			if (Array.isArray(value)) {
-				if (value.length > 0) {
-					return new Activity(value[0])
-				}
-				break
-			}
-
-			return new Activity(value)
-	}
-
-	return new Activity()
 }

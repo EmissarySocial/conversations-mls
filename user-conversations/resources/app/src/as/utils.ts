@@ -65,10 +65,23 @@ export function isInteger(value: any): value is number {
 	return false
 }
 
+// isArray returns TRUE if the given value is an array
 export function isArray(value: any): value is any[] {
 	return Array.isArray(value)
 }
 
+// isObject returns TRUE if the given value is a non-null object (but not an array)
 export function isObject(value: any): value is object {
 	return value !== null && typeof value === "object" && !Array.isArray(value)
+}
+
+// isValidUrl returns TRUE if the given string is a valie, web-addressable URL
+export function isValidUrl(value: string): boolean {
+	try {
+		const url = new URL(value)
+		return (url.protocol === "https:") || (url.protocol === "http:")
+
+	} catch {
+		return false
+	}
 }

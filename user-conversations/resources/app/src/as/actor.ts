@@ -1,10 +1,11 @@
 import * as vocab from "./vocab"
-import { Object } from "./object"
-import { Collection, loadCollection } from "./collection"
+import { ASObject } from "./object"
+import { Collection } from "./collection"
 import { toString } from "./utils"
+import { loadCollection } from "./loaders"
 
 // Actor is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
-export class Actor extends Object {
+export class Actor extends ASObject {
 
 	///////////////////////////////////
 	// Property accessors
@@ -53,16 +54,12 @@ export class Actor extends Object {
 	///////////////////////////////////
 	// MLS-specific properties
 
-	mlsMessages = () => {
+	mlsMessages = (): string => {
 		return this.getString("mls", vocab.PropertyMlsMessages)
 	}
 
-	mlsKeyPackages = () => {
-		return this.getCollection("mls", vocab.PropertyMlsKeyPackages)
-	}
-
-	getCollection = (namespace: string, property: string): Promise<Collection> => {
-		const value = this.get(namespace, property)
+	mlsKeyPackages = (): Promise<Collection> => {
+		const value = this.get("mls", vocab.PropertyMlsKeyPackages)
 		return loadCollection(value)
 	}
 
@@ -73,7 +70,7 @@ export class Actor extends Object {
 	// that returns BOTH encrypted and unencrypted messages. 
 	// This is preferred over messages because it allows the client to receive 
 	// direct messages that are not encrypted with MLS.
-	emissaryMessages = () => {
+	emissaryMessages = (): string => {
 		return toString(this.getWithNamespace("emissary", "messages"))
 	}
 
@@ -126,23 +123,4 @@ export class Actor extends Object {
 		// Combine as a nice looking Fediverse handle
 		return `@${username}@${url.hostname}`
 	}
-}
-
-export async function loadActor(value: any) {
-	switch (typeof value) {
-		case "string":
-			return await new Actor().fromURL(value)
-
-		case "object":
-			if (Array.isArray(value)) {
-				if (value.length > 0) {
-					return loadActor(value[0])
-				}
-				return new Actor()
-			}
-
-			return new Actor(value)
-	}
-
-	return new Actor()
 }

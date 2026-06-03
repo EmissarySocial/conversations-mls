@@ -1,11 +1,11 @@
-import { loadActor } from "./actor"
-import { Object } from "./object"
+import { ASObject } from "./object"
+import { loadActor, loadDocument } from "./loaders"
 import * as vocab from "./vocab"
 
 type map = { [key: string]: any }
 
 // Document is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
-export class Document extends Object {
+export class Document extends ASObject {
 
 	///////////////////////////////////
 	// Property accessors
@@ -13,7 +13,7 @@ export class Document extends Object {
 	// attributedTo returns the value of the "attributedTo" property
 	attributedTo = async () => {
 		const attributedTo = this.get("as", vocab.PropertyAttributedTo)
-		return await loadActor(attributedTo)
+		return loadActor(attributedTo)
 	}
 
 	// attributedToId returns the string/id value of the "attributedTo" property
@@ -73,7 +73,7 @@ export class Document extends Object {
 	// to returns the value of the "to" property
 	to = async () => {
 		const result = this.getArray("as", vocab.PropertyTo)
-		return result.map(async (actor: any) => await loadActor(actor))
+		return Promise.all(result.map(async (actor: any) => loadActor(actor)))
 	}
 
 	///////////////////////////////////
@@ -108,26 +108,4 @@ export class Document extends Object {
 	mediaType = () => {
 		return this.getString("mls", "mediaType")
 	}
-}
-
-export async function loadDocument(value: any): Promise<Document> {
-	switch (typeof value) {
-		case "string":
-			if (value.startsWith("http://") || value.startsWith("https://")) {
-				return await new Document().fromURL(value)
-			}
-			return new Document()
-
-		case "object":
-			if (Array.isArray(value)) {
-				if (value.length > 0) {
-					return await loadDocument(value[0])
-				}
-				return new Document()
-			}
-
-			return new Document(value)
-	}
-
-	return new Document()
 }

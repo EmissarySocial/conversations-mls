@@ -16,19 +16,19 @@ export class Proxy {
 	}
 
 	Activity(url: string): Promise<Activity> {
-		return new Activity().fromProxy(this.#proxyUrl, url)
+		return new Activity().withProxy(this.#proxyUrl).fromUrl(url)
 	}
 
 	Actor(url: string): Promise<Actor> {
-		return new Actor().fromProxy(this.#proxyUrl, url)
+		return new Actor().withProxy(this.#proxyUrl).fromUrl(url)
 	}
 
 	Document(url: string): Promise<Document> {
-		return new Document().fromProxy(this.#proxyUrl, url)
+		return new Document().withProxy(this.#proxyUrl).fromUrl(url)
 	}
 
 	Collection(url: string): Promise<Collection> {
-		return new Collection().fromProxy(this.#proxyUrl, url)
+		return new Collection().withProxy(this.#proxyUrl).fromUrl(url)
 	}
 
 }

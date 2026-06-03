@@ -1,14 +1,13 @@
 import { type Actor } from "../as/actor"
 import { Activity } from "../as/activity"
-import { Collection } from "../as/collection"
-import { rangeActivities } from "../as/collection"
+import { Collection, newCollection } from "../as/collection"
 import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfaces"
 
 // Receiver service receives messages from an ActivityPub actor and forwards them
 // to the MLS client
 export class Receiver {
 
-	#messagesUrl: string = "" // endpoint for the actor's emissary:messages or plain messages collection
+	#messagesUrl: string = "" // endpoint for the actor's emissary:messages or plain messages collection: uwuwu owo
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)
 	#activityHandler: IActivityHandler // list of registered message handlers
 	#lastMessage: ILastMessageGetterSetter // handler function for getting/setting the last message ID
@@ -46,7 +45,7 @@ export class Receiver {
 		this.#poll()
 
 		// If possible, listen for server-sent-events (SSE) from the server
-		const collection = await new Collection().fromURL(this.#messagesUrl)
+		const collection = await new Collection().fromUrl(this.#messagesUrl)
 		const sseEndpoint = collection.eventStream()
 
 		if (sseEndpoint != "") {
@@ -81,10 +80,10 @@ export class Receiver {
 
 		// Fetch NEW messages from the server
 		let lastMessageId = await this.#lastMessage()
-		const activities = rangeActivities(this.#messagesUrl, lastMessageId, { credentials: "include" })
+		const collection = await newCollection(this.#messagesUrl, lastMessageId)
 
 		// Process each activity sequentially
-		for await (const activity of activities) {
+		for await (const activity of collection.rangeActivities()) {
 
 			console.log("Receiver: ", activity.toObject())
 			lastMessageId = activity.id()
