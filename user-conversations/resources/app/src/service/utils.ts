@@ -29,9 +29,18 @@ export function stripTrailingNulls(tree: any[]): any[] {
 	return tree.slice(0, lastNonNull + 1)
 }
 
-// base64ToUint8Array converts a base64-encoded string to a Uint8Array
+// base64ToUint8Array converts a base64-encoded string to a Uint8Array.
+// Normalizes URL-safe base64 (- and _) to standard base64 (+ and /),
+// strips whitespace, and adds padding if missing — all common in interop scenarios.
 export function base64ToUint8Array(base64: string): Uint8Array {
-	const binary_string = globalThis.atob(base64)
+	const normalized = base64
+		.replaceAll('-', '+')
+		.replaceAll('_', '/')
+		.replaceAll(/\s+/g, '')
+
+	const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+
+	const binary_string = globalThis.atob(padded)
 	const len = binary_string.length
 	const bytes = new Uint8Array(len)
 	for (let i = 0; i < len; i++) {
