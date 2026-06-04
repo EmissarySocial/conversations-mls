@@ -33,20 +33,21 @@ export function stripTrailingNulls(tree: any[]): any[] {
 // Normalizes URL-safe base64 (- and _) to standard base64 (+ and /),
 // strips whitespace, and adds padding if missing — all common in interop scenarios.
 export function base64ToUint8Array(base64: string): Uint8Array {
+
+	// Normalize URL-safe base64 to standard base64 and remove whitespace
 	const normalized = base64
 		.replaceAll('-', '+')
 		.replaceAll('_', '/')
 		.replaceAll(/\s+/g, '')
 
+	// Add base64 padding (if missing)
 	const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
 
-	const binary_string = globalThis.atob(padded)
-	const len = binary_string.length
-	const bytes = new Uint8Array(len)
-	for (let i = 0; i < len; i++) {
-		bytes[i] = binary_string.codePointAt(i)!
-	}
-	return bytes
+	// Convert base64 string to binary string
+	const binaryString = globalThis.atob(padded)
+
+	// Convert binary string to Uint8Array
+	return Uint8Array.from(binaryString, c => c.codePointAt(0)!)
 }
 
 // newId generates a new unique identifier in the form of a URI with a UUID
