@@ -24,6 +24,7 @@ export class Welcome {
 		vnode.state.isDesktopNotifications = false
 		vnode.state.isDesktopNotificationsPermission = Notification.permission
 		vnode.state.isHideOnBlur = false
+		vnode.state.isEncryptedMessages = true
 	}
 
 	view(vnode: WelcomeVnode) {
