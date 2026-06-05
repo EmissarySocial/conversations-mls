@@ -40,6 +40,7 @@ import * as vocab from "../as/vocab"
 // Application Types
 import { type EncryptedGroup } from "../model/group"
 import { type Group } from "../model/group"
+import { type Message } from "../model/message"
 import { NewGroup } from "../model/group"
 
 import { type IController } from "./interfaces"
@@ -191,6 +192,7 @@ export class CodecMls {
 
 		// RULE: Must have at least one valid KeyPackage to add
 		if (addKeyPackages.length == 0) {
+			console.warn("addGroupMembers: 0 valid KeyPackages found for new members:", newMembers, "-- cannot add members to group")
 			return group
 		}
 
@@ -328,11 +330,100 @@ export class CodecMls {
 	async #cycleKeyPackages(): Promise<void> {
 
 		// Create a new KeyPackage for this device
-		const dbKeyPackage = await this.#controller.createOrUpdateKeyPackage()
+		const keyPackage = await this.#controller.createOrUpdateKeyPackage()
 
 		// Store the results.
-		this.#publicKeyPackage = dbKeyPackage.publicKeyPackage
-		this.#privateKeyPackage = dbKeyPackage.privateKeyPackage
+		this.#publicKeyPackage = keyPackage.publicKeyPackage
+		this.#privateKeyPackage = keyPackage.privateKeyPackage
+	}
+
+
+	//////////////////////////////////////////
+	// Sending Messages
+	//////////////////////////////////////////
+
+	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+	async encodeMessage(group: EncryptedGroup, message: Message): Promise<{}> {
+
+		return {
+			id: message.id,
+			attributedTo: message.sender,
+			type: vocab.ObjectTypeNote,
+			to: group.members,
+			context: group.id,
+			content: message.content,
+			attachment: message.attachments,
+			inReplyTo: message.inReplyTo,
+			published: new Date().toISOString(),
+		}
+	}
+
+	// sendActivity encodes an Activity as an MLS message and sends it to 
+	// updated as a result of this message.
+	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<void> {
+
+		// Encrypt the message using MLS
+		const messageText = activity.toJSON()
+		const messageBytes = encodeText(messageText)
+		const applicationMessage = await createApplicationMessage({
+			context: this.#context(),
+			state: group.clientState,
+			message: messageBytes,
+		})
+
+		// Zero out the keys used to encrypt the message
+		applicationMessage.consumed.forEach(zeroOutUint8Array)
+
+		// update the Group with the new group state
+		group.clientState = applicationMessage.newState
+		group.updateDate = Date.now()
+
+		// save the updated group
+		await this.#database.saveGroup(group)
+
+		// send the activity to all group members
+		await this.#sendMlsMessage(
+			vocab.ObjectTypeMlsPrivateMessage,
+			activity.getArrayOfString("as", vocab.PropertyTo),
+			applicationMessage.message,
+		)
+	}
+
+
+	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage) {
+
+		console.log("#sendMlsMessage", type, recipients)
+
+		// If there are no recipients to send to, just return early
+		if (recipients.length === 0) {
+			return
+		}
+
+		// Encode the private message as bytes, then to base64
+		const contentBytes = encode(mlsMessageEncoder, message)
+		const contentBase64 = bytesToBase64(contentBytes)
+
+		// Create an ActivityPub activity for the private message
+		const activity = new Activity({
+			"@context": [vocab.ContextActivityStreams, vocab.ContextMLS],
+			type: vocab.ActivityTypeCreate,
+			actor: this.#actor.id(),
+			to: recipients,
+			instrument: this.#generatorId,
+			object: {
+				type: type,
+				attributedTo: this.#actor.id(),
+				to: recipients,
+				content: contentBase64,
+				mediaType: vocab.MediaTypeMLSMessage,
+				encoding: vocab.EncodingTypeBase64,
+			},
+		})
+
+		await this.#delivery.sendActivity(activity)
+
+		return activity
 	}
 
 	//////////////////////////////////////////
@@ -344,6 +435,8 @@ export class CodecMls {
 	// null is returned.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
 
+		console.log("CodecMls.receiveActivity called with activity:", activity.toObject())
+
 		// Parse the message content
 		const message = object.content()
 		const uintArray = base64ToUint8Array(message)
@@ -351,6 +444,10 @@ export class CodecMls {
 
 		// Require that the we have a valid decoded message before proceeding
 		if (mlsMessage == undefined) {
+			const firstBytes = Array.from(uintArray.slice(0, 8)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+			console.error("Unable to decode MLS message.")
+			console.error("  object:", object.toJSON())
+			console.error("  first 8 bytes (hex):", firstBytes, "-- expected: 00 01 00 0N (version=1, wireformat=1-5)")
 			throw new Error("Unable to decode message: " + message)
 		}
 
@@ -431,7 +528,7 @@ export class CodecMls {
 	}
 
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-	async #receiveActivity_GroupInfo(document: Document, message: MlsGroupInfo) {
+	async #receiveActivity_GroupInfo(_document: Document, _message: MlsGroupInfo) {
 
 		// var clientState: ClientState
 
@@ -446,6 +543,8 @@ export class CodecMls {
 	async #receiveActivity_PublicPrivateMessage(document: Document, mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
 
 		let groupId: string
+
+		console.log("CodecMls.#receiveActivity_PublicPrivateMessage called with document:", document.toObject(), "mlsMessage:", mlsMessage)
 
 		switch (mlsMessage.wireformat) {
 
@@ -462,6 +561,8 @@ export class CodecMls {
 				return null
 		}
 
+		console.log("Decoded groupId: ", groupId)
+
 		// Load the group from the database so we can get the current client state for decryption
 		const group = await this.#database.loadGroup(groupId)
 
@@ -469,6 +570,8 @@ export class CodecMls {
 			console.error("Received message for unknown group", groupId)
 			return null
 		}
+
+		console.log("Loaded group from database: ", group)
 
 		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
@@ -487,15 +590,34 @@ export class CodecMls {
 
 		const _this = this // NOSONAR: typescript:S7740 (this is required to make the callback work correctly... IDK man.)
 
+		// Diagnostic logging before processMessage to detect epoch mismatches
+		const groupEpoch = group.clientState.groupContext.epoch
+		let msgEpoch: bigint | number | undefined
+		let msgWireformat: string
+		if (mlsMessage.wireformat === wireformats.mls_private_message) {
+			msgEpoch = mlsMessage.privateMessage.epoch
+			msgWireformat = "PrivateMessage(2)"
+		} else {
+			msgEpoch = mlsMessage.publicMessage.content.epoch
+			msgWireformat = "PublicMessage(1)"
+		}
+		console.log(`CodecMls.processMessage: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}, epochMatch=${groupEpoch == msgEpoch}`)
+
 		// Decode the message using ts-mls
-		const decodedMessage = await processMessage({
-			context: this.#context(),
-			state: group.clientState,
-			message: mlsMessage,
-			callback: (message) => {
-				return _this.#processMessageCallback(message, group)
-			}
-		})
+		let decodedMessage: Awaited<ReturnType<typeof processMessage>>
+		try {
+			decodedMessage = await processMessage({
+				context: this.#context(),
+				state: group.clientState,
+				message: mlsMessage,
+				callback: (message) => {
+					return _this.#processMessageCallback(message, group)
+				}
+			})
+		} catch (err) {
+			console.error(`CodecMls.processMessage FAILED: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}`, err)
+			throw err
+		}
 
 		// If no action is taken, then do not write it to the group.
 		if (decodedMessage.kind == "newState") {
@@ -592,41 +714,6 @@ export class CodecMls {
 		await this.#commitProposals(group, [proposal])
 	}
 
-	//////////////////////////////////////////
-	// Sending Messages
-	//////////////////////////////////////////
-
-	// sendActivity encodes an Activity as an MLS message and sends it to 
-	// updated as a result of this message.
-	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<void> {
-
-		// Encrypt the message using MLS
-		const messageText = activity.toJSON()
-		const messageBytes = encodeText(messageText)
-		const applicationMessage = await createApplicationMessage({
-			context: this.#context(),
-			state: group.clientState,
-			message: messageBytes,
-		})
-
-		// Zero out the keys used to encrypt the message
-		applicationMessage.consumed.forEach(zeroOutUint8Array)
-
-		// update the Group with the new group state
-		group.clientState = applicationMessage.newState
-		group.updateDate = Date.now()
-
-		// save the updated group
-		await this.#database.saveGroup(group)
-
-		// send the activity to all group members
-		await this.#sendMlsMessage(
-			vocab.ObjectTypeMlsPrivateMessage,
-			activity.getArrayOfString("as", vocab.PropertyTo),
-			applicationMessage.message,
-		)
-	}
-
 	// commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
 	async #commitProposals(group: EncryptedGroup, proposals: Proposal[]): Promise<void> {
 
@@ -658,44 +745,8 @@ export class CodecMls {
 		await this.#database.saveGroup(group)
 	}
 
-	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage) {
-
-		console.log("#sendMlsMessage", type, recipients)
-
-		// If there are no recipients to send to, just return early
-		if (recipients.length === 0) {
-			return
-		}
-
-		// Encode the private message as bytes, then to base64
-		const contentBytes = encode(mlsMessageEncoder, message)
-		const contentBase64 = bytesToBase64(contentBytes)
-
-		// Create an ActivityPub activity for the private message
-		const activity = new Activity({
-			"@context": [vocab.ContextActivityStreams, vocab.ContextMLS],
-			type: vocab.ActivityTypeCreate,
-			actor: this.#actor.id(),
-			to: recipients,
-			instrument: this.#generatorId,
-			object: {
-				type: type,
-				attributedTo: this.#actor.id(),
-				to: recipients,
-				content: contentBase64,
-				mediaType: vocab.MediaTypeMLSMessage,
-				encoding: vocab.EncodingTypeBase64,
-			},
-		})
-
-		this.#delivery.sendActivity(activity)
-
-		return activity
-	}
-
 	//////////////////////////////////////////
-	// Helpers
+	// Helper Methods
 	//////////////////////////////////////////
 
 	// #context returns an MlsContext with the current cipher suite and authentication service.
@@ -708,7 +759,7 @@ export class CodecMls {
 }
 
 //////////////////////////////////////////
-// Helpers
+// Helper Functions
 //////////////////////////////////////////
 
 // incomingMessage is a type that is passed to an IncomingMessageCallback function.

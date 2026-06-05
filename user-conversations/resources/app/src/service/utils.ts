@@ -1,6 +1,3 @@
-import type { Group } from "../model/group"
-import type { Message } from "../model/message"
-import * as vocab from "../as/vocab"
 
 // rangeToArray consumes all values from a generator and returns them as an array
 export function rangeToArray<T>(generator: Generator<T>): T[] {
@@ -81,20 +78,6 @@ export function uint8ArraysContain(arrays: Uint8Array[], target: Uint8Array): bo
 	}
 
 	return false
-}
-
-// messageToActivityStream converts a Message to an ActivityStream object for sending via ActivityPub
-export function messageToActivityStream(group: Group, message: Message): { [key: string]: any } {
-	return {
-		id: message.id,
-		attributedTo: message.sender,
-		type: vocab.ObjectTypeNote,
-		to: group.members,
-		context: group.id,
-		content: message.content,
-		attachment: message.attachments,
-		published: new Date().toISOString(),
-	}
 }
 
 // diffArrays compares two arrays and returns the added and removed items

@@ -30,6 +30,7 @@ import type { Collection } from "../as/collection"
 // regular ActivityPub "direct messages".
 export interface ICodec {
 	createGroup(group: Group): Promise<Group>
+	encodeMessage(group: Group, message: Message): Promise<{}>
 	getGroup(groupId: string): Promise<Group>
 	getGroupMembers(group: Group): string[]
 	addGroupMembers(group: Group, newMembers: string[]): Promise<Group>

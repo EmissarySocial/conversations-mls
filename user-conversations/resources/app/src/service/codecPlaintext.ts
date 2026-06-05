@@ -1,8 +1,9 @@
-import * as vocab from "../as/vocab"
 import { Activity } from "../as/activity"
-import { type Document } from "../as/document"
-import { type Group } from "../model/group"
-import { NewGroup } from "../model/group"
+import { Document } from "../as/document"
+import * as vocab from "../as/vocab"
+
+import { type Group, NewGroup } from "../model/group"
+import { type Message } from "../model/message"
 import type { IDatabase, IDelivery } from "./interfaces"
 import { newId } from "./utils"
 
@@ -18,6 +19,7 @@ export class CodecPlaintext {
 		this.#actorId = actorId
 	}
 
+	// createGroup creates a new group on the server and returns a local Group record
 	async createGroup(): Promise<Group> {
 
 		// Activity to create a new group on the server
@@ -41,6 +43,7 @@ export class CodecPlaintext {
 		return this.#createGroup(groupId)
 	}
 
+	// getGroup loads a group from the database or creates a new one if it doesn't exist
 	async getGroup(groupId: string): Promise<Group> {
 
 		let group = await this.#database.loadGroup(groupId)
@@ -58,15 +61,18 @@ export class CodecPlaintext {
 		return this.#createGroup(groupId)
 	}
 
+	// getGroupMembers returns the list of member IDs for the given group
 	getGroupMembers(group: Group): string[] {
 		return group.members
 	}
 
+	// addGroupMembers adds new members to the group and saves it to the database
 	async addGroupMembers(group: Group, newMembers: string[]): Promise<Group> {
 		group.members.push(...newMembers)
 		return group
 	}
 
+	// leaveGroup removes the current actor from the group and saves it to the database
 	async leaveGroup(group: Group): Promise<void> {
 		return undefined
 	}
@@ -154,6 +160,22 @@ export class CodecPlaintext {
 		// Otherwise, generate a new group ID
 		activity.setContext(newId())
 	}
+
+	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+	async encodeMessage(group: Group, message: Message): Promise<{}> {
+
+		return {
+			attributedTo: message.sender,
+			type: vocab.ObjectTypeNote,
+			inReplyTo: message.inReplyTo || group.firstMessageId,
+			to: group.members,
+			context: group.id,
+			content: message.content,
+			attachment: message.attachments,
+			published: new Date().toISOString(),
+		}
+	}
+
 
 	async sendActivity(group: Group, activity: Activity): Promise<void> {
 

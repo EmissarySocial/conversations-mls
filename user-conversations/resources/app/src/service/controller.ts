@@ -1045,13 +1045,17 @@ export class Controller {
 		// Update the group with the message content
 		await this.saveGroup(group)
 
+		// Encode the message object using the appropriate codec for this group
+		const codec = this.#getCodecForGroup(group)
+		const object = await codec.encodeMessage(group, message)
+
 		// Create an ActivityPub activity 
 		const activity = new Activity({
 			context: group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
 			to: group.members,
-			object: messageToActivityStream(group, message),
+			object: object,
 		})
 
 		// (asynchronously) Send the activity through the delivery service
@@ -1072,12 +1076,16 @@ export class Controller {
 			return
 		}
 
+		// Encode the message object using the appropriate codec for this group
+		const codec = this.#getCodecForGroup(group)
+		const object = await codec.encodeMessage(group, message)
+
 		// Create an "Update" activity
 		const activity = new Activity({
 			actor: this.actorId(),
 			type: vocab.ActivityTypeUpdate,
 			to: group.members,
-			object: messageToActivityStream(group, message),
+			object: object,
 		})
 
 		// Send the activity
@@ -1233,10 +1241,30 @@ export class Controller {
 
 
 	//////////////////////////////////////////
+	// Sending Activities
+	//////////////////////////////////////////
+
+	// sendActivity sends an activity to the Actor's outbox
+	readonly #sendActivity = async (group: Group, activity: Activity) => {
+
+		// Apply the "instrument" property to the activity to identify that it came from this client.
+		activity.set(vocab.PropertyInstrument, this.config.generatorId)
+
+		// Find the codec for this group (plaintext or MLS)
+		const codec = this.#getCodecForGroup(group)
+
+		// Send the activity through the codec.
+		await codec.sendActivity(group, activity)
+	}
+
+
+	//////////////////////////////////////////
 	// Receiving Activities
 	//////////////////////////////////////////
 
 	receiveActivity = async (activity: Activity, retryCount: number = 0) => {
+
+		console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount)
 
 		// Retrieve the object from the activity. This should be embedded,
 		// but we can load from the network if needed.
