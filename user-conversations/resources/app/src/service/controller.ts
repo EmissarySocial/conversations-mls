@@ -51,7 +51,6 @@ import { shouldRefreshKeyPackage } from "./cryptography"
 import { unwrapKey } from "./cryptography"
 import { wrapKey } from "./cryptography"
 
-import { messageToActivityStream } from "./utils"
 import { newId } from "./utils"
 
 export class Controller {
@@ -784,6 +783,7 @@ export class Controller {
 				"type": vocab.ObjectTypeEmissaryContext,
 				"name": group.name,
 				"summary": group.summary,
+				"firstMesssageId": group.firstMessageId,
 				"stateId": group.stateId,
 				"tag": group.tags,
 				"unread": group.unread,
@@ -1294,11 +1294,11 @@ export class Controller {
 
 		} catch (error) {
 
-			if (retryCount < 120) { // retry every half-second for up to 1 minute
+			if (retryCount < 120) { // retry every second for up to 2 minutes
 				console.log("Retrying error processing activity with codec:", error)
 				setTimeout(() => {
 					this.receiveActivity(activity, retryCount + 1)
-				}, 500)
+				}, 1000)
 				return
 			}
 
@@ -1418,6 +1418,11 @@ export class Controller {
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
+
+		// Default the first message in the group (if not already set)
+		if (group.firstMessageId == "") {
+			group.firstMessageId = message.id
+		}
 
 		// Mark the group with the lastMessage content
 		group.lastMessage = object.content()
