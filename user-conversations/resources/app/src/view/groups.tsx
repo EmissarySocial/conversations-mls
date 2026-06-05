@@ -57,7 +57,7 @@ export class Groups {
 						cssClass += " highlight"
 					}
 
-					const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green60)"
+					const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green70)"
 
 					return (
 						<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
