@@ -2,9 +2,7 @@ import type { KeyPackage } from "ts-mls"
 
 import { bytesToBase64 } from "ts-mls"
 import { encode } from "ts-mls"
-import { mlsMessageEncoder } from "ts-mls"
-import { protocolVersions } from "ts-mls"
-import { wireformats } from "ts-mls"
+import { keyPackageEncoder } from "ts-mls"
 
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
 export interface APKeyPackage {
@@ -47,16 +45,9 @@ export function NewAPKeyPackage(keyPackageId: string, generatorId: string, gener
 	}
 }
 
-// encodeKeyPackage represents a KeyPackage as a base64-encoded MLS message
+// encodeKeyPackage represents a KeyPackage as a base64-encoded raw TLS KeyPackage.
+// Uses the raw format (version + cipherSuite + initKey + leafNode + extensions + signature)
+// without the MlsMessage wrapper, matching the format used by Bonfire and other implementations.
 export function encodeKeyPackage(keyPackage: KeyPackage): string {
-
-	// Encode the KeyPackage as an MLS message
-	const keyPackageMessage = encode(mlsMessageEncoder, {
-		keyPackage: keyPackage,
-		wireformat: wireformats.mls_key_package,
-		version: protocolVersions.mls10,
-	})
-
-	// Encode the messag to base64 for transport
-	return bytesToBase64(keyPackageMessage)
+	return bytesToBase64(encode(keyPackageEncoder, keyPackage))
 }
