@@ -138,10 +138,12 @@ export class Directory {
 	async* listAllKeyPackages(actorId: string): AsyncGenerator<Document> {
 		const actor = await this.#proxy.Actor(actorId)
 		const collection = await actor.mlsKeyPackages()
+		console.log("listAllKeyPackages: fetching KeyPackages for actor:", actorId, "-- collection:", collection.toObject())
 		const documents = collection.rangeDocuments()
 
 		// Yield each KeyPackage document to the caller
 		for await (const document of documents) {
+			console.log("listAllKeyPackages: yielding document:", document.toObject())
 			yield document
 		}
 	}

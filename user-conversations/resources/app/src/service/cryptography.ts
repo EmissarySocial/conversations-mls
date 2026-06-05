@@ -12,6 +12,7 @@ import { defaultCredentialTypes } from "ts-mls"
 import { defaultLifetime } from "ts-mls"
 import { generateKeyPackage } from "ts-mls"
 import { getCiphersuiteImpl } from "ts-mls"
+import { keyPackageDecoder } from "ts-mls"
 import { mlsMessageDecoder } from "ts-mls"
 import { wireformats } from "ts-mls"
 
@@ -227,33 +228,46 @@ function keyPackageIdentity(keyPackage: KeyPackage): string {
 // decodeKeyPackage decodes a Document into an MlsKeyPackage
 export function decodeKeyPackage(document: Document): KeyPackage {
 
+	// RULE: Validate document type
 	if (!document.types().includes(vocab.ObjectTypeMlsKeyPackage)) {
 		throw new Error("Document must have type 'KeyPackage'")
 	}
 
+	// RULE: Validate mediaType
 	if (document.mediaType() != "message/mls") {
 		throw new Error("Document must use mediaType 'message/mls'")
 	}
 
+	// RULE: Validate encoding
 	if (document.encoding() != "base64") {
 		throw new Error("Document must use encoding 'base64'")
 	}
 
 	// Extract the KeyPackage data and parse it as an MLS message
 	const contentBytes = base64ToUint8Array(document.content())
-	const mlsMessage = decode(mlsMessageDecoder, contentBytes)
 
-	if (mlsMessage == undefined) {
-		throw new Error("decodeKeyPackage: Failed to decode KeyPackage for item:", document.toObject())
+	// Try raw KeyPackage format first
+	try {
+		const keyPackage = decode(keyPackageDecoder, contentBytes)
+		if (keyPackage != undefined) {
+			return keyPackage
+		}
+	} catch (e) {
+		console.debug("decodeKeyPackage: Unable to decode KeyPackage in raw format", e)
 	}
 
-	// Guarantee that the message is a KeyPackage
-	if (mlsMessage.wireformat !== wireformats.mls_key_package) {
-		throw new Error("decodeKeyPackage: Unexpected wireformat for KeyPackage")
+	// Fallback: try MLS framed format
+	try {
+		const mlsMessage = decode(mlsMessageDecoder, contentBytes)
+		if (mlsMessage?.wireformat === wireformats.mls_key_package) {
+			return mlsMessage.keyPackage
+		}
+	} catch (e) {
+		console.debug("decodeKeyPackage: Unable to decode KeyPackage in framed format", e)
 	}
 
-	// Woot.
-	return mlsMessage.keyPackage
+	// Abject Failure. Return from Teutonberg Forest.
+	throw new Error(`Unable to decode KeyPackage`)
 }
 
 
