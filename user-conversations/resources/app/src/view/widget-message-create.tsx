@@ -43,9 +43,9 @@ export class WidgetMessageCreate {
 		return <>
 
 			{isEncrypted ?
-				<div class="text-sm text-gray"><i class="bi bi-lock-fill"></i> encrypted conversation</div>
+				<div class="text-sm padding-xs text-gray"><i class="bi bi-lock-fill"></i> PRIVATE MESSAGE (encrypted)</div>
 				:
-				<div class="text-sm padding-xs bold bg-stripes"><i class="bi bi-exclamation-triangle-fill"></i> NOT ENCRYPTED</div>
+				<div class="text-sm padding-xs bold bg-stripes"><i class="bi bi-exclamation-triangle-fill"></i> DIRECT MESSAGE (not encrypted)</div>
 			}
 
 			<div class="flex-row flex-justify" style={backgroundStyle}>
