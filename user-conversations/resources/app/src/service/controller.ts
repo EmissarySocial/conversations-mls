@@ -1001,13 +1001,17 @@ export class Controller {
 		group.lastMessage = content
 		await this.saveGroup(group)
 
+		// Send message using the appropriate codec
+		const codec = this.#getCodecForGroup(group)
+		const object = await codec.encodeMessage(group, message)
+
 		// Create an ActivityPub activity 
 		const activity = new Activity({
 			context: group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeCreate,
 			to: group.members,
-			object: messageToActivityStream(group, message),
+			object: object,
 		})
 
 		console.log("Constructed activity:", activity.toObject())
@@ -1596,24 +1600,6 @@ export class Controller {
 
 		// Save the message to the database
 		await this.#database.saveMessage(message)
-	}
-
-
-	//////////////////////////////////////////
-	// Network Stuff
-	//////////////////////////////////////////
-
-	// sendActivity sends an activity to the Actor's outbox
-	readonly #sendActivity = async (group: Group, activity: Activity) => {
-
-		// Apply the "instrument" property to the activity to identify that it came from this client.
-		activity.set(vocab.PropertyInstrument, this.config.generatorId)
-
-		// Find the codec for this group (plaintext or MLS)
-		const codec = this.#getCodecForGroup(group)
-
-		// Send the activity through the codec.
-		await codec.sendActivity(group, activity)
 	}
 
 
