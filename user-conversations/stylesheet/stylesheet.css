@@ -98,8 +98,8 @@
 					justify-content:flex-end;
 
 					.bubble {
-						background-color: var(--green60);
-						border-color: var(--green60);
+						background-color: var(--green70);
+						border-color: var(--green70);
 						color:white;
 
 						a, button {
@@ -110,7 +110,7 @@
 							}
 
 							&.selected {
-								outline:solid 1px var(--green60);
+								outline:solid 1px var(--green70);
 							}
 						}
 					}
@@ -147,9 +147,9 @@
 				border-color: var(--blue50);
 				color: white;
 
-				& a, button {
+				& a, & button {
 
-					.selected {
+					&.selected {
 						outline:solid 1px var(--blue60);
 					}
 				}
