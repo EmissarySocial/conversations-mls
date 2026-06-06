@@ -52,6 +52,7 @@ import { groupIsEncrypted } from "../model/group"
 import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array } from "./utils"
 import { keyPackageIsExpired } from "./cryptography"
+import { algorithms } from "./algorithms"
 
 // MLS service encrypts/decrypts messages using the MLS protocol.
 // This is intended to be a reusable service that could be called
@@ -176,19 +177,25 @@ export class CodecMls {
 	// message to existing members, and a Welcome message to new members,
 	async addGroupMembers(group: EncryptedGroup, newMembers: string[]): Promise<EncryptedGroup> {
 
-		// Look up all KeyPackages for the new Members
+		// Step 1: look up all KeyPackages published by the new members
 		const currentMembers = group.members
-		let addKeyPackages = await this.#directory.getKeyPackages(newMembers)
+		let candidates = await this.#directory.getKeyPackages(newMembers)
 
 		// Filter out the KeyPackage for THIS device
-		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
+		candidates = candidates.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
 
 		// Filter out KeyPackages that are already in the group state (e.g. from another device of the same user)
 		const signatures = this.#getGroupSignatures(group)
-		addKeyPackages = addKeyPackages.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
+		candidates = candidates.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
 
-		// Inspect Lifetime values and remove expired KeyPackages
-		addKeyPackages = addKeyPackages.filter(keyPackage => !keyPackageIsExpired(keyPackage))
+		// Filter out expired KeyPackages
+		candidates = candidates.filter(keyPackage => !keyPackageIsExpired(keyPackage))
+
+		// Negotiate the best ciphersuite to use for this group and available keypackages
+		const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers)
+
+		// Use only the chosen ciphersuite and deduplicate per device
+		const addKeyPackages = this.#selectBestKeyPackages(candidates, targetCipherSuite)
 
 		// RULE: Must have at least one valid KeyPackage to add
 		if (addKeyPackages.length == 0) {
@@ -326,6 +333,14 @@ export class CodecMls {
 	//////////////////////////////////////////
 	// Key Packages
 	//////////////////////////////////////////
+
+	// #selectBestKeyPackages filters candidates to the target cipher suite (step 4)
+	// and deduplicates per device, keeping the KeyPackage with the latest notAfter (step 5).
+	// Steps 1-3 (collecting candidates and negotiating the cipher suite) are the caller's responsibility.
+	#selectBestKeyPackages(candidates: KeyPackage[], targetCipherSuiteId: number): KeyPackage[] {
+		const filtered = candidates.filter(kp => kp.cipherSuite === targetCipherSuiteId)
+		return deduplicateKeyPackages(filtered)
+	}
 
 	async #cycleKeyPackages(): Promise<void> {
 
@@ -758,8 +773,122 @@ export class CodecMls {
 	}
 }
 
+
 //////////////////////////////////////////
-// Helper Functions
+// CipherSuite Helper Functions
+//////////////////////////////////////////
+
+// chooseCipherSuite returns the cipher suite ID to use for this group.
+// If the group already has one set, it returns early. Otherwise it intersects the
+// cipher suite IDs published by all actors, picks the highest-ranked algorithm
+// from our preference list, stores the result on the group, and returns it.
+export function chooseCipherSuite(group: EncryptedGroup, candidates: KeyPackage[], actorIds: string[]): number {
+
+	// Early return: group already has a negotiated cipher suite
+	if (group.ciphersuite !== 0) {
+		return group.ciphersuite
+	}
+
+	// Step 2: build a map of actor → set of cipher suite IDs they have KeyPackages for
+	const actorCipherSuites = buildActorCipherSuiteMap(candidates)
+
+	// Step 3: intersect all actors' cipher suite sets
+	let commonSuites: Set<number> | undefined
+	for (const actorId of actorIds) {
+		const suites = actorCipherSuites.get(actorId)
+		if (suites == undefined) {
+			console.warn(`#chooseCipherSuite: No valid KeyPackages found for actor ${actorId}`)
+			continue
+		}
+		commonSuites = (commonSuites == undefined)
+			? new Set(suites)
+			: new Set([...commonSuites].filter(id => suites.has(id)))
+	}
+
+	// Pick the highest-ranked algorithm from our preference list that all actors support
+	if (commonSuites != undefined) {
+		for (const algorithm of algorithms) {
+			if (commonSuites.has(algorithm.id)) {
+				group.ciphersuite = algorithm.id
+				return algorithm.id
+			}
+		}
+	}
+
+	// Fall back to the group's own MLS cipher suite ID (already a number in ts-mls)
+	const fallback = group.clientState.groupContext.cipherSuite
+	group.ciphersuite = fallback
+	return fallback
+}
+
+
+// buildActorCipherSuiteMap builds a map of actor ID → set of cipher suite IDs
+// for which that actor has published valid KeyPackages.
+export function buildActorCipherSuiteMap(candidates: KeyPackage[]): Map<string, Set<number>> {
+	const result = new Map<string, Set<number>>()
+
+	for (const kp of candidates) {
+		const credential = kp.leafNode.credential as CredentialBasic
+
+		// Skip KeyPackages that don't carry an actor identity in their credential
+		if (credential.identity == undefined) {
+			continue
+		}
+
+		// Skip KeyPackages whose cipher suite isn't in our supported algorithm list
+		if (!algorithms.some(a => a.id === kp.cipherSuite)) {
+			continue
+		}
+
+		// Decode the actor ID and add this cipher suite ID to their set
+		const actorId = decodeText(credential.identity)
+		if (!result.has(actorId)) {
+			result.set(actorId, new Set())
+		}
+
+		result.get(actorId)!.add(kp.cipherSuite)
+	}
+
+	return result
+}
+
+// deduplicateKeyPackages returns one KeyPackage per unique device (signaturePublicKey),
+// choosing the one with the latest notAfter when multiple packages exist for the same device.
+export function deduplicateKeyPackages(candidates: KeyPackage[]): KeyPackage[] {
+
+	// Map from hex-encoded signaturePublicKey → the best KeyPackage seen so far for that device.
+	// signaturePublicKey is the stable identifier for a single device across all its KeyPackages.
+	const best = new Map<string, KeyPackage>()
+
+	for (const kp of candidates) {
+
+		// Convert the device's signing key to a hex string so it can be used as a Map key
+		const deviceKey = Array.from(kp.leafNode.signaturePublicKey, b => b.toString(16).padStart(2, '0')).join('')
+
+		const existing = best.get(deviceKey)
+		if (existing == undefined) {
+			// First KeyPackage seen for this device — accept it unconditionally
+			best.set(deviceKey, kp)
+			continue
+		}
+
+		// A KeyPackage with no lifetime is treated as already-expired (notAfter = 0),
+		// so any package with a real lifetime will displace it.
+		const existingNotAfter = existing.leafNode.lifetime?.notAfter ?? 0n
+		const candidateNotAfter = kp.leafNode.lifetime?.notAfter ?? 0n
+
+		// Keep the KeyPackage that stays valid the longest
+		if (candidateNotAfter > existingNotAfter) {
+			best.set(deviceKey, kp)
+		}
+	}
+
+	return [...best.values()]
+}
+
+
+//////////////////////////////////////////
+// Other Helper Functions
 //////////////////////////////////////////
 
 // incomingMessage is a type that is passed to an IncomingMessageCallback function.
@@ -777,12 +906,12 @@ type incomingCommit = {
 }
 
 // encodeText is a shorthand for using the ts-mls TextEncoder
-function encodeText(text: string) {
+export function encodeText(text: string) {
 	return new TextEncoder().encode(text)
 }
 
 // decodeText is a shorthand for using the ts-mls TextDecoder.
-function decodeText(bytes: Uint8Array) {
+export function decodeText(bytes: Uint8Array) {
 	return new TextDecoder().decode(bytes)
 }
 
@@ -790,6 +919,8 @@ function decodeText(bytes: Uint8Array) {
 function addClientState(group: Group, clientState: ClientState): EncryptedGroup {
 	return {
 		...group,
+		ciphersuite: 0,
 		clientState: clientState,
 	}
 }
+

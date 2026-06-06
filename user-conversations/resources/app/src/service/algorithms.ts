@@ -1,8 +1,26 @@
+// Named constants for the MLS cipher suite IDs used by this app.
+// All internal code works with these numeric IDs; string names appear only at wire-format boundaries.
+export const CIPHER_XWING_CHACHA20 = 0xf00e  // MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519
+export const CIPHER_X25519_AES128 = 1        // MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519
+
+// cipherSuiteName returns the algorithm name for a given numeric MLS cipher suite ID.
+// Used only at wire-format boundaries (ActivityPub JSON and ts-mls API calls).
+export function cipherSuiteName(id: number): (string | undefined) {
+
+	const algorithm = algorithms.find(a => a.id === id)
+
+	if (algorithm == undefined) {
+		return undefined
+	}
+
+	return algorithm.name
+}
+
 // Ciphersuites used by this app, in order of preference
 export const algorithms = [
+	/**** Remove this from the list of supported algorithms for now, until we have support from Bonfire (et al)
 	{
-		"rank": 6,
-		"id": "0xf00e",
+		"id": CIPHER_XWING_CHACHA20,
 		"name": "MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519",
 		"kem": "X-Wing",
 		"aead": "CHACHA20POLY1305",
@@ -13,9 +31,9 @@ export const algorithms = [
 		"post_quantum": false,
 		"deps": ["@hpke/ml-kem", "@hpke/chacha20poly1305", "@noble/curves"]
 	},
+	*/
 	{
-		"rank": 17,
-		"id": "1",
+		"id": CIPHER_X25519_AES128,
 		"name": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
 		"kem": "DHKEM-X25519-HKDF-SHA256",
 		"aead": "AES128GCM",

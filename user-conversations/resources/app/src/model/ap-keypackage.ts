@@ -4,6 +4,8 @@ import { bytesToBase64 } from "ts-mls"
 import { encode } from "ts-mls"
 import { keyPackageEncoder } from "ts-mls"
 
+import { CIPHER_X25519_AES128, cipherSuiteName } from "../service/algorithms"
+
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
 export interface APKeyPackage {
 	id: string
@@ -41,7 +43,7 @@ export function NewAPKeyPackage(keyPackageId: string, generatorId: string, gener
 			type: "Application",
 			name: generatorName,
 		},
-		ciphersuite: "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+		ciphersuite: cipherSuiteName(CIPHER_X25519_AES128) ?? ""
 	}
 }
 
