@@ -52,7 +52,7 @@ import { groupIsEncrypted } from "../model/group"
 import { uint8ArrayEqual, uint8ArraysContain } from "./utils"
 import { base64ToUint8Array } from "./utils"
 import { keyPackageIsExpired } from "./cryptography"
-import { algorithms } from "./algorithms"
+import { algorithms, CIPHER_X25519_AES128 } from "./algorithms"
 
 // MLS service encrypts/decrypts messages using the MLS protocol.
 // This is intended to be a reusable service that could be called
@@ -108,8 +108,9 @@ export class CodecMls {
 
 		let group = NewGroup("MLS")
 
-		// TODO: Negotiate the best ciphersuite to use for this group and available keypackages
-		// const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers)
+		// Fetch KeyPackages for the new members and negotiate the best shared cipher suite.
+		// const keyPackages = await this.#directory.getKeyPackages(newMembers)
+		// ciphersuite = chooseCipherSuite(keyPackages, newMembers)
 
 		// Generate a new clientState for this group
 		const clientState = await createGroup({
@@ -775,10 +776,10 @@ export class CodecMls {
 // CipherSuite Helper Functions
 //////////////////////////////////////////
 
-// chooseCipherSuite returns the cipher suite ID to use when adding members to this group.
+// chooseCipherSuite returns the cipher suite ID to use for a new group.
 // It intersects the cipher suite IDs published by all actors, picks the highest-ranked
-// algorithm from our preference list, and falls back to the group's own cipher suite.
-export function chooseCipherSuite(group: EncryptedGroup, candidates: KeyPackage[], actorIds: string[]): number {
+// algorithm from our preference list, and falls back to CIPHER_X25519_AES128.
+export function chooseCipherSuite(candidates: KeyPackage[], actorIds: string[]): number {
 
 	// Build a map of actor → set of cipher suite IDs they have KeyPackages for
 	const actorCipherSuites = buildActorCipherSuiteMap(candidates)
@@ -805,8 +806,8 @@ export function chooseCipherSuite(group: EncryptedGroup, candidates: KeyPackage[
 		}
 	}
 
-	// Fall back to the group's own MLS cipher suite ID (already a number in ts-mls)
-	return group.clientState.groupContext.cipherSuite
+	// Fall back to the provided default
+	return CIPHER_X25519_AES128
 }
 
 
