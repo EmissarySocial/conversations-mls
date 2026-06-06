@@ -17758,6 +17758,7 @@
       defaultName: "",
       summary: "",
       tags: [],
+      firstMessageId: "",
       lastMessage: "",
       members: [],
       contacts: [],
@@ -17818,61 +17819,12 @@
     return new Message(data);
   }
 
-  // src/as/vocab.ts
-  var ActivityTypeAcknowledge = "Acknowledge";
-  var ActivityTypeCreate = "Create";
-  var ActivityTypeDelete = "Delete";
-  var ActivityTypeLeave = "Leave";
-  var ActivityTypeLike = "Like";
-  var ActivityTypeFailure = "Failure";
-  var ActivityTypeUndo = "Undo";
-  var ActivityTypeUpdate = "Update";
-  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
-  var ContextMLS = "https://purl.archive.org/socialweb/mls";
-  var CoreTypeOrderedCollection = "OrderedCollection";
-  var EncodingTypeBase64 = "base64";
-  var MediaTypeMLSMessage = "message/mls";
-  var ObjectTypeNote = "Note";
-  var ObjectTypeEmissaryContext = "emissary:Context";
-  var ObjectTypeMlsKeyPackage = "KeyPackage";
-  var ObjectTypeMlsPrivateMessage = "PrivateMessage";
-  var ObjectTypeMlsGroupInfo = "GroupInfo";
-  var ObjectTypeMlsWelcome = "Welcome";
-  var PropertyActor = "actor";
-  var PropertyAttachment = "attachment";
-  var PropertyAttributedTo = "attributedTo";
-  var PropertyCc = "cc";
-  var PropertyContent = "content";
-  var PropertyContext = "context";
-  var PropertyEndpoints = "endpoints";
-  var PropertyGenerator = "generator";
-  var PropertyIcon = "icon";
-  var PropertyId = "id";
-  var PropertyInReplyTo = "inReplyTo";
-  var PropertyInstrument = "instrument";
-  var PropertyMlsKeyPackages = "keyPackages";
-  var PropertyMlsMessages = "messages";
-  var PropertyName = "name";
-  var PropertyObject = "object";
-  var PropertyOutbox = "outbox";
-  var PropertyPreferredUsername = "preferredUsername";
-  var PropertyProxyUrl = "proxyUrl";
-  var PropertyPublished = "published";
-  var PropertySummary = "summary";
-  var PropertyTag = "tag";
-  var PropertyTarget = "target";
-  var PropertyTo = "to";
-  var PropertyType = "type";
-
   // src/service/utils.ts
   function base64ToUint8Array(base64) {
-    const binary_string = globalThis.atob(base64);
-    const len = binary_string.length;
-    const bytes = new Uint8Array(len);
-    for (let i2 = 0; i2 < len; i2++) {
-      bytes[i2] = binary_string.codePointAt(i2);
-    }
-    return bytes;
+    const normalized = base64.replaceAll("-", "+").replaceAll("_", "/").replaceAll(/\s+/g, "");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const binaryString = globalThis.atob(padded);
+    return Uint8Array.from(binaryString, (c2) => c2.codePointAt(0));
   }
   function newId2() {
     return "uri:uuid:" + crypto.randomUUID();
@@ -17895,18 +17847,6 @@
       }
     }
     return false;
-  }
-  function messageToActivityStream(group, message) {
-    return {
-      id: message.id,
-      attributedTo: message.sender,
-      type: ObjectTypeNote,
-      to: group.members,
-      context: group.id,
-      content: message.content,
-      attachment: message.attachments,
-      published: (/* @__PURE__ */ new Date()).toISOString()
-    };
   }
   function diffArrays(before, after) {
     const beforeSet = new Set(before);
@@ -18114,6 +18054,52 @@
       return message;
     };
   };
+
+  // src/as/vocab.ts
+  var ActivityTypeAcknowledge = "Acknowledge";
+  var ActivityTypeCreate = "Create";
+  var ActivityTypeDelete = "Delete";
+  var ActivityTypeLeave = "Leave";
+  var ActivityTypeLike = "Like";
+  var ActivityTypeFailure = "Failure";
+  var ActivityTypeUndo = "Undo";
+  var ActivityTypeUpdate = "Update";
+  var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
+  var ContextMLS = "https://purl.archive.org/socialweb/mls";
+  var CoreTypeOrderedCollection = "OrderedCollection";
+  var EncodingTypeBase64 = "base64";
+  var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeNote = "Note";
+  var ObjectTypeEmissaryContext = "emissary:Context";
+  var ObjectTypeMlsKeyPackage = "KeyPackage";
+  var ObjectTypeMlsPrivateMessage = "PrivateMessage";
+  var ObjectTypeMlsGroupInfo = "GroupInfo";
+  var ObjectTypeMlsWelcome = "Welcome";
+  var PropertyActor = "actor";
+  var PropertyAttachment = "attachment";
+  var PropertyAttributedTo = "attributedTo";
+  var PropertyCc = "cc";
+  var PropertyContent = "content";
+  var PropertyContext = "context";
+  var PropertyEndpoints = "endpoints";
+  var PropertyGenerator = "generator";
+  var PropertyIcon = "icon";
+  var PropertyId = "id";
+  var PropertyInReplyTo = "inReplyTo";
+  var PropertyInstrument = "instrument";
+  var PropertyMlsKeyPackages = "keyPackages";
+  var PropertyMlsMessages = "messages";
+  var PropertyName = "name";
+  var PropertyObject = "object";
+  var PropertyOutbox = "outbox";
+  var PropertyPreferredUsername = "preferredUsername";
+  var PropertyProxyUrl = "proxyUrl";
+  var PropertyPublished = "published";
+  var PropertySummary = "summary";
+  var PropertyTag = "tag";
+  var PropertyTarget = "target";
+  var PropertyTo = "to";
+  var PropertyType = "type";
 
   // src/as/utils.ts
   function toString(value) {
@@ -18831,6 +18817,44 @@
     }
   };
 
+  // src/service/algorithms.ts
+  var CIPHER_X25519_AES128 = 1;
+  function cipherSuiteName(id) {
+    const algorithm = algorithms.find((a2) => a2.id === id);
+    if (algorithm == void 0) {
+      return void 0;
+    }
+    return algorithm.name;
+  }
+  var algorithms = [
+    /**** Remove this from the list of supported algorithms for now, until we have support from Bonfire (et al)
+    {
+    	"id": CIPHER_XWING_CHACHA20,
+    	"name": "MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519",
+    	"kem": "X-Wing",
+    	"aead": "CHACHA20POLY1305",
+    	"kdf": "HKDF-SHA512",
+    	"hash": "SHA-512",
+    	"signature": "Ed25519",
+    	"security_level": 256,
+    	"post_quantum": false,
+    	"deps": ["@hpke/ml-kem", "@hpke/chacha20poly1305", "@noble/curves"]
+    },
+    */
+    {
+      "id": CIPHER_X25519_AES128,
+      "name": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
+      "kem": "DHKEM-X25519-HKDF-SHA256",
+      "aead": "AES128GCM",
+      "kdf": "HKDF-SHA256",
+      "hash": "SHA-256",
+      "signature": "Ed25519",
+      "security_level": 128,
+      "post_quantum": false,
+      "deps": []
+    }
+  ];
+
   // src/model/ap-keypackage.ts
   function NewAPKeyPackage(keyPackageId, generatorId, generatorName, actorID, publicPackage) {
     const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
@@ -18847,16 +18871,11 @@
         type: "Application",
         name: generatorName
       },
-      ciphersuite: "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519"
+      ciphersuite: cipherSuiteName(CIPHER_X25519_AES128) ?? ""
     };
   }
   function encodeKeyPackage(keyPackage) {
-    const keyPackageMessage = encode(mlsMessageEncoder, {
-      keyPackage,
-      wireformat: wireformats.mls_key_package,
-      version: protocolVersions.mls10
-    });
-    return bytesToBase64(keyPackageMessage);
+    return bytesToBase64(encode(keyPackageEncoder, keyPackage));
   }
 
   // node_modules/@js-temporal/polyfill/dist/index.esm.js
@@ -22871,36 +22890,6 @@
     (t2.configurable || t2.enumerable || t2.writable) && (t2.configurable = false, t2.enumerable = false, t2.writable = false, Object.defineProperty(e2, "prototype", t2));
   }
 
-  // src/service/algorithms.ts
-  var algorithms = [
-    {
-      "rank": 6,
-      "id": "0xf00e",
-      "name": "MLS_256_XWING_CHACHA20POLY1305_SHA512_Ed25519",
-      "kem": "X-Wing",
-      "aead": "CHACHA20POLY1305",
-      "kdf": "HKDF-SHA512",
-      "hash": "SHA-512",
-      "signature": "Ed25519",
-      "security_level": 256,
-      "post_quantum": false,
-      "deps": ["@hpke/ml-kem", "@hpke/chacha20poly1305", "@noble/curves"]
-    },
-    {
-      "rank": 17,
-      "id": "1",
-      "name": "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519",
-      "kem": "DHKEM-X25519-HKDF-SHA256",
-      "aead": "AES128GCM",
-      "kdf": "HKDF-SHA256",
-      "hash": "SHA-256",
-      "signature": "Ed25519",
-      "security_level": 128,
-      "post_quantum": false,
-      "deps": []
-    }
-  ];
-
   // src/service/cryptography.ts
   async function generateAESKey() {
     return await crypto.subtle.generateKey(
@@ -22968,8 +22957,8 @@
     );
   }
   async function cipherSuiteImplementation() {
-    const cipherSuiteName = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
-    const cipherSuite = await getCiphersuiteImpl(cipherSuiteName);
+    const suiteName = cipherSuiteName(CIPHER_X25519_AES128);
+    const cipherSuite = await getCiphersuiteImpl(suiteName);
     return cipherSuite;
   }
   async function newKeyPackage(actorId) {
@@ -23055,14 +23044,23 @@
       throw new Error("Document must use encoding 'base64'");
     }
     const contentBytes = base64ToUint8Array(document2.content());
-    const mlsMessage = decode(mlsMessageDecoder, contentBytes);
-    if (mlsMessage == void 0) {
-      throw new Error("decodeKeyPackage: Failed to decode KeyPackage for item:", document2.toObject());
+    try {
+      const keyPackage = decode(keyPackageDecoder, contentBytes);
+      if (keyPackage != void 0) {
+        return keyPackage;
+      }
+    } catch (e2) {
+      console.debug("decodeKeyPackage: Unable to decode KeyPackage in raw format", e2);
     }
-    if (mlsMessage.wireformat !== wireformats.mls_key_package) {
-      throw new Error("decodeKeyPackage: Unexpected wireformat for KeyPackage");
+    try {
+      const mlsMessage = decode(mlsMessageDecoder, contentBytes);
+      if (mlsMessage?.wireformat === wireformats.mls_key_package) {
+        return mlsMessage.keyPackage;
+      }
+    } catch (e2) {
+      console.debug("decodeKeyPackage: Unable to decode KeyPackage in framed format", e2);
     }
-    return mlsMessage.keyPackage;
+    throw new Error(`Unable to decode KeyPackage`);
   }
   async function encodeKeyToBase64(key) {
     const exported = await crypto.subtle.exportKey("raw", key);
@@ -23173,8 +23171,10 @@
     async *listAllKeyPackages(actorId) {
       const actor = await this.#proxy.Actor(actorId);
       const collection = await actor.mlsKeyPackages();
+      console.log("listAllKeyPackages: fetching KeyPackages for actor:", actorId, "-- collection:", collection.toObject());
       const documents = collection.rangeDocuments();
       for await (const document2 of documents) {
+        console.log("listAllKeyPackages: yielding document:", document2.toObject());
         yield document2;
       }
     }
@@ -23798,12 +23798,15 @@
     // message to existing members, and a Welcome message to new members,
     async addGroupMembers(group, newMembers) {
       const currentMembers = group.members;
-      let addKeyPackages = await this.#directory.getKeyPackages(newMembers);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
+      let candidates = await this.#directory.getKeyPackages(newMembers);
+      candidates = candidates.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
       const signatures = this.#getGroupSignatures(group);
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
-      addKeyPackages = addKeyPackages.filter((keyPackage) => !keyPackageIsExpired(keyPackage));
+      candidates = candidates.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
+      candidates = candidates.filter((keyPackage) => !keyPackageIsExpired(keyPackage));
+      const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers);
+      const addKeyPackages = this.#selectBestKeyPackages(candidates, targetCipherSuite);
       if (addKeyPackages.length == 0) {
+        console.warn("addGroupMembers: 0 valid KeyPackages found for new members:", newMembers, "-- cannot add members to group");
         return group;
       }
       const addProposals = addKeyPackages.map((keyPackage) => ({
@@ -23890,10 +23893,80 @@
     //////////////////////////////////////////
     // Key Packages
     //////////////////////////////////////////
+    // #selectBestKeyPackages filters candidates to the target cipher suite (step 4)
+    // and deduplicates per device, keeping the KeyPackage with the latest notAfter (step 5).
+    // Steps 1-3 (collecting candidates and negotiating the cipher suite) are the caller's responsibility.
+    #selectBestKeyPackages(candidates, targetCipherSuiteId) {
+      const filtered = candidates.filter((kp) => kp.cipherSuite === targetCipherSuiteId);
+      return deduplicateKeyPackages(filtered);
+    }
     async #cycleKeyPackages() {
-      const dbKeyPackage = await this.#controller.createOrUpdateKeyPackage();
-      this.#publicKeyPackage = dbKeyPackage.publicKeyPackage;
-      this.#privateKeyPackage = dbKeyPackage.privateKeyPackage;
+      const keyPackage = await this.#controller.createOrUpdateKeyPackage();
+      this.#publicKeyPackage = keyPackage.publicKeyPackage;
+      this.#privateKeyPackage = keyPackage.privateKeyPackage;
+    }
+    //////////////////////////////////////////
+    // Sending Messages
+    //////////////////////////////////////////
+    // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+    async encodeMessage(group, message) {
+      return {
+        id: message.id,
+        attributedTo: message.sender,
+        type: ObjectTypeNote,
+        to: group.members,
+        context: group.id,
+        content: message.content,
+        attachment: message.attachments,
+        inReplyTo: message.inReplyTo,
+        published: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    }
+    // sendActivity encodes an Activity as an MLS message and sends it to 
+    // updated as a result of this message.
+    async sendActivity(group, activity) {
+      const messageText = activity.toJSON();
+      const messageBytes = encodeText(messageText);
+      const applicationMessage = await createApplicationMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: messageBytes
+      });
+      applicationMessage.consumed.forEach(zeroOutUint8Array);
+      group.clientState = applicationMessage.newState;
+      group.updateDate = Date.now();
+      await this.#database.saveGroup(group);
+      await this.#sendMlsMessage(
+        ObjectTypeMlsPrivateMessage,
+        activity.getArrayOfString("as", PropertyTo),
+        applicationMessage.message
+      );
+    }
+    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
+    async #sendMlsMessage(type, recipients, message) {
+      console.log("#sendMlsMessage", type, recipients);
+      if (recipients.length === 0) {
+        return;
+      }
+      const contentBytes = encode(mlsMessageEncoder, message);
+      const contentBase64 = bytesToBase64(contentBytes);
+      const activity = new Activity({
+        "@context": [ContextActivityStreams, ContextMLS],
+        type: ActivityTypeCreate,
+        actor: this.#actor.id(),
+        to: recipients,
+        instrument: this.#generatorId,
+        object: {
+          type,
+          attributedTo: this.#actor.id(),
+          to: recipients,
+          content: contentBase64,
+          mediaType: MediaTypeMLSMessage,
+          encoding: EncodingTypeBase64
+        }
+      });
+      await this.#delivery.sendActivity(activity);
+      return activity;
     }
     //////////////////////////////////////////
     // Receiving Messages
@@ -23902,10 +23975,15 @@
     // If no further action is required (such as processing a GroupInfo or Welcome message) then
     // null is returned.
     async receiveActivity(activity, object) {
+      console.log("CodecMls.receiveActivity called with activity:", activity.toObject());
       const message = object.content();
       const uintArray = base64ToUint8Array(message);
       const mlsMessage = decode(mlsMessageDecoder, uintArray);
       if (mlsMessage == void 0) {
+        const firstBytes = Array.from(uintArray.slice(0, 8)).map((b2) => b2.toString(16).padStart(2, "0")).join(" ");
+        console.error("Unable to decode MLS message.");
+        console.error("  object:", object.toJSON());
+        console.error("  first 8 bytes (hex):", firstBytes, "-- expected: 00 01 00 0N (version=1, wireformat=1-5)");
         throw new Error("Unable to decode message: " + message);
       }
       switch (mlsMessage.wireformat) {
@@ -23955,7 +24033,7 @@
       await this.#cycleKeyPackages();
     }
     // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-    async #receiveActivity_GroupInfo(document2, message) {
+    async #receiveActivity_GroupInfo(_document, _message) {
       return null;
     }
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
@@ -23963,6 +24041,7 @@
     // ActivityStreams messages.
     async #receiveActivity_PublicPrivateMessage(document2, mlsMessage) {
       let groupId;
+      console.log("CodecMls.#receiveActivity_PublicPrivateMessage called with document:", document2.toObject(), "mlsMessage:", mlsMessage);
       switch (mlsMessage.wireformat) {
         case wireformats.mls_private_message:
           groupId = decodeText(mlsMessage.privateMessage.groupId);
@@ -23974,11 +24053,13 @@
           console.error("Invalid message type for PrivateMessage decoder");
           return null;
       }
+      console.log("Decoded groupId: ", groupId);
       const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
         console.error("Received message for unknown group", groupId);
         return null;
       }
+      console.log("Loaded group from database: ", group);
       if (!groupIsEncrypted(group)) {
         throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
       }
@@ -23989,14 +24070,31 @@
         return null;
       }
       const _this = this;
-      const decodedMessage = await processMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: mlsMessage,
-        callback: (message) => {
-          return _this.#processMessageCallback(message, group);
-        }
-      });
+      const groupEpoch = group.clientState.groupContext.epoch;
+      let msgEpoch;
+      let msgWireformat;
+      if (mlsMessage.wireformat === wireformats.mls_private_message) {
+        msgEpoch = mlsMessage.privateMessage.epoch;
+        msgWireformat = "PrivateMessage(2)";
+      } else {
+        msgEpoch = mlsMessage.publicMessage.content.epoch;
+        msgWireformat = "PublicMessage(1)";
+      }
+      console.log(`CodecMls.processMessage: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}, epochMatch=${groupEpoch == msgEpoch}`);
+      let decodedMessage;
+      try {
+        decodedMessage = await processMessage({
+          context: this.#context(),
+          state: group.clientState,
+          message: mlsMessage,
+          callback: (message) => {
+            return _this.#processMessageCallback(message, group);
+          }
+        });
+      } catch (err) {
+        console.error(`CodecMls.processMessage FAILED: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}`, err);
+        throw err;
+      }
       if (decodedMessage.kind == "newState") {
         if (decodedMessage.actionTaken == "reject") {
           return null;
@@ -24053,29 +24151,6 @@
       }
       await this.#commitProposals(group, [proposal]);
     }
-    //////////////////////////////////////////
-    // Sending Messages
-    //////////////////////////////////////////
-    // sendActivity encodes an Activity as an MLS message and sends it to 
-    // updated as a result of this message.
-    async sendActivity(group, activity) {
-      const messageText = activity.toJSON();
-      const messageBytes = encodeText(messageText);
-      const applicationMessage = await createApplicationMessage({
-        context: this.#context(),
-        state: group.clientState,
-        message: messageBytes
-      });
-      applicationMessage.consumed.forEach(zeroOutUint8Array);
-      group.clientState = applicationMessage.newState;
-      group.updateDate = Date.now();
-      await this.#database.saveGroup(group);
-      await this.#sendMlsMessage(
-        ObjectTypeMlsPrivateMessage,
-        activity.getArrayOfString("as", PropertyTo),
-        applicationMessage.message
-      );
-    }
     // commitProposals commits the specified proposals to the group state and sends the resulting commit message to the group members.
     async #commitProposals(group, proposals) {
       const commitResult = await createCommit({
@@ -24094,34 +24169,8 @@
       group.members = this.getGroupMembers(group);
       await this.#database.saveGroup(group);
     }
-    // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    async #sendMlsMessage(type, recipients, message) {
-      console.log("#sendMlsMessage", type, recipients);
-      if (recipients.length === 0) {
-        return;
-      }
-      const contentBytes = encode(mlsMessageEncoder, message);
-      const contentBase64 = bytesToBase64(contentBytes);
-      const activity = new Activity({
-        "@context": [ContextActivityStreams, ContextMLS],
-        type: ActivityTypeCreate,
-        actor: this.#actor.id(),
-        to: recipients,
-        instrument: this.#generatorId,
-        object: {
-          type,
-          attributedTo: this.#actor.id(),
-          to: recipients,
-          content: contentBase64,
-          mediaType: MediaTypeMLSMessage,
-          encoding: EncodingTypeBase64
-        }
-      });
-      this.#delivery.sendActivity(activity);
-      return activity;
-    }
     //////////////////////////////////////////
-    // Helpers
+    // Helper Methods
     //////////////////////////////////////////
     // #context returns an MlsContext with the current cipher suite and authentication service.
     #context() {
@@ -24131,6 +24180,67 @@
       };
     }
   };
+  function chooseCipherSuite(group, candidates, actorIds) {
+    if (group.ciphersuite !== 0) {
+      return group.ciphersuite;
+    }
+    const actorCipherSuites = buildActorCipherSuiteMap(candidates);
+    let commonSuites;
+    for (const actorId of actorIds) {
+      const suites = actorCipherSuites.get(actorId);
+      if (suites == void 0) {
+        console.warn(`#chooseCipherSuite: No valid KeyPackages found for actor ${actorId}`);
+        continue;
+      }
+      commonSuites = commonSuites == void 0 ? new Set(suites) : new Set([...commonSuites].filter((id) => suites.has(id)));
+    }
+    if (commonSuites != void 0) {
+      for (const algorithm of algorithms) {
+        if (commonSuites.has(algorithm.id)) {
+          group.ciphersuite = algorithm.id;
+          return algorithm.id;
+        }
+      }
+    }
+    const fallback = group.clientState.groupContext.cipherSuite;
+    group.ciphersuite = fallback;
+    return fallback;
+  }
+  function buildActorCipherSuiteMap(candidates) {
+    const result = /* @__PURE__ */ new Map();
+    for (const kp of candidates) {
+      const credential = kp.leafNode.credential;
+      if (credential.identity == void 0) {
+        continue;
+      }
+      if (!algorithms.some((a2) => a2.id === kp.cipherSuite)) {
+        continue;
+      }
+      const actorId = decodeText(credential.identity);
+      if (!result.has(actorId)) {
+        result.set(actorId, /* @__PURE__ */ new Set());
+      }
+      result.get(actorId).add(kp.cipherSuite);
+    }
+    return result;
+  }
+  function deduplicateKeyPackages(candidates) {
+    const best = /* @__PURE__ */ new Map();
+    for (const kp of candidates) {
+      const deviceKey = Array.from(kp.leafNode.signaturePublicKey, (b2) => b2.toString(16).padStart(2, "0")).join("");
+      const existing = best.get(deviceKey);
+      if (existing == void 0) {
+        best.set(deviceKey, kp);
+        continue;
+      }
+      const existingNotAfter = existing.leafNode.lifetime?.notAfter ?? 0n;
+      const candidateNotAfter = kp.leafNode.lifetime?.notAfter ?? 0n;
+      if (candidateNotAfter > existingNotAfter) {
+        best.set(deviceKey, kp);
+      }
+    }
+    return [...best.values()];
+  }
   function encodeText(text) {
     return new TextEncoder().encode(text);
   }
@@ -24140,6 +24250,7 @@
   function addClientState(group, clientState) {
     return {
       ...group,
+      ciphersuite: 0,
       clientState
     };
   }
@@ -24154,6 +24265,7 @@
       this.#delivery = delivery;
       this.#actorId = actorId;
     }
+    // createGroup creates a new group on the server and returns a local Group record
     async createGroup() {
       const createGroupActivity = new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
@@ -24170,6 +24282,7 @@
       const groupId = await this.#delivery.sendActivity(createGroupActivity);
       return this.#createGroup(groupId);
     }
+    // getGroup loads a group from the database or creates a new one if it doesn't exist
     async getGroup(groupId) {
       let group = await this.#database.loadGroup(groupId);
       if (group != void 0) {
@@ -24180,13 +24293,16 @@
       }
       return this.#createGroup(groupId);
     }
+    // getGroupMembers returns the list of member IDs for the given group
     getGroupMembers(group) {
       return group.members;
     }
+    // addGroupMembers adds new members to the group and saves it to the database
     async addGroupMembers(group, newMembers) {
       group.members.push(...newMembers);
       return group;
     }
+    // leaveGroup removes the current actor from the group and saves it to the database
     async leaveGroup(group) {
       return void 0;
     }
@@ -24238,6 +24354,19 @@
         return;
       }
       activity.setContext(newId2());
+    }
+    // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+    async encodeMessage(group, message) {
+      return {
+        attributedTo: message.sender,
+        type: ObjectTypeNote,
+        inReplyTo: message.inReplyTo || group.firstMessageId,
+        to: group.members,
+        context: group.id,
+        content: message.content,
+        attachment: message.attachments,
+        published: (/* @__PURE__ */ new Date()).toISOString()
+      };
     }
     async sendActivity(group, activity) {
       if (activity.type() != ActivityTypeAcknowledge) {
@@ -24735,6 +24864,7 @@
           "type": ObjectTypeEmissaryContext,
           "name": group.name,
           "summary": group.summary,
+          "firstMesssageId": group.firstMessageId,
           "stateId": group.stateId,
           "tag": group.tags,
           "unread": group.unread
@@ -24871,12 +25001,14 @@
       await this.loadMessages();
       group.lastMessage = content;
       await this.saveGroup(group);
+      const codec = this.#getCodecForGroup(group);
+      const object = await codec.encodeMessage(group, message);
       const activity = new Activity({
         context: group.id,
         actor: this.actorId(),
         type: ActivityTypeCreate,
         to: group.members,
-        object: messageToActivityStream(group, message)
+        object
       });
       console.log("Constructed activity:", activity.toObject());
       await this.#sendActivity(group, activity);
@@ -24899,12 +25031,14 @@
       await this.#database.saveMessage(message);
       await this.loadMessages();
       await this.saveGroup(group);
+      const codec = this.#getCodecForGroup(group);
+      const object = await codec.encodeMessage(group, message);
       const activity = new Activity({
         context: group.id,
         actor: this.actorId(),
         type: ActivityTypeCreate,
         to: group.members,
-        object: messageToActivityStream(group, message)
+        object
       });
       this.#sendActivity(group, activity);
     };
@@ -24916,11 +25050,13 @@
       if (message.groupId != group.id) {
         return;
       }
+      const codec = this.#getCodecForGroup(group);
+      const object = await codec.encodeMessage(group, message);
       const activity = new Activity({
         actor: this.actorId(),
         type: ActivityTypeUpdate,
         to: group.members,
-        object: messageToActivityStream(group, message)
+        object
       });
       this.#sendActivity(group, activity);
       await this.#database.saveMessage(message);
@@ -25020,9 +25156,19 @@
       return this.#contacts.getContactStream(actorId);
     };
     //////////////////////////////////////////
+    // Sending Activities
+    //////////////////////////////////////////
+    // sendActivity sends an activity to the Actor's outbox
+    #sendActivity = async (group, activity) => {
+      activity.set(PropertyInstrument, this.config.generatorId);
+      const codec = this.#getCodecForGroup(group);
+      await codec.sendActivity(group, activity);
+    };
+    //////////////////////////////////////////
     // Receiving Activities
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
+      console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount);
       const object = await activity.object();
       const codec = this.#getCodecForActivity(object);
       try {
@@ -25036,7 +25182,7 @@
           console.log("Retrying error processing activity with codec:", error);
           setTimeout(() => {
             this.receiveActivity(activity, retryCount + 1);
-          }, 500);
+          }, 1e3);
           return;
         }
         console.error("Failed to process activity after multiple attempts:", error);
@@ -25109,6 +25255,9 @@
         message.attachments = [object.attachment()];
       }
       await this.#database.saveMessage(message);
+      if (group.firstMessageId == "") {
+        group.firstMessageId = message.id;
+      }
       group.lastMessage = object.content();
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
@@ -25214,15 +25363,6 @@
       await this.#database.saveMessage(message);
     };
     //////////////////////////////////////////
-    // Network Stuff
-    //////////////////////////////////////////
-    // sendActivity sends an activity to the Actor's outbox
-    #sendActivity = async (group, activity) => {
-      activity.set(PropertyInstrument, this.config.generatorId);
-      const codec = this.#getCodecForGroup(group);
-      await codec.sendActivity(group, activity);
-    };
-    //////////////////////////////////////////
     // Other Helpers
     //////////////////////////////////////////
     #getCodecForGroup = (group) => {
@@ -25300,6 +25440,7 @@
       vnode.state.isDesktopNotifications = false;
       vnode.state.isDesktopNotificationsPermission = Notification.permission;
       vnode.state.isHideOnBlur = false;
+      vnode.state.isEncryptedMessages = true;
     }
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), " ", /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Device Passcode"), " ", /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "password", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission == "denied" ? "Desktop Notifications Denied" : "Allow Desktop Notifications"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
@@ -25784,7 +25925,7 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green60)";
+        const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green70)";
         return /* @__PURE__ */ (0, import_mithril9.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${color}` }, groupIsEncrypted(group) ? /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-lock-fill" }) : /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-chat-fill" })), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "flex-row bold" }, group.name || group.defaultName || ""), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || "")), this.unreadMarker(vnode, group)));
       }));
     }
@@ -25821,7 +25962,7 @@
       if (!isEncrypted) {
         backgroundStyle = `background: repeating-linear-gradient(135deg,rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.1) 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);`;
       }
-      return /* @__PURE__ */ (0, import_mithril11.default)(import_mithril11.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-sm text-gray" }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-lock-fill" }), " encrypted conversation") : /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " NOT ENCRYPTED"), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril11.default)(
+      return /* @__PURE__ */ (0, import_mithril11.default)(import_mithril11.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-sm padding-xs text-gray" }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-lock-fill" }), " PRIVATE MESSAGE (encrypted)") : /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " DIRECT MESSAGE (not encrypted)"), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril11.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril11.default)(
         "textarea",
         {
           id: "message-input",
