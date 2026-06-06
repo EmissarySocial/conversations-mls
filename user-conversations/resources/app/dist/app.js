@@ -24181,9 +24181,6 @@
     }
   };
   function chooseCipherSuite(group, candidates, actorIds) {
-    if (group.ciphersuite !== 0) {
-      return group.ciphersuite;
-    }
     const actorCipherSuites = buildActorCipherSuiteMap(candidates);
     let commonSuites;
     for (const actorId of actorIds) {
@@ -24197,14 +24194,11 @@
     if (commonSuites != void 0) {
       for (const algorithm of algorithms) {
         if (commonSuites.has(algorithm.id)) {
-          group.ciphersuite = algorithm.id;
           return algorithm.id;
         }
       }
     }
-    const fallback = group.clientState.groupContext.cipherSuite;
-    group.ciphersuite = fallback;
-    return fallback;
+    return group.clientState.groupContext.cipherSuite;
   }
   function buildActorCipherSuiteMap(candidates) {
     const result = /* @__PURE__ */ new Map();
@@ -24250,7 +24244,6 @@
   function addClientState(group, clientState) {
     return {
       ...group,
-      ciphersuite: 0,
       clientState
     };
   }

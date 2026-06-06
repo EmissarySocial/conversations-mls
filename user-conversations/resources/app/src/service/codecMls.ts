@@ -778,21 +778,15 @@ export class CodecMls {
 // CipherSuite Helper Functions
 //////////////////////////////////////////
 
-// chooseCipherSuite returns the cipher suite ID to use for this group.
-// If the group already has one set, it returns early. Otherwise it intersects the
-// cipher suite IDs published by all actors, picks the highest-ranked algorithm
-// from our preference list, stores the result on the group, and returns it.
+// chooseCipherSuite returns the cipher suite ID to use when adding members to this group.
+// It intersects the cipher suite IDs published by all actors, picks the highest-ranked
+// algorithm from our preference list, and falls back to the group's own cipher suite.
 export function chooseCipherSuite(group: EncryptedGroup, candidates: KeyPackage[], actorIds: string[]): number {
 
-	// Early return: group already has a negotiated cipher suite
-	if (group.ciphersuite !== 0) {
-		return group.ciphersuite
-	}
-
-	// Step 2: build a map of actor → set of cipher suite IDs they have KeyPackages for
+	// Build a map of actor → set of cipher suite IDs they have KeyPackages for
 	const actorCipherSuites = buildActorCipherSuiteMap(candidates)
 
-	// Step 3: intersect all actors' cipher suite sets
+	// Intersect all actors' cipher suite sets
 	let commonSuites: Set<number> | undefined
 	for (const actorId of actorIds) {
 		const suites = actorCipherSuites.get(actorId)
@@ -809,16 +803,13 @@ export function chooseCipherSuite(group: EncryptedGroup, candidates: KeyPackage[
 	if (commonSuites != undefined) {
 		for (const algorithm of algorithms) {
 			if (commonSuites.has(algorithm.id)) {
-				group.ciphersuite = algorithm.id
 				return algorithm.id
 			}
 		}
 	}
 
 	// Fall back to the group's own MLS cipher suite ID (already a number in ts-mls)
-	const fallback = group.clientState.groupContext.cipherSuite
-	group.ciphersuite = fallback
-	return fallback
+	return group.clientState.groupContext.cipherSuite
 }
 
 
@@ -919,7 +910,6 @@ export function decodeText(bytes: Uint8Array) {
 function addClientState(group: Group, clientState: ClientState): EncryptedGroup {
 	return {
 		...group,
-		ciphersuite: 0,
 		clientState: clientState,
 	}
 }

@@ -22,7 +22,6 @@ export type Group = {
 
 // EncryptedGroup extends Group with additional properties related to encryption state
 export type EncryptedGroup = Group & {
-	ciphersuite: number  // MLS cipher suite ID (e.g. CIPHER_X25519_AES128); 0 until first negotiation
 	clientState: ClientState
 }
 
