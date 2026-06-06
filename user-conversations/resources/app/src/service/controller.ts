@@ -691,15 +691,12 @@ export class Controller {
 		// Add "me" to the members list
 		recipients.push(this.actorId())
 
-		// Create a new Group record
-		let group: Group
-
 		// If encrypted messages are disallowed, then only create plaintext groups
 		if (!this.useEncryptedMessages()) {
 			encrypted = false
 		}
 
-		// Extra handling for encrypted groups
+		// Extra validate that the server will let us do this...
 		if (encrypted) {
 
 			// RULE: Require server support for encrypted messages
@@ -707,29 +704,20 @@ export class Controller {
 				throw new Error("Server does not support sending of encrypted messages")
 			}
 
-			// Guarantee dependency
-			if (this.#codecMls == undefined) {
-				throw new Error("MLS service is not initialized")
-			}
-
-			// Create a new Encrypted group
-			group = await this.#codecMls.createGroup()
-
 		} else {
 
 			// RULE: Require server support for plaintext messages
-			if (!this.#allowPlaintextMessages) {
+			if (!this.#allowPlaintextMessages) { // NOSONAR typescript:S6660 - this is clearer this way
 				throw new Error("Server does not support sending of plaintext messages")
 			}
-
-			// Create a new Plaintext group
-			group = await this.#codecPlaintext.createGroup()
 		}
 
-		this.groupStream(group)
+		// Use the codec to generate a new Group record.
+		const codec = this.#getCodec(encrypted)
+		let group = await codec.createGroup(recipients)
 
-		// Add new recipients to the list of group members (and save)
-		await this.addGroupMembers(recipients)
+		// Save the group as the "current" group in the UX
+		this.groupStream(group)
 
 		// Send the initial message
 		await this.sendMessage(initialMessage)
@@ -1612,30 +1600,30 @@ export class Controller {
 	// Other Helpers
 	//////////////////////////////////////////
 
-	readonly #getCodecForGroup = (group: Group): ICodec => {
-
-		if (groupIsEncrypted(group)) {
-
+	// getCodec returns the appropriate codec (Plaintext or MLS) based on the "encrypted" parameter.
+	readonly #getCodec = (encrypted: boolean): ICodec => {
+		if (encrypted) {
 			if (this.#codecMls == undefined) {
-				throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.")
+				throw new Error("No codec available for encrypted messages. Either MLS has not initialized properly, or your permissions have changed on the server.")
 			}
-
 			return this.#codecMls
+		}
+
+		if (this.#codecPlaintext == undefined) {
+			throw new Error("No codec available for plaintext messages. Either the plaintext codec has not initialized properly, or your permissions have changed on the server.")
 		}
 
 		return this.#codecPlaintext
 	}
 
+	// getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
+	readonly #getCodecForGroup = (group: Group): ICodec => {
+		return this.#getCodec(groupIsEncrypted(group))
+	}
+
+	// getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
 	readonly #getCodecForActivity = (object: Document): ICodec => {
-
-		if (object.isMLSMessage()) {
-			if (this.#codecMls == undefined) {
-				throw new Error("No codec available for this message. Either MLS has not initialized properly, or your permissions have changed on the server.")
-			}
-			return this.#codecMls
-		}
-
-		return this.#codecPlaintext
+		return this.#getCodec(object.isMLSMessage())
 	}
 
 	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 

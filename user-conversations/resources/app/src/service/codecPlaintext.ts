@@ -20,7 +20,7 @@ export class CodecPlaintext {
 	}
 
 	// createGroup creates a new group on the server and returns a local Group record
-	async createGroup(): Promise<Group> {
+	async createGroup(newMembers: string[]): Promise<Group> {
 
 		// Activity to create a new group on the server
 		const createGroupActivity = new Activity({
@@ -40,7 +40,7 @@ export class CodecPlaintext {
 		const groupId = await this.#delivery.sendActivity(createGroupActivity)
 
 		// Create a new plaintext group
-		return this.#createGroup(groupId)
+		return this.#createGroup(groupId, newMembers)
 	}
 
 	// getGroup loads a group from the database or creates a new one if it doesn't exist
@@ -58,7 +58,7 @@ export class CodecPlaintext {
 		}
 
 		// Otherwise, create a new plaintext group
-		return this.#createGroup(groupId)
+		return this.#createGroup(groupId, [])
 	}
 
 	// getGroupMembers returns the list of member IDs for the given group
@@ -194,12 +194,12 @@ export class CodecPlaintext {
 	}
 
 	// createGroup creates/returns a new PLAINTEXT group with the given ID
-	async #createGroup(groupId: string): Promise<Group> {
+	async #createGroup(groupId: string, newMembers: string[]): Promise<Group> {
 
 		// Create a group record for this device
 		let plaintextGroup = NewGroup("PLAINTEXT")
 		plaintextGroup.id = groupId
-		plaintextGroup.members = [this.#actorId]
+		plaintextGroup.members = newMembers
 
 		// Save the group to the local database
 		await this.#database.saveGroup(plaintextGroup)

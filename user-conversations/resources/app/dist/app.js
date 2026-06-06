@@ -23752,7 +23752,7 @@
     // Group Management
     //////////////////////////////////////////
     // createGroup is an encoder hook that is called when an encrypted group is created.
-    async createGroup() {
+    async createGroup(newMembers) {
       let group = NewGroup("MLS");
       const clientState = await createGroup({
         context: this.#context(),
@@ -23761,7 +23761,7 @@
         privateKeyPackage: this.#privateKeyPackage
       });
       const encryptedGroup = addClientState(group, clientState);
-      await this.addGroupMembers(encryptedGroup, [this.#actor.id()]);
+      await this.addGroupMembers(encryptedGroup, newMembers);
       await this.#database.saveGroup(encryptedGroup);
       await this.#cycleKeyPackages();
       return encryptedGroup;
@@ -23798,18 +23798,18 @@
     // message to existing members, and a Welcome message to new members,
     async addGroupMembers(group, newMembers) {
       const currentMembers = group.members;
-      let candidates = await this.#directory.getKeyPackages(newMembers);
-      candidates = candidates.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
       const signatures = this.#getGroupSignatures(group);
-      candidates = candidates.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
-      candidates = candidates.filter((keyPackage) => !keyPackageIsExpired(keyPackage));
-      const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers);
-      const addKeyPackages = this.#selectBestKeyPackages(candidates, targetCipherSuite);
-      if (addKeyPackages.length == 0) {
+      let keyPackages = await this.#directory.getKeyPackages(newMembers);
+      keyPackages = keyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
+      keyPackages = keyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
+      keyPackages = keyPackages.filter((keyPackage) => !keyPackageIsExpired(keyPackage));
+      keyPackages = keyPackages.filter((kp) => kp.cipherSuite === group.clientState.groupContext.cipherSuite);
+      keyPackages = deduplicateKeyPackages(keyPackages);
+      if (keyPackages.length == 0) {
         console.warn("addGroupMembers: 0 valid KeyPackages found for new members:", newMembers, "-- cannot add members to group");
         return group;
       }
-      const addProposals = addKeyPackages.map((keyPackage) => ({
+      const addProposals = keyPackages.map((keyPackage) => ({
         proposalType: defaultProposalTypes.add,
         add: {
           keyPackage
@@ -23889,21 +23889,6 @@
         };
       }).filter((proposal) => proposal != null);
       await this.#commitProposals(group, proposals);
-    }
-    //////////////////////////////////////////
-    // Key Packages
-    //////////////////////////////////////////
-    // #selectBestKeyPackages filters candidates to the target cipher suite (step 4)
-    // and deduplicates per device, keeping the KeyPackage with the latest notAfter (step 5).
-    // Steps 1-3 (collecting candidates and negotiating the cipher suite) are the caller's responsibility.
-    #selectBestKeyPackages(candidates, targetCipherSuiteId) {
-      const filtered = candidates.filter((kp) => kp.cipherSuite === targetCipherSuiteId);
-      return deduplicateKeyPackages(filtered);
-    }
-    async #cycleKeyPackages() {
-      const keyPackage = await this.#controller.createOrUpdateKeyPackage();
-      this.#publicKeyPackage = keyPackage.publicKeyPackage;
-      this.#privateKeyPackage = keyPackage.privateKeyPackage;
     }
     //////////////////////////////////////////
     // Sending Messages
@@ -24170,6 +24155,14 @@
       await this.#database.saveGroup(group);
     }
     //////////////////////////////////////////
+    // Key Package Helpers
+    //////////////////////////////////////////
+    async #cycleKeyPackages() {
+      const keyPackage = await this.#controller.createOrUpdateKeyPackage();
+      this.#publicKeyPackage = keyPackage.publicKeyPackage;
+      this.#privateKeyPackage = keyPackage.privateKeyPackage;
+    }
+    //////////////////////////////////////////
     // Helper Methods
     //////////////////////////////////////////
     // #context returns an MlsContext with the current cipher suite and authentication service.
@@ -24180,44 +24173,6 @@
       };
     }
   };
-  function chooseCipherSuite(group, candidates, actorIds) {
-    const actorCipherSuites = buildActorCipherSuiteMap(candidates);
-    let commonSuites;
-    for (const actorId of actorIds) {
-      const suites = actorCipherSuites.get(actorId);
-      if (suites == void 0) {
-        console.warn(`#chooseCipherSuite: No valid KeyPackages found for actor ${actorId}`);
-        continue;
-      }
-      commonSuites = commonSuites == void 0 ? new Set(suites) : new Set([...commonSuites].filter((id) => suites.has(id)));
-    }
-    if (commonSuites != void 0) {
-      for (const algorithm of algorithms) {
-        if (commonSuites.has(algorithm.id)) {
-          return algorithm.id;
-        }
-      }
-    }
-    return group.clientState.groupContext.cipherSuite;
-  }
-  function buildActorCipherSuiteMap(candidates) {
-    const result = /* @__PURE__ */ new Map();
-    for (const kp of candidates) {
-      const credential = kp.leafNode.credential;
-      if (credential.identity == void 0) {
-        continue;
-      }
-      if (!algorithms.some((a2) => a2.id === kp.cipherSuite)) {
-        continue;
-      }
-      const actorId = decodeText(credential.identity);
-      if (!result.has(actorId)) {
-        result.set(actorId, /* @__PURE__ */ new Set());
-      }
-      result.get(actorId).add(kp.cipherSuite);
-    }
-    return result;
-  }
   function deduplicateKeyPackages(candidates) {
     const best = /* @__PURE__ */ new Map();
     for (const kp of candidates) {
@@ -24259,7 +24214,7 @@
       this.#actorId = actorId;
     }
     // createGroup creates a new group on the server and returns a local Group record
-    async createGroup() {
+    async createGroup(newMembers) {
       const createGroupActivity = new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
         type: ActivityTypeCreate,
@@ -24273,7 +24228,7 @@
         }
       });
       const groupId = await this.#delivery.sendActivity(createGroupActivity);
-      return this.#createGroup(groupId);
+      return this.#createGroup(groupId, newMembers);
     }
     // getGroup loads a group from the database or creates a new one if it doesn't exist
     async getGroup(groupId) {
@@ -24284,7 +24239,7 @@
         }
         return group;
       }
-      return this.#createGroup(groupId);
+      return this.#createGroup(groupId, []);
     }
     // getGroupMembers returns the list of member IDs for the given group
     getGroupMembers(group) {
@@ -24369,10 +24324,10 @@
       await this.#delivery.sendActivity(activity);
     }
     // createGroup creates/returns a new PLAINTEXT group with the given ID
-    async #createGroup(groupId) {
+    async #createGroup(groupId, newMembers) {
       let plaintextGroup = NewGroup("PLAINTEXT");
       plaintextGroup.id = groupId;
-      plaintextGroup.members = [this.#actorId];
+      plaintextGroup.members = newMembers;
       await this.#database.saveGroup(plaintextGroup);
       return plaintextGroup;
     }
@@ -24808,7 +24763,6 @@
     // createGroup creates a new group and initial message
     createGroup = async (recipients, initialMessage, encrypted) => {
       recipients.push(this.actorId());
-      let group;
       if (!this.useEncryptedMessages()) {
         encrypted = false;
       }
@@ -24816,18 +24770,14 @@
         if (!this.#allowEncryptedMessages) {
           throw new Error("Server does not support sending of encrypted messages");
         }
-        if (this.#codecMls == void 0) {
-          throw new Error("MLS service is not initialized");
-        }
-        group = await this.#codecMls.createGroup();
       } else {
         if (!this.#allowPlaintextMessages) {
           throw new Error("Server does not support sending of plaintext messages");
         }
-        group = await this.#codecPlaintext.createGroup();
       }
+      const codec = this.#getCodec(encrypted);
+      let group = await codec.createGroup(recipients);
       this.groupStream(group);
-      await this.addGroupMembers(recipients);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
     };
@@ -25358,23 +25308,26 @@
     //////////////////////////////////////////
     // Other Helpers
     //////////////////////////////////////////
-    #getCodecForGroup = (group) => {
-      if (groupIsEncrypted(group)) {
+    // getCodec returns the appropriate codec (Plaintext or MLS) based on the "encrypted" parameter.
+    #getCodec = (encrypted) => {
+      if (encrypted) {
         if (this.#codecMls == void 0) {
-          throw new Error("No codec available for this group. Either MLS has not initialized properly, or your permissions have changed on the server.");
+          throw new Error("No codec available for encrypted messages. Either MLS has not initialized properly, or your permissions have changed on the server.");
         }
         return this.#codecMls;
+      }
+      if (this.#codecPlaintext == void 0) {
+        throw new Error("No codec available for plaintext messages. Either the plaintext codec has not initialized properly, or your permissions have changed on the server.");
       }
       return this.#codecPlaintext;
     };
+    // getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
+    #getCodecForGroup = (group) => {
+      return this.#getCodec(groupIsEncrypted(group));
+    };
+    // getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
     #getCodecForActivity = (object) => {
-      if (object.isMLSMessage()) {
-        if (this.#codecMls == void 0) {
-          throw new Error("No codec available for this message. Either MLS has not initialized properly, or your permissions have changed on the server.");
-        }
-        return this.#codecMls;
-      }
-      return this.#codecPlaintext;
+      return this.#getCodec(object.isMLSMessage());
     };
     // calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
     // internal state and member list.

@@ -104,9 +104,12 @@ export class CodecMls {
 	//////////////////////////////////////////
 
 	// createGroup is an encoder hook that is called when an encrypted group is created.
-	async createGroup(): Promise<Group> {
+	async createGroup(newMembers: string[]): Promise<Group> {
 
 		let group = NewGroup("MLS")
+
+		// TODO: Negotiate the best ciphersuite to use for this group and available keypackages
+		// const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers)
 
 		// Generate a new clientState for this group
 		const clientState = await createGroup({
@@ -120,7 +123,7 @@ export class CodecMls {
 		const encryptedGroup = addClientState(group, clientState)
 
 		// reset the group members based on the clientState
-		await this.addGroupMembers(encryptedGroup, [this.#actor.id()])
+		await this.addGroupMembers(encryptedGroup, newMembers)
 
 		// Save the EncryptedGroup
 		await this.#database.saveGroup(encryptedGroup)
@@ -179,32 +182,33 @@ export class CodecMls {
 
 		// Step 1: look up all KeyPackages published by the new members
 		const currentMembers = group.members
-		let candidates = await this.#directory.getKeyPackages(newMembers)
+		const signatures = this.#getGroupSignatures(group)
+
+		let keyPackages = await this.#directory.getKeyPackages(newMembers)
 
 		// Filter out the KeyPackage for THIS device
-		candidates = candidates.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
+		keyPackages = keyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
 
 		// Filter out KeyPackages that are already in the group state (e.g. from another device of the same user)
-		const signatures = this.#getGroupSignatures(group)
-		candidates = candidates.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
+		keyPackages = keyPackages.filter(keyPackage => !uint8ArraysContain(signatures, keyPackage.signature))
 
 		// Filter out expired KeyPackages
-		candidates = candidates.filter(keyPackage => !keyPackageIsExpired(keyPackage))
+		keyPackages = keyPackages.filter(keyPackage => !keyPackageIsExpired(keyPackage))
 
-		// Negotiate the best ciphersuite to use for this group and available keypackages
-		const targetCipherSuite = chooseCipherSuite(group, candidates, newMembers)
+		// Only allow KeyPackages that match the ciphersuite for this group
+		keyPackages = keyPackages.filter(kp => kp.cipherSuite === group.clientState.groupContext.cipherSuite)
 
-		// Use only the chosen ciphersuite and deduplicate per device
-		const addKeyPackages = this.#selectBestKeyPackages(candidates, targetCipherSuite)
+		// Deduplicate KeyPackages per device
+		keyPackages = deduplicateKeyPackages(keyPackages)
 
 		// RULE: Must have at least one valid KeyPackage to add
-		if (addKeyPackages.length == 0) {
+		if (keyPackages.length == 0) {
 			console.warn("addGroupMembers: 0 valid KeyPackages found for new members:", newMembers, "-- cannot add members to group")
 			return group
 		}
 
 		// Create add proposals for each key package
-		const addProposals: Proposal[] = addKeyPackages.map(keyPackage => ({
+		const addProposals: Proposal[] = keyPackages.map(keyPackage => ({
 			proposalType: defaultProposalTypes.add,
 			add: {
 				keyPackage: keyPackage,
@@ -329,29 +333,6 @@ export class CodecMls {
 		// This MUST have an `await` so that the group is fully updated before exiting, or else leaveGroup() fails.
 		await this.#commitProposals(group, proposals)
 	}
-
-	//////////////////////////////////////////
-	// Key Packages
-	//////////////////////////////////////////
-
-	// #selectBestKeyPackages filters candidates to the target cipher suite (step 4)
-	// and deduplicates per device, keeping the KeyPackage with the latest notAfter (step 5).
-	// Steps 1-3 (collecting candidates and negotiating the cipher suite) are the caller's responsibility.
-	#selectBestKeyPackages(candidates: KeyPackage[], targetCipherSuiteId: number): KeyPackage[] {
-		const filtered = candidates.filter(kp => kp.cipherSuite === targetCipherSuiteId)
-		return deduplicateKeyPackages(filtered)
-	}
-
-	async #cycleKeyPackages(): Promise<void> {
-
-		// Create a new KeyPackage for this device
-		const keyPackage = await this.#controller.createOrUpdateKeyPackage()
-
-		// Store the results.
-		this.#publicKeyPackage = keyPackage.publicKeyPackage
-		this.#privateKeyPackage = keyPackage.privateKeyPackage
-	}
-
 
 	//////////////////////////////////////////
 	// Sending Messages
@@ -759,6 +740,22 @@ export class CodecMls {
 		// Save the group to the database
 		await this.#database.saveGroup(group)
 	}
+
+
+	//////////////////////////////////////////
+	// Key Package Helpers
+	//////////////////////////////////////////
+
+	async #cycleKeyPackages(): Promise<void> {
+
+		// Create a new KeyPackage for this device
+		const keyPackage = await this.#controller.createOrUpdateKeyPackage()
+
+		// Store the results.
+		this.#publicKeyPackage = keyPackage.publicKeyPackage
+		this.#privateKeyPackage = keyPackage.privateKeyPackage
+	}
+
 
 	//////////////////////////////////////////
 	// Helper Methods

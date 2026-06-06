@@ -29,7 +29,7 @@ import type { Collection } from "../as/collection"
 // generates MLS messages, and the Plaintext codec sends
 // regular ActivityPub "direct messages".
 export interface ICodec {
-	createGroup(group: Group): Promise<Group>
+	createGroup(newMembers: string[]): Promise<Group>
 	encodeMessage(group: Group, message: Message): Promise<{}>
 	getGroup(groupId: string): Promise<Group>
 	getGroupMembers(group: Group): string[]
