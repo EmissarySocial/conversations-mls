@@ -11,16 +11,17 @@
 		"test": "vitest"
 	},
 	"dependencies": {
+		"@js-temporal/polyfill": "^0.5.1",
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
-		"@js-temporal/polyfill": "^0.5.1",
+		"dayjs": "^1.11.20",
 		"idb": "^8.0.3",
 		"mithril": "^2.3.8",
-		"ts-mls": "^v2.0.0-rc.11",
-		"dayjs": "^1.11.20"
+		"ts-mls": "^v2.0.0-rc.11"
 	},
 	"devDependencies": {
 		"@types/mithril": "^2.2.7",
+		"@vitest/coverage-v8": "^4.1.8",
 		"esbuild": "^0.27.1",
 		"vitest": "^4.0"
 	}
