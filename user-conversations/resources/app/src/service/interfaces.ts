@@ -119,7 +119,7 @@ export interface IDirectory {
 	setGenerator(generatorId: string, generatorName: string): void
 
 	// KeyPackage methods
-	listAllKeyPackages(actorId: string): AsyncGenerator<Document>
+	getKeyPackagesByActor(actorId: string): AsyncGenerator<Document>
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
 	createKeyPackage(publicPackage: KeyPackage): Promise<[string, string]>
 	updateKeyPackage(keyPackageId: string, publicPackage: KeyPackage): Promise<void>

@@ -59,7 +59,7 @@ export class Directory {
 			let documents: AsyncGenerator<Document>
 
 			try {
-				documents = this.listAllKeyPackages(actorId)
+				documents = this.getKeyPackagesByActor(actorId)
 			} catch (error) {
 				console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error)
 				continue
@@ -69,11 +69,6 @@ export class Directory {
 			for await (const document of documents) {
 
 				try {
-
-					// RULE: Do not parse KeyPackages if we do not recognize the format
-					if (!keyPackageIsSupported(document)) {
-						continue
-					}
 
 					// Decode the ActivityStreams document as a KeyPackage
 					const keyPackage = decodeKeyPackage(document)
@@ -134,16 +129,21 @@ export class Directory {
 		return await this.#deleteObject(keyPackageId)
 	}
 
-	// listAllKeyPackages is an async generator that yields all KeyPackage documents for a specific actor.
-	async* listAllKeyPackages(actorId: string): AsyncGenerator<Document> {
+	// getKeyPackagesByActor is an async generator that yields all KeyPackage documents for a specific actor.
+	async* getKeyPackagesByActor(actorId: string): AsyncGenerator<Document> {
+
 		const actor = await this.#proxy.Actor(actorId)
 		const collection = await actor.mlsKeyPackages()
-		console.log("listAllKeyPackages: fetching KeyPackages for actor:", actorId, "-- collection:", collection.toObject())
 		const documents = collection.rangeDocuments()
 
 		// Yield each KeyPackage document to the caller
 		for await (const document of documents) {
-			console.log("listAllKeyPackages: yielding document:", document.toObject())
+
+			// RULE: Do not yield KeyPackages if we do not recognize the format
+			if (!keyPackageIsSupported(document)) {
+				continue
+			}
+
 			yield document
 		}
 	}

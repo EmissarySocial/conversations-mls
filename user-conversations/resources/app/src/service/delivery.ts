@@ -35,7 +35,6 @@ export class Delivery {
 		// Confirm that authentication has not changed since the last request.
 		this.#checkCookies()
 
-		// If necessary, encrypt the activity using MLS before sending
 		// Send the Activity to the server
 		const response = await fetch(this.#outboxUrl, {
 			method: "POST",

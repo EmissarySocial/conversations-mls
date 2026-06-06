@@ -569,7 +569,7 @@ export class Controller {
 			return
 		}
 
-		const documents = this.#directory.listAllKeyPackages(this.#actorId)
+		const documents = this.#directory.getKeyPackagesByActor(this.#actorId)
 		let shouldCreateKeyPackage = true
 
 		for await (const document of documents) {

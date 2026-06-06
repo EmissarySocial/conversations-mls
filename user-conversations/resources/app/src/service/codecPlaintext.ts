@@ -176,18 +176,16 @@ export class CodecPlaintext {
 		}
 	}
 
-
+	// sendActivity sends the provided activity to the group via the delivery service
 	async sendActivity(group: Group, activity: Activity): Promise<void> {
 
-		// RULE: add addressing to all activities ecept "Acknowledge"
+		// Add "Mention" tags so that Mastodon will notify users properly (except for "Acknowledge" activities)
 		if (activity.type() != vocab.ActivityTypeAcknowledge) {
-
-			// Set group members as "to" recipients of the activity
-			activity.set("to", group.members)
-
-			// Add "Mention" tags so that Mastodon will notify users properly.
 			this.#addMentions(activity, group.members)
 		}
+
+		// Set recipients to be the members of this group
+		activity.set("to", group.members)
 
 		// Send the activity via the delivery service
 		await this.#delivery.sendActivity(activity)

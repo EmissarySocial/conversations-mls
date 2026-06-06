@@ -23116,16 +23116,13 @@
       for (const actorId of actorIds) {
         let documents;
         try {
-          documents = this.listAllKeyPackages(actorId);
+          documents = this.getKeyPackagesByActor(actorId);
         } catch (error) {
           console.error("getKeyPackages: Failed to load KeyPackages for actor:", actorId, error);
           continue;
         }
         for await (const document2 of documents) {
           try {
-            if (!keyPackageIsSupported(document2)) {
-              continue;
-            }
             const keyPackage = decodeKeyPackage(document2);
             if (keyPackageIsExpired(keyPackage)) {
               continue;
@@ -23167,14 +23164,15 @@
     deleteKeyPackage = async (keyPackageId) => {
       return await this.#deleteObject(keyPackageId);
     };
-    // listAllKeyPackages is an async generator that yields all KeyPackage documents for a specific actor.
-    async *listAllKeyPackages(actorId) {
+    // getKeyPackagesByActor is an async generator that yields all KeyPackage documents for a specific actor.
+    async *getKeyPackagesByActor(actorId) {
       const actor = await this.#proxy.Actor(actorId);
       const collection = await actor.mlsKeyPackages();
-      console.log("listAllKeyPackages: fetching KeyPackages for actor:", actorId, "-- collection:", collection.toObject());
       const documents = collection.rangeDocuments();
       for await (const document2 of documents) {
-        console.log("listAllKeyPackages: yielding document:", document2.toObject());
+        if (!keyPackageIsSupported(document2)) {
+          continue;
+        }
         yield document2;
       }
     }
@@ -24316,11 +24314,12 @@
         published: (/* @__PURE__ */ new Date()).toISOString()
       };
     }
+    // sendActivity sends the provided activity to the group via the delivery service
     async sendActivity(group, activity) {
       if (activity.type() != ActivityTypeAcknowledge) {
-        activity.set("to", group.members);
         this.#addMentions(activity, group.members);
       }
+      activity.set("to", group.members);
       await this.#delivery.sendActivity(activity);
     }
     // createGroup creates/returns a new PLAINTEXT group with the given ID
@@ -24691,7 +24690,7 @@
       if (!this.useEncryptedMessages()) {
         return;
       }
-      const documents = this.#directory.listAllKeyPackages(this.#actorId);
+      const documents = this.#directory.getKeyPackagesByActor(this.#actorId);
       let shouldCreateKeyPackage = true;
       for await (const document2 of documents) {
         try {
