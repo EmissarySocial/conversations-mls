@@ -16,7 +16,7 @@ import { Host } from "./service/host"
 // Global controller instance
 let controller: Controller
 
-// startup initializes the application and mounts the Mithril components.
+// startup initializes the application and mounts the Mithril components
 async function startup() {
 
 	// Locate the root DOM element

@@ -1,9 +1,7 @@
-import m from "mithril"
-import { type Vnode } from "mithril"
+import m, { type Vnode } from "mithril"
 
 import { Controller } from "../service/controller"
-import { haltEvent } from "./utils"
-import { synthClick } from "./utils"
+import { haltEvent, synthClick } from "./utils"
 
 type AppSignInVnode = Vnode<AppSignInArgs, AppSignInState>
 

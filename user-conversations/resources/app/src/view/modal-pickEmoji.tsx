@@ -1,7 +1,6 @@
-import m from "mithril"
+import m, { type VnodeDOM } from "mithril"
 import Stream from "mithril/stream"
 
-import { type VnodeDOM } from "mithril"
 import { Controller } from "../service/controller"
 import { Modal } from "./modal"
 import { type Emoji, type EmojiGroup } from "../model/emoji"

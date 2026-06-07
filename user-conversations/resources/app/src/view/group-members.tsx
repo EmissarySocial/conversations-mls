@@ -1,7 +1,6 @@
-import { type Vnode } from "mithril"
+import m, { type Vnode } from "mithril"
 import { type Contact } from "../model/contact"
 
-import m from "mithril"
 import { Controller } from "../service/controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"

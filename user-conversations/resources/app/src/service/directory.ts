@@ -11,9 +11,7 @@ import { NewAPKeyPackage } from "../model/ap-keypackage"
 // ActivityPub objects
 import { Actor } from "../as/actor"
 import { newId } from "./utils"
-import { decodeKeyPackage } from "./cryptography"
-import { keyPackageIsExpired } from "./cryptography"
-import { keyPackageIsSupported } from "./cryptography"
+import { decodeKeyPackage, keyPackageIsExpired, keyPackageIsSupported } from "./cryptography"
 import type { IDelivery, IProxy } from "./interfaces"
 
 export class Directory {

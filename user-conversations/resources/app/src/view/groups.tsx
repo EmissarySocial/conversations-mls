@@ -1,8 +1,6 @@
-import m from "mithril"
-import { type Vnode } from "mithril"
+import m, { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
-import { groupIsEncrypted } from "../model/group"
-import { type Group } from "../model/group"
+import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupsVnode = Vnode<GroupsAttrs, GroupsState>

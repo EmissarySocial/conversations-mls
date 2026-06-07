@@ -1,22 +1,16 @@
 // MLS Types
-import { type KeyPackage } from "ts-mls"
-import { type PrivateKeyPackage } from "ts-mls"
+import { type KeyPackage, type PrivateKeyPackage } from "ts-mls"
 
 // IDB Objects
-import { type DBSchema } from "idb"
-import { type IDBPDatabase } from "idb"
-import { openDB } from "idb"
+import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 
 // Model Types
-import { type Config } from "../model/config"
-import { type EncryptedGroup } from "../model/group"
-import { type Group } from "../model/group"
+import { type Config, ConfigID, NewConfig } from "../model/config"
+import { type EncryptedGroup, type Group } from "../model/group"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
 // Model Objects
-import { ConfigID } from "../model/config"
-import { NewConfig } from "../model/config"
 import { diffArrays, newId } from "./utils"
 import type { IHost } from "./interfaces"
 

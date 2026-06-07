@@ -1,6 +1,5 @@
-import m from "mithril"
+import m, { type VnodeDOM } from "mithril"
 import type Stream from "mithril/stream"
-import { type VnodeDOM } from "mithril"
 
 import dayjs from "dayjs"
 

@@ -1,8 +1,7 @@
 import m, { type Vnode } from "mithril"
 import type { Group } from "../model/group"
 import type { Controller } from "../service/controller"
-import { haltEvent } from "./utils"
-import { synthClick } from "./utils"
+import { haltEvent, synthClick } from "./utils"
 
 type AppSettingsVnode = Vnode<AppSettingsArgs, AppSettingsState>
 

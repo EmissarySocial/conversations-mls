@@ -1,8 +1,6 @@
 import type { KeyPackage } from "ts-mls"
 
-import { bytesToBase64 } from "ts-mls"
-import { encode } from "ts-mls"
-import { keyPackageEncoder } from "ts-mls"
+import { bytesToBase64, encode, keyPackageEncoder } from "ts-mls"
 
 import { CIPHER_X25519_AES128, cipherSuiteName } from "../service/algorithms"
 

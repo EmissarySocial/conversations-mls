@@ -1,7 +1,6 @@
-import m from "mithril"
+import m, { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
 import { type Group } from "../model/group"
-import { type Vnode } from "mithril"
 import { synthClick } from "./utils"
 
 type GroupLeaveVnode = Vnode<GroupLeaveArgs, GroupLeaveState>

@@ -1,12 +1,10 @@
-import m from "mithril"
-import { type Vnode } from "mithril"
+import m, { type Vnode } from "mithril"
 import { type Message } from "../model/message"
 import { Controller } from "../service/controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
-import { formatFileSize, formatHTML, isEmoji } from "./utils"
-import { synthClick } from "./utils"
+import { formatFileSize, formatHTML, isEmoji, synthClick } from "./utils"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 

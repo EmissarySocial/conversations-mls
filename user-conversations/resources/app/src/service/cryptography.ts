@@ -1,20 +1,8 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import { type CiphersuiteName, type CredentialBasic } from "ts-mls"
-import { type CiphersuiteImpl } from "ts-mls"
-import { type Credential } from "ts-mls"
-import { type KeyPackage } from "ts-mls"
-import { type PrivateKeyPackage } from "ts-mls"
+import { type CiphersuiteName, type CredentialBasic, type CiphersuiteImpl, type Credential, type KeyPackage, type PrivateKeyPackage, decode, defaultCredentialTypes, defaultLifetime, generateKeyPackage, getCiphersuiteImpl, keyPackageDecoder, mlsMessageDecoder, wireformats } from "ts-mls"
 
 import { base64ToUint8Array } from "./utils"
-import { decode } from "ts-mls"
-import { defaultCredentialTypes } from "ts-mls"
-import { defaultLifetime } from "ts-mls"
-import { generateKeyPackage } from "ts-mls"
-import { getCiphersuiteImpl } from "ts-mls"
-import { keyPackageDecoder } from "ts-mls"
-import { mlsMessageDecoder } from "ts-mls"
-import { wireformats } from "ts-mls"
 
 import * as vocab from "../as/vocab"
 import { Document } from "../as/document"

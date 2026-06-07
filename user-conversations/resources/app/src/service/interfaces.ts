@@ -7,8 +7,7 @@
 import Stream from "mithril/stream"
 
 // ts-mls types
-import { type PrivateKeyPackage } from "ts-mls"
-import { type KeyPackage } from "ts-mls"
+import { type PrivateKeyPackage, type KeyPackage } from "ts-mls"
 
 // ActivityStreams types
 import { type Activity } from "../as/activity"
@@ -18,8 +17,7 @@ import { type Actor } from "../as/actor"
 // Model types
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
-import { type Group } from "../model/group"
-import { type EncryptedGroup } from "../model/group"
+import { type Group, type EncryptedGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 import type { Collection } from "../as/collection"
