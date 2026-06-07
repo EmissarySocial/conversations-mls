@@ -1435,6 +1435,7 @@ export class Controller {
 
 				// Mark it as "unread"
 				group.unread = true
+				group.updateDate = Date.now()
 
 				// Send desktop notifications (if requested)
 				if (this.config.isDesktopNotifications) {

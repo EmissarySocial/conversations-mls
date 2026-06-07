@@ -432,7 +432,7 @@ export class CodecMls {
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
 	// null is returned.
-	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
+	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
 
 		console.log("CodecMls.receiveActivity called with activity:", activity.toObject())
 
@@ -457,7 +457,7 @@ export class CodecMls {
 				return await this.#receiveActivity_GroupInfo(object, mlsMessage)
 
 			case wireformats.mls_key_package:
-				return null
+				return undefined
 
 			case wireformats.mls_private_message:
 				return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
@@ -467,7 +467,7 @@ export class CodecMls {
 
 			case wireformats.mls_welcome:
 				await this.#receiveActivity_Welcome(mlsMessage)
-				return null
+				return undefined
 
 			default:
 				throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage))
@@ -527,19 +527,19 @@ export class CodecMls {
 	}
 
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-	async #receiveActivity_GroupInfo(_document: Document, _message: MlsGroupInfo) {
+	async #receiveActivity_GroupInfo(_document: Document, _message: MlsGroupInfo): Promise<undefined> {
 
 		// var clientState: ClientState
 
-		// Returning `null` means that the controller won't take 
+		// Returning `undefined` means that the controller won't take 
 		// any additional actions to process this message.
-		return null
+		return undefined
 	}
 
 	// decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
-	async #receiveActivity_PublicPrivateMessage(document: Document, mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | null> {
+	async #receiveActivity_PublicPrivateMessage(document: Document, mlsMessage: MlsPublicMessage | MlsPrivateMessage): Promise<Activity | undefined> {
 
 		let groupId: string
 
@@ -557,7 +557,7 @@ export class CodecMls {
 
 			default:
 				console.error("Invalid message type for PrivateMessage decoder")
-				return null
+				return undefined
 		}
 
 		console.log("Decoded groupId: ", groupId)
@@ -567,7 +567,7 @@ export class CodecMls {
 
 		if (group == undefined) {
 			console.error("Received message for unknown group", groupId)
-			return null
+			return undefined
 		}
 
 		console.log("Loaded group from database: ", group)
@@ -584,7 +584,7 @@ export class CodecMls {
 
 		// RULE: Do not accept messages for closed groups
 		if (group.stateId == "CLOSED") {
-			return null
+			return undefined
 		}
 
 		const _this = this // NOSONAR: typescript:S7740 (this is required to make the callback work correctly... IDK man.)
@@ -621,7 +621,7 @@ export class CodecMls {
 		// If no action is taken, then do not write it to the group.
 		if (decodedMessage.kind == "newState") {
 			if (decodedMessage.actionTaken == "reject") {
-				return null
+				return undefined
 			}
 		}
 
@@ -638,7 +638,7 @@ export class CodecMls {
 		if (!group.members.includes(this.#actor.id())) {
 			group.stateId = "CLOSED"
 			await this.#database.saveGroup(group)
-			return null
+			return undefined
 		}
 
 		// Save the updated group to the database
@@ -646,7 +646,7 @@ export class CodecMls {
 
 		// If this is not an application message, then there are no further actions to take.
 		if (decodedMessage.kind != "applicationMessage") {
-			return null
+			return undefined
 		}
 
 		// Otherwise, this IS an application message, so return the decrypted JSON-LD to the controller.

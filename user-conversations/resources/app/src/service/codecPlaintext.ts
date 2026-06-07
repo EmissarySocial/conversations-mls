@@ -5,7 +5,6 @@ import * as vocab from "../as/vocab"
 import { type Group, NewGroup } from "../model/group"
 import { type Message } from "../model/message"
 import type { IDatabase, IDelivery } from "./interfaces"
-import { newId } from "./utils"
 
 export class CodecPlaintext {
 
@@ -81,89 +80,81 @@ export class CodecPlaintext {
 		group.members = group.members.filter((member) => member !== actorId)
 	}
 
-	async receiveActivity(activity: Activity, object: Document): Promise<Activity | null> {
+	// receiveActivity processes an incoming activity and creates/finds the correct group for it.
+	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
 
-		let group: Group
-		await this.#calculateContext(activity, object)
-		const groupId = activity.context()
+		let group = await this.#findGroupForActivity(activity, object)
 
-		// Special case for "Leave" activities.  If we've already left the group, then don't add it to the database
-		if (activity.type() == vocab.ActivityTypeLeave) {
-
-			// Load only
-			const dbGroup = await this.#database.loadGroup(groupId)
-
-			// If the group doesn't exist, then we're done
-			if (dbGroup == undefined) {
-				return null
-			}
-
-			group = dbGroup
-
-		} else {
-
-			// Load/Create the group based on the Activity context
-			group = await this.getGroup(groupId)
+		if (group == undefined) {
+			return undefined
 		}
 
 		// RULE: DO NOT allow this activity if the codec does not match this group
 		if (group.codec != "PLAINTEXT") {
-			throw new Error("Group with id " + groupId + " is not a PLAINTEXT group")
+			throw new Error("Group with id " + group.id + " is not a PLAINTEXT group")
 		}
+
+		// If we need to add new members to the group, then save the changes
+		let newMembers = this.#findNewGroupMembers(group, activity)
+		if (newMembers.length > 0) {
+			group.members.push(...newMembers)
+			await this.#database.saveGroup(group)
+		}
+
+		// Guarantee that the Activity now uses the "correct" Group
+		activity.setContext(group.id)
+
+		// Done.
+		return activity
+	}
+
+	async #findGroupForActivity(activity: Activity, object: Document): Promise<Group | undefined> {
+
+		switch (activity.type()) {
+
+			// "Leave" activities use the "object" of the activity as the group ID.
+			case vocab.ActivityTypeLeave: {
+				return await this.#database.loadGroup(activity.objectId())
+			}
+
+			// "Like" activities use the group of the message being liked.
+			case vocab.ActivityTypeLike: {
+				let message = await this.#database.loadMessage(activity.objectId())
+				return this.#database.loadGroup(message.groupId)
+			}
+
+			// "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
+			case vocab.ActivityTypeCreate:
+			case vocab.ActivityTypeUpdate: {
+
+				// If this is a "reply" then use the same group as the parent message
+				if (object.inReplyToId() != "") {
+					let message = await this.#database.loadMessage(object.inReplyToId())
+					return this.#database.loadGroup(message.groupId)
+				}
+
+				// Otherwise, use the context provided in the message
+				if (activity.context() != "") {
+					return this.#database.loadGroup(activity.context())
+				}
+
+				// If none is found, then create a new group for this message.
+				return this.createGroup([])
+			}
+		}
+
+		throw new Error("Unrecognized activity type " + activity.type())
+	}
+
+	// findNewGroupMembers returns the actors involved in this activity who are not already members of the group.
+	#findNewGroupMembers(group: Group, activity: Activity): string[] {
 
 		// Find members (from/to/cc addressess) of the activity
 		let members = activity.recipients()
 		members.push(activity.actorId())
 
 		// Filter members that are NOT already members of the group
-		const newMembers = members.filter(member => !group.members.includes(member))
-
-		// If there are new members, add them to the group and save
-		if (newMembers.length > 0) {
-			group.members.push(...newMembers)
-		}
-
-		// Mark the group as updated
-		group.updateDate = Date.now()
-		group.unread = true
-		await this.#database.saveGroup(group)
-
-		// Done.
-		return activity
-	}
-
-	async #calculateContext(activity: Activity, object: Document): Promise<void> {
-
-		console.log("#calculateContext....")
-
-		// If this is a "reply" then use the same group as the parent message
-		let inReplyToId = object.inReplyToId()
-
-		if (inReplyToId != "") {
-			console.log("Loading parent message: ", inReplyToId)
-
-			try {
-				let parentMessage = await this.#database.loadMessage(inReplyToId)
-
-				if (parentMessage != undefined) {
-					activity.setContext(parentMessage.groupId)
-					return
-				}
-			} catch (error) {
-				console.log("Failed to load parent message from database:", inReplyToId, error)
-			}
-		}
-
-		// If the message already has a context, then use that as the group ID
-		let groupId = activity.context()
-
-		if (groupId != "") {
-			console.log("Activity already has context:", groupId)
-			return
-		}
-
-		// Otherwise, generate a new group ID
-		activity.setContext(newId())
+		return members.filter(member => !group.members.includes(member))
 	}
 
 	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.

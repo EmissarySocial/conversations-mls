@@ -23974,14 +23974,14 @@
         case wireformats.mls_group_info:
           return await this.#receiveActivity_GroupInfo(object, mlsMessage);
         case wireformats.mls_key_package:
-          return null;
+          return void 0;
         case wireformats.mls_private_message:
           return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
         case wireformats.mls_public_message:
           return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
         case wireformats.mls_welcome:
           await this.#receiveActivity_Welcome(mlsMessage);
-          return null;
+          return void 0;
         default:
           throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
       }
@@ -24018,7 +24018,7 @@
     }
     // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
     async #receiveActivity_GroupInfo(_document, _message) {
-      return null;
+      return void 0;
     }
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
     // application messages for this user.  These messages are decrypted and then processes as
@@ -24035,13 +24035,13 @@
           break;
         default:
           console.error("Invalid message type for PrivateMessage decoder");
-          return null;
+          return void 0;
       }
       console.log("Decoded groupId: ", groupId);
       const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
         console.error("Received message for unknown group", groupId);
-        return null;
+        return void 0;
       }
       console.log("Loaded group from database: ", group);
       if (!groupIsEncrypted(group)) {
@@ -24051,7 +24051,7 @@
         throw new Error("Received MLS message from a sender that is not a member of the group: " + document2.toJSON());
       }
       if (group.stateId == "CLOSED") {
-        return null;
+        return void 0;
       }
       const _this = this;
       const groupEpoch = group.clientState.groupContext.epoch;
@@ -24081,7 +24081,7 @@
       }
       if (decodedMessage.kind == "newState") {
         if (decodedMessage.actionTaken == "reject") {
-          return null;
+          return void 0;
         }
       }
       decodedMessage.consumed.forEach(zeroOutUint8Array);
@@ -24091,11 +24091,11 @@
       if (!group.members.includes(this.#actor.id())) {
         group.stateId = "CLOSED";
         await this.#database.saveGroup(group);
-        return null;
+        return void 0;
       }
       await this.#database.saveGroup(group);
       if (decodedMessage.kind != "applicationMessage") {
-        return null;
+        return void 0;
       }
       const plaintext = decodeText(decodedMessage.message);
       const result = new Activity().fromJSON(plaintext);
@@ -24256,54 +24256,54 @@
     async removeGroupMember(group, actorId) {
       group.members = group.members.filter((member) => member !== actorId);
     }
+    // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
-      let group;
-      await this.#calculateContext(activity, object);
-      const groupId = activity.context();
-      if (activity.type() == ActivityTypeLeave) {
-        const dbGroup = await this.#database.loadGroup(groupId);
-        if (dbGroup == void 0) {
-          return null;
-        }
-        group = dbGroup;
-      } else {
-        group = await this.getGroup(groupId);
+      let group = await this.#findGroupForActivity(activity, object);
+      if (group == void 0) {
+        return void 0;
       }
       if (group.codec != "PLAINTEXT") {
-        throw new Error("Group with id " + groupId + " is not a PLAINTEXT group");
+        throw new Error("Group with id " + group.id + " is not a PLAINTEXT group");
       }
-      let members = activity.recipients();
-      members.push(activity.actorId());
-      const newMembers = members.filter((member) => !group.members.includes(member));
+      let newMembers = this.#findNewGroupMembers(group, activity);
       if (newMembers.length > 0) {
         group.members.push(...newMembers);
+        await this.#database.saveGroup(group);
       }
-      group.updateDate = Date.now();
-      group.unread = true;
-      await this.#database.saveGroup(group);
+      activity.setContext(group.id);
       return activity;
     }
-    async #calculateContext(activity, object) {
-      console.log("#calculateContext....");
-      let inReplyToId = object.inReplyToId();
-      if (inReplyToId != "") {
-        console.log("Loading parent message: ", inReplyToId);
-        try {
-          let parentMessage = await this.#database.loadMessage(inReplyToId);
-          if (parentMessage != void 0) {
-            activity.setContext(parentMessage.groupId);
-            return;
+    async #findGroupForActivity(activity, object) {
+      switch (activity.type()) {
+        // "Leave" activities use the "object" of the activity as the group ID.
+        case ActivityTypeLeave: {
+          return await this.#database.loadGroup(activity.objectId());
+        }
+        // "Like" activities use the group of the message being liked.
+        case ActivityTypeLike: {
+          let message = await this.#database.loadMessage(activity.objectId());
+          return this.#database.loadGroup(message.groupId);
+        }
+        // "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
+        case ActivityTypeCreate:
+        case ActivityTypeUpdate: {
+          if (object.inReplyToId() != "") {
+            let message = await this.#database.loadMessage(object.inReplyToId());
+            return this.#database.loadGroup(message.groupId);
           }
-        } catch (error) {
-          console.log("Failed to load parent message from database:", inReplyToId, error);
+          if (activity.context() != "") {
+            return this.#database.loadGroup(activity.context());
+          }
+          return this.createGroup([]);
         }
       }
-      let groupId = activity.context();
-      if (groupId != "") {
-        console.log("Activity already has context:", groupId);
-        return;
-      }
-      activity.setContext(newId2());
+      throw new Error("Unrecognized activity type " + activity.type());
+    }
+    // findNewGroupMembers returns the actors involved in this activity who are not already members of the group.
+    #findNewGroupMembers(group, activity) {
+      let members = activity.recipients();
+      members.push(activity.actorId());
+      return members.filter((member) => !group.members.includes(member));
     }
     // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
     async encodeMessage(group, message) {
@@ -25216,6 +25216,7 @@
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
           group.unread = true;
+          group.updateDate = Date.now();
           if (this.config.isDesktopNotifications) {
             if (!this.isWindowFocused) {
               this.#host.notify(message.sender, message.content);
