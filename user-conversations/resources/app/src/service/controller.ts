@@ -748,7 +748,8 @@ export class Controller {
 				"type": vocab.ObjectTypeEmissaryContext,
 				"name": group.name,
 				"summary": group.summary,
-				"firstMesssageId": group.firstMessageId,
+				"lastMessage": group.lastMessage,
+				"lastMessageId": group.lastMessageId,
 				"stateId": group.stateId,
 				"tag": group.tags,
 				"unread": group.unread,
@@ -988,9 +989,7 @@ export class Controller {
 		// Update the group with the message metadata
 		group.lastMessage = content
 
-		if (group.firstMessageId == "") {
-			group.firstMessageId = message.id
-		}
+		group.lastMessageId = message.id
 
 		// Save the group with updated message metadata
 		await this.saveGroup(group)
@@ -1396,10 +1395,8 @@ export class Controller {
 		// Save the message to the database
 		await this.#database.saveMessage(message)
 
-		// Default the first message in the group (if not already set)
-		if (group.firstMessageId == "") {
-			group.firstMessageId = message.id
-		}
+		// Track the most recent message in the group
+		group.lastMessageId = message.id
 
 		// Mark the group with the lastMessage content
 		group.lastMessage = object.content()

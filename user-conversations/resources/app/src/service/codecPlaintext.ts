@@ -163,7 +163,7 @@ export class CodecPlaintext {
 		return {
 			attributedTo: message.sender,
 			type: vocab.ObjectTypeNote,
-			inReplyTo: message.inReplyTo || group.firstMessageId,
+			inReplyTo: message.inReplyTo || group.lastMessageId,
 			to: group.members,
 			context: group.id,
 			content: message.content,

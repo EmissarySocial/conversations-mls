@@ -17758,7 +17758,7 @@
       defaultName: "",
       summary: "",
       tags: [],
-      firstMessageId: "",
+      lastMessageId: "",
       lastMessage: "",
       members: [],
       contacts: [],
@@ -24099,6 +24099,13 @@
       }
       const plaintext = decodeText(decodedMessage.message);
       const result = new Activity().fromJSON(plaintext);
+      this.sendActivity(group, new Activity({
+        actor: this.#actor.id(),
+        type: ActivityTypeAcknowledge,
+        to: [result.actorId()],
+        object: result.objectId(),
+        context: group.id
+      }));
       return result;
     }
     #processMessageCallback(message, group) {
@@ -24310,7 +24317,7 @@
       return {
         attributedTo: message.sender,
         type: ObjectTypeNote,
-        inReplyTo: message.inReplyTo || group.firstMessageId,
+        inReplyTo: message.inReplyTo || group.lastMessageId,
         to: group.members,
         context: group.id,
         content: message.content,
@@ -24811,7 +24818,8 @@
           "type": ObjectTypeEmissaryContext,
           "name": group.name,
           "summary": group.summary,
-          "firstMesssageId": group.firstMessageId,
+          "lastMessage": group.lastMessage,
+          "lastMessageId": group.lastMessageId,
           "stateId": group.stateId,
           "tag": group.tags,
           "unread": group.unread
@@ -24961,9 +24969,7 @@
       this.removeReply();
       await this.loadMessages();
       group.lastMessage = content;
-      if (group.firstMessageId == "") {
-        group.firstMessageId = message.id;
-      }
+      group.lastMessageId = message.id;
       await this.saveGroup(group);
     };
     // sendFile sends a base64-encoded file to the specified group
@@ -25209,9 +25215,7 @@
         message.attachments = [object.attachment()];
       }
       await this.#database.saveMessage(message);
-      if (group.firstMessageId == "") {
-        group.firstMessageId = message.id;
-      }
+      group.lastMessageId = message.id;
       group.lastMessage = object.content();
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
@@ -25225,13 +25229,6 @@
         }
       }
       await this.saveGroup(group);
-      this.#sendActivity(group, new Activity({
-        actor: this.actorId(),
-        type: ActivityTypeAcknowledge,
-        to: [message.sender],
-        object: object.id(),
-        context: group.id
-      }));
     };
     #receiveActivity_Failure = async (activity) => {
     };
