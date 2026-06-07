@@ -24219,6 +24219,9 @@
       this.#delivery = delivery;
       this.#actorId = actorId;
     }
+    //////////////////////////////////////////
+    // Group Management
+    //////////////////////////////////////////
     // createGroup creates a new group on the server and returns a local Group record
     async createGroup(newMembers) {
       const createGroupActivity = new Activity({
@@ -24263,6 +24266,36 @@
     async removeGroupMember(group, actorId) {
       group.members = group.members.filter((member) => member !== actorId);
     }
+    //////////////////////////////////////////
+    // Sending Messages
+    //////////////////////////////////////////
+    // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+    async encodeMessage(group, message) {
+      return {
+        attributedTo: message.sender,
+        type: ObjectTypeNote,
+        inReplyTo: message.inReplyTo || group.lastMessageId,
+        to: group.members,
+        context: group.id,
+        content: message.content,
+        attachment: message.attachments,
+        published: (/* @__PURE__ */ new Date()).toISOString()
+      };
+    }
+    // sendActivity sends the provided activity to the group via the delivery service.
+    // Returns the server-assigned URL for the created object, or "" if none was returned.
+    async sendActivity(group, activity) {
+      if (activity.type() != ActivityTypeAcknowledge) {
+        this.#addMentions(activity, group.members);
+      }
+      if (activity.recipients().length == 0) {
+        activity.set("to", group.members);
+      }
+      return await this.#delivery.sendActivity(activity);
+    }
+    //////////////////////////////////////////
+    // Receiving Messages
+    //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
       let group = await this.#findGroupForActivity(activity, object);
@@ -24311,28 +24344,6 @@
       let members = activity.recipients();
       members.push(activity.actorId());
       return members.filter((member) => !group.members.includes(member));
-    }
-    // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
-    async encodeMessage(group, message) {
-      return {
-        attributedTo: message.sender,
-        type: ObjectTypeNote,
-        inReplyTo: message.inReplyTo || group.lastMessageId,
-        to: group.members,
-        context: group.id,
-        content: message.content,
-        attachment: message.attachments,
-        published: (/* @__PURE__ */ new Date()).toISOString()
-      };
-    }
-    // sendActivity sends the provided activity to the group via the delivery service.
-    // Returns the server-assigned URL for the created object, or "" if none was returned.
-    async sendActivity(group, activity) {
-      if (activity.type() != ActivityTypeAcknowledge) {
-        this.#addMentions(activity, group.members);
-      }
-      activity.set("to", group.members);
-      return await this.#delivery.sendActivity(activity);
     }
     // createGroup creates/returns a new PLAINTEXT group with the given ID
     async #createGroup(groupId, newMembers) {
@@ -25522,6 +25533,9 @@
     return [firstElement, lastElement];
   }
   function isEmoji(char) {
+    if (char.length > 1) {
+      return false;
+    }
     return /\p{Extended_Pictographic}/u.test(char);
   }
   function formatFileSize(bytes) {

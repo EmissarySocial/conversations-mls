@@ -351,7 +351,6 @@ export class CodecMls {
 		return ""
 	}
 
-
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
 	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage) {
 
@@ -387,6 +386,7 @@ export class CodecMls {
 
 		return activity
 	}
+
 
 	//////////////////////////////////////////
 	// Receiving Messages

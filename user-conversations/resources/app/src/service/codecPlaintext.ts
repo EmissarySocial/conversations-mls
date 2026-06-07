@@ -18,6 +18,10 @@ export class CodecPlaintext {
 		this.#actorId = actorId
 	}
 
+	//////////////////////////////////////////
+	// Group Management
+	//////////////////////////////////////////
+
 	// createGroup creates a new group on the server and returns a local Group record
 	async createGroup(newMembers: string[]): Promise<Group> {
 
@@ -79,6 +83,49 @@ export class CodecPlaintext {
 	async removeGroupMember(group: Group, actorId: string): Promise<void> {
 		group.members = group.members.filter((member) => member !== actorId)
 	}
+
+
+	//////////////////////////////////////////
+	// Sending Messages
+	//////////////////////////////////////////
+
+	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
+	async encodeMessage(group: Group, message: Message): Promise<{}> {
+
+		return {
+			attributedTo: message.sender,
+			type: vocab.ObjectTypeNote,
+			inReplyTo: message.inReplyTo || group.lastMessageId,
+			to: group.members,
+			context: group.id,
+			content: message.content,
+			attachment: message.attachments,
+			published: new Date().toISOString(),
+		}
+	}
+
+	// sendActivity sends the provided activity to the group via the delivery service.
+	// Returns the server-assigned URL for the created object, or "" if none was returned.
+	async sendActivity(group: Group, activity: Activity): Promise<string> {
+
+		// Add "Mention" tags so that Mastodon will notify users properly (except for "Acknowledge" activities)
+		if (activity.type() != vocab.ActivityTypeAcknowledge) {
+			this.#addMentions(activity, group.members)
+		}
+
+		// If the activity does not already have a "to" value, then set recipients to be ALL members of this group
+		if (activity.recipients().length == 0) {
+			activity.set("to", group.members)
+		}
+
+		// Send the activity via the delivery service and return the server-assigned ID
+		return await this.#delivery.sendActivity(activity)
+	}
+
+
+	//////////////////////////////////////////
+	// Receiving Messages
+	//////////////////////////////////////////
 
 	// receiveActivity processes an incoming activity and creates/finds the correct group for it.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
@@ -155,37 +202,6 @@ export class CodecPlaintext {
 
 		// Filter members that are NOT already members of the group
 		return members.filter(member => !group.members.includes(member))
-	}
-
-	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
-	async encodeMessage(group: Group, message: Message): Promise<{}> {
-
-		return {
-			attributedTo: message.sender,
-			type: vocab.ObjectTypeNote,
-			inReplyTo: message.inReplyTo || group.lastMessageId,
-			to: group.members,
-			context: group.id,
-			content: message.content,
-			attachment: message.attachments,
-			published: new Date().toISOString(),
-		}
-	}
-
-	// sendActivity sends the provided activity to the group via the delivery service.
-	// Returns the server-assigned URL for the created object, or "" if none was returned.
-	async sendActivity(group: Group, activity: Activity): Promise<string> {
-
-		// Add "Mention" tags so that Mastodon will notify users properly (except for "Acknowledge" activities)
-		if (activity.type() != vocab.ActivityTypeAcknowledge) {
-			this.#addMentions(activity, group.members)
-		}
-
-		// Set recipients to be the members of this group
-		activity.set("to", group.members)
-
-		// Send the activity via the delivery service and return the server-assigned ID
-		return await this.#delivery.sendActivity(activity)
 	}
 
 	// createGroup creates/returns a new PLAINTEXT group with the given ID
