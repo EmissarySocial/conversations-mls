@@ -37,7 +37,7 @@ export interface ICodec {
 	leaveGroup(group: Group): Promise<void>
 	removeGroupMember(group: Group, actorId: string): Promise<void>
 	receiveActivity(activity: Activity, object: Document): Promise<Activity | null>
-	sendActivity(group: Group, activity: Activity): Promise<void>
+	sendActivity(group: Group, activity: Activity): Promise<string>
 }
 
 export interface IContacts {

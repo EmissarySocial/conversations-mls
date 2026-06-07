@@ -355,9 +355,9 @@ export class CodecMls {
 		}
 	}
 
-	// sendActivity encodes an Activity as an MLS message and sends it to 
-	// updated as a result of this message.
-	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<void> {
+	// sendActivity encodes an Activity as an MLS message and sends it to all group members.
+	// Returns "" because the server-assigned ID belongs to the MLS envelope, not the inner message.
+	async sendActivity(group: EncryptedGroup, activity: Activity): Promise<string> {
 
 		// Encrypt the message using MLS
 		const messageText = activity.toJSON()
@@ -384,6 +384,8 @@ export class CodecMls {
 			activity.getArrayOfString("as", vocab.PropertyTo),
 			applicationMessage.message,
 		)
+
+		return ""
 	}
 
 

@@ -23905,8 +23905,8 @@
         published: (/* @__PURE__ */ new Date()).toISOString()
       };
     }
-    // sendActivity encodes an Activity as an MLS message and sends it to 
-    // updated as a result of this message.
+    // sendActivity encodes an Activity as an MLS message and sends it to all group members.
+    // Returns "" because the server-assigned ID belongs to the MLS envelope, not the inner message.
     async sendActivity(group, activity) {
       const messageText = activity.toJSON();
       const messageBytes = encodeText(messageText);
@@ -23924,6 +23924,7 @@
         activity.getArrayOfString("as", PropertyTo),
         applicationMessage.message
       );
+      return "";
     }
     // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
     async #sendMlsMessage(type, recipients, message) {
@@ -24271,12 +24272,15 @@
       if (group.codec != "PLAINTEXT") {
         throw new Error("Group with id " + groupId + " is not a PLAINTEXT group");
       }
-      const recipients = activity.recipients();
-      const newRecipients = recipients.filter((recipient) => !group.members.includes(recipient));
-      if (newRecipients.length > 0) {
-        group.members.push(...newRecipients);
-        await this.#database.saveGroup(group);
+      let members = activity.recipients();
+      members.push(activity.actorId());
+      const newMembers = members.filter((member) => !group.members.includes(member));
+      if (newMembers.length > 0) {
+        group.members.push(...newMembers);
       }
+      group.updateDate = Date.now();
+      group.unread = true;
+      await this.#database.saveGroup(group);
       return activity;
     }
     async #calculateContext(activity, object) {
@@ -24314,13 +24318,14 @@
         published: (/* @__PURE__ */ new Date()).toISOString()
       };
     }
-    // sendActivity sends the provided activity to the group via the delivery service
+    // sendActivity sends the provided activity to the group via the delivery service.
+    // Returns the server-assigned URL for the created object, or "" if none was returned.
     async sendActivity(group, activity) {
       if (activity.type() != ActivityTypeAcknowledge) {
         this.#addMentions(activity, group.members);
       }
       activity.set("to", group.members);
-      await this.#delivery.sendActivity(activity);
+      return await this.#delivery.sendActivity(activity);
     }
     // createGroup creates/returns a new PLAINTEXT group with the given ID
     async #createGroup(groupId, newMembers) {
@@ -24937,12 +24942,7 @@
       message.type = "SENT";
       if (this.inReplyTo != void 0) {
         message.inReplyTo = this.inReplyTo.id;
-        this.removeReply();
       }
-      await this.#database.saveMessage(message);
-      await this.loadMessages();
-      group.lastMessage = content;
-      await this.saveGroup(group);
       const codec = this.#getCodecForGroup(group);
       const object = await codec.encodeMessage(group, message);
       const activity = new Activity({
@@ -24953,7 +24953,18 @@
         object
       });
       console.log("Constructed activity:", activity.toObject());
-      await this.#sendActivity(group, activity);
+      const serverId = await this.#sendActivity(group, activity);
+      if (serverId !== "") {
+        message.id = serverId;
+      }
+      await this.#database.saveMessage(message);
+      this.removeReply();
+      await this.loadMessages();
+      group.lastMessage = content;
+      if (group.firstMessageId == "") {
+        group.firstMessageId = message.id;
+      }
+      await this.saveGroup(group);
     };
     // sendFile sends a base64-encoded file to the specified group
     sendFile = async (file) => {
@@ -24968,7 +24979,6 @@
       message.type = "SENT";
       if (this.inReplyTo != void 0) {
         message.inReplyTo = this.inReplyTo.id;
-        this.removeReply();
       }
       await this.#database.saveMessage(message);
       await this.loadMessages();
@@ -24982,7 +24992,8 @@
         to: group.members,
         object
       });
-      this.#sendActivity(group, activity);
+      await this.#sendActivity(group, activity);
+      this.removeReply();
     };
     updateMessage = async (message) => {
       const group = this.groupStream();
@@ -25100,11 +25111,12 @@
     //////////////////////////////////////////
     // Sending Activities
     //////////////////////////////////////////
-    // sendActivity sends an activity to the Actor's outbox
+    // sendActivity sends an activity to the Actor's outbox.
+    // Returns the server-assigned URL for the created object, or "" if none was returned.
     #sendActivity = async (group, activity) => {
       activity.set(PropertyInstrument, this.config.generatorId);
       const codec = this.#getCodecForGroup(group);
-      await codec.sendActivity(group, activity);
+      return await codec.sendActivity(group, activity);
     };
     //////////////////////////////////////////
     // Receiving Activities

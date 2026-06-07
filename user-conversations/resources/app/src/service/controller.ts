@@ -978,22 +978,13 @@ export class Controller {
 
 		if (this.inReplyTo != undefined) {
 			message.inReplyTo = this.inReplyTo.id
-			this.removeReply()
 		}
-
-		// Save message and reload to refresh the UX
-		await this.#database.saveMessage(message)
-		await this.loadMessages()
-
-		// Update the group with the message content
-		group.lastMessage = content
-		await this.saveGroup(group)
 
 		// Send message using the appropriate codec
 		const codec = this.#getCodecForGroup(group)
 		const object = await codec.encodeMessage(group, message)
 
-		// Create an ActivityPub activity 
+		// Create an ActivityPub activity
 		const activity = new Activity({
 			context: group.id,
 			actor: this.actorId(),
@@ -1004,8 +995,28 @@ export class Controller {
 
 		console.log("Constructed activity:", activity.toObject())
 
-		// Send the activity through the delivery service
-		await this.#sendActivity(group, activity)
+		// Send the activity and capture the server-assigned ID
+		const serverId = await this.#sendActivity(group, activity)
+
+		// If the server assigned a URL then use it
+		if (serverId !== "") {
+			message.id = serverId
+		}
+
+		// Save message and reload to refresh the UX
+		await this.#database.saveMessage(message)
+		this.removeReply()
+		await this.loadMessages()
+
+		// Update the group with the message metadata
+		group.lastMessage = content
+
+		if (group.firstMessageId == "") {
+			group.firstMessageId = message.id
+		}
+
+		// Save the group with updated message metadata
+		await this.saveGroup(group)
 	}
 
 	// sendFile sends a base64-encoded file to the specified group
@@ -1027,7 +1038,6 @@ export class Controller {
 
 		if (this.inReplyTo != undefined) {
 			message.inReplyTo = this.inReplyTo.id
-			this.removeReply()
 		}
 
 		// Save message and reload to refresh the UX
@@ -1051,7 +1061,8 @@ export class Controller {
 		})
 
 		// (asynchronously) Send the activity through the delivery service
-		this.#sendActivity(group, activity)
+		await this.#sendActivity(group, activity)
+		this.removeReply()
 	}
 
 	updateMessage = async (message: Message) => {
@@ -1236,8 +1247,9 @@ export class Controller {
 	// Sending Activities
 	//////////////////////////////////////////
 
-	// sendActivity sends an activity to the Actor's outbox
-	readonly #sendActivity = async (group: Group, activity: Activity) => {
+	// sendActivity sends an activity to the Actor's outbox.
+	// Returns the server-assigned URL for the created object, or "" if none was returned.
+	readonly #sendActivity = async (group: Group, activity: Activity): Promise<string> => {
 
 		// Apply the "instrument" property to the activity to identify that it came from this client.
 		activity.set(vocab.PropertyInstrument, this.config.generatorId)
@@ -1245,8 +1257,8 @@ export class Controller {
 		// Find the codec for this group (plaintext or MLS)
 		const codec = this.#getCodecForGroup(group)
 
-		// Send the activity through the codec.
-		await codec.sendActivity(group, activity)
+		// Send the activity through the codec and return the server-assigned ID.
+		return await codec.sendActivity(group, activity)
 	}
 
 

@@ -111,17 +111,22 @@ export class CodecPlaintext {
 			throw new Error("Group with id " + groupId + " is not a PLAINTEXT group")
 		}
 
-		// Find recipients (to/cc addressess) of the activity
-		const recipients = activity.recipients()
+		// Find members (from/to/cc addressess) of the activity
+		let members = activity.recipients()
+		members.push(activity.actorId())
 
-		// Filter recipients that are NOT already members of the group
-		const newRecipients = recipients.filter((recipient) => !group.members.includes(recipient))
+		// Filter members that are NOT already members of the group
+		const newMembers = members.filter(member => !group.members.includes(member))
 
-		// Add new recipients to the group and save it to the database
-		if (newRecipients.length > 0) {
-			group.members.push(...newRecipients)
-			await this.#database.saveGroup(group)
+		// If there are new members, add them to the group and save
+		if (newMembers.length > 0) {
+			group.members.push(...newMembers)
 		}
+
+		// Mark the group as updated
+		group.updateDate = Date.now()
+		group.unread = true
+		await this.#database.saveGroup(group)
 
 		// Done.
 		return activity
@@ -176,8 +181,9 @@ export class CodecPlaintext {
 		}
 	}
 
-	// sendActivity sends the provided activity to the group via the delivery service
-	async sendActivity(group: Group, activity: Activity): Promise<void> {
+	// sendActivity sends the provided activity to the group via the delivery service.
+	// Returns the server-assigned URL for the created object, or "" if none was returned.
+	async sendActivity(group: Group, activity: Activity): Promise<string> {
 
 		// Add "Mention" tags so that Mastodon will notify users properly (except for "Acknowledge" activities)
 		if (activity.type() != vocab.ActivityTypeAcknowledge) {
@@ -187,8 +193,8 @@ export class CodecPlaintext {
 		// Set recipients to be the members of this group
 		activity.set("to", group.members)
 
-		// Send the activity via the delivery service
-		await this.#delivery.sendActivity(activity)
+		// Send the activity via the delivery service and return the server-assigned ID
+		return await this.#delivery.sendActivity(activity)
 	}
 
 	// createGroup creates/returns a new PLAINTEXT group with the given ID
