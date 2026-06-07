@@ -618,6 +618,16 @@ export class CodecMls {
 		// Create a result object and embed additional context data
 		const result = new Activity().fromJSON(plaintext)
 
+		// Acknowledge successful message received
+		this.sendActivity(group, new Activity({
+			actor: this.#actor.id(),
+			type: vocab.ActivityTypeAcknowledge,
+			to: [result.actorId()],
+			object: result.objectId(),
+			context: group.id,
+		}))
+
+		// Continue processing the message in the controller.
 		return result
 	}
 

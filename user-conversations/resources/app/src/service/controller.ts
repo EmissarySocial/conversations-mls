@@ -1425,16 +1425,6 @@ export class Controller {
 
 		// Update the group
 		await this.saveGroup(group)
-
-		// Send acknowledgement to the sender
-		this.#sendActivity(group, new Activity({
-			actor: this.actorId(),
-			type: vocab.ActivityTypeAcknowledge,
-			to: [message.sender],
-			object: object.id(),
-			context: group.id,
-		}))
-
 	}
 
 	readonly #receiveActivity_Failure = async (activity: Activity) => {
