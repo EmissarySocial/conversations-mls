@@ -47,6 +47,12 @@ export function getFocusElements(node: Element): [HTMLInputElement | undefined, 
 }
 
 export function isEmoji(char: string): boolean {
+
+	// Only expand emoji messages if it is a single character.
+	if (char.length > 1) {
+		return false
+	}
+
 	return /\p{Extended_Pictographic}/u.test(char);
 }
 
