@@ -4,6 +4,7 @@ import * as vocab from "../as/vocab"
 
 import { type Group, NewGroup } from "../model/group"
 import { type Message } from "../model/message"
+import { newId } from "../model/utils"
 import type { IDatabase, IDelivery } from "./interfaces"
 
 export class CodecPlaintext {
@@ -130,10 +131,13 @@ export class CodecPlaintext {
 	// receiveActivity processes an incoming activity and creates/finds the correct group for it.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
 
-		let group = await this.#findGroupForActivity(activity, object)
+		const groupId = await this.#findGroupForActivity(activity, object)
 
+		let group = await this.#database.loadGroup(groupId)
+
+		// If the group was not found, then just create a new one.
 		if (group == undefined) {
-			return undefined
+			group = await this.#createGroup(groupId, [])
 		}
 
 		// RULE: DO NOT allow this activity if the codec does not match this group
@@ -141,52 +145,75 @@ export class CodecPlaintext {
 			throw new Error("Group with id " + group.id + " is not a PLAINTEXT group")
 		}
 
+		// If we don't have a createdById for this group, then set it to the Actor who sent this Activity
+		if (group.createdById == "") {
+			group.createdById = activity.actorId()
+		}
+
 		// If we need to add new members to the group, then save the changes
 		let newMembers = this.#findNewGroupMembers(group, activity)
 		if (newMembers.length > 0) {
 			group.members.push(...newMembers)
-			await this.#database.saveGroup(group)
 		}
+
+		// Save the group if any changes were made
+		await this.#database.saveGroup(group)
 
 		// Guarantee that the Activity now uses the "correct" Group
 		activity.setContext(group.id)
+
+		console.log("Plaintext.receiveActivity:", group, activity)
 
 		// Done.
 		return activity
 	}
 
-	async #findGroupForActivity(activity: Activity, object: Document): Promise<Group | undefined> {
+	async #findGroupForActivity(activity: Activity, object: Document): Promise<string> {
+
+		console.log("#findGroupForActivity", activity)
 
 		switch (activity.type()) {
 
 			// "Leave" activities use the "object" of the activity as the group ID.
 			case vocab.ActivityTypeLeave: {
-				return await this.#database.loadGroup(activity.objectId())
+				console.log("Leave activity")
+				return activity.objectId()
 			}
 
 			// "Like" activities use the group of the message being liked.
 			case vocab.ActivityTypeLike: {
+				console.log("Like activity")
 				let message = await this.#database.loadMessage(activity.objectId())
-				return this.#database.loadGroup(message.groupId)
+				return message.groupId
 			}
 
 			// "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
 			case vocab.ActivityTypeCreate:
 			case vocab.ActivityTypeUpdate: {
 
+				console.log("Create/Update activity", object.inReplyToId(), object.context(), activity.context())
 				// If this is a "reply" then use the same group as the parent message
 				if (object.inReplyToId() != "") {
+					console.log("Found in reply")
 					let message = await this.#database.loadMessage(object.inReplyToId())
-					return this.#database.loadGroup(message.groupId)
+					return message.groupId
 				}
 
-				// Otherwise, use the context provided in the message
+				// If the OBJECT defines a context, then use that
+				if (object.context() != "") {
+					console.log("Found object context")
+					return object.context()
+				}
+
+				// If the ACTIVITY defines a context, then use that
 				if (activity.context() != "") {
-					return this.#database.loadGroup(activity.context())
+					console.log("Found activity context")
+					return activity.context()
 				}
 
 				// If none is found, then create a new group for this message.
-				return this.createGroup([])
+				console.log("Not found, creating new group")
+				return newId()
 			}
 		}
 

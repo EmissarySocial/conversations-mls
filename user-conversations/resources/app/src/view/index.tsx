@@ -13,6 +13,7 @@ import { AddGroupMember } from "./modal-addGroupMember"
 import { EditMessage } from "./modal-editMessage"
 import { MessageHistory } from "./modal-messageHistory"
 import { PickEmoji } from "./modal-pickEmoji"
+import { GroupWelcome } from "./group-welcome"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -31,41 +32,50 @@ export class Index {
 	}
 
 	public view(vnode: IndexVnode) {
-		let page: JSX.Element
-
-		switch (vnode.attrs.controller.pageView) {
-
-			case "GROUP-MEMBERS":
-				page = <GroupMembers controller={vnode.attrs.controller} />
-				break
-
-			case "GROUP-NOTES":
-				page = <GroupNotes controller={vnode.attrs.controller} />
-				break
-
-			case "GROUP-LEAVE":
-				page = <GroupLeave controller={vnode.attrs.controller} />
-				break
-
-			default: {
-				const groups = vnode.attrs.controller.groups
-				if (groups.length == 0) {
-					page = <Empty controller={vnode.attrs.controller} />
-				} else {
-					page = <GroupMessages controller={vnode.attrs.controller} />
-				}
-			}
-		}
-
 		return (
 			<div id="conversations">
 				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
 					<Groups controller={vnode.attrs.controller}></Groups>
 				</div>
-				{page}
+				{this.viewDetails(vnode)}
 				{this.viewModals(vnode)}
 			</div>
 		)
+	}
+
+	private viewDetails(vnode: IndexVnode): JSX.Element {
+
+		// If there are no groups, then only show the empty page.
+		const groups = vnode.attrs.controller.groups
+
+		if (groups.length == 0) {
+			return <Empty controller={vnode.attrs.controller} />
+		}
+
+		// Special case: if the group state is "WELCOME", then only show the welcome page.
+		const group = vnode.attrs.controller.groupStream()
+
+		if (group.stateId == "WELCOME") {
+			return <GroupWelcome controller={vnode.attrs.controller} />
+		}
+
+		// Otherwise, show the user's selected page
+		switch (vnode.attrs.controller.pageView) {
+
+			case "GROUP-MEMBERS":
+				return <GroupMembers controller={vnode.attrs.controller} />
+
+			case "GROUP-NOTES":
+				return <GroupNotes controller={vnode.attrs.controller} />
+
+			case "GROUP-LEAVE":
+				return <GroupLeave controller={vnode.attrs.controller} />
+
+			case "GROUP-MESSAGES":
+			default: {
+				return <GroupMessages controller={vnode.attrs.controller} />
+			}
+		}
 	}
 
 	// viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active

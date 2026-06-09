@@ -336,7 +336,6 @@ export class CodecMls {
 
 		// update the Group with the new group state
 		group.clientState = applicationMessage.newState
-		group.updateDate = Date.now()
 
 		// save the updated group
 		await this.#database.saveGroup(group)
@@ -429,7 +428,7 @@ export class CodecMls {
 				return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage)
 
 			case wireformats.mls_welcome:
-				await this.#receiveActivity_Welcome(mlsMessage)
+				await this.#receiveActivity_Welcome(activity, mlsMessage)
 				return undefined
 
 			default:
@@ -438,7 +437,7 @@ export class CodecMls {
 	}
 
 	// decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-	async #receiveActivity_Welcome(message: MlsWelcomeMessage): Promise<void> {
+	async #receiveActivity_Welcome(activity: Activity, message: MlsWelcomeMessage): Promise<void> {
 
 		let clientState: ClientState
 
@@ -478,6 +477,7 @@ export class CodecMls {
 		// Create a new EncryptedGroup
 		const group = NewGroup("MLS")
 		group.id = groupId
+		group.createdById = activity.actorId()
 
 		let encryptedGroup = addClientState(group, clientState)
 		encryptedGroup.members = this.getGroupMembers(encryptedGroup)
@@ -563,7 +563,6 @@ export class CodecMls {
 			msgEpoch = mlsMessage.publicMessage.content.epoch
 			msgWireformat = "PublicMessage(1)"
 		}
-		console.log(`CodecMls.processMessage: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}, epochMatch=${groupEpoch == msgEpoch}`)
 
 		// Decode the message using ts-mls
 		let decodedMessage: Awaited<ReturnType<typeof processMessage>>
@@ -594,7 +593,6 @@ export class CodecMls {
 
 		// Update the group state
 		group.clientState = decodedMessage.newState
-		group.updateDate = Date.now()
 		group.members = this.getGroupMembers(group)
 
 		// If the current actor has been removed from the group, then close it permanently...
@@ -618,17 +616,28 @@ export class CodecMls {
 		// Create a result object and embed additional context data
 		const result = new Activity().fromJSON(plaintext)
 
+		// Send Acknowledge message for certain kinds of activities.
+		this.#maybeSendAcknowledgement(group, result)
+
+		// Continue processing the message in the controller.
+		return result
+	}
+
+	#maybeSendAcknowledgement(group: EncryptedGroup, activity: Activity): void {
+
+		// Only sent Acknowledgements for "Create" activities, which represent new messages.
+		if (activity.type() !== vocab.ActivityTypeCreate) {
+			return
+		}
+
 		// Acknowledge successful message received
 		this.sendActivity(group, new Activity({
 			actor: this.#actor.id(),
 			type: vocab.ActivityTypeAcknowledge,
-			to: [result.actorId()],
-			object: result.objectId(),
+			to: [activity.actorId()],
+			object: activity.objectId(),
 			context: group.id,
 		}))
-
-		// Continue processing the message in the controller.
-		return result
 	}
 
 	#processMessageCallback(message: incomingMessage, group: EncryptedGroup): IncomingMessageAction {

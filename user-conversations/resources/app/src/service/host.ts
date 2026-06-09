@@ -21,7 +21,7 @@ export class Host {
 	}
 
 	viewBlockActor(actorId: string) {
-		htmx.ajax("GET", "/@me/settings/rule-edit-actor?action=BLOCK&trigger=" + encodeURIComponent(actorId))
+		htmx.ajax("GET", "/@me/settings/actor-rule?actor=" + encodeURIComponent(actorId))
 	}
 
 	notify(title: string, message: string) {

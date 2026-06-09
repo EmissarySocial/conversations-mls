@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m28, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m29, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m28;
+          if (params[key] == null) return m29;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m28, key, extra) {
-            if (key == null) return "\\" + m28;
+          function(m29, key, extra) {
+            if (key == null) return "\\" + m29;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request = require_request2();
       var router = require_route();
-      var m28 = function m29() {
+      var m29 = function m30() {
         return hyperscript.apply(this, arguments);
       };
-      m28.m = hyperscript;
-      m28.trust = hyperscript.trust;
-      m28.fragment = hyperscript.fragment;
-      m28.Fragment = "[";
-      m28.mount = mountRedraw.mount;
-      m28.route = router;
-      m28.render = require_render2();
-      m28.redraw = mountRedraw.redraw;
-      m28.request = request.request;
-      m28.parseQueryString = require_parse();
-      m28.buildQueryString = require_build();
-      m28.parsePathname = require_parse2();
-      m28.buildPathname = require_build2();
-      m28.vnode = require_vnode();
-      m28.censor = require_censor();
-      m28.domFor = require_domFor();
-      module.exports = m28;
+      m29.m = hyperscript;
+      m29.trust = hyperscript.trust;
+      m29.fragment = hyperscript.fragment;
+      m29.Fragment = "[";
+      m29.mount = mountRedraw.mount;
+      m29.route = router;
+      m29.render = require_render2();
+      m29.redraw = mountRedraw.redraw;
+      m29.request = request.request;
+      m29.parseQueryString = require_parse();
+      m29.buildQueryString = require_build();
+      m29.parsePathname = require_parse2();
+      m29.buildPathname = require_build2();
+      m29.vnode = require_vnode();
+      m29.censor = require_censor();
+      m29.domFor = require_domFor();
+      module.exports = m29;
     }
   });
 
@@ -3593,9 +3593,9 @@
     while (a2 !== _0n3) {
       const q2 = b2 / a2;
       const r2 = b2 - a2 * q2;
-      const m28 = x2 - u2 * q2;
+      const m29 = x2 - u2 * q2;
       const n2 = y2 - v2 * q2;
-      b2 = a2, a2 = r2, x2 = u2, y2 = v2, u2 = m28, v2 = n2;
+      b2 = a2, a2 = r2, x2 = u2, y2 = v2, u2 = m29, v2 = n2;
     }
     const gcd = b2;
     if (gcd !== _1n3)
@@ -5128,17 +5128,17 @@
       k: "number",
       hash: "function"
     });
-    const { p: p2, k: k2, m: m28, hash, expand, DST } = options;
+    const { p: p2, k: k2, m: m29, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes4(msg);
     asafenumber(count);
     if (count < 1)
       throw new Error("hash_to_field: expected count >= 1");
-    if (m28 < 1)
+    if (m29 < 1)
       throw new Error("hash_to_field: expected m >= 1");
     const log2p = p2.toString(2).length;
     const L2 = Math.ceil((log2p + k2) / 8);
-    const len_in_bytes = count * m28 * L2;
+    const len_in_bytes = count * m29 * L2;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -5151,9 +5151,9 @@
     }
     const u2 = new Array(count);
     for (let i2 = 0; i2 < count; i2++) {
-      const e2 = new Array(m28);
-      for (let j2 = 0; j2 < m28; j2++) {
-        const elm_offset = L2 * (j2 + i2 * m28);
+      const e2 = new Array(m29);
+      for (let j2 = 0; j2 < m29; j2++) {
+        const elm_offset = L2 * (j2 + i2 * m29);
         const tv = prb.subarray(elm_offset, elm_offset + L2);
         e2[j2] = mod3(os2ip(tv), p2);
       }
@@ -6176,8 +6176,8 @@
     });
     const poprf = (info) => {
       info = inputBytes("info", info);
-      const m28 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T2 = Point.BASE.multiply(m28);
+      const m29 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T2 = Point.BASE.multiply(m29);
       return Object.freeze({
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -6202,7 +6202,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn4.fromBytes(secretKey);
-          const t2 = Fn4.add(skS, m28);
+          const t2 = Fn4.add(skS, m29);
           const invT = Fn4.inv(t2);
           const blindedPoints = blinded.map((i2) => wirePoint("blinded", i2));
           const evalPoints = blindedPoints.map((i2) => i2.multiply(invT));
@@ -6235,7 +6235,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t2 = Fn4.add(skS, m28);
+          const t2 = Fn4.add(skS, m29);
           const invT = Fn4.inv(t2);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -8177,7 +8177,7 @@
         seedArgs.push(abytes4(e2, void 0, "extraEntropy"));
       }
       const seed = concatBytes3(...seedArgs);
-      const m28 = h1int;
+      const m29 = h1int;
       function k2sig(kBytes) {
         const k2 = bits2int(kBytes);
         if (!Fn4.isValidNot0(k2))
@@ -8187,7 +8187,7 @@
         const r2 = Fn4.create(q2.x);
         if (r2 === _0n9)
           return;
-        const s2 = Fn4.create(ik * Fn4.create(m28 + r2 * d2));
+        const s2 = Fn4.create(ik * Fn4.create(m29 + r2 * d2));
         if (s2 === _0n9)
           return;
         let recovery = (q2.x === r2 ? 0 : 2) | Number(q2.y & _1n10);
@@ -8263,8 +8263,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m28 = "") {
-          super(m28);
+        constructor(m29 = "") {
+          super(m29);
         }
       };
       DER = {
@@ -8616,22 +8616,22 @@
             return !!e3;
           })();
         }
-        function m28(_3, g3) {
+        function m29(_3, g3) {
           var l3 = null == _3 ? null : "undefined" != typeof Symbol && _3[Symbol.iterator] || _3["@@iterator"];
           if (null != l3) {
-            var s3, d3, r3, h3, b3 = [], a3 = true, m29 = false;
+            var s3, d3, r3, h3, b3 = [], a3 = true, m30 = false;
             try {
               if (r3 = (l3 = l3.call(_3)).next, 0 === g3) {
                 if (Object(l3) !== l3) return;
                 a3 = false;
               } else for (; !(a3 = (s3 = r3.call(l3)).done) && (b3.push(s3.value), b3.length !== g3); a3 = true) ;
             } catch (e3) {
-              m29 = true, d3 = e3;
+              m30 = true, d3 = e3;
             } finally {
               try {
                 if (!a3 && null != l3.return && (h3 = l3.return(), Object(h3) !== h3)) return;
               } finally {
-                if (m29) throw d3;
+                if (m30) throw d3;
               }
             }
             return b3;
@@ -8651,7 +8651,7 @@
           }, y2(i3, t3);
         }
         function f2(t3, i3) {
-          return _2(t3) || m28(t3, i3) || B2(t3, i3) || c2();
+          return _2(t3) || m29(t3, i3) || B2(t3, i3) || c2();
         }
         function k2(_3, t3) {
           if ("object" != typeof _3 || !_3) return _3;
@@ -8736,7 +8736,7 @@
           } }, { key: "__inplaceMultiplyAdd", value: function n3(e4, t4, _4) {
             _4 > this.length && (_4 = this.length);
             for (var o3 = 32767 & e4, l3 = e4 >>> 15, a3 = 0, s3 = t4, u3 = 0; u3 < _4; u3++) {
-              var r3 = this.__digit(u3), h3 = 32767 & r3, b3 = r3 >>> 15, m29 = g3.__imul(h3, o3), c3 = g3.__imul(h3, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f3 = s3 + m29 + a3;
+              var r3 = this.__digit(u3), h3 = 32767 & r3, b3 = r3 >>> 15, m30 = g3.__imul(h3, o3), c3 = g3.__imul(h3, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f3 = s3 + m30 + a3;
               a3 = f3 >>> 30, f3 &= 1073741823, f3 += ((32767 & c3) << 15) + ((32767 & v3) << 15), a3 += f3 >>> 30, s3 = y3 + (c3 >>> 15) + (v3 >>> 15), this.__setDigit(u3, 1073741823 & f3);
             }
             if (0 !== a3 || 0 !== s3) throw new Error("implementation bug");
@@ -8758,16 +8758,16 @@
               0 == (1 & _4) && (g4 = this.__digit(t4 + s3 + 1), a3 = (32767 & g4) - b3 - l3, l3 = 1 & a3 >>> 15, this.__setDigit(t4 + e4.length, 1073709056 & g4 | 32767 & a3));
             } else {
               t4 >>= 1;
-              for (var m29 = 0; m29 < e4.length - 1; m29++) {
-                var c3 = this.__digit(t4 + m29), v3 = e4.__digit(m29), y3 = (32767 & c3) - (32767 & v3) - l3;
+              for (var m30 = 0; m30 < e4.length - 1; m30++) {
+                var c3 = this.__digit(t4 + m30), v3 = e4.__digit(m30), y3 = (32767 & c3) - (32767 & v3) - l3;
                 l3 = 1 & y3 >>> 15;
                 var f3 = (c3 >>> 15) - (v3 >>> 15) - l3;
-                l3 = 1 & f3 >>> 15, this.__setDigit(t4 + m29, (32767 & f3) << 15 | 32767 & y3);
+                l3 = 1 & f3 >>> 15, this.__setDigit(t4 + m30, (32767 & f3) << 15 | 32767 & y3);
               }
-              var k3 = this.__digit(t4 + m29), D3 = e4.__digit(m29), p3 = (32767 & k3) - (32767 & D3) - l3;
+              var k3 = this.__digit(t4 + m30), D3 = e4.__digit(m30), p3 = (32767 & k3) - (32767 & D3) - l3;
               l3 = 1 & p3 >>> 15;
               var B3 = 0;
-              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D3 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m29, (32767 & B3) << 15 | 32767 & p3);
+              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D3 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m30, (32767 & B3) << 15 | 32767 & p3);
             }
             return l3;
           } }, { key: "__inplaceRightShift", value: function t4(e4) {
@@ -8822,9 +8822,9 @@
             if (1024 < l3) return e4.sign ? -Infinity : 1 / 0;
             var a3 = l3 - 1, s3 = n3, u3 = i4 - 1, r3 = o3 + 3, d3 = 32 === r3 ? 0 : s3 << r3;
             d3 >>>= 12;
-            var h3 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m29 = 20 + r3;
-            for (0 < h3 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d3 |= s3 >>> 30 - h3, b3 = s3 << h3 + 2, m29 = h3 + 2); 0 < m29 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m29 ? s3 << m29 - 30 : s3 >>> 30 - m29, m29 -= 30;
-            var c3 = g3.__decideRounding(e4, m29, u3, s3);
+            var h3 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m30 = 20 + r3;
+            for (0 < h3 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d3 |= s3 >>> 30 - h3, b3 = s3 << h3 + 2, m30 = h3 + 2); 0 < m30 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m30 ? s3 << m30 - 30 : s3 >>> 30 - m30, m30 -= 30;
+            var c3 = g3.__decideRounding(e4, m30, u3, s3);
             if ((1 === c3 || 0 === c3 && 1 == (1 & b3)) && (b3 = b3 + 1 >>> 0, 0 === b3 && (d3++, 0 != d3 >>> 20 && (d3 = 0, a3++, 1023 < a3)))) return e4.sign ? -Infinity : 1 / 0;
             var v3 = e4.sign ? -2147483648 : 0;
             return a3 = a3 + 1023 << 20, g3.__kBitConversionInts[g3.__kBitConversionIntHigh] = v3 | a3 | d3, g3.__kBitConversionInts[g3.__kBitConversionIntLow] = b3, g3.__kBitConversionDouble[0];
@@ -9062,8 +9062,8 @@
             g3.__kBitConversionDouble[0] = e4;
             var _4, n3 = 2047 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] >>> 20, o3 = n3 - 1023, l3 = (0 | o3 / 30) + 1, a3 = new g3(l3, i4), s3 = 1048576, u3 = 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] | s3, r3 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], d3 = 20, h3 = o3 % 30, b3 = 0;
             if (h3 < d3) {
-              var m29 = d3 - h3;
-              b3 = m29 + 32, _4 = u3 >>> m29, u3 = u3 << 32 - m29 | r3 >>> m29, r3 <<= 32 - m29;
+              var m30 = d3 - h3;
+              b3 = m30 + 32, _4 = u3 >>> m30, u3 = u3 << 32 - m30 | r3 >>> m30, r3 <<= 32 - m30;
             } else if (h3 === d3) b3 = 32, _4 = u3, u3 = r3, r3 = 0;
             else {
               var c3 = h3 - d3;
@@ -9181,14 +9181,14 @@
             o3 = (85 & o3 >>> 1) + (85 & o3), o3 = (51 & o3 >>> 2) + (51 & o3), o3 = (15 & o3 >>> 4) + (15 & o3);
             var l3 = o3, a3 = t4 - 1, s3 = e4.__digit(n3 - 1), u3 = g3.__clz30(s3), r3 = 30 * n3 - u3, d3 = 0 | (r3 + l3 - 1) / l3;
             if (e4.sign && d3++, 268435456 < d3) throw new Error("string too long");
-            for (var h3 = Array(d3), b3 = d3 - 1, m29 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
-              var y3 = e4.__digit(v3), f3 = (m29 | y3 << c3) & a3;
+            for (var h3 = Array(d3), b3 = d3 - 1, m30 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
+              var y3 = e4.__digit(v3), f3 = (m30 | y3 << c3) & a3;
               h3[b3--] = g3.__kConversionChars[f3];
               var k3 = l3 - c3;
-              for (m29 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h3[b3--] = g3.__kConversionChars[m29 & a3], m29 >>>= l3, c3 -= l3;
+              for (m30 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h3[b3--] = g3.__kConversionChars[m30 & a3], m30 >>>= l3, c3 -= l3;
             }
-            var D3 = (m29 | s3 << c3) & a3;
-            for (h3[b3--] = g3.__kConversionChars[D3], m29 = s3 >>> l3 - c3; 0 !== m29; ) h3[b3--] = g3.__kConversionChars[m29 & a3], m29 >>>= l3;
+            var D3 = (m30 | s3 << c3) & a3;
+            for (h3[b3--] = g3.__kConversionChars[D3], m30 = s3 >>> l3 - c3; 0 !== m30; ) h3[b3--] = g3.__kConversionChars[m30 & a3], m30 >>>= l3;
             if (e4.sign && (h3[b3--] = "-"), -1 !== b3) throw new Error("implementation bug");
             return h3.join("");
           } }, { key: "__toStringGeneric", value: function n3(e4, t4, _4) {
@@ -9200,13 +9200,13 @@
             }
             var a3 = 30 * o3 - g3.__clz30(e4.__digit(o3 - 1)), s3 = g3.__kMaxBitsPerChar[t4], u3 = s3 - 1, r3 = a3 * g3.__kBitsPerCharTableMultiplier;
             r3 += u3 - 1, r3 = 0 | r3 / u3;
-            var d3, h3, b3 = r3 + 1 >> 1, m29 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m29.__unsignedDigit(0);
-            if (1 === m29.length && 32767 >= c3) {
+            var d3, h3, b3 = r3 + 1 >> 1, m30 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m30.__unsignedDigit(0);
+            if (1 === m30.length && 32767 >= c3) {
               d3 = new g3(e4.length, false), d3.__initializeDigits();
               for (var v3, y3 = 0, f3 = 2 * e4.length - 1; 0 <= f3; f3--) v3 = y3 << 15 | e4.__halfDigit(f3), d3.__setHalfDigit(f3, 0 | v3 / c3), y3 = 0 | v3 % c3;
               h3 = y3.toString(t4);
             } else {
-              var k3 = g3.__absoluteDivLarge(e4, m29, true, true);
+              var k3 = g3.__absoluteDivLarge(e4, m30, true, true);
               d3 = k3.quotient;
               var D3 = k3.remainder.__trim();
               h3 = g3.__toStringGeneric(D3, t4, true);
@@ -9254,26 +9254,26 @@
             var a3 = e4.length, s3 = e4.__digit(a3 - 1), u3 = g3.__clz30(s3), r3 = 30 * a3 - u3, d3 = l3 + 1;
             if (r3 < d3) return g3.__absoluteLess(_4);
             if (r3 > d3) return g3.__absoluteGreater(_4);
-            var h3 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m29 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
+            var h3 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m30 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
             if (v3 !== (0 | (r3 - 1) % 30)) throw new Error("implementation bug");
             var y3, f3 = 0;
             if (v3 < c3) {
               var k3 = c3 - v3;
-              f3 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m29 >>> k3, m29 <<= 32 - k3;
-            } else if (v3 === c3) f3 = 32, y3 = b3, b3 = m29, m29 = 0;
+              f3 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m30 >>> k3, m30 <<= 32 - k3;
+            } else if (v3 === c3) f3 = 32, y3 = b3, b3 = m30, m30 = 0;
             else {
               var D3 = v3 - c3;
-              f3 = 32 - D3, y3 = b3 << D3 | m29 >>> 32 - D3, b3 = m29 << D3, m29 = 0;
+              f3 = 32 - D3, y3 = b3 << D3 | m30 >>> 32 - D3, b3 = m30 << D3, m30 = 0;
             }
             if (s3 >>>= 0, y3 >>>= 0, s3 > y3) return g3.__absoluteGreater(_4);
             if (s3 < y3) return g3.__absoluteLess(_4);
             for (var p3 = a3 - 2; 0 <= p3; p3--) {
-              0 < f3 ? (f3 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m29 >>> 2, m29 <<= 30) : y3 = 0;
+              0 < f3 ? (f3 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m30 >>> 2, m30 <<= 30) : y3 = 0;
               var B3 = e4.__unsignedDigit(p3);
               if (B3 > y3) return g3.__absoluteGreater(_4);
               if (B3 < y3) return g3.__absoluteLess(_4);
             }
-            if (0 !== b3 || 0 !== m29) {
+            if (0 !== b3 || 0 !== m30) {
               if (0 === f3) throw new Error("implementation bug");
               return g3.__absoluteLess(_4);
             }
@@ -9392,7 +9392,7 @@
           } }, { key: "__multiplyAccumulate", value: function o3(e4, t4, _4, n3) {
             if (0 !== t4) {
               for (var l3 = 32767 & t4, a3 = t4 >>> 15, s3 = 0, u3 = 0, r3 = 0; r3 < e4.length; r3++, n3++) {
-                var d3 = _4.__digit(n3), h3 = e4.__digit(r3), b3 = 32767 & h3, m29 = h3 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m29, l3), f3 = g3.__imul(m29, a3);
+                var d3 = _4.__digit(n3), h3 = e4.__digit(r3), b3 = 32767 & h3, m30 = h3 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m30, l3), f3 = g3.__imul(m30, a3);
                 d3 += u3 + c3 + s3, s3 = d3 >>> 30, d3 &= 1073741823, d3 += ((32767 & v3) << 15) + ((32767 & y3) << 15), s3 += d3 >>> 30, u3 = f3 + (v3 >>> 15) + (y3 >>> 15), _4.__setDigit(n3, 1073741823 & d3);
               }
               for (; 0 !== s3 || 0 !== u3; n3++) {
@@ -9402,8 +9402,8 @@
             }
           } }, { key: "__internalMultiplyAdd", value: function a3(e4, t4, _4, o3, l3) {
             for (var s3 = _4, u3 = 0, d3 = 0; d3 < o3; d3++) {
-              var h3 = e4.__digit(d3), b3 = g3.__imul(32767 & h3, t4), m29 = g3.__imul(h3 >>> 15, t4), c3 = b3 + ((32767 & m29) << 15) + u3 + s3;
-              s3 = c3 >>> 30, u3 = m29 >>> 15, l3.__setDigit(d3, 1073741823 & c3);
+              var h3 = e4.__digit(d3), b3 = g3.__imul(32767 & h3, t4), m30 = g3.__imul(h3 >>> 15, t4), c3 = b3 + ((32767 & m30) << 15) + u3 + s3;
+              s3 = c3 >>> 30, u3 = m30 >>> 15, l3.__setDigit(d3, 1073741823 & c3);
             }
             if (l3.length > o3) for (l3.__setDigit(o3++, s3 + u3); o3 < l3.length; ) l3.__setDigit(o3++, 0);
             else if (0 !== s3 + u3) throw new Error("implementation bug");
@@ -9427,16 +9427,16 @@
             r3.__initializeDigits();
             var d3 = g3.__clz15(t4.__halfDigit(l3 - 1));
             0 < d3 && (t4 = g3.__specialLeftShift(t4, d3, 0));
-            for (var h3 = g3.__specialLeftShift(e4, d3, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m29 = a3; 0 <= m29; m29--) {
-              var v3 = 32767, y3 = h3.__halfDigit(m29 + l3);
+            for (var h3 = g3.__specialLeftShift(e4, d3, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m30 = a3; 0 <= m30; m30--) {
+              var v3 = 32767, y3 = h3.__halfDigit(m30 + l3);
               if (y3 !== u3) {
-                var f3 = (y3 << 15 | h3.__halfDigit(m29 + l3 - 1)) >>> 0;
+                var f3 = (y3 << 15 | h3.__halfDigit(m30 + l3 - 1)) >>> 0;
                 v3 = 0 | f3 / u3;
-                for (var k3 = 0 | f3 % u3, D3 = t4.__halfDigit(l3 - 2), p3 = h3.__halfDigit(m29 + l3 - 2); g3.__imul(v3, D3) >>> 0 > (k3 << 16 | p3) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
+                for (var k3 = 0 | f3 % u3, D3 = t4.__halfDigit(l3 - 2), p3 = h3.__halfDigit(m30 + l3 - 2); g3.__imul(v3, D3) >>> 0 > (k3 << 16 | p3) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
               }
               g3.__internalMultiplyAdd(t4, v3, 0, n3, r3);
-              var B3 = h3.__inplaceSub(r3, m29, l3 + 1);
-              0 !== B3 && (B3 = h3.__inplaceAdd(t4, m29, l3), h3.__setHalfDigit(m29 + l3, 32767 & h3.__halfDigit(m29 + l3) + B3), v3--), i4 && (1 & m29 ? b3 = v3 << 15 : s3.__setDigit(m29 >>> 1, b3 | v3));
+              var B3 = h3.__inplaceSub(r3, m30, l3 + 1);
+              0 !== B3 && (B3 = h3.__inplaceAdd(t4, m30, l3), h3.__setHalfDigit(m30 + l3, 32767 & h3.__halfDigit(m30 + l3) + B3), v3--), i4 && (1 & m30 ? b3 = v3 << 15 : s3.__setDigit(m30 >>> 1, b3 | v3));
             }
             if (_4) return h3.__inplaceRightShift(d3), i4 ? { quotient: s3, remainder: h3 } : h3;
             if (i4) return s3;
@@ -9459,7 +9459,7 @@
               for (var h3 = 0; h3 < o3; h3++) r3.__setDigit(h3, 0);
               for (; h3 < u3; h3++) r3.__setDigit(h3, e4.__digit(h3 - o3));
             } else {
-              for (var b3 = 0, m29 = 0; m29 < o3; m29++) r3.__setDigit(m29, 0);
+              for (var b3 = 0, m30 = 0; m30 < o3; m30++) r3.__setDigit(m30, 0);
               for (var c3, v3 = 0; v3 < a3; v3++) c3 = e4.__digit(v3), r3.__setDigit(v3 + o3, 1073741823 & c3 << l3 | b3), b3 = c3 >>> 30 - l3;
               if (s3) r3.__setDigit(a3 + o3, b3);
               else if (0 !== b3) throw new Error("implementation bug");
@@ -9480,7 +9480,7 @@
               }
             }
             if (r3 && 0 === s3) {
-              var m29 = e4.__digit(n3 - 1), c3 = 0 == ~m29;
+              var m30 = e4.__digit(n3 - 1), c3 = 0 == ~m30;
               c3 && u3++;
             }
             var v3 = new g3(u3, o3);
@@ -9533,15 +9533,15 @@
           } }, { key: "__truncateAndSubFromPowerOfTwo", value: function n3(e4, t4, _4) {
             for (var o3 = Math.min, l3, a3 = 0 | (e4 + 29) / 30, s3 = new g3(a3, _4), u3 = 0, d3 = a3 - 1, h3 = 0, b3 = o3(d3, t4.length); u3 < b3; u3++) l3 = 0 - t4.__digit(u3) - h3, h3 = 1 & l3 >>> 30, s3.__setDigit(u3, 1073741823 & l3);
             for (; u3 < d3; u3++) s3.__setDigit(u3, 0 | 1073741823 & -h3);
-            var m29, c3 = d3 < t4.length ? t4.__digit(d3) : 0, v3 = e4 % 30;
-            if (0 === v3) m29 = 0 - c3 - h3, m29 &= 1073741823;
+            var m30, c3 = d3 < t4.length ? t4.__digit(d3) : 0, v3 = e4 % 30;
+            if (0 === v3) m30 = 0 - c3 - h3, m30 &= 1073741823;
             else {
               var y3 = 32 - v3;
               c3 = c3 << y3 >>> y3;
               var f3 = 1 << 32 - y3;
-              m29 = f3 - c3 - h3, m29 &= f3 - 1;
+              m30 = f3 - c3 - h3, m30 &= f3 - 1;
             }
-            return s3.__setDigit(d3, m29), s3.__trim();
+            return s3.__setDigit(d3, m30), s3.__trim();
           } }, { key: "__digitPow", value: function i4(e4, t4) {
             for (var _4 = 1; 0 < t4; ) 1 & t4 && (_4 *= e4), t4 >>>= 1, e4 *= e4;
             return _4;
@@ -9754,12 +9754,12 @@
         var t2 = 1e3, e2 = 6e4, n2 = 36e5, r2 = "millisecond", i2 = "second", s2 = "minute", u2 = "hour", a2 = "day", o2 = "week", c2 = "month", f2 = "quarter", h2 = "year", d2 = "date", l2 = "Invalid Date", $2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y2 = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M2 = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t3) {
           var e3 = ["th", "st", "nd", "rd"], n3 = t3 % 100;
           return "[" + t3 + (e3[(n3 - 20) % 10] || e3[n3] || e3[0]) + "]";
-        } }, m28 = function(t3, e3, n3) {
+        } }, m29 = function(t3, e3, n3) {
           var r3 = String(t3);
           return !r3 || r3.length >= e3 ? t3 : "" + Array(e3 + 1 - r3.length).join(n3) + t3;
-        }, v2 = { s: m28, z: function(t3) {
+        }, v2 = { s: m29, z: function(t3) {
           var e3 = -t3.utcOffset(), n3 = Math.abs(e3), r3 = Math.floor(n3 / 60), i3 = n3 % 60;
-          return (e3 <= 0 ? "+" : "-") + m28(r3, 2, "0") + ":" + m28(i3, 2, "0");
+          return (e3 <= 0 ? "+" : "-") + m29(r3, 2, "0") + ":" + m29(i3, 2, "0");
         }, m: function t3(e3, n3) {
           if (e3.date() < n3.date()) return -t3(n3, e3);
           var r3 = 12 * (n3.year() - e3.year()) + (n3.month() - e3.month()), i3 = e3.clone().add(r3, c2), s3 = n3 - i3 < 0, u3 = e3.clone().add(r3 + (s3 ? -1 : 1), c2);
@@ -9799,8 +9799,8 @@
           function M3(t3) {
             this.$L = w2(t3.locale, null, true), this.parse(t3), this.$x = this.$x || t3.x || {}, this[p2] = true;
           }
-          var m29 = M3.prototype;
-          return m29.parse = function(t3) {
+          var m30 = M3.prototype;
+          return m30.parse = function(t3) {
             this.$d = (function(t4) {
               var e3 = t4.date, n3 = t4.utc;
               if (null === e3) return /* @__PURE__ */ new Date(NaN);
@@ -9815,33 +9815,33 @@
               }
               return new Date(e3);
             })(t3), this.init();
-          }, m29.init = function() {
+          }, m30.init = function() {
             var t3 = this.$d;
             this.$y = t3.getFullYear(), this.$M = t3.getMonth(), this.$D = t3.getDate(), this.$W = t3.getDay(), this.$H = t3.getHours(), this.$m = t3.getMinutes(), this.$s = t3.getSeconds(), this.$ms = t3.getMilliseconds();
-          }, m29.$utils = function() {
+          }, m30.$utils = function() {
             return b2;
-          }, m29.isValid = function() {
+          }, m30.isValid = function() {
             return !(this.$d.toString() === l2);
-          }, m29.isSame = function(t3, e3) {
+          }, m30.isSame = function(t3, e3) {
             var n3 = O2(t3);
             return this.startOf(e3) <= n3 && n3 <= this.endOf(e3);
-          }, m29.isAfter = function(t3, e3) {
+          }, m30.isAfter = function(t3, e3) {
             return O2(t3) < this.startOf(e3);
-          }, m29.isBefore = function(t3, e3) {
+          }, m30.isBefore = function(t3, e3) {
             return this.endOf(e3) < O2(t3);
-          }, m29.$g = function(t3, e3, n3) {
+          }, m30.$g = function(t3, e3, n3) {
             return b2.u(t3) ? this[e3] : this.set(n3, t3);
-          }, m29.unix = function() {
+          }, m30.unix = function() {
             return Math.floor(this.valueOf() / 1e3);
-          }, m29.valueOf = function() {
+          }, m30.valueOf = function() {
             return this.$d.getTime();
-          }, m29.startOf = function(t3, e3) {
+          }, m30.startOf = function(t3, e3) {
             var n3 = this, r3 = !!b2.u(e3) || e3, f3 = b2.p(t3), l3 = function(t4, e4) {
               var i3 = b2.w(n3.$u ? Date.UTC(n3.$y, e4, t4) : new Date(n3.$y, e4, t4), n3);
               return r3 ? i3 : i3.endOf(a2);
             }, $3 = function(t4, e4) {
               return b2.w(n3.toDate()[t4].apply(n3.toDate("s"), (r3 ? [0, 0, 0, 0] : [23, 59, 59, 999]).slice(e4)), n3);
-            }, y3 = this.$W, M4 = this.$M, m30 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
+            }, y3 = this.$W, M4 = this.$M, m31 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
             switch (f3) {
               case h2:
                 return r3 ? l3(1, 0) : l3(31, 11);
@@ -9849,7 +9849,7 @@
                 return r3 ? l3(1, M4) : l3(0, M4 + 1);
               case o2:
                 var g3 = this.$locale().weekStart || 0, D3 = (y3 < g3 ? y3 + 7 : y3) - g3;
-                return l3(r3 ? m30 - D3 : m30 + (6 - D3), M4);
+                return l3(r3 ? m31 - D3 : m31 + (6 - D3), M4);
               case a2:
               case d2:
                 return $3(v3 + "Hours", 0);
@@ -9862,20 +9862,20 @@
               default:
                 return this.clone();
             }
-          }, m29.endOf = function(t3) {
+          }, m30.endOf = function(t3) {
             return this.startOf(t3, false);
-          }, m29.$set = function(t3, e3) {
+          }, m30.$set = function(t3, e3) {
             var n3, o3 = b2.p(t3), f3 = "set" + (this.$u ? "UTC" : ""), l3 = (n3 = {}, n3[a2] = f3 + "Date", n3[d2] = f3 + "Date", n3[c2] = f3 + "Month", n3[h2] = f3 + "FullYear", n3[u2] = f3 + "Hours", n3[s2] = f3 + "Minutes", n3[i2] = f3 + "Seconds", n3[r2] = f3 + "Milliseconds", n3)[o3], $3 = o3 === a2 ? this.$D + (e3 - this.$W) : e3;
             if (o3 === c2 || o3 === h2) {
               var y3 = this.clone().set(d2, 1);
               y3.$d[l3]($3), y3.init(), this.$d = y3.set(d2, Math.min(this.$D, y3.daysInMonth())).$d;
             } else l3 && this.$d[l3]($3);
             return this.init(), this;
-          }, m29.set = function(t3, e3) {
+          }, m30.set = function(t3, e3) {
             return this.clone().$set(t3, e3);
-          }, m29.get = function(t3) {
+          }, m30.get = function(t3) {
             return this[b2.p(t3)]();
-          }, m29.add = function(r3, f3) {
+          }, m30.add = function(r3, f3) {
             var d3, l3 = this;
             r3 = Number(r3);
             var $3 = b2.p(f3), y3 = function(t3) {
@@ -9886,11 +9886,11 @@
             if ($3 === h2) return this.set(h2, this.$y + r3);
             if ($3 === a2) return y3(1);
             if ($3 === o2) return y3(7);
-            var M4 = (d3 = {}, d3[s2] = e2, d3[u2] = n2, d3[i2] = t2, d3)[$3] || 1, m30 = this.$d.getTime() + r3 * M4;
-            return b2.w(m30, this);
-          }, m29.subtract = function(t3, e3) {
+            var M4 = (d3 = {}, d3[s2] = e2, d3[u2] = n2, d3[i2] = t2, d3)[$3] || 1, m31 = this.$d.getTime() + r3 * M4;
+            return b2.w(m31, this);
+          }, m30.subtract = function(t3, e3) {
             return this.add(-1 * t3, e3);
-          }, m29.format = function(t3) {
+          }, m30.format = function(t3) {
             var e3 = this, n3 = this.$locale();
             if (!this.isValid()) return n3.invalidDate || l2;
             var r3 = t3 || "YYYY-MM-DDTHH:mm:ssZ", i3 = b2.z(this), s3 = this.$H, u3 = this.$m, a3 = this.$M, o3 = n3.weekdays, c3 = n3.months, f3 = n3.meridiem, h3 = function(t4, n4, i4, s4) {
@@ -9956,11 +9956,11 @@
                 return null;
               })(t4) || i3.replace(":", "");
             }));
-          }, m29.utcOffset = function() {
+          }, m30.utcOffset = function() {
             return 15 * -Math.round(this.$d.getTimezoneOffset() / 15);
-          }, m29.diff = function(r3, d3, l3) {
-            var $3, y3 = this, M4 = b2.p(d3), m30 = O2(r3), v3 = (m30.utcOffset() - this.utcOffset()) * e2, g3 = this - m30, D3 = function() {
-              return b2.m(y3, m30);
+          }, m30.diff = function(r3, d3, l3) {
+            var $3, y3 = this, M4 = b2.p(d3), m31 = O2(r3), v3 = (m31.utcOffset() - this.utcOffset()) * e2, g3 = this - m31, D3 = function() {
+              return b2.m(y3, m31);
             };
             switch (M4) {
               case h2:
@@ -9991,23 +9991,23 @@
                 $3 = g3;
             }
             return l3 ? $3 : b2.a($3);
-          }, m29.daysInMonth = function() {
+          }, m30.daysInMonth = function() {
             return this.endOf(c2).$D;
-          }, m29.$locale = function() {
+          }, m30.$locale = function() {
             return D2[this.$L];
-          }, m29.locale = function(t3, e3) {
+          }, m30.locale = function(t3, e3) {
             if (!t3) return this.$L;
             var n3 = this.clone(), r3 = w2(t3, e3, true);
             return r3 && (n3.$L = r3), n3;
-          }, m29.clone = function() {
+          }, m30.clone = function() {
             return b2.w(this.$d, this);
-          }, m29.toDate = function() {
+          }, m30.toDate = function() {
             return new Date(this.valueOf());
-          }, m29.toJSON = function() {
+          }, m30.toJSON = function() {
             return this.isValid() ? this.toISOString() : null;
-          }, m29.toISOString = function() {
+          }, m30.toISOString = function() {
             return this.$d.toISOString();
-          }, m29.toString = function() {
+          }, m30.toString = function() {
             return this.$d.toUTCString();
           }, M3;
         })(), k2 = _2.prototype;
@@ -10038,7 +10038,7 @@
             return n2.fromToBase(r3, e3, t3, o3);
           }
           t2.en.relativeTime = o2, n2.fromToBase = function(e3, n3, i3, d3, u2) {
-            for (var f2, a2, s2, l2 = i3.$locale().relativeTime || o2, h2 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m28 = h2.length, c2 = 0; c2 < m28; c2 += 1) {
+            for (var f2, a2, s2, l2 = i3.$locale().relativeTime || o2, h2 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m29 = h2.length, c2 = 0; c2 < m29; c2 += 1) {
               var y2 = h2[c2];
               y2.d && (f2 = d3 ? t2(e3).diff(i3, y2.d, true) : i3.diff(e3, y2.d, true));
               var p2 = (r2.rounding || Math.round)(Math.abs(f2));
@@ -10071,7 +10071,7 @@
   });
 
   // src/app.tsx
-  var import_mithril32 = __toESM(require_mithril(), 1);
+  var import_mithril33 = __toESM(require_mithril(), 1);
 
   // node_modules/ts-mls/dist/src/codec/tlsEncoder.js
   function encode(enc, t2) {
@@ -13684,11 +13684,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m28) => [m28.applicationData, m28.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m29) => [m29.applicationData, m29.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m28) => [m28.proposal, m28.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m29) => [m29.proposal, m29.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m28) => [m28.commit, m28.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m29) => [m29.commit, m29.auth]), config)(msg);
       }
     };
   }
@@ -17752,12 +17752,13 @@
   function NewGroup(codec) {
     return {
       id: "uri:uuid:" + crypto.randomUUID(),
-      stateId: "ACTIVE",
+      stateId: "WELCOME",
       codec,
       name: "",
       defaultName: "",
       summary: "",
       tags: [],
+      createdById: "",
       lastMessageId: "",
       lastMessage: "",
       members: [],
@@ -18436,6 +18437,9 @@
     // content returns the value of the "content" property
     content = () => {
       return this.getString("as", PropertyContent);
+    };
+    context = () => {
+      return this.getString("as", PropertyContext);
     };
     generator = () => {
       return this.getString("as", PropertyGenerator);
@@ -19260,11 +19264,11 @@
     const o2 = +r2, i2 = +(t2[2] ?? t2[4] ?? 1), a2 = +(t2[3] ?? t2[5] ?? 1), s2 = void 0 !== t2[6], c2 = +(t2[6] ?? 0), d2 = +(t2[7] ?? t2[10] ?? 0);
     let h2 = +(t2[8] ?? t2[11] ?? 0);
     60 === h2 && (h2 = 59);
-    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m28 = +u2.slice(3, 6), f2 = +u2.slice(6, 9);
+    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m29 = +u2.slice(3, 6), f2 = +u2.slice(6, 9);
     let y2, p2 = false;
     t2[13] ? (y2 = void 0, p2 = true) : t2[14] && (y2 = t2[14]);
     const g2 = t2[15];
-    return Ur(o2, i2, a2, c2, d2, h2, l2, m28, f2), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d2, second: h2, millisecond: l2, microsecond: m28, nanosecond: f2 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p2, calendar: n2 };
+    return Ur(o2, i2, a2, c2, d2, h2, l2, m29, f2), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d2, second: h2, millisecond: l2, microsecond: m29, nanosecond: f2 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p2, calendar: n2 };
   }
   function Et(e2) {
     const t2 = Ee.exec(e2);
@@ -19571,16 +19575,16 @@
         if (!t4) throw new RangeError(`invalid duration: ${e4}`);
         if (t4.every(((e5, t5) => t5 < 2 || void 0 === e5))) throw new RangeError(`invalid duration: ${e4}`);
         const n4 = "-" === t4[1] ? -1 : 1, r4 = void 0 === t4[2] ? 0 : _e(t4[2]) * n4, o3 = void 0 === t4[3] ? 0 : _e(t4[3]) * n4, i3 = void 0 === t4[4] ? 0 : _e(t4[4]) * n4, a3 = void 0 === t4[5] ? 0 : _e(t4[5]) * n4, s3 = void 0 === t4[6] ? 0 : _e(t4[6]) * n4, c3 = t4[7], d3 = t4[8], h3 = t4[9], u2 = t4[10], l2 = t4[11];
-        let m28 = 0, f2 = 0, y2 = 0;
+        let m29 = 0, f2 = 0, y2 = 0;
         if (void 0 !== c3) {
           if (d3 ?? h3 ?? u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
           y2 = 3600 * _e((c3 + "000000000").slice(0, 9)) * n4;
-        } else if (m28 = void 0 === d3 ? 0 : _e(d3) * n4, void 0 !== h3) {
+        } else if (m29 = void 0 === d3 ? 0 : _e(d3) * n4, void 0 !== h3) {
           if (u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
           y2 = 60 * _e((h3 + "000000000").slice(0, 9)) * n4;
         } else f2 = void 0 === u2 ? 0 : _e(u2) * n4, void 0 !== l2 && (y2 = _e((l2 + "000000000").slice(0, 9)) * n4);
         const p2 = y2 % 1e3, g2 = Math.trunc(y2 / 1e3) % 1e3, w2 = Math.trunc(y2 / 1e6) % 1e3;
-        return f2 += Math.trunc(y2 / 1e9) % 60, m28 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m28, f2, w2, g2, p2), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m28, seconds: f2, milliseconds: w2, microseconds: g2, nanoseconds: p2 };
+        return f2 += Math.trunc(y2 / 1e9) % 60, m29 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m29, f2, w2, g2, p2), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m29, seconds: f2, milliseconds: w2, microseconds: g2, nanoseconds: p2 };
       })(e3);
       return new (ce("%Temporal.Duration%"))(t3, n3, r3, o2, i2, a2, s2, c2, d2, h2);
     })(Ve(e2));
@@ -19602,7 +19606,7 @@
       const t3 = Mt(e3);
       if (!t3.z && !t3.offset) throw new RangeError("Temporal.Instant requires a time zone offset");
       return t3;
-    })(Ve(t2)), { hour: c2 = 0, minute: d2 = 0, second: h2 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m28 = 0 } = "start-of-day" === i2 ? {} : i2, f2 = $r(n2, r2, o2, c2, d2, h2, u2, l2, m28 - (s2 ? 0 : sr(a2)));
+    })(Ve(t2)), { hour: c2 = 0, minute: d2 = 0, second: h2 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m29 = 0 } = "start-of-day" === i2 ? {} : i2, f2 = $r(n2, r2, o2, c2, d2, h2, u2, l2, m29 - (s2 ? 0 : sr(a2)));
     return Kr(f2.isoDate), Cn(pr(f2));
   }
   function dn(e2, t2) {
@@ -19681,14 +19685,14 @@
       const l2 = Lt(u3);
       ({ isoDate: n2, time: r2 } = on(a2, d3, l2));
     } else {
-      let u3, l2, m28, f2, y2;
-      ({ year: m28, month: f2, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
+      let u3, l2, m29, f2, y2;
+      ({ year: m29, month: f2, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
         const t3 = Mt(e3);
         if (!t3.tzAnnotation) throw new RangeError("Temporal.ZonedDateTime requires a time zone ID in brackets");
         return t3;
       })(Ve(e2))), o2 = Bn(u3), l2 ? h2 = "exact" : i2 || (h2 = "wall"), a2 || (a2 = "iso8601"), a2 = zo(a2), d2 = true;
       const p2 = Zo(t2);
-      s2 = Pt(p2), c2 = Bt(p2, "reject"), Lt(p2), n2 = { year: m28, month: f2, day: y2 };
+      s2 = Pt(p2), c2 = Bt(p2, "reject"), Lt(p2), n2 = { year: m29, month: f2, day: y2 };
     }
     let u2 = 0;
     return "option" === h2 && (u2 = sr(i2)), $n(mn(n2, r2, h2, u2, o2, s2, c2, d2), o2, a2);
@@ -20161,8 +20165,8 @@
   function Yr(e2, t2, n2, r2, o2, i2) {
     let a2, s2 = e2, c2 = t2, d2 = n2, h2 = r2, u2 = o2, l2 = i2;
     ({ div: a2, mod: l2 } = de(l2, 3)), u2 += a2, l2 < 0 && (u2 -= 1, l2 += 1e3), { div: a2, mod: u2 } = de(u2, 3), h2 += a2, u2 < 0 && (h2 -= 1, u2 += 1e3), d2 += Math.trunc(h2 / 1e3), h2 %= 1e3, h2 < 0 && (d2 -= 1, h2 += 1e3), c2 += Math.trunc(d2 / 60), d2 %= 60, d2 < 0 && (c2 -= 1, d2 += 60), s2 += Math.trunc(c2 / 60), c2 %= 60, c2 < 0 && (s2 -= 1, c2 += 60);
-    let m28 = Math.trunc(s2 / 24);
-    return s2 %= 24, s2 < 0 && (m28 -= 1, s2 += 24), m28 += 0, s2 += 0, c2 += 0, d2 += 0, h2 += 0, u2 += 0, l2 += 0, { deltaDays: m28, hour: s2, minute: c2, second: d2, millisecond: h2, microsecond: u2, nanosecond: l2 };
+    let m29 = Math.trunc(s2 / 24);
+    return s2 %= 24, s2 < 0 && (m29 -= 1, s2 += 24), m29 += 0, s2 += 0, c2 += 0, d2 += 0, h2 += 0, u2 += 0, l2 += 0, { deltaDays: m29, hour: s2, minute: c2, second: d2, millisecond: h2, microsecond: u2, nanosecond: l2 };
   }
   function Rr(e2, t2) {
     const n2 = Nt(e2, 0);
@@ -20221,7 +20225,7 @@
       }
     }
     if (Math.abs(e2) >= 2 ** 32 || Math.abs(t2) >= 2 ** 32 || Math.abs(n2) >= 2 ** 32) throw new RangeError("years, months, and weeks must be < 2\xB3\xB2");
-    const l2 = de(s2, 3), m28 = de(c2, 6), f2 = de(d2, 9), y2 = de(1e6 * l2.mod + 1e3 * m28.mod + f2.mod, 9).div, p2 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m28.div + f2.div + y2;
+    const l2 = de(s2, 3), m29 = de(c2, 6), f2 = de(d2, 9), y2 = de(1e6 * l2.mod + 1e3 * m29.mod + f2.mod, 9).div, p2 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m29.div + f2.div + y2;
     if (!Number.isSafeInteger(p2)) throw new RangeError("total of duration time units cannot exceed 9007199254740991.999999999 s");
   }
   function Ar(e2) {
@@ -20295,8 +20299,8 @@
     const s2 = import_jsbi.default.subtract(r2, n2);
     if (import_jsbi.default.equal(s2, t)) return { date: { years: 0, months: 0, weeks: 0, days: 0 }, time: TimeDuration.ZERO };
     const c2 = import_jsbi.default.lessThan(s2, t) ? -1 : 1, d2 = zn(o2, n2), h2 = zn(o2, r2);
-    let u2, l2 = 0, m28 = 1 === c2 ? 2 : 1, f2 = Vr(d2.time, h2.time);
-    for (f2.sign() === -c2 && l2++; l2 <= m28; l2++) {
+    let u2, l2 = 0, m29 = 1 === c2 ? 2 : 1, f2 = Vr(d2.time, h2.time);
+    for (f2.sign() === -c2 && l2++; l2 <= m29; l2++) {
       u2 = xt(Or(h2.isoDate.year, h2.isoDate.month, h2.isoDate.day - l2 * c2), d2.time);
       const e2 = An(o2, u2, "compatible");
       if (f2 = TimeDuration.fromEpochNsDiff(r2, e2), f2.sign() !== -c2) break;
@@ -20305,55 +20309,55 @@
     return Jr(jn(i2, d2.isoDate, u2.isoDate, y2), f2);
   }
   function to(t2, n2, r2, o2, i2, a2, s2, c2, d2) {
-    let h2, u2, l2, m28, f2 = n2;
+    let h2, u2, l2, m29, f2 = n2;
     switch (c2) {
       case "year": {
         const e2 = Eo(f2.date.years, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = { years: h2, months: 0, weeks: 0, days: 0 }, m28 = { ...l2, years: u2 };
+        h2 = e2, u2 = e2 + s2 * t2, l2 = { years: h2, months: 0, weeks: 0, days: 0 }, m29 = { ...l2, years: u2 };
         break;
       }
       case "month": {
         const e2 = Eo(f2.date.months, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, 0, 0, h2), m28 = Nt(f2.date, 0, 0, u2);
+        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, 0, 0, h2), m29 = Nt(f2.date, 0, 0, u2);
         break;
       }
       case "week": {
         const e2 = Nt(f2.date, 0, 0), n3 = Sn(a2, o2.isoDate, e2, "constrain"), r3 = jn(a2, n3, Or(n3.year, n3.month, n3.day + f2.date.days), "week"), i3 = Eo(f2.date.weeks + r3.weeks, s2, "trunc");
-        h2 = i3, u2 = i3 + s2 * t2, l2 = Nt(f2.date, 0, h2), m28 = Nt(f2.date, 0, u2);
+        h2 = i3, u2 = i3 + s2 * t2, l2 = Nt(f2.date, 0, h2), m29 = Nt(f2.date, 0, u2);
         break;
       }
       case "day": {
         const e2 = Eo(f2.date.days, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, h2), m28 = Nt(f2.date, u2);
+        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, h2), m29 = Nt(f2.date, u2);
         break;
       }
     }
-    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p2 = Sn(a2, o2.isoDate, m28, "constrain");
+    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p2 = Sn(a2, o2.isoDate, m29, "constrain");
     let g2, w2;
     const v2 = xt(y2, o2.time), b2 = xt(p2, o2.time);
     i2 ? (g2 = An(i2, v2, "compatible"), w2 = An(i2, b2, "compatible")) : (g2 = pr(v2), w2 = pr(b2));
     const D2 = TimeDuration.fromEpochNsDiff(r2, g2), T2 = TimeDuration.fromEpochNsDiff(w2, g2), M2 = ue(d2, t2 < 0 ? "negative" : "positive"), E2 = D2.add(D2).abs().subtract(T2.abs()).sign(), I2 = Math.abs(h2) / s2 % 2 == 0, C2 = D2.isZero() ? Math.abs(h2) : D2.cmp(T2) ? le(Math.abs(h2), Math.abs(u2), E2, I2, M2) : Math.abs(u2), O2 = new TimeDuration(import_jsbi.default.add(import_jsbi.default.multiply(T2.totalNs, import_jsbi.default.BigInt(h2)), import_jsbi.default.multiply(D2.totalNs, import_jsbi.default.BigInt(s2 * t2)))).fdiv(T2.totalNs), $2 = C2 === Math.abs(u2);
-    return f2 = { date: $2 ? m28 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f2, nudgedEpochNs: $2 ? w2 : g2, didExpandCalendarUnit: $2 }, total: O2 };
+    return f2 = { date: $2 ? m29 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f2, nudgedEpochNs: $2 ? w2 : g2, didExpandCalendarUnit: $2 }, total: O2 };
   }
   function no(t2, n2, r2, o2, i2, a2, s2, c2, d2) {
     let h2 = t2;
     const u2 = Kt(c2) || o2 && "day" === c2, l2 = Ir(h2) < 0 ? -1 : 1;
-    let m28;
-    return u2 ? { nudgeResult: m28 } = to(l2, h2, n2, r2, o2, i2, s2, c2, d2) : m28 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
+    let m29;
+    return u2 ? { nudgeResult: m29 } = to(l2, h2, n2, r2, o2, i2, s2, c2, d2) : m29 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
       let d3 = n3;
-      const h3 = Sn(i3, r3.isoDate, d3.date, "constrain"), u3 = xt(h3, r3.time), l3 = xt(Or(h3.year, h3.month, h3.day + t3), r3.time), m29 = An(o3, u3, "compatible"), f2 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f2, m29);
+      const h3 = Sn(i3, r3.isoDate, d3.date, "constrain"), u3 = xt(h3, r3.time), l3 = xt(Or(h3.year, h3.month, h3.day + t3), r3.time), m30 = An(o3, u3, "compatible"), f2 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f2, m30);
       if (y2.sign() !== t3) throw new RangeError("time zone returned inconsistent Instants");
       const p2 = import_jsbi.default.BigInt(at[s3] * a3);
       let g2 = d3.time.round(p2, c3);
       const w2 = g2.subtract(y2), v2 = w2.sign() !== -t3;
       let b2, D2;
-      return v2 ? (b2 = t3, g2 = w2.round(p2, c3), D2 = g2.addToEpochNs(f2)) : (b2 = 0, D2 = g2.addToEpochNs(m29)), { duration: Jr(Nt(d3.date, d3.date.days + b2), g2), nudgedEpochNs: D2, didExpandCalendarUnit: v2 };
+      return v2 ? (b2 = t3, g2 = w2.round(p2, c3), D2 = g2.addToEpochNs(f2)) : (b2 = 0, D2 = g2.addToEpochNs(m30)), { duration: Jr(Nt(d3.date, d3.date.days + b2), g2), nudgedEpochNs: D2, didExpandCalendarUnit: v2 };
     })(l2, h2, r2, o2, i2, s2, c2, d2) : (function(t3, n3, r3, o3, i3, a3) {
       let s3 = t3;
-      const c3 = s3.time.add24HourDays(s3.date.days), d3 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h3 = d3.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d3.divmod(Se), m29 = Math.sign(l3 - u3) === c3.sign(), f2 = h3.addToEpochNs(n3);
+      const c3 = s3.time.add24HourDays(s3.date.days), d3 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h3 = d3.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d3.divmod(Se), m30 = Math.sign(l3 - u3) === c3.sign(), f2 = h3.addToEpochNs(n3);
       let y2 = 0, p2 = d3;
-      return "date" === Vt(r3) && (y2 = l3, p2 = d3.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p2 }, nudgedEpochNs: f2, didExpandCalendarUnit: m29 };
-    })(h2, n2, a2, s2, c2, d2), h2 = m28.duration, m28.didExpandCalendarUnit && "week" !== c2 && (h2 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
+      return "date" === Vt(r3) && (y2 = l3, p2 = d3.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p2 }, nudgedEpochNs: f2, didExpandCalendarUnit: m30 };
+    })(h2, n2, a2, s2, c2, d2), h2 = m29.duration, m29.didExpandCalendarUnit && "week" !== c2 && (h2 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
       let c3 = t3;
       if (s3 === a3) return c3;
       const d3 = it.indexOf(a3);
@@ -20382,7 +20386,7 @@
         c3 = { date: d4, time: TimeDuration.ZERO };
       }
       return c3;
-    })(l2, h2, m28.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h2;
+    })(l2, h2, m29.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h2;
   }
   function ro(e2, t2, n2, r2, o2, i2) {
     return Kt(i2) || r2 && "day" === i2 ? to(Ir(e2) < 0 ? -1 : 1, e2, t2, n2, r2, o2, 1, i2, "trunc").total : Yo(e2.time.add24HourDays(e2.date.days), i2);
@@ -20471,12 +20475,12 @@
     const h2 = Ln(i2, d2, "constrain"), u2 = en(i2, re(o2, D), "year-month");
     u2.day = 1;
     const l2 = Ln(i2, u2, "constrain");
-    let m28 = { date: Nt(jn(i2, h2, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
+    let m29 = { date: Nt(jn(i2, h2, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
     if ("month" !== s2.smallestUnit || 1 !== s2.roundingIncrement) {
       const e3 = xt(h2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
-      m28 = no(m28, pr(xt(l2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
+      m29 = no(m29, pr(xt(l2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
     }
-    let f2 = _r(m28, "day");
+    let f2 = _r(m29, "day");
     return "since" === e2 && (f2 = Sr(f2)), f2;
   }
   function mo(t2, n2, r2, o2) {
@@ -20955,23 +20959,23 @@
         }
         return r3;
       };
-      let m28 = 0, f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2);
+      let m29 = 0, f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2);
       if (0 !== y2.years || 0 !== y2.months || 0 !== y2.days) {
         const e3 = 365 * y2.years + 30 * y2.months + y2.days;
-        u2 = this.addDaysIso(u2, e3), f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m28 = this.compareCalendarDates(o2, f2);
+        u2 = this.addDaysIso(u2, e3), f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m29 = this.compareCalendarDates(o2, f2);
       }
       let p2 = 8;
-      for (; m28; ) {
-        u2 = this.addDaysIso(u2, m28 * p2);
+      for (; m29; ) {
+        u2 = this.addDaysIso(u2, m29 * p2);
         const e3 = f2;
         f2 = this.isoToCalendarDate(u2, n2);
-        const i3 = m28;
-        if (m28 = this.compareCalendarDates(o2, f2), m28) {
-          if (y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m28 = 0;
-          else if (i3 && m28 !== i3) if (p2 > 1) p2 /= 2;
+        const i3 = m29;
+        if (m29 = this.compareCalendarDates(o2, f2), m29) {
+          if (y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m29 = 0;
+          else if (i3 && m29 !== i3) if (p2 > 1) p2 /= 2;
           else {
             if ("reject" === t2) throw new RangeError(`Can't find ISO date from calendar date: ${JSON.stringify({ ...r2 })}`);
-            this.compareCalendarDates(f2, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m28 = 0;
+            this.compareCalendarDates(f2, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m29 = 0;
           }
         }
       }
@@ -21071,21 +21075,21 @@
       return 1972;
     }
     monthDayFromFields(e2, t2, n2) {
-      let r2, o2, i2, a2, s2, { era: c2, eraYear: d2, year: h2, month: u2, monthCode: l2, day: m28 } = e2;
+      let r2, o2, i2, a2, s2, { era: c2, eraYear: d2, year: h2, month: u2, monthCode: l2, day: m29 } = e2;
       if (void 0 !== u2 && void 0 === h2 && (!this.hasEra || void 0 === c2 || void 0 === d2)) throw new TypeError("when month is present, year (or era and eraYear) are required");
-      (void 0 === l2 || void 0 !== h2 || this.hasEra && void 0 !== d2) && ({ monthCode: l2, day: m28 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
-      const f2 = { year: this.monthDaySearchStartYear(l2, m28), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f2, n2), p2 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m28 ? y2.year : y2.year - 1;
+      (void 0 === l2 || void 0 !== h2 || this.hasEra && void 0 !== d2) && ({ monthCode: l2, day: m29 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
+      const f2 = { year: this.monthDaySearchStartYear(l2, m29), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f2, n2), p2 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m29 ? y2.year : y2.year - 1;
       for (let e3 = 0; e3 < 20; e3++) {
-        const c3 = this.adjustCalendarDate({ day: m28, monthCode: l2, year: p2 - e3 }, n2), d3 = this.calendarToIsoDate(c3, "constrain", n2), h3 = this.isoToCalendarDate(d3, n2);
-        if ({ year: r2, month: o2, day: i2 } = d3, h3.monthCode === l2 && h3.day === m28) return { month: o2, day: i2, year: r2 };
+        const c3 = this.adjustCalendarDate({ day: m29, monthCode: l2, year: p2 - e3 }, n2), d3 = this.calendarToIsoDate(c3, "constrain", n2), h3 = this.isoToCalendarDate(d3, n2);
+        if ({ year: r2, month: o2, day: i2 } = d3, h3.monthCode === l2 && h3.day === m29) return { month: o2, day: i2, year: r2 };
         if ("constrain" === t2) {
           const e4 = this.maxLengthOfMonthCodeInAnyYear(h3.monthCode);
-          if (h3.monthCode === l2 && h3.day === e4 && m28 > e4) return { month: o2, day: i2, year: r2 };
+          if (h3.monthCode === l2 && h3.day === e4 && m29 > e4) return { month: o2, day: i2, year: r2 };
           (void 0 === a2 || h3.monthCode === a2.monthCode && h3.day > a2.day) && (a2 = h3, s2 = d3);
         }
       }
       if ("constrain" === t2 && void 0 !== s2) return s2;
-      throw new RangeError(`No recent ${this.id} year with monthCode ${l2} and day ${m28}`);
+      throw new RangeError(`No recent ${this.id} year with monthCode ${l2} and day ${m29}`);
     }
     getFirstDayOfWeek() {
     }
@@ -21513,9 +21517,9 @@
       let a2 = 17, { calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d2 } = i2(e2, a2);
       "1" !== s2 && (a2 += 29, { calendarMonthString: s2, calendarDay: c2 } = i2(e2, a2)), a2 -= c2 - 5;
       const h2 = {};
-      let u2, l2, m28 = 1, f2 = false;
+      let u2, l2, m29 = 1, f2 = false;
       do {
-        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d2 } = i2(e2, a2)), u2 && (h2[l2].daysInMonth = u2 + 30 - c2), d2 !== e2 ? f2 = true : (h2[s2] = { monthIndex: m28++ }, a2 += 30), u2 = c2, l2 = s2;
+        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d2 } = i2(e2, a2)), u2 && (h2[l2].daysInMonth = u2 + 30 - c2), d2 !== e2 ? f2 = true : (h2[s2] = { monthIndex: m29++ }, a2 += 30), u2 = c2, l2 = s2;
       } while (!f2);
       return h2[l2].daysInMonth = u2 + 30 - c2, t2.set(n2, h2), h2;
     }
@@ -22092,8 +22096,8 @@
   ae(PlainDate, "Temporal.PlainDate");
   var PlainDateTime = class {
     constructor(e2, t2, n2, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d2 = "iso8601") {
-      const h2 = _e(e2), u2 = _e(t2), l2 = _e(n2), m28 = void 0 === r2 ? 0 : _e(r2), f2 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p2 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d2 ? "iso8601" : Ve(d2));
-      Ur(h2, u2, l2, m28, f2, y2, p2, g2, w2), gn(this, { isoDate: { year: h2, month: u2, day: l2 }, time: { hour: m28, minute: f2, second: y2, millisecond: p2, microsecond: g2, nanosecond: w2 } }, v2);
+      const h2 = _e(e2), u2 = _e(t2), l2 = _e(n2), m29 = void 0 === r2 ? 0 : _e(r2), f2 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p2 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d2 ? "iso8601" : Ve(d2));
+      Ur(h2, u2, l2, m29, f2, y2, p2, g2, w2), gn(this, { isoDate: { year: h2, month: u2, day: l2 }, time: { hour: m29, minute: f2, second: y2, millisecond: p2, microsecond: g2, nanosecond: w2 } }, v2);
     }
     get calendarId() {
       return vt(this, yt), re(this, E);
@@ -22248,8 +22252,8 @@
   ae(PlainDateTime, "Temporal.PlainDateTime");
   var Duration = class _Duration {
     constructor(e2 = 0, t2 = 0, n2 = 0, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d2 = 0) {
-      const h2 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m28 = void 0 === r2 ? 0 : Ge(r2), f2 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p2 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d2 ? 0 : Ge(d2);
-      zr(h2, u2, l2, m28, f2, y2, p2, g2, w2, v2), te(this), oe(this, Y, h2), oe(this, R, u2), oe(this, S, l2), oe(this, j, m28), oe(this, k, f2), oe(this, N, y2), oe(this, x, p2), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
+      const h2 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m29 = void 0 === r2 ? 0 : Ge(r2), f2 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p2 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d2 ? 0 : Ge(d2);
+      zr(h2, u2, l2, m29, f2, y2, p2, g2, w2, v2), te(this), oe(this, Y, h2), oe(this, R, u2), oe(this, S, l2), oe(this, j, m29), oe(this, k, f2), oe(this, N, y2), oe(this, x, p2), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
     }
     get years() {
       return vt(this, lt), re(this, Y);
@@ -22329,13 +22333,13 @@
       }
       if (Kt(t2)) throw new RangeError(`a starting point is required for ${t2}s balancing`);
       if (Kt(r2)) throw new RangeError(`a starting point is required for ${r2}s balancing`);
-      let m28 = qr(this);
+      let m29 = qr(this);
       if ("day" === c2) {
-        const { quotient: e3, remainder: t3 } = m28.time.divmod(Se);
-        let n3 = m28.date.days + e3 + Yo(t3, "day");
-        n3 = Eo(n3, a2, s2), m28 = Jr({ years: 0, months: 0, weeks: 0, days: n3 }, TimeDuration.ZERO);
-      } else m28 = Jr({ years: 0, months: 0, weeks: 0, days: 0 }, $o(m28.time, a2, c2, s2));
-      return _r(m28, r2);
+        const { quotient: e3, remainder: t3 } = m29.time.divmod(Se);
+        let n3 = m29.date.days + e3 + Yo(t3, "day");
+        n3 = Eo(n3, a2, s2), m29 = Jr({ years: 0, months: 0, weeks: 0, days: n3 }, TimeDuration.ZERO);
+      } else m29 = Jr({ years: 0, months: 0, weeks: 0, days: 0 }, $o(m29.time, a2, c2, s2));
+      return _r(m29, r2);
     }
     total(t2) {
       if (vt(this, lt), void 0 === t2) throw new TypeError("options argument is required");
@@ -22399,12 +22403,12 @@
         const t3 = re(c2, $), n3 = re(c2, E), r3 = re(c2, b), o3 = po(r3, t3, n3, u2), i3 = po(r3, t3, n3, l2);
         return Bo(import_jsbi.default.toNumber(import_jsbi.default.subtract(o3, i3)));
       }
-      let m28 = u2.date.days, f2 = l2.date.days;
+      let m29 = u2.date.days, f2 = l2.date.days;
       if (Kt(d2) || Kt(h2)) {
         if (!s2) throw new RangeError("A starting point is required for years, months, or weeks comparison");
-        m28 = Rr(u2.date, s2), f2 = Rr(l2.date, s2);
+        m29 = Rr(u2.date, s2), f2 = Rr(l2.date, s2);
       }
-      const y2 = u2.time.add24HourDays(m28), p2 = l2.time.add24HourDays(f2);
+      const y2 = u2.time.add24HourDays(m29), p2 = l2.time.add24HourDays(f2);
       return y2.cmp(p2);
     }
   };
@@ -23917,7 +23921,6 @@
       });
       applicationMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = applicationMessage.newState;
-      group.updateDate = Date.now();
       await this.#database.saveGroup(group);
       await this.#sendMlsMessage(
         ObjectTypeMlsPrivateMessage,
@@ -23980,14 +23983,14 @@
         case wireformats.mls_public_message:
           return await this.#receiveActivity_PublicPrivateMessage(object, mlsMessage);
         case wireformats.mls_welcome:
-          await this.#receiveActivity_Welcome(mlsMessage);
+          await this.#receiveActivity_Welcome(activity, mlsMessage);
           return void 0;
         default:
           throw new Error("Unknown MLS message type: " + JSON.stringify(mlsMessage));
       }
     }
     // decodeMessage_Welcome processes MLS "Welcome" messages that add this user to a new group.
-    async #receiveActivity_Welcome(message) {
+    async #receiveActivity_Welcome(activity, message) {
       let clientState;
       try {
         clientState = await joinGroup({
@@ -24011,6 +24014,7 @@
       }
       const group = NewGroup("MLS");
       group.id = groupId;
+      group.createdById = activity.actorId();
       let encryptedGroup = addClientState(group, clientState);
       encryptedGroup.members = this.getGroupMembers(encryptedGroup);
       await this.#database.saveGroup(encryptedGroup);
@@ -24064,7 +24068,6 @@
         msgEpoch = mlsMessage.publicMessage.content.epoch;
         msgWireformat = "PublicMessage(1)";
       }
-      console.log(`CodecMls.processMessage: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}, epochMatch=${groupEpoch == msgEpoch}`);
       let decodedMessage;
       try {
         decodedMessage = await processMessage({
@@ -24086,7 +24089,6 @@
       }
       decodedMessage.consumed.forEach(zeroOutUint8Array);
       group.clientState = decodedMessage.newState;
-      group.updateDate = Date.now();
       group.members = this.getGroupMembers(group);
       if (!group.members.includes(this.#actor.id())) {
         group.stateId = "CLOSED";
@@ -24099,14 +24101,20 @@
       }
       const plaintext = decodeText(decodedMessage.message);
       const result = new Activity().fromJSON(plaintext);
+      this.#maybeSendAcknowledgement(group, result);
+      return result;
+    }
+    #maybeSendAcknowledgement(group, activity) {
+      if (activity.type() !== ActivityTypeCreate) {
+        return;
+      }
       this.sendActivity(group, new Activity({
         actor: this.#actor.id(),
         type: ActivityTypeAcknowledge,
-        to: [result.actorId()],
-        object: result.objectId(),
+        to: [activity.actorId()],
+        object: activity.objectId(),
         context: group.id
       }));
-      return result;
     }
     #processMessageCallback(message, group) {
       if (message.kind == "commit") {
@@ -24298,43 +24306,59 @@
     //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
-      let group = await this.#findGroupForActivity(activity, object);
+      const groupId = await this.#findGroupForActivity(activity, object);
+      let group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
-        return void 0;
+        group = await this.#createGroup(groupId, []);
       }
       if (group.codec != "PLAINTEXT") {
         throw new Error("Group with id " + group.id + " is not a PLAINTEXT group");
       }
+      if (group.createdById == "") {
+        group.createdById = activity.actorId();
+      }
       let newMembers = this.#findNewGroupMembers(group, activity);
       if (newMembers.length > 0) {
         group.members.push(...newMembers);
-        await this.#database.saveGroup(group);
       }
+      await this.#database.saveGroup(group);
       activity.setContext(group.id);
+      console.log("Plaintext.receiveActivity:", group, activity);
       return activity;
     }
     async #findGroupForActivity(activity, object) {
+      console.log("#findGroupForActivity", activity);
       switch (activity.type()) {
         // "Leave" activities use the "object" of the activity as the group ID.
         case ActivityTypeLeave: {
-          return await this.#database.loadGroup(activity.objectId());
+          console.log("Leave activity");
+          return activity.objectId();
         }
         // "Like" activities use the group of the message being liked.
         case ActivityTypeLike: {
+          console.log("Like activity");
           let message = await this.#database.loadMessage(activity.objectId());
-          return this.#database.loadGroup(message.groupId);
+          return message.groupId;
         }
         // "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
         case ActivityTypeCreate:
         case ActivityTypeUpdate: {
+          console.log("Create/Update activity", object.inReplyToId(), object.context(), activity.context());
           if (object.inReplyToId() != "") {
+            console.log("Found in reply");
             let message = await this.#database.loadMessage(object.inReplyToId());
-            return this.#database.loadGroup(message.groupId);
+            return message.groupId;
+          }
+          if (object.context() != "") {
+            console.log("Found object context");
+            return object.context();
           }
           if (activity.context() != "") {
-            return this.#database.loadGroup(activity.context());
+            console.log("Found activity context");
+            return activity.context();
           }
-          return this.createGroup([]);
+          console.log("Not found, creating new group");
+          return newId();
         }
       }
       throw new Error("Unrecognized activity type " + activity.type());
@@ -24677,6 +24701,9 @@
     host_actor = (actorId) => {
       this.#host.viewActor(actorId);
     };
+    host_block = (actorId) => {
+      this.#host.viewBlockActor(actorId);
+    };
     host_keyPackages = () => {
       this.#host.viewKeyPackages();
     };
@@ -24799,9 +24826,20 @@
       }
       const codec = this.#getCodec(encrypted);
       let group = await codec.createGroup(recipients);
+      group.stateId = "ACTIVE";
       this.groupStream(group);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
+    };
+    joinGroup = async (group) => {
+      if (group.stateId != "WELCOME") {
+        console.error("Can only join groups that are in the WELCOME state");
+        return;
+      }
+      group.stateId = "ACTIVE";
+      await this.saveGroup(group);
+      import_mithril.default.redraw();
+      this.syncGroup(group);
     };
     // loadGroups retrieves all groups from the database
     loadGroups = async () => {
@@ -24981,6 +25019,7 @@
       await this.loadMessages();
       group.lastMessage = content;
       group.lastMessageId = message.id;
+      group.updateDate = Temporal.Now.instant().epochMilliseconds;
       await this.saveGroup(group);
     };
     // sendFile sends a base64-encoded file to the specified group
@@ -25231,7 +25270,7 @@
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
           group.unread = true;
-          group.updateDate = Date.now();
+          group.updateDate = Temporal.Now.instant().epochMilliseconds;
           if (this.config.isDesktopNotifications) {
             if (!this.isWindowFocused) {
               this.#host.notify(message.sender, message.content);
@@ -25394,7 +25433,7 @@
   };
 
   // src/view/app.tsx
-  var import_mithril30 = __toESM(require_mithril(), 1);
+  var import_mithril31 = __toESM(require_mithril(), 1);
 
   // src/view/welcome.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
@@ -25486,8 +25525,8 @@
   };
 
   // src/view/index.tsx
-  var import_mithril23 = __toESM(require_mithril(), 1);
   var import_mithril24 = __toESM(require_mithril(), 1);
+  var import_mithril25 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
   var import_mithril6 = __toESM(require_mithril(), 1);
@@ -25891,9 +25930,29 @@
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green70)";
-        return /* @__PURE__ */ (0, import_mithril8.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${color}` }, groupIsEncrypted(group) ? /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-lock-fill" }) : /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-chat-fill" })), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-row bold" }, group.name || group.defaultName || ""), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || "")), this.unreadMarker(vnode, group)));
+        return /* @__PURE__ */ (0, import_mithril8.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${this.groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-grow" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
       }));
+    }
+    groupColor(group) {
+      if (group.stateId == "WELCOME") {
+        return "var(--gray50)";
+      }
+      if (groupIsEncrypted(group)) {
+        return "var(--blue50)";
+      }
+      return "var(--green70)";
+    }
+    groupIcon(group) {
+      if (groupIsEncrypted(group)) {
+        return /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-lock-fill" });
+      }
+      return /* @__PURE__ */ (0, import_mithril8.default)("i", { class: "bi bi-chat-fill" });
+    }
+    groupLabel(group) {
+      if (group.stateId == "WELCOME") {
+        return /* @__PURE__ */ (0, import_mithril8.default)(import_mithril8.default.Fragment, null, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "bold" }, "Invitation (", groupIsEncrypted(group) ? "Encrypted" : "Plaintext", ")"), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.defaultName || ""));
+      }
+      return /* @__PURE__ */ (0, import_mithril8.default)(import_mithril8.default.Fragment, null, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "flex-row bold" }, group.name || group.defaultName || ""), /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || ""));
     }
     unreadMarker(vnode, group) {
       if (!group.unread) {
@@ -26566,33 +26625,88 @@
     }
   };
 
+  // src/view/group-welcome.tsx
+  var import_mithril23 = __toESM(require_mithril(), 1);
+  var GroupWelcome = class {
+    oninit(vnode) {
+      return void 0;
+    }
+    view(vnode) {
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      const contactStreams = controller2.groupContactStream();
+      const isEncrypted = groupIsEncrypted(group);
+      const contacts = contactStreams.map((contactStream) => contactStream()).filter((contact) => contact !== void 0).filter((contact) => contact.id != controller2.actorId());
+      const creator = contacts.find((contact) => contact.id == group.createdById);
+      return /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "flex-column flex-align-center max-width-640 padding-xl" }, /* @__PURE__ */ (0, import_mithril23.default)("img", { src: creator?.icon, class: "width-96 circle margin-none", alt: "" }), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-xl margin-none" }, creator?.name), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray link margin-bottom", onclick: () => this.clickUsername(vnode), onkeyup: synthClick, role: "button", tabindex: "0" }, creator?.username, " ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-arrow-up-right-square" })), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-lg" }, isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to an ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-lock-fill" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "encrypted conversation")) : /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to a ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-card-text" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "plaintext conversation"), ".")), isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Encrypted converations cannot be read by anyone outside of the group)") : /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Plaintext conversations may be visible by others on the Internet)"), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl card padding width-100% max-width-480" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "maargin-bottom" }, '"The text of the first message will go here..."'), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "primary", onclick: () => this.clickAccept(vnode) }, "Accept"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickIgnore(vnode) }, "Ignore"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickBlock(vnode) }, "Block"))))));
+    }
+    /*
+    <div class="margin-vertical-xl">
+    {contacts.map(contact => (
+    	<div key={contact.id} class="flex-row flex-align-center margin-bottom">
+    		<img src={contact.icon} class="width-32 circle margin-right" alt="" />
+    		<div class="flex-row flex-align-center">
+    			<div class="bold">{contact.name}</div>
+    			<div class="text-sm text-light-gray margin-left">{contact.username}</div>
+    		</div>
+    	</div>
+    ))}
+    </div>
+    */
+    clickUsername(vnode) {
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      controller2.host_actor(group.createdById);
+    }
+    clickAccept(vnode) {
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      controller2.joinGroup(group);
+    }
+    clickIgnore(vnode) {
+      if (!confirm("Ignore this request?\n\nThis will remove the conversation from your list, but the requester may still be able to message you again in the future.")) {
+        return;
+      }
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      controller2.leaveGroup(group.id);
+    }
+    clickBlock(vnode) {
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      controller2.host_block(group.createdById);
+    }
+  };
+
   // src/view/index.tsx
   var Index = class {
     oninit(vnode) {
       vnode.state.modal = "";
     }
     view(vnode) {
-      let page;
+      return /* @__PURE__ */ (0, import_mithril24.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril24.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril24.default)(Groups, { controller: vnode.attrs.controller })), this.viewDetails(vnode), this.viewModals(vnode));
+    }
+    viewDetails(vnode) {
+      const groups = vnode.attrs.controller.groups;
+      if (groups.length == 0) {
+        return /* @__PURE__ */ (0, import_mithril24.default)(Empty, { controller: vnode.attrs.controller });
+      }
+      const group = vnode.attrs.controller.groupStream();
+      if (group.stateId == "WELCOME") {
+        return /* @__PURE__ */ (0, import_mithril24.default)(GroupWelcome, { controller: vnode.attrs.controller });
+      }
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-MEMBERS":
-          page = /* @__PURE__ */ (0, import_mithril23.default)(GroupMembers, { controller: vnode.attrs.controller });
-          break;
+          return /* @__PURE__ */ (0, import_mithril24.default)(GroupMembers, { controller: vnode.attrs.controller });
         case "GROUP-NOTES":
-          page = /* @__PURE__ */ (0, import_mithril23.default)(GroupNotes, { controller: vnode.attrs.controller });
-          break;
+          return /* @__PURE__ */ (0, import_mithril24.default)(GroupNotes, { controller: vnode.attrs.controller });
         case "GROUP-LEAVE":
-          page = /* @__PURE__ */ (0, import_mithril23.default)(GroupLeave, { controller: vnode.attrs.controller });
-          break;
+          return /* @__PURE__ */ (0, import_mithril24.default)(GroupLeave, { controller: vnode.attrs.controller });
+        case "GROUP-MESSAGES":
         default: {
-          const groups = vnode.attrs.controller.groups;
-          if (groups.length == 0) {
-            page = /* @__PURE__ */ (0, import_mithril23.default)(Empty, { controller: vnode.attrs.controller });
-          } else {
-            page = /* @__PURE__ */ (0, import_mithril23.default)(GroupMessages, { controller: vnode.attrs.controller });
-          }
+          return /* @__PURE__ */ (0, import_mithril24.default)(GroupMessages, { controller: vnode.attrs.controller });
         }
       }
-      return /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril23.default)(Groups, { controller: vnode.attrs.controller })), page, this.viewModals(vnode));
     }
     // viewModals returns the JSX for the currently active modal dialog, or undefined if no modal is active
     viewModals(vnode) {
@@ -26600,17 +26714,17 @@
       const modalView = controller2.modalView;
       switch (modalView) {
         case "ADD-GROUP-MEMBER":
-          return /* @__PURE__ */ (0, import_mithril23.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
         case "EDIT-MESSAGE":
-          return /* @__PURE__ */ (0, import_mithril23.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
         case "MESSAGE-SEND-EMOJI":
-          return /* @__PURE__ */ (0, import_mithril23.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_sendEmoji_callback, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_sendEmoji_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-START-REACTION":
-          return /* @__PURE__ */ (0, import_mithril23.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(PickEmoji, { controller: controller2, onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-HISTORY":
-          return /* @__PURE__ */ (0, import_mithril23.default)(MessageHistory, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(MessageHistory, { controller: controller2, close: () => this.closeModal(vnode) });
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril23.default)(NewConversation, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril24.default)(NewConversation, { controller: controller2, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -26619,21 +26733,21 @@
       document.getElementById("modal")?.classList.remove("ready");
       globalThis.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril23.default.redraw();
+        import_mithril24.default.redraw();
       }, 240);
     }
   };
 
   // src/view/app-blurred.tsx
-  var import_mithril25 = __toESM(require_mithril(), 1);
+  var import_mithril26 = __toESM(require_mithril(), 1);
   var AppBlurred = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
+      return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
     }
   };
 
   // src/view/app-settings.tsx
-  var import_mithril26 = __toESM(require_mithril(), 1);
+  var import_mithril27 = __toESM(require_mithril(), 1);
   var AppSettings = class {
     oninit(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -26645,7 +26759,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril26.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril26.default)(
+      return /* @__PURE__ */ (0, import_mithril27.default)("div", { id: "conversations", class: "app-content" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "padding width-800" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril27.default)(
         "div",
         {
           class: "clickable circle width-32 margin-none flex-center",
@@ -26654,8 +26768,8 @@
           role: "button",
           tabIndex: "0"
         },
-        /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-arrow-left" })
-      ), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-lg bold margin-none" }, "Conversation Settings")), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril26.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril26.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril26.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril26.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril26.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril26.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril26.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril26.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril26.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril26.default)("div", null, vnode.state.isDesktopNotificationsPermission == "granted" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril26.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril26.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril26.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril26.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-lg bold margin-bottom" }, "Close Conversations"), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-element" }, "Close out this current session. Your data will remain on this device, but cannot be accessed without a passcode."))), /* @__PURE__ */ (0, import_mithril26.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Close")), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril26.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "padding-vertical-xl" })));
+        /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-arrow-left" })
+      ), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-lg bold margin-none" }, "Conversation Settings")), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril27.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril27.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril27.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril27.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril27.default)("input", { type: "checkbox", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril27.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril27.default)("div", null, "Hide When Window Loses Focus"))), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril27.default)("input", { type: "checkbox", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril27.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril27.default)("div", null, vnode.state.isDesktopNotificationsPermission == "granted" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril27.default)("button", { type: "submit", class: "primary" }, "Save Settings"), /* @__PURE__ */ (0, import_mithril27.default)("button", { onclick: () => controller2.page_index() }, "Cancel"))), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril27.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "flex-row" }, controller2.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril27.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-xs text-gray" }, name))))), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-lg bold margin-bottom" }, "Close Conversations"), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-element" }, "Close out this current session. Your data will remain on this device, but cannot be accessed without a passcode."))), /* @__PURE__ */ (0, import_mithril27.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Close")), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril27.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "padding-vertical-xl" })));
     }
     setEncryptedMessages(vnode, event) {
       const target = event.target;
@@ -26698,29 +26812,29 @@
   };
 
   // src/view/app-stopped.tsx
-  var import_mithril27 = __toESM(require_mithril(), 1);
+  var import_mithril28 = __toESM(require_mithril(), 1);
   var AppStopped = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
+      return /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
     }
     message(vnode) {
       switch (vnode.attrs.message) {
         case "COOKIES-CHANGED":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", null, /* @__PURE__ */ (0, import_mithril27.default)("h2", null, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril27.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SERVER-DOWN":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", null, /* @__PURE__ */ (0, import_mithril27.default)("h2", null, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril27.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SIGN-OUT":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", null, /* @__PURE__ */ (0, import_mithril27.default)("h2", null, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril27.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
         case "UNSUPPORTED":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", null, /* @__PURE__ */ (0, import_mithril27.default)("h2", null, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril27.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", null, /* @__PURE__ */ (0, import_mithril27.default)("h2", null, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril27.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
       }
     }
   };
 
   // src/view/app-signin.tsx
-  var import_mithril28 = __toESM(require_mithril(), 1);
+  var import_mithril29 = __toESM(require_mithril(), 1);
   var AppSignIn = class {
     oninit(vnode) {
       vnode.state.passcode = "";
@@ -26730,7 +26844,7 @@
       document.getElementById("passcode")?.focus();
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "card padding-lg width-640" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "align-center text-light-gray margin-vertical", style: "font-size:80px;" }, "\xA0", /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-chat" }), "\xA0"), /* @__PURE__ */ (0, import_mithril28.default)("h1", { class: "align-center text-xl bold" }, "Conversations Passcode"), vnode.state.requestPending ? /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril28.default)("input", { type: "password", class: "flex-grow", hint: "Conversation Passcode", disabled: true }), /* @__PURE__ */ (0, import_mithril28.default)("button", { type: "submit", class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-arrow-clockwise" })))) : /* @__PURE__ */ (0, import_mithril28.default)("form", { onsubmit: (event) => this.submit(vnode, event) }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril28.default)("input", { id: "passcode", type: "password", class: "flex-grow", hint: "Conversation Passcode", oninput: (event) => this.setPasscode(vnode, event), value: vnode.state.passcode, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril28.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-arrow-right" })))), vnode.state.message && /* @__PURE__ */ (0, import_mithril28.default)("p", { class: "text-red margin-vertical" }, vnode.state.message), /* @__PURE__ */ (0, import_mithril28.default)("p", { class: "margin-vertical" }, "To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations."), /* @__PURE__ */ (0, import_mithril28.default)("p", { class: "margin-vertical" }, "You can ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => this.reset(vnode), onkeypress: synthClick }, "reset your passcode"), " if you don't remember it, but all encrypted messages will be lost.")));
+      return /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "card padding-lg width-640" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "align-center text-light-gray margin-vertical", style: "font-size:80px;" }, "\xA0", /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-chat" }), "\xA0"), /* @__PURE__ */ (0, import_mithril29.default)("h1", { class: "align-center text-xl bold" }, "Conversations Passcode"), vnode.state.requestPending ? /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril29.default)("input", { type: "password", class: "flex-grow", hint: "Conversation Passcode", disabled: true }), /* @__PURE__ */ (0, import_mithril29.default)("button", { type: "submit", class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril29.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-arrow-clockwise" })))) : /* @__PURE__ */ (0, import_mithril29.default)("form", { onsubmit: (event) => this.submit(vnode, event) }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril29.default)("input", { id: "passcode", type: "password", class: "flex-grow", hint: "Conversation Passcode", oninput: (event) => this.setPasscode(vnode, event), value: vnode.state.passcode, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril29.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-arrow-right" })))), vnode.state.message && /* @__PURE__ */ (0, import_mithril29.default)("p", { class: "text-red margin-vertical" }, vnode.state.message), /* @__PURE__ */ (0, import_mithril29.default)("p", { class: "margin-vertical" }, "To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations."), /* @__PURE__ */ (0, import_mithril29.default)("p", { class: "margin-vertical" }, "You can ", /* @__PURE__ */ (0, import_mithril29.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => this.reset(vnode), onkeypress: synthClick }, "reset your passcode"), " if you don't remember it, but all encrypted messages will be lost.")));
     }
     setPasscode(vnode, event) {
       const input = event.target;
@@ -26744,7 +26858,7 @@
         vnode.state.passcode = "";
         vnode.state.requestPending = false;
         vnode.state.message = "Passcode incorrect. You cannot continue without the valid passcode.";
-        import_mithril28.default.redraw();
+        import_mithril29.default.redraw();
         globalThis.requestAnimationFrame(() => {
           document.getElementById("passcode")?.focus();
         });
@@ -26759,10 +26873,10 @@
   };
 
   // src/view/app-loading.tsx
-  var import_mithril29 = __toESM(require_mithril(), 1);
+  var import_mithril30 = __toESM(require_mithril(), 1);
   var AppLoading = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril29.default)("div", null, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "width-32 circle" }), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "bold text-lg margin-none" }, "Conversations")), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-grow" }), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-lg margin-none text-light-gray" }, /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril29.default)("label", { class: "bi bi-search" }), /* @__PURE__ */ (0, import_mithril29.default)(
+      return /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "width-32 circle" }), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "bold text-lg margin-none" }, "Conversations")), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-grow" }), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg margin-none text-light-gray" }, /* @__PURE__ */ (0, import_mithril30.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril30.default)("label", { class: "bi bi-search" }), /* @__PURE__ */ (0, import_mithril30.default)(
         "input",
         {
           id: "idSearch",
@@ -26771,7 +26885,7 @@
           class: "flex-grow margin-none padding-none",
           style: "border:none; outline:none;"
         }
-      )), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-lg text-light-gray margin-none clickable" }, /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-filter-circle" }))))), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril29.default)("div", null, /* @__PURE__ */ (0, import_mithril29.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
+      )), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg text-light-gray margin-none clickable" }, /* @__PURE__ */ (0, import_mithril30.default)("i", { class: "bi bi-filter-circle" }))))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, /* @__PURE__ */ (0, import_mithril30.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril30.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
     }
   };
 
@@ -26784,30 +26898,30 @@
       const controller2 = vnode.attrs.controller;
       if (!controller2.isApplicationRunning) {
         console.error(controller2);
-        return /* @__PURE__ */ (0, import_mithril30.default)(AppStopped, { message: controller2.stopReason });
+        return /* @__PURE__ */ (0, import_mithril31.default)(AppStopped, { message: controller2.stopReason });
       }
       if (!controller2.isWindowFocused) {
         if (controller2.config.isHideOnBlur) {
-          return /* @__PURE__ */ (0, import_mithril30.default)(AppBlurred, null);
+          return /* @__PURE__ */ (0, import_mithril31.default)(AppBlurred, null);
         }
       }
       switch (controller2.pageView) {
         case "LOADING":
-          return /* @__PURE__ */ (0, import_mithril30.default)(AppLoading, null);
+          return /* @__PURE__ */ (0, import_mithril31.default)(AppLoading, null);
         case "SETTINGS":
-          return /* @__PURE__ */ (0, import_mithril30.default)(AppSettings, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril31.default)(AppSettings, { controller: controller2 });
         case "SIGN-IN":
-          return /* @__PURE__ */ (0, import_mithril30.default)(AppSignIn, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril31.default)(AppSignIn, { controller: controller2 });
         case "WELCOME":
-          return /* @__PURE__ */ (0, import_mithril30.default)(Welcome, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril31.default)(Welcome, { controller: controller2 });
         default:
-          return /* @__PURE__ */ (0, import_mithril30.default)(Index, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril31.default)(Index, { controller: controller2 });
       }
     }
   };
 
   // src/service/contacts.ts
-  var import_mithril31 = __toESM(require_mithril(), 1);
+  var import_mithril32 = __toESM(require_mithril(), 1);
   var import_stream4 = __toESM(require_stream2(), 1);
   var Contacts = class {
     #contacts;
@@ -26849,7 +26963,7 @@
         const contact = ContactFromActor(response);
         this.#contacts.set(id, contact);
         result(contact);
-        import_mithril31.default.redraw();
+        import_mithril32.default.redraw();
       });
       return result;
     }
@@ -26871,7 +26985,7 @@
       globalThis.location.assign("/@me/settings/keyPackages");
     }
     viewBlockActor(actorId) {
-      htmx.ajax("GET", "/@me/settings/rule-edit-actor?action=BLOCK&trigger=" + encodeURIComponent(actorId));
+      htmx.ajax("GET", "/@me/settings/actor-rule?actor=" + encodeURIComponent(actorId));
     }
     notify(title, message) {
       if (Notification.permission === "granted") {
@@ -26921,7 +27035,7 @@
     const receiver = new Receiver();
     controller = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
     controller.start();
-    import_mithril32.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril32.default)(App, { controller }) });
+    import_mithril33.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril33.default)(App, { controller }) });
     window.addEventListener("focus", async () => {
       controller.onFocusWindow();
     });

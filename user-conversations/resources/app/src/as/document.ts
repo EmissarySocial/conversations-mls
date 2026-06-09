@@ -30,6 +30,10 @@ export class Document extends ASObject {
 		return this.getString("as", vocab.PropertyContent)
 	}
 
+	context = () => {
+		return this.getString("as", vocab.PropertyContext)
+	}
+
 	generator = () => {
 		return this.getString("as", vocab.PropertyGenerator)
 	}

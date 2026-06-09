@@ -490,6 +490,10 @@ export class Controller {
 		this.#host.viewActor(actorId)
 	}
 
+	host_block = (actorId: string) => {
+		this.#host.viewBlockActor(actorId)
+	}
+
 	host_keyPackages = () => {
 		this.#host.viewKeyPackages()
 	}
@@ -693,6 +697,9 @@ export class Controller {
 		const codec = this.#getCodec(encrypted)
 		let group = await codec.createGroup(recipients)
 
+		// Since we're creating this group, it becomes active immediately (no WELCOME step)
+		group.stateId = "ACTIVE"
+
 		// Save the group as the "current" group in the UX
 		this.groupStream(group)
 
@@ -701,6 +708,20 @@ export class Controller {
 
 		// Move the view to the messages for this group
 		this.pageView = "GROUP-MESSAGES"
+	}
+
+	joinGroup = async (group: Group) => {
+
+		if (group.stateId != "WELCOME") {
+			console.error("Can only join groups that are in the WELCOME state")
+			return
+		}
+
+		group.stateId = "ACTIVE"
+		await this.saveGroup(group)
+		m.redraw()
+
+		this.syncGroup(group)
 	}
 
 	// loadGroups retrieves all groups from the database
@@ -988,8 +1009,8 @@ export class Controller {
 
 		// Update the group with the message metadata
 		group.lastMessage = content
-
 		group.lastMessageId = message.id
+		group.updateDate = Temporal.Now.instant().epochMilliseconds
 
 		// Save the group with updated message metadata
 		await this.saveGroup(group)
@@ -1409,7 +1430,7 @@ export class Controller {
 
 				// Mark it as "unread"
 				group.unread = true
-				group.updateDate = Date.now()
+				group.updateDate = Temporal.Now.instant().epochMilliseconds
 
 				// Send desktop notifications (if requested)
 				if (this.config.isDesktopNotifications) {

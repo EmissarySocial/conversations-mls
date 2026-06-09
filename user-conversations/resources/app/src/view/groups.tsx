@@ -55,21 +55,14 @@ export class Groups {
 						cssClass += " highlight"
 					}
 
-					const color = groupIsEncrypted(group) ? "var(--blue50)" : "var(--green70)"
-
 					return (
 						<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
-							<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${color}`}>
-								{
-									groupIsEncrypted(group) ?
-										<i class="bi bi-lock-fill"></i> :
-										<i class="bi bi-chat-fill"></i>
-								}
+							<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
+								{this.groupIcon(group)}
 							</div>
 							<div class="flex-row flex-grow nowrap ellipsis pos-relative">
 								<div class="flex-grow">
-									<div class="flex-row bold">{group.name || group.defaultName || ""}</div>
-									<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
+									{this.groupLabel(group)}
 								</div>
 								{this.unreadMarker(vnode, group)}
 							</div>
@@ -78,6 +71,43 @@ export class Groups {
 				})}
 			</div>
 		)
+	}
+
+	groupColor(group: Group): string {
+
+		if (group.stateId == "WELCOME") {
+			return "var(--gray50)"
+		}
+
+		if (groupIsEncrypted(group)) {
+			return "var(--blue50)"
+		}
+
+		return "var(--green70)"
+	}
+
+	groupIcon(group: Group): JSX.Element {
+
+		if (groupIsEncrypted(group)) {
+			return <i class="bi bi-lock-fill"></i>
+		}
+
+		return <i class="bi bi-chat-fill"></i>
+	}
+
+	groupLabel(group: Group): JSX.Element {
+
+		if (group.stateId == "WELCOME") {
+			return <>
+				<div class="bold">Invitation ({groupIsEncrypted(group) ? "Encrypted" : "Plaintext"})</div>
+				<div class="text-xs text-light-gray ellipsis-multiline-2">{group.defaultName || ""}</div>
+			</>
+		}
+
+		return <>
+			<div class="flex-row bold">{group.name || group.defaultName || ""}</div>
+			<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
+		</>
 	}
 
 	unreadMarker(vnode: GroupsVnode, group: Group) {

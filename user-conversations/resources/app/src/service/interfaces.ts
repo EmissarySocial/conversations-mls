@@ -130,6 +130,7 @@ export interface IHost {
 	notify(title: string, message: string): void
 	reload(): void
 	viewActor(actorId: string): void
+	viewBlockActor(actorId: string): void
 	viewKeyPackages(): void
 	viewBlockActor(actorId: string): void
 }
