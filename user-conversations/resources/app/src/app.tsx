@@ -58,8 +58,6 @@ async function startup() {
 		controller.onBlurWindow()
 	})
 
-	// Use the host connector to watch application state (e.g. cookies)
-	host.watchSignin((message: string) => controller.stop(message))
 }
 
 // 3..2..1.. Go!

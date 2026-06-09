@@ -32,21 +32,4 @@ export class Host {
 		}
 	}
 
-	//////////////////////////////////////////
-	// State Watcher
-	//////////////////////////////////////////
-
-	watchSignin = (stop: (message: string) => void) => {
-
-		const originalCookie = document.cookie
-
-		const intervalId = setInterval(() => {
-			if (document.cookie !== originalCookie) {
-				clearInterval(intervalId)
-				stop("COOKIES-CHANGED")
-			}
-		}, 1000)
-
-		return () => clearInterval(intervalId)
-	}
 }

@@ -163,12 +163,21 @@ export class ActorSearch {
 		vnode.state.loading = true
 		m.redraw()
 
-		const actors: Object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
-		vnode.state.actors = actors.map(object => new Actor(object))
-
-		vnode.state.loading = false
-		vnode.state.highlightedOption = -1
-		m.redraw()
+		try {
+			const actors: Object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
+			vnode.state.actors = actors.map(object => new Actor(object))
+		} catch (error) {
+			if ((error as any).code === 401) {
+				vnode.attrs.controller.stop("SESSION-EXPIRED")
+				return
+			}
+			console.error("ActorSearch: Error loading options:", error)
+			vnode.state.actors = []
+		} finally {
+			vnode.state.loading = false
+			vnode.state.highlightedOption = -1
+			m.redraw()
+		}
 	}
 
 	onblur(vnode: ActorSearchVnode) {

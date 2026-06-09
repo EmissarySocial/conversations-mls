@@ -27,7 +27,7 @@ export class AppStopped {
 
 		switch (vnode.attrs.message) {
 
-			case "COOKIES-CHANGED":
+			case "SESSION-EXPIRED":
 				return <div>
 					<h2><i class="bi bi-slash-circle"></i> Application Stopped</h2>
 					It looks like you have signed in to a different account using another tab.

@@ -171,6 +171,7 @@ export class Controller {
 		// Wire additional data into each dependency
 		this.#receiver.setActor(this.#actor)
 		this.#delivery.setActor(this.#actor)
+		this.#delivery.setSignout(() => this.stop("SESSION-EXPIRED"))
 		this.#directory.setActor(this.#actor)
 		this.#directory.setGenerator(this.config.generatorId, this.config.generatorName)
 
@@ -210,7 +211,7 @@ export class Controller {
 		}
 
 		// Start the realtime message receiver
-		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage)
+		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => this.stop("SESSION-EXPIRED"))
 
 		// Wire UX redraws into database updates
 		this.#database.onchange(async () => {

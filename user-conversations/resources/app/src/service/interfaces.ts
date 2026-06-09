@@ -101,6 +101,7 @@ export interface IDelivery {
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
+	setSignout(onSignout: () => void): void
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
 	sendActivity(activity: Activity): Promise<string>
@@ -150,7 +151,7 @@ export interface IReceiver {
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
-	start(generatorId: string, handler: IActivityHandler, lastMessageGetterSetter: ILastMessageGetterSetter): void
+	start(generatorId: string, handler: IActivityHandler, lastMessageGetterSetter: ILastMessageGetterSetter, onSignout: () => void): void
 	stop(): void
 }
 

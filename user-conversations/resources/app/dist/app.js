@@ -18243,6 +18243,13 @@
   }
 
   // src/as/object.ts
+  var HttpError = class extends Error {
+    status;
+    constructor(status, message) {
+      super(message);
+      this.status = status;
+    }
+  };
   var ASObject = class {
     #proxyUrl = "";
     #value;
@@ -18279,7 +18286,7 @@
         })
       });
       if (!response.ok) {
-        throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`);
+        throw new HttpError(response.status, `Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`);
       }
       const body = await response.text();
       this.fromJSON(body);
@@ -18298,7 +18305,7 @@
       };
       const response = await fetch(url, options);
       if (!response.ok) {
-        throw new Error(`Unable to fetch url:'${url}': ${response.status} ${response.statusText}`);
+        throw new HttpError(response.status, `Unable to fetch url:'${url}': ${response.status} ${response.statusText}`);
       }
       const body = await response.text();
       this.fromJSON(body);
@@ -18790,25 +18797,25 @@
   var Delivery = class {
     // The URL of the current user's outbox
     #outboxUrl = "";
-    // The cookie string present when this instance was created
-    // used to detect changes to cookies/authentication state
-    #originalCookie = document.cookie;
+    #onSignout = () => {
+    };
     // stop clears this service and prevents it from sending any more messages.
     stop() {
       this.#outboxUrl = "";
-      this.#originalCookie = "";
     }
     // setActor is used to configure the Delivery service
     // after the Actor has been loaded by the Controller.
     setActor(actor) {
       this.#outboxUrl = actor.outbox();
     }
+    setSignout(onSignout) {
+      this.#onSignout = onSignout;
+    }
     // sendActivity sends an activity to the Actor's outbox
     async sendActivity(activity) {
       if (this.#outboxUrl == "") {
         throw new Error("Outbox URL not set. Cannot send activity.");
       }
-      this.#checkCookies();
       const response = await fetch(this.#outboxUrl, {
         method: "POST",
         headers: { "Content-Type": "application/activity+json" },
@@ -18816,17 +18823,12 @@
         body: activity.toJSON()
       });
       if (!response.ok) {
-        throw new Error(`Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
+        if (response.status === 401) {
+          this.#onSignout();
+        }
+        throw new HttpError(response.status, `Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
       }
       return response.headers.get("Location") || "";
-    }
-    // #checkCookies guarantees that we're still signed in as the 
-    // original user.  It throws an error if the cookies have changed since 
-    // this component was created, halting whatever operation was in progress..
-    #checkCookies() {
-      if (document.cookie !== this.#originalCookie) {
-        throw new Error("Cookies have changed since the last request.");
-      }
     }
   };
 
@@ -23270,16 +23272,20 @@
     // handler function for getting/setting the last message ID
     #generatorId;
     // ID of this MLS client, used for the generator field of outgoing messages
+    #onSignout;
+    // called when the server returns 401 (session expired)
     #polling;
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
     // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
     // constructor initializes the Receiver with the actor's ID and messages URL
     constructor() {
-      this.#activityHandler = async (activity) => {
+      this.#activityHandler = async (_activity) => {
       };
-      this.#lastMessage = async (messageId) => {
+      this.#lastMessage = async (_messageId) => {
         return "";
+      };
+      this.#onSignout = () => {
       };
       this.#polling = false;
       this.#pollAgain = false;
@@ -23292,10 +23298,11 @@
       this.#messagesUrl = url;
     }
     // start begins polling for new messages and processing them with the registered handlers
-    async start(generatorId, activityHandler, lastMessage) {
+    async start(generatorId, activityHandler, lastMessage, onSignout) {
       this.#activityHandler = activityHandler;
       this.#lastMessage = lastMessage;
       this.#generatorId = generatorId;
+      this.#onSignout = onSignout;
       this.#poll();
       const collection = await new Collection().fromUrl(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
@@ -23319,23 +23326,32 @@
         return;
       }
       this.#polling = true;
-      let lastMessageId = await this.#lastMessage();
-      const collection = await loadCollectionAfter(this.#messagesUrl, lastMessageId);
-      for await (const activity of collection.rangeActivities()) {
-        console.log("Receiver: ", activity.toObject());
-        lastMessageId = activity.id();
-        if (activity.instrument() === this.#generatorId) {
-          console.log("Receiver: Skipping message generated by this client.");
-          continue;
+      try {
+        let lastMessageId = await this.#lastMessage();
+        const collection = await loadCollectionAfter(this.#messagesUrl, lastMessageId);
+        for await (const activity of collection.rangeActivities()) {
+          console.log("Receiver: ", activity.toObject());
+          lastMessageId = activity.id();
+          if (activity.instrument() === this.#generatorId) {
+            console.log("Receiver: Skipping message generated by this client.");
+            continue;
+          }
+          try {
+            await this.#activityHandler(activity);
+          } catch (error) {
+            console.error("Receiver.#poll: Unable to process incoming message:", activity.toJSON(), error);
+          }
         }
-        try {
-          await this.#activityHandler(activity);
-        } catch (error) {
-          console.error("Receiver.#poll: Unable to process incoming message:", activity.toJSON(), error);
+        await this.#lastMessage(lastMessageId);
+      } catch (error) {
+        if (error instanceof HttpError && error.status === 401) {
+          this.#onSignout();
+          return;
         }
+        console.error("Receiver.#poll: Error fetching messages:", error);
+      } finally {
+        this.#polling = false;
       }
-      await this.#lastMessage(lastMessageId);
-      this.#polling = false;
       if (this.#pollAgain) {
         this.#pollAgain = false;
         this.#poll();
@@ -24485,6 +24501,7 @@
       this.#allowEncryptedMessages = ciphertext;
       this.#receiver.setActor(this.#actor);
       this.#delivery.setActor(this.#actor);
+      this.#delivery.setSignout(() => this.stop("SESSION-EXPIRED"));
       this.#directory.setActor(this.#actor);
       this.#directory.setGenerator(this.config.generatorId, this.config.generatorName);
       if (this.useEncryptedMessages()) {
@@ -24510,7 +24527,7 @@
           return;
         }
       }
-      this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage);
+      this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => this.stop("SESSION-EXPIRED"));
       this.#database.onchange(async () => {
         await this.loadGroups();
         await this.loadMessages();
@@ -25746,11 +25763,21 @@
       }
       vnode.state.loading = true;
       import_mithril4.default.redraw();
-      const actors = await import_mithril4.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
-      vnode.state.actors = actors.map((object) => new Actor(object));
-      vnode.state.loading = false;
-      vnode.state.highlightedOption = -1;
-      import_mithril4.default.redraw();
+      try {
+        const actors = await import_mithril4.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
+        vnode.state.actors = actors.map((object) => new Actor(object));
+      } catch (error) {
+        if (error.code === 401) {
+          vnode.attrs.controller.stop("SESSION-EXPIRED");
+          return;
+        }
+        console.error("ActorSearch: Error loading options:", error);
+        vnode.state.actors = [];
+      } finally {
+        vnode.state.loading = false;
+        vnode.state.highlightedOption = -1;
+        import_mithril4.default.redraw();
+      }
     }
     onblur(vnode) {
       requestAnimationFrame(() => {
@@ -26845,7 +26872,7 @@
     }
     message(vnode) {
       switch (vnode.attrs.message) {
-        case "COOKIES-CHANGED":
+        case "SESSION-EXPIRED":
           return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SERVER-DOWN":
           return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
@@ -27020,19 +27047,6 @@
         });
       }
     }
-    //////////////////////////////////////////
-    // State Watcher
-    //////////////////////////////////////////
-    watchSignin = (stop) => {
-      const originalCookie = document.cookie;
-      const intervalId = setInterval(() => {
-        if (document.cookie !== originalCookie) {
-          clearInterval(intervalId);
-          stop("COOKIES-CHANGED");
-        }
-      }, 1e3);
-      return () => clearInterval(intervalId);
-    };
   };
 
   // src/app.tsx
@@ -27063,7 +27077,6 @@
     window.addEventListener("blur", async () => {
       controller.onBlurWindow();
     });
-    host.watchSignin((message) => controller.stop(message));
   }
   startup();
 })();

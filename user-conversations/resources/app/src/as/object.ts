@@ -4,6 +4,14 @@ import * as vocab from "./vocab"
 
 type map = { [key: string]: any }
 
+export class HttpError extends Error {
+	readonly status: number
+	constructor(status: number, message: string) {
+		super(message)
+		this.status = status
+	}
+}
+
 // JSONLD is a wrapper around a JSON object that provides methods for accessing common ActivityPub properties
 export class ASObject {
 
@@ -54,7 +62,7 @@ export class ASObject {
 		})
 
 		if (!response.ok) {
-			throw new Error(`Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`)
+			throw new HttpError(response.status, `Unable to fetch url:'${url}' via proxy:'${this.#proxyUrl}': ${response.status} ${response.statusText}`)
 		}
 
 		// Parse the response and return
@@ -84,7 +92,7 @@ export class ASObject {
 
 		// Report errors
 		if (!response.ok) {
-			throw new Error(`Unable to fetch url:'${url}': ${response.status} ${response.statusText}`)
+			throw new HttpError(response.status, `Unable to fetch url:'${url}': ${response.status} ${response.statusText}`)
 		}
 
 		// Parse the JSON response into a JSONLD
