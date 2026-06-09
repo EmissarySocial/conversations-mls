@@ -23274,8 +23274,6 @@
     // Pseudo-lock to prevent simultaneous polls
     #pollAgain;
     // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
-    #originalCookie;
-    // The original cookie string, used for detecting changes in cookies
     // constructor initializes the Receiver with the actor's ID and messages URL
     constructor() {
       this.#activityHandler = async (activity) => {
@@ -23286,7 +23284,6 @@
       this.#polling = false;
       this.#pollAgain = false;
       this.#generatorId = "";
-      this.#originalCookie = document.cookie;
     }
     // setActor configures the Receiver with the given Actor's information,
     // once it has been loaded from the network.
@@ -23321,7 +23318,6 @@
         this.#pollAgain = true;
         return;
       }
-      this.#checkCookies();
       this.#polling = true;
       let lastMessageId = await this.#lastMessage();
       const collection = await loadCollectionAfter(this.#messagesUrl, lastMessageId);
@@ -23343,14 +23339,6 @@
       if (this.#pollAgain) {
         this.#pollAgain = false;
         this.#poll();
-      }
-    }
-    // #checkCookies guarantees that we're still signed in as the 
-    // original user.  It throws an error if the cookies have changed since 
-    // this component was created, halting whatever operation was in progress..
-    #checkCookies() {
-      if (document.cookie !== this.#originalCookie) {
-        throw new Error("Cookies have changed since the last request.");
       }
     }
   };
@@ -27036,15 +27024,10 @@
     // State Watcher
     //////////////////////////////////////////
     watchSignin = (stop) => {
-      if (typeof cookieStore !== "undefined") {
-        cookieStore.addEventListener("change", async () => {
-          stop("COOKIES-CHANGED");
-        });
-        return;
-      }
       const originalCookie = document.cookie;
       const intervalId = setInterval(() => {
         if (document.cookie !== originalCookie) {
+          clearInterval(intervalId);
           stop("COOKIES-CHANGED");
         }
       }, 1e3);

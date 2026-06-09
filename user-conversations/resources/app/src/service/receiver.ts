@@ -15,7 +15,6 @@ export class Receiver {
 	#generatorId: string // ID of this MLS client, used for the generator field of outgoing messages
 	#polling: boolean // Pseudo-lock to prevent simultaneous polls
 	#pollAgain: boolean // Indicates that one or more messages were received during a poll, so poll again after the current poll finishes
-	readonly #originalCookie: string // The original cookie string, used for detecting changes in cookies
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor() {
@@ -24,7 +23,6 @@ export class Receiver {
 		this.#polling = false
 		this.#pollAgain = false
 		this.#generatorId = ""
-		this.#originalCookie = document.cookie
 	}
 
 	// setActor configures the Receiver with the given Actor's information,
@@ -73,9 +71,6 @@ export class Receiver {
 			return
 		}
 
-		// Verify that the cookie hasn't changed since we last checked.
-		this.#checkCookies()
-
 		// Set the "lock" to prevent simultaneous polls
 		this.#polling = true
 
@@ -117,12 +112,4 @@ export class Receiver {
 		}
 	}
 
-	// #checkCookies guarantees that we're still signed in as the 
-	// original user.  It throws an error if the cookies have changed since 
-	// this component was created, halting whatever operation was in progress..
-	#checkCookies() {
-		if (document.cookie !== this.#originalCookie) {
-			throw new Error("Cookies have changed since the last request.")
-		}
-	}
 }
