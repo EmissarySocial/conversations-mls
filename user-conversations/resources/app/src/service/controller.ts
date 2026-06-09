@@ -859,6 +859,12 @@ export class Controller {
 		return this.groupStream().id
 	}
 
+	// getFirstMessageInGroup returns the content of the first received message in a group
+	getFirstMessageInGroup = async (groupId: string): Promise<string> => {
+		const message = await this.#database.getFirstMessageInGroup(groupId)
+		return message?.content ?? ""
+	}
+
 	setGroupState(group: Group, stateId: string) {
 
 		switch (stateId) {
@@ -1422,9 +1428,9 @@ export class Controller {
 		// Mark the group with the lastMessage content
 		group.lastMessage = object.content()
 
-		// Mark the group as "unread"
 		if (!sentByMe) {
 
+			// Mark the group as "unread"
 			// If not currentlly viewing this group
 			if (groupId != this.selectedGroupId()) {
 
@@ -1440,6 +1446,8 @@ export class Controller {
 				}
 			}
 		}
+
+		console.log("Saving new message to group...", group, message)
 
 		// Update the group
 		await this.saveGroup(group)
@@ -1551,6 +1559,8 @@ export class Controller {
 		group.summary = object.summary()
 		group.tags = object.getArray("as", "tag")
 		group.unread = object.getBoolean("emissary", "unread")
+		group.lastMessage = object.getString("emissary", "lastMessage")
+		group.lastMessageId = object.getString("emissary", "lastMessageId")
 		this.setGroupState(group, object.getString("emissary", "stateId"))
 
 		await this.saveGroup(group)

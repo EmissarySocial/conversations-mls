@@ -269,6 +269,18 @@ export class Database {
 		return messageData.map(data => NewMessage(data))
 	}
 
+	// getFirstMessageInGroup returns the earliest received message in a group
+	getFirstMessageInGroup = async (groupId: string): Promise<Message | undefined> => {
+		const messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
+		const received = messageData
+			.filter(data => data.type === "RECEIVED")
+			.sort((a, b) => a.createDate - b.createDate)
+		if (received.length === 0) {
+			return undefined
+		}
+		return NewMessage(received[0]!)
+	}
+
 	// loadMessage retrieves a message from the database
 	loadMessage = async (messageID: string) => {
 		const data = await this.#db.get("message", messageID)

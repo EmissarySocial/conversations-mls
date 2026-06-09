@@ -78,6 +78,7 @@ export interface IDatabase {
 
 	// Message methods
 	allMessages(groupId: string): Promise<Message[]>
+	getFirstMessageInGroup(groupId: string): Promise<Message | undefined>
 	loadMessage(messageId: string): Promise<Message>
 	saveMessage(message: Message): Promise<void>
 	deleteMessage(messageId: string): Promise<void>

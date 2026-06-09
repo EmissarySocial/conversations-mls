@@ -18006,6 +18006,15 @@
       messageData.sort((a2, b2) => a2.createDate - b2.createDate);
       return messageData.map((data) => NewMessage(data));
     };
+    // getFirstMessageInGroup returns the earliest received message in a group
+    getFirstMessageInGroup = async (groupId) => {
+      const messageData = await this.#db.getAllFromIndex("message", "groupId", groupId);
+      const received = messageData.filter((data) => data.type === "RECEIVED").sort((a2, b2) => a2.createDate - b2.createDate);
+      if (received.length === 0) {
+        return void 0;
+      }
+      return NewMessage(received[0]);
+    };
     // loadMessage retrieves a message from the database
     loadMessage = async (messageID) => {
       const data = await this.#db.get("message", messageID);
@@ -24926,6 +24935,11 @@
     selectedGroupId = () => {
       return this.groupStream().id;
     };
+    // getFirstMessageInGroup returns the content of the first received message in a group
+    getFirstMessageInGroup = async (groupId) => {
+      const message = await this.#database.getFirstMessageInGroup(groupId);
+      return message?.content ?? "";
+    };
     setGroupState(group, stateId) {
       switch (stateId) {
         case "IMPORTANT":
@@ -25278,6 +25292,7 @@
           }
         }
       }
+      console.log("Saving new message to group...", group, message);
       await this.saveGroup(group);
     };
     #receiveActivity_Failure = async (activity) => {
@@ -25341,6 +25356,8 @@
       group.summary = object.summary();
       group.tags = object.getArray("as", "tag");
       group.unread = object.getBoolean("emissary", "unread");
+      group.lastMessage = object.getString("emissary", "lastMessage");
+      group.lastMessageId = object.getString("emissary", "lastMessageId");
       this.setGroupState(group, object.getString("emissary", "stateId"));
       await this.saveGroup(group);
     };
@@ -26628,9 +26645,16 @@
   // src/view/group-welcome.tsx
   var import_mithril23 = __toESM(require_mithril(), 1);
   var GroupWelcome = class {
+    // oninit loads the first message from the database when the component is first created
     oninit(vnode) {
-      return void 0;
+      vnode.state.firstMessage = "";
+      const group = vnode.attrs.controller.groupStream();
+      vnode.attrs.controller.getFirstMessageInGroup(group.id).then((content) => {
+        vnode.state.firstMessage = content;
+        import_mithril23.default.redraw();
+      });
     }
+    // view renders the welcome screen shown when the user receives a new group invitation
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
@@ -26638,7 +26662,7 @@
       const isEncrypted = groupIsEncrypted(group);
       const contacts = contactStreams.map((contactStream) => contactStream()).filter((contact) => contact !== void 0).filter((contact) => contact.id != controller2.actorId());
       const creator = contacts.find((contact) => contact.id == group.createdById);
-      return /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "flex-column flex-align-center max-width-640 padding-xl" }, /* @__PURE__ */ (0, import_mithril23.default)("img", { src: creator?.icon, class: "width-96 circle margin-none", alt: "" }), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-xl margin-none" }, creator?.name), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray link margin-bottom", onclick: () => this.clickUsername(vnode), onkeyup: synthClick, role: "button", tabindex: "0" }, creator?.username, " ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-arrow-up-right-square" })), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-lg" }, isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to an ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-lock-fill" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "encrypted conversation")) : /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to a ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-card-text" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "plaintext conversation"), ".")), isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Encrypted converations cannot be read by anyone outside of the group)") : /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Plaintext conversations may be visible by others on the Internet)"), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl card padding width-100% max-width-480" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "maargin-bottom" }, '"The text of the first message will go here..."'), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "primary", onclick: () => this.clickAccept(vnode) }, "Accept"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickIgnore(vnode) }, "Ignore"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickBlock(vnode) }, "Block"))))));
+      return /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "flex-column flex-align-center max-width-640 padding-xl" }, /* @__PURE__ */ (0, import_mithril23.default)("img", { src: creator?.icon, class: "width-96 circle margin-none", alt: "" }), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-xl margin-none" }, creator?.name), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray link margin-bottom", onclick: () => this.clickUsername(vnode), onkeyup: synthClick, role: "button", tabindex: "0" }, creator?.username, " ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-arrow-up-right-square" })), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-lg" }, isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to an ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-lock-fill" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "encrypted conversation")) : /* @__PURE__ */ (0, import_mithril23.default)("div", null, "is inviting you to a ", /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "margin-left-xs bi bi-card-text" }), " ", /* @__PURE__ */ (0, import_mithril23.default)("b", null, "plaintext conversation"), ".")), isEncrypted ? /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Encrypted converations cannot be read by anyone outside of the group)") : /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-gray" }, "(Plaintext conversations may be visible by others on the Internet)"), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl card padding width-100% max-width-480" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril23.default)("i", null, creator?.name), " says... ", this.firstMessagePreview(vnode.state.firstMessage)), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top-xl flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "primary", onclick: () => this.clickAccept(vnode) }, "Accept"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickIgnore(vnode) }, "Ignore"), /* @__PURE__ */ (0, import_mithril23.default)("button", { class: "text-red", onclick: () => this.clickBlock(vnode) }, "Block"))))));
     }
     /*
     <div class="margin-vertical-xl">
@@ -26653,16 +26677,29 @@
     ))}
     </div>
     */
+    // firstMessagePreview truncates the first message to 100 characters for display
+    firstMessagePreview(content) {
+      if (!content) {
+        return "";
+      }
+      if (content.length > 100) {
+        return content.slice(0, 100) + "\u2026";
+      }
+      return content;
+    }
+    // clickUsername opens the creator's profile page
     clickUsername(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       controller2.host_actor(group.createdById);
     }
+    // clickAccept joins the group and transitions it out of the WELCOME state
     clickAccept(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       controller2.joinGroup(group);
     }
+    // clickIgnore removes the group invitation without blocking the sender
     clickIgnore(vnode) {
       if (!confirm("Ignore this request?\n\nThis will remove the conversation from your list, but the requester may still be able to message you again in the future.")) {
         return;
@@ -26671,6 +26708,7 @@
       const group = controller2.groupStream();
       controller2.leaveGroup(group.id);
     }
+    // clickBlock blocks the creator and removes the group invitation
     clickBlock(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
