@@ -23,6 +23,7 @@ import { Message, NewMessage } from "../model/message"
 import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver } from "./interfaces"
 import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
 import { CodecMls } from "./codecMls"
+import { ActivityPubAuthenticationService } from "./authService"
 import { CodecPlaintext } from "./codecPlaintext"
 
 // Other utility functions
@@ -186,6 +187,7 @@ export class Controller {
 				// Load async dependencies: ciphersuite and keyPackage
 				const cipherSuite = await cipherSuiteImplementation()
 				const keyPackage = await this.loadOrCreateKeyPackage()
+				const authenticationService = new ActivityPubAuthenticationService(this.#directory)
 
 				// Create the MLS encoder service
 				this.#codecMls = new CodecMls(
@@ -193,6 +195,7 @@ export class Controller {
 					this.#database,
 					this.#delivery,
 					this.#directory,
+					authenticationService,
 					cipherSuite,
 					keyPackage.publicKeyPackage,
 					keyPackage.privateKeyPackage,

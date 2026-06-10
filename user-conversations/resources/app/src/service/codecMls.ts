@@ -1,5 +1,5 @@
 // MLS functions and types
-import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, unsafeTestingAuthenticationService, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type AuthenticationService, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage, unsafeTestingAuthenticationService } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -25,6 +25,7 @@ export class CodecMls {
 	readonly #database: IDatabase
 	readonly #delivery: IDelivery
 	readonly #directory: IDirectory
+	readonly #authService: AuthenticationService
 	readonly #cipherSuite: CiphersuiteImpl
 	readonly #generatorId: string
 
@@ -37,6 +38,7 @@ export class CodecMls {
 		database: IDatabase,
 		delivery: IDelivery,
 		directory: IDirectory,
+		authService: AuthenticationService,
 		cipherSuite: CiphersuiteImpl,
 
 		publicKeyPackage: KeyPackage,
@@ -48,6 +50,7 @@ export class CodecMls {
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
+		this.#authService = authService
 		this.#cipherSuite = cipherSuite
 
 		this.#actor = actor
@@ -750,6 +753,7 @@ export class CodecMls {
 	#context(): MlsContext {
 		return {
 			cipherSuite: this.#cipherSuite,
+			// authService: this.#authService,
 			authService: unsafeTestingAuthenticationService,
 		}
 	}

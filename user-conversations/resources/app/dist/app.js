@@ -23742,16 +23742,18 @@
     #database;
     #delivery;
     #directory;
+    #authService;
     #cipherSuite;
     #generatorId;
     #publicKeyPackage;
     #privateKeyPackage;
     #actor;
-    constructor(controller2, database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+    constructor(controller2, database, delivery, directory, authService, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
       this.#controller = controller2;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
+      this.#authService = authService;
       this.#cipherSuite = cipherSuite;
       this.#actor = actor;
       this.#generatorId = generatorId;
@@ -24196,6 +24198,7 @@
     #context() {
       return {
         cipherSuite: this.#cipherSuite,
+        // authService: this.#authService,
         authService: unsafeTestingAuthenticationService
       };
     }
@@ -24229,6 +24232,29 @@
       clientState
     };
   }
+
+  // src/service/authService.ts
+  var ActivityPubAuthenticationService = class {
+    #directory;
+    constructor(directory) {
+      this.#directory = directory;
+    }
+    async validateCredential(credential, signaturePublicKey) {
+      if (credential.credentialType !== defaultCredentialTypes.basic) {
+        console.log(`AuthenticationService: FALSE: Invalid credential type: ${credential.credentialType}`);
+        return false;
+      }
+      const actorId = new TextDecoder().decode(credential.identity);
+      if (!actorId) {
+        console.log(`AuthenticationService: FALSE: Invalid actor ID: ${actorId}`);
+        return false;
+      }
+      const keyPackages = await this.#directory.getKeyPackages([actorId]);
+      const result = keyPackages.some((kp) => uint8ArrayEqual(kp.leafNode.signaturePublicKey, signaturePublicKey));
+      console.log(`AuthenticationService: Validated credential for actor ${actorId}. Result: ${result}`, keyPackages);
+      return result;
+    }
+  };
 
   // src/service/codecPlaintext.ts
   var CodecPlaintext = class {
@@ -24509,11 +24535,13 @@
           await this.#validateKeyPackages();
           const cipherSuite = await cipherSuiteImplementation();
           const keyPackage = await this.loadOrCreateKeyPackage();
+          const authenticationService = new ActivityPubAuthenticationService(this.#directory);
           this.#codecMls = new CodecMls(
             this,
             this.#database,
             this.#delivery,
             this.#directory,
+            authenticationService,
             cipherSuite,
             keyPackage.publicKeyPackage,
             keyPackage.privateKeyPackage,
@@ -26873,15 +26901,15 @@
     message(vnode) {
       switch (vnode.attrs.message) {
         case "SESSION-EXPIRED":
-          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SERVER-DOWN":
-          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SIGN-OUT":
-          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
         case "UNSUPPORTED":
-          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "link", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", null, /* @__PURE__ */ (0, import_mithril28.default)("h2", null, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril28.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
       }
     }
   };
