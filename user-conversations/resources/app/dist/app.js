@@ -17861,7 +17861,7 @@
   // src/service/database.ts
   async function NewIndexedDB(actorId) {
     return await openDB(actorId, 1, {
-      upgrade(db, oldVersion, newVersion, transaction) {
+      upgrade(db, oldVersion, _newVersion, transaction) {
         if (oldVersion < 1) {
           db.createObjectStore("config", { keyPath: "id" });
           db.createObjectStore("group", { keyPath: "id" });
@@ -17888,7 +17888,7 @@
     erase = () => {
       this.#db.close();
       let req = globalThis.indexedDB.deleteDatabase(this.#db.name);
-      req.onsuccess = (event) => {
+      req.onsuccess = (_event) => {
         this.#host.reload();
       };
       req.onerror = (event) => {
@@ -17965,6 +17965,16 @@
       group.lastMessage = group.lastMessage.slice(0, 100);
       await this.#db.put("group", group);
       this.#onchange();
+    };
+    // groupsByTag returns all groups that include the specified tag, sorted by updateDate descending
+    groupsByTag = async (tag) => {
+      const groups = await this.#db.getAll("group");
+      return groups.filter((g2) => g2.tags.includes(tag)).sort((a2, b2) => b2.updateDate - a2.updateDate);
+    };
+    // groupsByTags returns all groups that include every one of the specified tags, sorted by updateDate descending
+    groupsByTags = async (tags) => {
+      const groups = await this.#db.getAll("group");
+      return groups.filter((g2) => tags.every((tag) => g2.tags.includes(tag))).sort((a2, b2) => b2.updateDate - a2.updateDate);
     };
     // deleteGroup removes a group from the database
     deleteGroup = async (groupId) => {

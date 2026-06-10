@@ -204,6 +204,22 @@ export class Database {
 		this.#onchange()
 	}
 
+	// groupsByTag returns all groups that include the specified tag, sorted by updateDate descending
+	groupsByTag = async (tag: string): Promise<Group[]> => {
+		const groups = await this.#db.getAll("group")
+		return groups
+			.filter(g => g.tags.includes(tag))
+			.sort((a, b) => b.updateDate - a.updateDate)
+	}
+
+	// groupsByTags returns all groups that include every one of the specified tags, sorted by updateDate descending
+	groupsByTags = async (tags: string[]): Promise<Group[]> => {
+		const groups = await this.#db.getAll("group")
+		return groups
+			.filter(g => tags.every(tag => g.tags.includes(tag)))
+			.sort((a, b) => b.updateDate - a.updateDate)
+	}
+
 	// deleteGroup removes a group from the database
 	deleteGroup = async (groupId: string) => {
 
