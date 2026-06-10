@@ -54,7 +54,7 @@ type callbackFunction = () => void
 
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
 	return await openDB<Schema>(actorId, 1, {
-		upgrade(db, oldVersion, newVersion, transaction) {
+		upgrade(db, oldVersion, _newVersion, transaction) {
 
 			if (oldVersion < 1) {
 
@@ -91,7 +91,7 @@ export class Database {
 		this.#db.close()
 		let req = globalThis.indexedDB.deleteDatabase(this.#db.name)
 
-		req.onsuccess = (event) => {
+		req.onsuccess = (_event) => {
 			this.#host.reload()
 		}
 
