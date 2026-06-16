@@ -374,6 +374,15 @@ export class Controller {
 		m.redraw()
 	}
 
+	// setConversationFilter records the currently selected conversation filter and
+	// persists it. NOTE: the actual filtering of the conversation list is not yet
+	// implemented; this only stores and surfaces the selection.
+	setConversationFilter = async (filterId: string) => {
+		this.config.selectedFilterId = filterId
+		await this.#database.saveConfig(this.config)
+		m.redraw()
+	}
+
 	page_groups = () => {
 		this.pageView = "GROUPS"
 		m.redraw()

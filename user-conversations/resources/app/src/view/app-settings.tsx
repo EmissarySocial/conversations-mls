@@ -36,7 +36,7 @@ export class AppSettings {
 				</div>
 
 				<div class="app-content scroll-vertical flex-grow padding">
-					<div class="width-800">
+					<div class="max-width-800">
 						{this.viewSection(vnode)}
 						<div class="padding-vertical-xl"></div>
 					</div>
@@ -86,7 +86,7 @@ export class AppSettings {
 
 		return (
 			<div class={cssClass} role="button" tabIndex="0" onclick={() => this.selectTab(vnode, tab)} onkeypress={synthClick}>
-				<i class={iconClass}></i> {label}
+				<i class={iconClass}></i> <span class={isSelected ? "bold" : ""}>{label}</span>
 			</div>
 		)
 	}

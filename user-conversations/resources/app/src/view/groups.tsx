@@ -1,9 +1,10 @@
-import m, { type Vnode } from "mithril"
+import m from "mithril"
 import { Controller } from "../service/controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
+import { FilterMenu } from "./widget-filterMenu"
 
-type GroupsVnode = Vnode<GroupsAttrs, GroupsState>
+type GroupsVnode = m.Vnode<GroupsAttrs, GroupsState>
 
 type GroupsAttrs = {
 	controller: Controller
@@ -17,7 +18,7 @@ export class Groups {
 		const controller = vnode.attrs.controller
 
 		return (
-			<div>
+			<div class="conversations-pane">
 				<div class="flex-row flex-align-center padding-horizontal">
 					<div class="flex-row flex-align-center clickable hover-trigger" role="link" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
 						<div class="circle width-32 hover-show text-lg margin-none align-center"><i class="bi bi-gear"></i></div>
@@ -41,34 +42,34 @@ export class Groups {
 							style="border:none; outline:none;"
 						/>
 					</div>
-					<div class="text-lg text-gray margin-none clickable" role="button" tabindex="0" onkeypress={synthClick}>
-						<i class="bi bi-filter-circle"></i>
-					</div>
+					<FilterMenu controller={controller} />
 				</div>
 
 				<hr class="margin-vertical-sm" />
 
-				{controller.groups.map((group) => {
-					let cssClass = "flex-row flex-align-center padding hover-trigger"
+				<div class="conversations-scroll">
+					{controller.groups.map((group) => {
+						let cssClass = "flex-row flex-align-center padding hover-trigger"
 
-					if (group.id == controller.selectedGroupId()) {
-						cssClass += " highlight"
-					}
+						if (group.id == controller.selectedGroupId()) {
+							cssClass += " highlight"
+						}
 
-					return (
-						<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
-							<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
-								{this.groupIcon(group)}
-							</div>
-							<div class="flex-row flex-grow nowrap ellipsis pos-relative">
-								<div class="flex-grow">
-									{this.groupLabel(group)}
+						return (
+							<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
+								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
+									{this.groupIcon(group)}
 								</div>
-								{this.unreadMarker(vnode, group)}
+								<div class="flex-row flex-grow nowrap ellipsis pos-relative">
+									<div class="flex-grow">
+										{this.groupLabel(group)}
+									</div>
+									{this.unreadMarker(vnode, group)}
+								</div>
 							</div>
-						</div>
-					)
-				})}
+						)
+					})}
+				</div>
 			</div>
 		)
 	}

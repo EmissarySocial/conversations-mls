@@ -12,6 +12,7 @@ export type Config = {
 	isDesktopNotifications: boolean // TRUE when desktop notifications are enabled
 	isSoundNotifications: boolean // TRUE when sound notifications are enabled
 	isHideOnBlur: boolean // TRUE when the app should hide when it loses focus (desktop only)
+	selectedFilterId: string // ID of the conversation filter currently applied ("" means "All Conversations")
 	ready: boolean // TRUE when an the user has passed the initial setup screen
 }
 
@@ -30,6 +31,7 @@ export function NewConfig(): Config {
 		isDesktopNotifications: false,
 		isSoundNotifications: false,
 		isHideOnBlur: false,
+		selectedFilterId: "",
 		ready: false,
 	}
 }

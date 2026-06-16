@@ -34,7 +34,7 @@ export class Index {
 	public view(vnode: IndexVnode) {
 		return (
 			<div id="conversations">
-				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
+				<div id="app-sidebar" class="table no-top-border flex-shrink-0" style="width:30%">
 					<Groups controller={vnode.attrs.controller}></Groups>
 				</div>
 				{this.viewDetails(vnode)}

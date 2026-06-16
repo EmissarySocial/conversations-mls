@@ -9,6 +9,12 @@
 		font-size: 16px;
 		background-color: var(--gray10);
 
+		/* A flex column whose conversation list (not the whole sidebar) scrolls,
+		   so the filter pop-up can overflow horizontally into the message pane. */
+		display: flex;
+		flex-direction: column;
+		overflow: visible;
+
 		[role="button"] {
 			padding: 8px;
 			border-radius: 8px;
@@ -224,4 +230,77 @@
 	margin: calc(var(--rhythm) * 2) 0px;
 	background-color: var(--gray10);
 	border-radius: calc(var(--rhythm) * 2);
+}
+
+/* The conversation sidebar's content fills the sidebar height; only the list
+   scrolls, leaving the header/search row (and the filter pop-up) un-clipped. */
+.conversations-pane {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	min-height: 0;
+}
+
+.conversations-scroll {
+	flex-grow: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: none;
+}
+
+/* Reusable pop-up component (positioned card with a caret, see widget-popup.tsx) */
+.popup-anchor {
+	position: relative;
+}
+
+.popup {
+	position: absolute;
+	top: calc(100% + var(--rhythm));
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 100;
+	min-width: 200px;
+	padding: 0;
+	background-color: var(--white);
+	border: 1px solid var(--gray20);
+	border-radius: calc(var(--rhythm) * 1.5);
+	box-shadow: 0 calc(var(--rhythm) * 0.5) calc(var(--rhythm) * 2) rgba(0, 0, 0, 0.18);
+}
+
+.popup-caret {
+	position: absolute;
+	top: calc(var(--rhythm) * -1);
+	left: 50%;
+	transform: translateX(-50%);
+	width: 0;
+	height: 0;
+	border-left: var(--rhythm) solid transparent;
+	border-right: var(--rhythm) solid transparent;
+	border-bottom: var(--rhythm) solid var(--white);
+}
+
+.filter-menu-item {
+	display: flex;
+	align-items: center;
+	margin: calc(var(--rhythm) * 0.5);
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+/* Higher specificity than the generic "#app-sidebar [role=button]" rule so the
+   item radius actually wins. */
+#conversations #app-sidebar .popup .filter-menu-item {
+	border-radius: var(--rhythm);
+}
+
+.filter-menu-item:hover {
+	background-color: var(--gray10);
+}
+
+.filter-menu-icon {
+	display: inline-flex;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1.5em;
 }
