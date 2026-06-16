@@ -1,203 +1,143 @@
 import m, { type Vnode } from "mithril"
-import type { Group } from "../model/group"
-import type { EmojiKey } from "../model/emoji"
 import type { Controller } from "../service/controller"
-import { haltEvent, synthClick } from "./utils"
+import { synthClick } from "./utils"
+import { AppSettingsNotifications } from "./app-settings-notifications"
+import { AppSettingsEncryption } from "./app-settings-encryption"
+import { AppSettingsFilters } from "./app-settings-filters"
+import { AppSettingsSignout } from "./app-settings-signout"
+
+type SettingsTab = "FILTERS" | "NOTIFICATIONS" | "ENCRYPTION" | "SIGNOUT"
 
 type AppSettingsVnode = Vnode<AppSettingsArgs, AppSettingsState>
 
 interface AppSettingsArgs {
 	controller: Controller
-	group: Group
 }
 
 interface AppSettingsState {
-	name: string
-	passcode: string
-	emojiKey: EmojiKey[]
-	isEncryptedMessages: boolean
-	isDesktopNotifications: boolean
-	isDesktopNotificationsPermission: "granted" | "denied" | "default"
-	isHideOnBlur: boolean
+	tab: SettingsTab
+	saved: boolean
+	savedTimeout?: ReturnType<typeof setTimeout>
 }
 
+// AppSettings is the shell for the settings screen. It mirrors the conversations
+// layout with a sidebar of tabs on the left and the selected section on the right.
+// Section changes are auto-saved, which surfaces a transient "Change is saved" notice.
 export class AppSettings {
 
 	oninit(vnode: AppSettingsVnode) {
-		const controller = vnode.attrs.controller
-
-		vnode.state.name = controller.config.generatorName
-		vnode.state.isHideOnBlur = controller.config.isHideOnBlur
-		vnode.state.isEncryptedMessages = controller.config.isEncryptedMessages
-		vnode.state.isDesktopNotifications = controller.config.isDesktopNotifications
-		vnode.state.isDesktopNotificationsPermission = Notification.permission
-
-		// Load the EmojiKey from the stored KeyPackage (if one exists)
-		vnode.state.emojiKey = []
-		controller.loadKeyPackage().then(keyPackage => {
-			vnode.state.emojiKey = keyPackage?.emojiKey ?? []
-			m.redraw()
-		})
+		vnode.state.tab = "FILTERS"
+		vnode.state.saved = false
 	}
 
 	view(vnode: AppSettingsVnode) {
 
-		const controller = vnode.attrs.controller
-
 		return (
-			<div id="conversations" class="app-content">
-				<div class="padding width-800">
-					<div class="flex-row flex-align-center margin-bottom">
-						<div
-							class="clickable circle width-32 margin-none flex-center"
-							onclick={() => controller.page_index()}
-							onkeypress={synthClick}
-							role="button"
-							tabIndex="0"><i class="bi bi-arrow-left"></i></div>
-						<div class="text-lg bold margin-none">Conversation Settings</div>
+			<div id="conversations">
+				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
+					{this.viewSidebar(vnode)}
+				</div>
+
+				<div class="app-content scroll-vertical flex-grow padding">
+					<div class="width-800">
+						{this.viewSection(vnode)}
+						<div class="padding-vertical-xl"></div>
 					</div>
-
-					<div class="card padding">
-						<form onsubmit={(event: SubmitEvent) => this.submit(event, vnode)}>
-							<div class="layout-vertical">
-								<div class="layout-elements">
-
-									<div class="layout-element flex-row">
-										<input type="checkbox" tabIndex="0" id="isEncryptedMessages" checked={vnode.state.isEncryptedMessages} onchange={(event: Event) => this.setEncryptedMessages(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isEncryptedMessages"> {/* NOSONOR: typescript:S6853 */}
-											<div>Send Encrypted Messages When Possible</div>
-										</label>
-									</div>
-
-									<div class="layout-element flex-row">
-										<input type="checkbox" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isHideOnBlur"> {/* NOSONOR: typescript:S6853 */}
-											<div>Hide When Window Loses Focus</div>
-										</label>
-									</div>
-
-									<div class="layout-element flex-row">
-										<input type="checkbox" id="isDesktopNotifications" checked={vnode.state.isDesktopNotifications} disabled={vnode.state.isDesktopNotificationsPermission === "denied"} onchange={(event: Event) => this.setDesktopNotifications(vnode, event)} style="height:1em; width:1em;" />
-										<label for="isDesktopNotifications">
-											<div>{(vnode.state.isDesktopNotificationsPermission == "granted") ? "Allow Desktop Notifications" : "Desktop Notifications Denied"}</div>
-											{vnode.state.isDesktopNotificationsPermission === "denied" && <div class="text-xs text-gray margin-right-xs">To re-enable desktop notifications, go to your browser settings.</div>}
-										</label>
-									</div>
-
-								</div>
-							</div>
-
-							<button type="submit" class="primary">Save Settings</button>
-							<button onclick={() => controller.page_index()}>Cancel</button>
-						</form>
-					</div>
-
-					<div class="card padding margin-top">
-						<div class="text-lg bold margin-bottom">EmojiKey</div>
-						<div class="margin-bottom-lg">
-							EmojiKeys give you an easy way to verify your identity.
-							When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey.
-							EmojiKey change frequently, so make sure you're comparing the most recent one.
-							{" "}
-							<span role="link" class="link" tabIndex="0" onclick={() => controller.host_keyPackages()} onkeypress={synthClick}>View all registered devices &rarr;</span>
-						</div>
-
-						<div class="flex-row">
-							{vnode.state.emojiKey.map(([emoji, name]) => (
-								<div key={emoji} class="layout-vertical align-center padding-horizontal">
-									<div style="font-size: 32px; line-height:1em;">{emoji}</div>
-									<div class="text-xs text-gray">{name}</div>
-								</div>
-							))}
-						</div>
-					</div>
-
-					<div class="card padding margin-top">
-						<div class="text-lg bold margin-bottom">Close Conversations</div>
-						<div class="layout-vertical margin-top">
-							<div class="layout-elements">
-								<div class="layout-element">
-									Close out this current session.
-									Your data will remain on this device, but cannot be accessed without a passcode.
-								</div>
-							</div>
-						</div>
-
-						<button class="text-red" onclick={() => controller.page_signout()}>Close</button>
-					</div>
-
-					<div class="card padding margin-top">
-						<div class="text-lg bold margin-bottom">Erase Device</div>
-						<div class="layout-vertical margin-top">
-							<div class="layout-elements">
-								<div class="layout-element">
-									Erase all conversation data from this device.  You'll be able to recover unencrypted conversations
-									on another device. But encrypted conversations will be lost forever.
-								</div>
-							</div>
-						</div>
-
-						<button class="text-red" onclick={() => this.eraseDevice(vnode)}>Erase Device</button>
-					</div>
-
-					<div class="padding-vertical-xl"></div>
 				</div>
 			</div>
 		)
 	}
 
-	setEncryptedMessages(vnode: AppSettingsVnode, event: Event) {
-		const target = event.target as HTMLInputElement
-		vnode.state.isEncryptedMessages = target.checked
-	}
+	// viewSidebar renders the back button, title, and tab navigation
+	viewSidebar(vnode: AppSettingsVnode): JSX.Element {
 
-	async setDesktopNotifications(vnode: AppSettingsVnode, event: Event) {
-		const target = event.target as HTMLInputElement
-
-		if (target.checked) {
-			const permission = await Notification.requestPermission()
-			vnode.state.isDesktopNotificationsPermission = permission
-
-			if (permission == "granted") {
-				vnode.state.isDesktopNotifications = true
-				return
-			}
-
-		}
-
-		vnode.state.isDesktopNotifications = false
-	}
-
-	setHideOnBlur(vnode: AppSettingsVnode, event: Event) {
-		const target = event.target as HTMLInputElement
-		vnode.state.isHideOnBlur = target.checked
-	}
-
-	submit(event: SubmitEvent, vnode: AppSettingsVnode) {
-
-		// Halt form submission and page reload
-		haltEvent(event)
-
-		// Save the configuration
 		const controller = vnode.attrs.controller
-		controller.saveConfiguration(
-			vnode.state.name,
-			vnode.state.passcode,
-			vnode.state.isEncryptedMessages,
-			vnode.state.isDesktopNotifications,
-			vnode.state.isHideOnBlur,
-		)
 
-		// Return to the message index
-		vnode.attrs.controller.page_index()
+		return (
+			<div>
+				<div class="flex-row flex-align-center padding-horizontal">
+					<div class="flex-row flex-align-center clickable" role="link" tabIndex="0" onclick={() => controller.page_index()} onkeypress={synthClick}>
+						<div class="circle width-32 margin-none flex-center text-lg"><i class="bi bi-arrow-left"></i></div>
+						<div class="bold text-lg margin-none">Settings</div>
+					</div>
+				</div>
+
+				<hr class="margin-vertical-sm" />
+
+				{this.viewTab(vnode, "FILTERS", "funnel", "Filters")}
+				{this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications")}
+				{this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption")}
+				{this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase")}
+			</div>
+		)
 	}
 
-	eraseDevice(vnode: AppSettingsVnode) {
+	// viewTab renders a single navigation row in the sidebar. The icon argument is
+	// a Bootstrap Icon stem (e.g. "shield"); the unselected tab uses the outline
+	// style and the selected tab uses the "-fill" variant.
+	viewTab(vnode: AppSettingsVnode, tab: SettingsTab, icon: string, label: string): JSX.Element {
 
-		if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
-			return
+		const isSelected = (vnode.state.tab == tab)
+
+		let cssClass = "flex-row flex-align-center padding hover-trigger clickable"
+
+		if (isSelected) {
+			cssClass += " highlight"
 		}
 
-		vnode.attrs.controller.eraseDevice()
+		const iconClass = "bi bi-" + icon + (isSelected ? "-fill" : "")
+
+		return (
+			<div class={cssClass} role="button" tabIndex="0" onclick={() => this.selectTab(vnode, tab)} onkeypress={synthClick}>
+				<i class={iconClass}></i> {label}
+			</div>
+		)
+	}
+
+	// viewSection renders the content for the currently selected tab
+	viewSection(vnode: AppSettingsVnode): JSX.Element {
+
+		const controller = vnode.attrs.controller
+		const save = () => this.save(vnode)
+		const saved = vnode.state.saved
+
+		switch (vnode.state.tab) {
+
+			case "ENCRYPTION":
+				return <AppSettingsEncryption controller={controller} save={save} saved={saved} />
+
+			case "NOTIFICATIONS":
+				return <AppSettingsNotifications controller={controller} save={save} saved={saved} />
+
+			case "SIGNOUT":
+				return <AppSettingsSignout controller={controller} />
+
+			case "FILTERS":
+			default:
+				return <AppSettingsFilters />
+		}
+	}
+
+	selectTab(vnode: AppSettingsVnode, tab: SettingsTab) {
+		vnode.state.tab = tab
+	}
+
+	// save persists the current config and shows a transient confirmation
+	save(vnode: AppSettingsVnode) {
+
+		// Persist the current in-memory config
+		vnode.attrs.controller.saveConfig()
+
+		// Show the "Change is saved" confirmation and hide it again after a short delay
+		vnode.state.saved = true
+
+		if (vnode.state.savedTimeout != undefined) {
+			clearTimeout(vnode.state.savedTimeout)
+		}
+
+		vnode.state.savedTimeout = setTimeout(() => {
+			vnode.state.saved = false
+			m.redraw()
+		}, 2000)
 	}
 }

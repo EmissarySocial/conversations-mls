@@ -10,6 +10,7 @@ export type Config = {
 	encryptionKeySalt: Uint8Array // Salt for the encryption key
 	isEncryptedMessages: boolean // TRUE when the user wants to send encrypted messages when possible
 	isDesktopNotifications: boolean // TRUE when desktop notifications are enabled
+	isSoundNotifications: boolean // TRUE when sound notifications are enabled
 	isHideOnBlur: boolean // TRUE when the app should hide when it loses focus (desktop only)
 	ready: boolean // TRUE when an the user has passed the initial setup screen
 }
@@ -27,6 +28,7 @@ export function NewConfig(): Config {
 		lastMessageId: "",
 		isEncryptedMessages: false,
 		isDesktopNotifications: false,
+		isSoundNotifications: false,
 		isHideOnBlur: false,
 		ready: false,
 	}

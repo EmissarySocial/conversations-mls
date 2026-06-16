@@ -264,6 +264,12 @@ export class Controller {
 		await this.#database.saveConfig(this.config)
 	}
 
+	// saveConfig persists the current in-memory config to the database. Used by the
+	// settings screen for auto-saving individual changes after mutating this.config.
+	saveConfig = async () => {
+		await this.#database.saveConfig(this.config)
+	}
+
 	// signIn uses the provided passcode to extract the encryption key from the configuration value.
 	signIn = async (passcode: string): Promise<boolean> => {
 
