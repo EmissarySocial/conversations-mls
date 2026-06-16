@@ -18341,15 +18341,22 @@
       await this.#db.put("group", group);
       this.#onchange();
     };
-    // groupsByTag returns all groups that include the specified tag, sorted by updateDate descending
-    groupsByTag = async (tag) => {
+    // searchGroups returns all groups that include every one of the specified tags
+    // and match one of the specified stateIds. Results are sorted with IMPORTANT
+    // groups first, then by updateDate descending within each tier.
+    // An empty tags or stateIds array means "do not filter on that field".
+    searchGroups = async (tags, stateIds = []) => {
       const groups = await this.#db.getAll("group");
-      return groups.filter((g2) => g2.tags.includes(tag)).sort((a2, b2) => b2.updateDate - a2.updateDate);
-    };
-    // groupsByTags returns all groups that include every one of the specified tags, sorted by updateDate descending
-    groupsByTags = async (tags) => {
-      const groups = await this.#db.getAll("group");
-      return groups.filter((g2) => tags.every((tag) => g2.tags.includes(tag))).sort((a2, b2) => b2.updateDate - a2.updateDate);
+      return groups.filter((g2) => tags.every((tag) => g2.tags.includes(tag))).filter((g2) => stateIds.length === 0 || stateIds.includes(g2.stateId)).sort((a2, b2) => {
+        if (a2.stateId === "IMPORTANT") {
+          if (b2.stateId !== "IMPORTANT") {
+            return -1;
+          }
+        } else if (b2.stateId === "IMPORTANT") {
+          return 1;
+        }
+        return b2.updateDate - a2.updateDate;
+      });
     };
     // deleteGroup removes a group from the database
     deleteGroup = async (groupId) => {

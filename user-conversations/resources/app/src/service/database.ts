@@ -3,7 +3,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 
 // Model Types
 import { type Config, ConfigID, NewConfig } from "../model/config"
-import { type EncryptedGroup, type Group } from "../model/group"
+import { type EncryptedGroup, type Group, type GroupState } from "../model/group"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
@@ -202,20 +202,28 @@ export class Database {
 		this.#onchange()
 	}
 
-	// groupsByTag returns all groups that include the specified tag, sorted by updateDate descending
-	groupsByTag = async (tag: string): Promise<Group[]> => {
-		const groups = await this.#db.getAll("group")
-		return groups
-			.filter(g => g.tags.includes(tag))
-			.sort((a, b) => b.updateDate - a.updateDate)
-	}
-
-	// groupsByTags returns all groups that include every one of the specified tags, sorted by updateDate descending
-	groupsByTags = async (tags: string[]): Promise<Group[]> => {
+	// searchGroups returns all groups that include every one of the specified tags
+	// and match one of the specified stateIds. Results are sorted with IMPORTANT
+	// groups first, then by updateDate descending within each tier.
+	// An empty tags or stateIds array means "do not filter on that field".
+	searchGroups = async (tags: string[], stateIds: GroupState[] = []): Promise<Group[]> => {
 		const groups = await this.#db.getAll("group")
 		return groups
 			.filter(g => tags.every(tag => g.tags.includes(tag)))
-			.sort((a, b) => b.updateDate - a.updateDate)
+			.filter(g => stateIds.length === 0 || stateIds.includes(g.stateId))
+			.sort((a, b) => {
+
+				if (a.stateId === "IMPORTANT") {
+					if (b.stateId !== "IMPORTANT") {
+						return -1
+					}
+				} else if (b.stateId === "IMPORTANT") {
+					return 1
+				}
+
+				// Within the same tier, sort by updateDate descending
+				return b.updateDate - a.updateDate
+			})
 	}
 
 	// deleteGroup removes a group from the database
