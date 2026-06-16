@@ -24445,6 +24445,7 @@
     message;
     inReplyTo;
     pageView = "LOADING";
+    settingsTab = "FILTERS";
     modalView = "";
     isWindowFocused = true;
     isApplicationRunning = true;
@@ -24640,6 +24641,7 @@
     };
     page_settings = () => {
       this.pageView = "SETTINGS";
+      this.settingsTab = "FILTERS";
       import_mithril.default.redraw();
     };
     page_groups = () => {
@@ -26946,7 +26948,6 @@
   // src/view/app-settings.tsx
   var AppSettings = class {
     oninit(vnode) {
-      vnode.state.tab = "FILTERS";
       vnode.state.saved = false;
     }
     view(vnode) {
@@ -26961,7 +26962,7 @@
     // a Bootstrap Icon stem (e.g. "shield"); the unselected tab uses the outline
     // style and the selected tab uses the "-fill" variant.
     viewTab(vnode, tab, icon, label) {
-      const isSelected = vnode.state.tab == tab;
+      const isSelected = vnode.attrs.controller.settingsTab == tab;
       let cssClass = "flex-row flex-align-center padding hover-trigger clickable";
       if (isSelected) {
         cssClass += " highlight";
@@ -26974,7 +26975,7 @@
       const controller2 = vnode.attrs.controller;
       const save = () => this.save(vnode);
       const saved = vnode.state.saved;
-      switch (vnode.state.tab) {
+      switch (controller2.settingsTab) {
         case "ENCRYPTION":
           return /* @__PURE__ */ (0, import_mithril32.default)(AppSettingsEncryption, { controller: controller2, save, saved });
         case "NOTIFICATIONS":
@@ -26987,7 +26988,7 @@
       }
     }
     selectTab(vnode, tab) {
-      vnode.state.tab = tab;
+      vnode.attrs.controller.settingsTab = tab;
     }
     // save persists the current config and shows a transient confirmation
     save(vnode) {

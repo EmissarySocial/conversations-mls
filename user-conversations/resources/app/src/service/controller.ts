@@ -31,6 +31,9 @@ import { cipherSuiteImplementation, decodeKeyPackage, decodeKeyFromBase64, deriv
 
 import { newId } from "./utils"
 
+// SettingsTab identifies which tab is active on the settings screen.
+export type SettingsTab = "FILTERS" | "NOTIFICATIONS" | "ENCRYPTION" | "SIGNOUT"
+
 export class Controller {
 
 	readonly #actorId: string
@@ -61,6 +64,7 @@ export class Controller {
 	inReplyTo: Message | undefined
 
 	pageView: string = "LOADING"
+	settingsTab: SettingsTab = "FILTERS"
 	modalView: string = ""
 	isWindowFocused: boolean = true
 	isApplicationRunning: boolean = true
@@ -364,6 +368,9 @@ export class Controller {
 
 	page_settings = () => {
 		this.pageView = "SETTINGS"
+
+		// Deliberately entering settings always starts on the default tab
+		this.settingsTab = "FILTERS"
 		m.redraw()
 	}
 

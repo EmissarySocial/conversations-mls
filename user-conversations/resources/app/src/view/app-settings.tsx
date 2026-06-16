@@ -1,12 +1,10 @@
 import m, { type Vnode } from "mithril"
-import type { Controller } from "../service/controller"
+import type { Controller, SettingsTab } from "../service/controller"
 import { synthClick } from "./utils"
 import { AppSettingsNotifications } from "./app-settings-notifications"
 import { AppSettingsEncryption } from "./app-settings-encryption"
 import { AppSettingsFilters } from "./app-settings-filters"
 import { AppSettingsSignout } from "./app-settings-signout"
-
-type SettingsTab = "FILTERS" | "NOTIFICATIONS" | "ENCRYPTION" | "SIGNOUT"
 
 type AppSettingsVnode = Vnode<AppSettingsArgs, AppSettingsState>
 
@@ -15,18 +13,17 @@ interface AppSettingsArgs {
 }
 
 interface AppSettingsState {
-	tab: SettingsTab
 	saved: boolean
 	savedTimeout?: ReturnType<typeof setTimeout>
 }
 
 // AppSettings is the shell for the settings screen. It mirrors the conversations
 // layout with a sidebar of tabs on the left and the selected section on the right.
-// Section changes are auto-saved, which surfaces a transient "Change is saved" notice.
+// The active tab lives on the controller so it survives the component being
+// unmounted and remounted (e.g. when the window loses and regains focus).
 export class AppSettings {
 
 	oninit(vnode: AppSettingsVnode) {
-		vnode.state.tab = "FILTERS"
 		vnode.state.saved = false
 	}
 
@@ -77,7 +74,7 @@ export class AppSettings {
 	// style and the selected tab uses the "-fill" variant.
 	viewTab(vnode: AppSettingsVnode, tab: SettingsTab, icon: string, label: string): JSX.Element {
 
-		const isSelected = (vnode.state.tab == tab)
+		const isSelected = (vnode.attrs.controller.settingsTab == tab)
 
 		let cssClass = "flex-row flex-align-center padding hover-trigger clickable"
 
@@ -101,7 +98,7 @@ export class AppSettings {
 		const save = () => this.save(vnode)
 		const saved = vnode.state.saved
 
-		switch (vnode.state.tab) {
+		switch (controller.settingsTab) {
 
 			case "ENCRYPTION":
 				return <AppSettingsEncryption controller={controller} save={save} saved={saved} />
@@ -119,7 +116,7 @@ export class AppSettings {
 	}
 
 	selectTab(vnode: AppSettingsVnode, tab: SettingsTab) {
-		vnode.state.tab = tab
+		vnode.attrs.controller.settingsTab = tab
 	}
 
 	// save persists the current config and shows a transient confirmation
