@@ -636,7 +636,14 @@ export class Controller {
 		return await this.#database.saveKeyPackage(dbKeyPackage)
 	}
 
-	// loadOrCreateKeyPackage tries to load the KeyPackage for the 
+	// loadKeyPackage reads the current Actor's KeyPackage from the local
+	// database, or returns undefined if none exists. Unlike loadOrCreateKeyPackage,
+	// it never creates a new KeyPackage.
+	loadKeyPackage = (): Promise<DBKeyPackage | undefined> => {
+		return this.#database.loadKeyPackage()
+	}
+
+	// loadOrCreateKeyPackage tries to load the KeyPackage for the
 	// current Actor. If none exists, then a new one is created and returned
 	loadOrCreateKeyPackage = async (): Promise<DBKeyPackage> => {
 

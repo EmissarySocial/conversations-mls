@@ -1,5 +1,6 @@
 import m, { type Vnode } from "mithril"
 import type { Group } from "../model/group"
+import type { EmojiKey } from "../model/emoji"
 import type { Controller } from "../service/controller"
 import { haltEvent, synthClick } from "./utils"
 
@@ -13,6 +14,7 @@ interface AppSettingsArgs {
 interface AppSettingsState {
 	name: string
 	passcode: string
+	emojiKey: EmojiKey[]
 	isEncryptedMessages: boolean
 	isDesktopNotifications: boolean
 	isDesktopNotificationsPermission: "granted" | "denied" | "default"
@@ -29,6 +31,13 @@ export class AppSettings {
 		vnode.state.isEncryptedMessages = controller.config.isEncryptedMessages
 		vnode.state.isDesktopNotifications = controller.config.isDesktopNotifications
 		vnode.state.isDesktopNotificationsPermission = Notification.permission
+
+		// Load the EmojiKey from the stored KeyPackage (if one exists)
+		vnode.state.emojiKey = []
+		controller.loadKeyPackage().then(keyPackage => {
+			vnode.state.emojiKey = keyPackage?.emojiKey ?? []
+			m.redraw()
+		})
 	}
 
 	view(vnode: AppSettingsVnode) {
@@ -94,7 +103,7 @@ export class AppSettings {
 						</div>
 
 						<div class="flex-row">
-							{controller.emojiKey.map(([emoji, name]) => (
+							{vnode.state.emojiKey.map(([emoji, name]) => (
 								<div key={emoji} class="layout-vertical align-center padding-horizontal">
 									<div style="font-size: 32px; line-height:1em;">{emoji}</div>
 									<div class="text-xs text-gray">{name}</div>
