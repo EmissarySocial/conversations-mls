@@ -47,6 +47,12 @@ export function base64ToUint8Array(base64: string): Uint8Array {
 	return Uint8Array.from(binaryString, c => c.codePointAt(0)!)
 }
 
+// uint8ArrayToBase64 converts a Uint8Array to a standard base64-encoded string.
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+	const binaryString = Array.from(bytes, b => String.fromCodePoint(b)).join('')
+	return globalThis.btoa(binaryString)
+}
+
 // newId generates a new unique identifier in the form of a URI with a UUID
 export function newId(): string {
 	return "uri:uuid:" + crypto.randomUUID()

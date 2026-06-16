@@ -1,5 +1,6 @@
-// ts-mls TYpes
+// ts-mls Types
 import { type KeyPackage } from "ts-mls"
+import type { DBKeyPackage } from "../model/db-keypackage"
 
 import * as vocab from "../as/vocab"
 import { Activity } from "../as/activity"
@@ -19,31 +20,20 @@ export class Directory {
 	readonly #delivery: IDelivery
 	readonly #proxy: IProxy
 
-	#actorId: string // ID of the local actor 
-	#generatorId: string // ID of the generator
-	#generatorName: string // Name of the generator
+	#actorId: string // ID of the local actor
 
 	constructor(delivery: IDelivery, proxy: IProxy, actorId: string) {
 		this.#delivery = delivery
 		this.#actorId = actorId
-		this.#generatorId = ""
-		this.#generatorName = ""
 		this.#proxy = proxy
 	}
 
 	stop = () => {
 		this.#actorId = ""
-		this.#generatorId = ""
-		this.#generatorName = ""
 	}
 
 	setActor = (actor: Actor) => {
 		this.#actorId = actor.id()
-	}
-
-	setGenerator = (generatorId: string, generatorName: string) => {
-		this.#generatorId = generatorId
-		this.#generatorName = generatorName
 	}
 
 	// getKeyPackage loads the KeyPackages published by a single actor
@@ -90,36 +80,13 @@ export class Directory {
 
 	// createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
 	// It returns the ID of the newly created KeyPackage or throws an error on failure.
-	createKeyPackage = async (publicPackage: KeyPackage): Promise<[string, string]> => {
-
-		// Create an ActivityPub JSON-LD object for the KeyPackage
-		const keyPackage = NewAPKeyPackage(
-			"", // ID will be assigned by the server
-			this.#generatorId,
-			this.#generatorName,
-			this.#actorId,
-			publicPackage,
-		)
-
-		// Create a new KeyPackage and return the ID of the newly created KeyPackage
-		return await this.#createObject(keyPackage)
+	createKeyPackage = async (dbKeyPackage: DBKeyPackage): Promise<[string, string]> => {
+		return await this.#createObject(NewAPKeyPackage(dbKeyPackage))
 	}
 
 	// updateKeyPackage sends the provided KeyPackage to the server as an ActivityPub `Update` activity.
-	// It returns the ID of the updated KeyPackage or throws an error on failure.
-	updateKeyPackage = async (keyPackageId: string, publicPackage: KeyPackage): Promise<void> => {
-
-		// Create an ActivityPub JSON-LD object for the KeyPackage
-		const keyPackage = NewAPKeyPackage(
-			keyPackageId,
-			this.#generatorId,
-			this.#generatorName,
-			this.#actorId,
-			publicPackage,
-		)
-
-		// Update the KeyPackage via the ActivityPub API
-		await this.#updateObject(keyPackage)
+	updateKeyPackage = async (dbKeyPackage: DBKeyPackage): Promise<void> => {
+		await this.#updateObject(NewAPKeyPackage(dbKeyPackage))
 	}
 
 	// deleteKeyPackage removes a single KeyPackage from the server

@@ -1,8 +1,7 @@
-import type { KeyPackage } from "ts-mls"
-
 import { bytesToBase64, encode, keyPackageEncoder } from "ts-mls"
 
 import { CIPHER_X25519_AES128, cipherSuiteName } from "../service/algorithms"
+import type { DBKeyPackage } from "./db-keypackage"
 
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
 export interface APKeyPackage {
@@ -13,6 +12,8 @@ export interface APKeyPackage {
 	mediaType: "message/mls"
 	encoding: "base64"
 	content: string
+	name: string
+	summary: string
 	generator: {
 		id: string,
 		type: "Application",
@@ -22,24 +23,26 @@ export interface APKeyPackage {
 }
 
 // NewAPKeyPackage creates a fully initialized KeyPackage object
-// using the provided actorID and public KeyPackage.
-export function NewAPKeyPackage(keyPackageId: string, generatorId: string, generatorName: string, actorID: string, publicPackage: KeyPackage): APKeyPackage {
+// using the provided DBKeyPackage.
+export function NewAPKeyPackage(dbKeyPackage: DBKeyPackage): APKeyPackage {
 
 	// Encode the KeyPackage as an MLS message
-	const keyPackageAsBase64 = encodeKeyPackage(publicPackage)
+	const keyPackageAsBase64 = encodeKeyPackage(dbKeyPackage)
 
 	return {
-		id: keyPackageId,
+		id: dbKeyPackage.keyPackageURL,
 		type: "KeyPackage",
 		to: "Public",
-		attributedTo: actorID,
+		attributedTo: dbKeyPackage.actorId,
 		mediaType: "message/mls",
 		encoding: "base64",
 		content: keyPackageAsBase64,
+		name: dbKeyPackage.signature,
+		summary: dbKeyPackage.emojiKey.map(emoji => emoji[0]).join(""),
 		generator: {
-			id: generatorId,
+			id: dbKeyPackage.generatorId,
 			type: "Application",
-			name: generatorName,
+			name: dbKeyPackage.generatorName,
 		},
 		ciphersuite: cipherSuiteName(CIPHER_X25519_AES128) ?? ""
 	}
@@ -48,6 +51,6 @@ export function NewAPKeyPackage(keyPackageId: string, generatorId: string, gener
 // encodeKeyPackage represents a KeyPackage as a base64-encoded raw TLS KeyPackage.
 // Uses the raw format (version + cipherSuite + initKey + leafNode + extensions + signature)
 // without the MlsMessage wrapper, matching the format used by Bonfire and other implementations.
-export function encodeKeyPackage(keyPackage: KeyPackage): string {
-	return bytesToBase64(encode(keyPackageEncoder, keyPackage))
+export function encodeKeyPackage(dbKeyPackage: DBKeyPackage): string {
+	return bytesToBase64(encode(keyPackageEncoder, dbKeyPackage.publicKeyPackage))
 }

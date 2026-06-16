@@ -198,7 +198,7 @@ export class CodecMls {
 		group.members = this.getGroupMembers(group)
 		await this.#database.saveGroup(group)
 
-		// Send welcome to new members
+		// (async) Send welcome to new members
 		if (commitResult.welcome != undefined) {
 			this.#sendMlsMessage(
 				vocab.ObjectTypeMlsWelcome,
@@ -245,7 +245,7 @@ export class CodecMls {
 		})
 
 		// Send a message to the group members
-		await this.#sendMlsMessage(
+		this.#sendMlsMessage(
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			proposal.message,

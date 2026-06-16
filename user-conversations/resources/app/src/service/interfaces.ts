@@ -7,7 +7,7 @@
 import Stream from "mithril/stream"
 
 // ts-mls types
-import { type PrivateKeyPackage, type KeyPackage } from "ts-mls"
+import { type KeyPackage } from "ts-mls"
 
 // ActivityStreams types
 import { type Activity } from "../as/activity"
@@ -73,7 +73,7 @@ export interface IDatabase {
 
 	// KeyPackage methods
 	loadKeyPackage(): Promise<DBKeyPackage | undefined>
-	saveKeyPackage(keyPackageId: string, publicPackage: KeyPackage, privatePackage: PrivateKeyPackage): Promise<DBKeyPackage>
+	saveKeyPackage(dbKeyPackage: DBKeyPackage): Promise<DBKeyPackage>
 	deleteKeyPackage(): Promise<void>
 
 	// Message methods
@@ -116,13 +116,12 @@ export interface IDirectory {
 
 	// Lifecycle methods
 	setActor(actor: Actor): void
-	setGenerator(generatorId: string, generatorName: string): void
 
 	// KeyPackage methods
 	getKeyPackagesByActor(actorId: string): AsyncGenerator<Document>
 	getKeyPackages(actorIDs: string[]): Promise<KeyPackage[]>
-	createKeyPackage(publicPackage: KeyPackage): Promise<[string, string]>
-	updateKeyPackage(keyPackageId: string, publicPackage: KeyPackage): Promise<void>
+	createKeyPackage(dbKeyPackage: DBKeyPackage): Promise<[string, string]>
+	updateKeyPackage(dbKeyPackage: DBKeyPackage): Promise<void>
 	deleteKeyPackage(keyPackageUrl: string): Promise<void>
 }
 

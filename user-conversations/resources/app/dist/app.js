@@ -10073,6 +10073,264 @@
   // src/app.tsx
   var import_mithril33 = __toESM(require_mithril(), 1);
 
+  // node_modules/idb/build/index.js
+  var instanceOfAny = (object, constructors) => constructors.some((c2) => object instanceof c2);
+  var idbProxyableTypes;
+  var cursorAdvanceMethods;
+  function getIdbProxyableTypes() {
+    return idbProxyableTypes || (idbProxyableTypes = [
+      IDBDatabase,
+      IDBObjectStore,
+      IDBIndex,
+      IDBCursor,
+      IDBTransaction
+    ]);
+  }
+  function getCursorAdvanceMethods() {
+    return cursorAdvanceMethods || (cursorAdvanceMethods = [
+      IDBCursor.prototype.advance,
+      IDBCursor.prototype.continue,
+      IDBCursor.prototype.continuePrimaryKey
+    ]);
+  }
+  var transactionDoneMap = /* @__PURE__ */ new WeakMap();
+  var transformCache = /* @__PURE__ */ new WeakMap();
+  var reverseTransformCache = /* @__PURE__ */ new WeakMap();
+  function promisifyRequest(request) {
+    const promise = new Promise((resolve, reject) => {
+      const unlisten = () => {
+        request.removeEventListener("success", success);
+        request.removeEventListener("error", error);
+      };
+      const success = () => {
+        resolve(wrap(request.result));
+        unlisten();
+      };
+      const error = () => {
+        reject(request.error);
+        unlisten();
+      };
+      request.addEventListener("success", success);
+      request.addEventListener("error", error);
+    });
+    reverseTransformCache.set(promise, request);
+    return promise;
+  }
+  function cacheDonePromiseForTransaction(tx) {
+    if (transactionDoneMap.has(tx))
+      return;
+    const done = new Promise((resolve, reject) => {
+      const unlisten = () => {
+        tx.removeEventListener("complete", complete);
+        tx.removeEventListener("error", error);
+        tx.removeEventListener("abort", error);
+      };
+      const complete = () => {
+        resolve();
+        unlisten();
+      };
+      const error = () => {
+        reject(tx.error || new DOMException("AbortError", "AbortError"));
+        unlisten();
+      };
+      tx.addEventListener("complete", complete);
+      tx.addEventListener("error", error);
+      tx.addEventListener("abort", error);
+    });
+    transactionDoneMap.set(tx, done);
+  }
+  var idbProxyTraps = {
+    get(target, prop, receiver) {
+      if (target instanceof IDBTransaction) {
+        if (prop === "done")
+          return transactionDoneMap.get(target);
+        if (prop === "store") {
+          return receiver.objectStoreNames[1] ? void 0 : receiver.objectStore(receiver.objectStoreNames[0]);
+        }
+      }
+      return wrap(target[prop]);
+    },
+    set(target, prop, value) {
+      target[prop] = value;
+      return true;
+    },
+    has(target, prop) {
+      if (target instanceof IDBTransaction && (prop === "done" || prop === "store")) {
+        return true;
+      }
+      return prop in target;
+    }
+  };
+  function replaceTraps(callback) {
+    idbProxyTraps = callback(idbProxyTraps);
+  }
+  function wrapFunction(func) {
+    if (getCursorAdvanceMethods().includes(func)) {
+      return function(...args) {
+        func.apply(unwrap(this), args);
+        return wrap(this.request);
+      };
+    }
+    return function(...args) {
+      return wrap(func.apply(unwrap(this), args));
+    };
+  }
+  function transformCachableValue(value) {
+    if (typeof value === "function")
+      return wrapFunction(value);
+    if (value instanceof IDBTransaction)
+      cacheDonePromiseForTransaction(value);
+    if (instanceOfAny(value, getIdbProxyableTypes()))
+      return new Proxy(value, idbProxyTraps);
+    return value;
+  }
+  function wrap(value) {
+    if (value instanceof IDBRequest)
+      return promisifyRequest(value);
+    if (transformCache.has(value))
+      return transformCache.get(value);
+    const newValue = transformCachableValue(value);
+    if (newValue !== value) {
+      transformCache.set(value, newValue);
+      reverseTransformCache.set(newValue, value);
+    }
+    return newValue;
+  }
+  var unwrap = (value) => reverseTransformCache.get(value);
+  function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
+    const request = indexedDB.open(name, version);
+    const openPromise = wrap(request);
+    if (upgrade) {
+      request.addEventListener("upgradeneeded", (event) => {
+        upgrade(wrap(request.result), event.oldVersion, event.newVersion, wrap(request.transaction), event);
+      });
+    }
+    if (blocked) {
+      request.addEventListener("blocked", (event) => blocked(
+        // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
+        event.oldVersion,
+        event.newVersion,
+        event
+      ));
+    }
+    openPromise.then((db) => {
+      if (terminated)
+        db.addEventListener("close", () => terminated());
+      if (blocking) {
+        db.addEventListener("versionchange", (event) => blocking(event.oldVersion, event.newVersion, event));
+      }
+    }).catch(() => {
+    });
+    return openPromise;
+  }
+  var readMethods = ["get", "getKey", "getAll", "getAllKeys", "count"];
+  var writeMethods = ["put", "add", "delete", "clear"];
+  var cachedMethods = /* @__PURE__ */ new Map();
+  function getMethod(target, prop) {
+    if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === "string")) {
+      return;
+    }
+    if (cachedMethods.get(prop))
+      return cachedMethods.get(prop);
+    const targetFuncName = prop.replace(/FromIndex$/, "");
+    const useIndex = prop !== targetFuncName;
+    const isWrite = writeMethods.includes(targetFuncName);
+    if (
+      // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
+      !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))
+    ) {
+      return;
+    }
+    const method = async function(storeName, ...args) {
+      const tx = this.transaction(storeName, isWrite ? "readwrite" : "readonly");
+      let target2 = tx.store;
+      if (useIndex)
+        target2 = target2.index(args.shift());
+      return (await Promise.all([
+        target2[targetFuncName](...args),
+        isWrite && tx.done
+      ]))[0];
+    };
+    cachedMethods.set(prop, method);
+    return method;
+  }
+  replaceTraps((oldTraps) => ({
+    ...oldTraps,
+    get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
+    has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
+  }));
+  var advanceMethodProps = ["continue", "continuePrimaryKey", "advance"];
+  var methodMap = {};
+  var advanceResults = /* @__PURE__ */ new WeakMap();
+  var ittrProxiedCursorToOriginalProxy = /* @__PURE__ */ new WeakMap();
+  var cursorIteratorTraps = {
+    get(target, prop) {
+      if (!advanceMethodProps.includes(prop))
+        return target[prop];
+      let cachedFunc = methodMap[prop];
+      if (!cachedFunc) {
+        cachedFunc = methodMap[prop] = function(...args) {
+          advanceResults.set(this, ittrProxiedCursorToOriginalProxy.get(this)[prop](...args));
+        };
+      }
+      return cachedFunc;
+    }
+  };
+  async function* iterate(...args) {
+    let cursor = this;
+    if (!(cursor instanceof IDBCursor)) {
+      cursor = await cursor.openCursor(...args);
+    }
+    if (!cursor)
+      return;
+    cursor = cursor;
+    const proxiedCursor = new Proxy(cursor, cursorIteratorTraps);
+    ittrProxiedCursorToOriginalProxy.set(proxiedCursor, cursor);
+    reverseTransformCache.set(proxiedCursor, unwrap(cursor));
+    while (cursor) {
+      yield proxiedCursor;
+      cursor = await (advanceResults.get(proxiedCursor) || cursor.continue());
+      advanceResults.delete(proxiedCursor);
+    }
+  }
+  function isIteratorProp(target, prop) {
+    return prop === Symbol.asyncIterator && instanceOfAny(target, [IDBIndex, IDBObjectStore, IDBCursor]) || prop === "iterate" && instanceOfAny(target, [IDBIndex, IDBObjectStore]);
+  }
+  replaceTraps((oldTraps) => ({
+    ...oldTraps,
+    get(target, prop, receiver) {
+      if (isIteratorProp(target, prop))
+        return iterate;
+      return oldTraps.get(target, prop, receiver);
+    },
+    has(target, prop) {
+      return isIteratorProp(target, prop) || oldTraps.has(target, prop);
+    }
+  }));
+
+  // src/model/utils.ts
+  function newId() {
+    return "uri:uuid:" + crypto.randomUUID();
+  }
+
+  // src/model/config.ts
+  var ConfigID = "config";
+  function NewConfig() {
+    return {
+      id: ConfigID,
+      generatorId: newId(),
+      generatorName: "Unknown Device",
+      encryptionKey: new ArrayBuffer(0),
+      encryptionKeyIV: new Uint8Array(),
+      encryptionKeySalt: new Uint8Array(),
+      lastMessageId: "",
+      isEncryptedMessages: false,
+      isDesktopNotifications: false,
+      isHideOnBlur: false,
+      ready: false
+    };
+  }
+
   // node_modules/ts-mls/dist/src/codec/tlsEncoder.js
   function encode(enc, t2) {
     const [len, write] = enc(t2);
@@ -17490,264 +17748,6 @@
     }
   }));
 
-  // node_modules/idb/build/index.js
-  var instanceOfAny = (object, constructors) => constructors.some((c2) => object instanceof c2);
-  var idbProxyableTypes;
-  var cursorAdvanceMethods;
-  function getIdbProxyableTypes() {
-    return idbProxyableTypes || (idbProxyableTypes = [
-      IDBDatabase,
-      IDBObjectStore,
-      IDBIndex,
-      IDBCursor,
-      IDBTransaction
-    ]);
-  }
-  function getCursorAdvanceMethods() {
-    return cursorAdvanceMethods || (cursorAdvanceMethods = [
-      IDBCursor.prototype.advance,
-      IDBCursor.prototype.continue,
-      IDBCursor.prototype.continuePrimaryKey
-    ]);
-  }
-  var transactionDoneMap = /* @__PURE__ */ new WeakMap();
-  var transformCache = /* @__PURE__ */ new WeakMap();
-  var reverseTransformCache = /* @__PURE__ */ new WeakMap();
-  function promisifyRequest(request) {
-    const promise = new Promise((resolve, reject) => {
-      const unlisten = () => {
-        request.removeEventListener("success", success);
-        request.removeEventListener("error", error);
-      };
-      const success = () => {
-        resolve(wrap(request.result));
-        unlisten();
-      };
-      const error = () => {
-        reject(request.error);
-        unlisten();
-      };
-      request.addEventListener("success", success);
-      request.addEventListener("error", error);
-    });
-    reverseTransformCache.set(promise, request);
-    return promise;
-  }
-  function cacheDonePromiseForTransaction(tx) {
-    if (transactionDoneMap.has(tx))
-      return;
-    const done = new Promise((resolve, reject) => {
-      const unlisten = () => {
-        tx.removeEventListener("complete", complete);
-        tx.removeEventListener("error", error);
-        tx.removeEventListener("abort", error);
-      };
-      const complete = () => {
-        resolve();
-        unlisten();
-      };
-      const error = () => {
-        reject(tx.error || new DOMException("AbortError", "AbortError"));
-        unlisten();
-      };
-      tx.addEventListener("complete", complete);
-      tx.addEventListener("error", error);
-      tx.addEventListener("abort", error);
-    });
-    transactionDoneMap.set(tx, done);
-  }
-  var idbProxyTraps = {
-    get(target, prop, receiver) {
-      if (target instanceof IDBTransaction) {
-        if (prop === "done")
-          return transactionDoneMap.get(target);
-        if (prop === "store") {
-          return receiver.objectStoreNames[1] ? void 0 : receiver.objectStore(receiver.objectStoreNames[0]);
-        }
-      }
-      return wrap(target[prop]);
-    },
-    set(target, prop, value) {
-      target[prop] = value;
-      return true;
-    },
-    has(target, prop) {
-      if (target instanceof IDBTransaction && (prop === "done" || prop === "store")) {
-        return true;
-      }
-      return prop in target;
-    }
-  };
-  function replaceTraps(callback) {
-    idbProxyTraps = callback(idbProxyTraps);
-  }
-  function wrapFunction(func) {
-    if (getCursorAdvanceMethods().includes(func)) {
-      return function(...args) {
-        func.apply(unwrap(this), args);
-        return wrap(this.request);
-      };
-    }
-    return function(...args) {
-      return wrap(func.apply(unwrap(this), args));
-    };
-  }
-  function transformCachableValue(value) {
-    if (typeof value === "function")
-      return wrapFunction(value);
-    if (value instanceof IDBTransaction)
-      cacheDonePromiseForTransaction(value);
-    if (instanceOfAny(value, getIdbProxyableTypes()))
-      return new Proxy(value, idbProxyTraps);
-    return value;
-  }
-  function wrap(value) {
-    if (value instanceof IDBRequest)
-      return promisifyRequest(value);
-    if (transformCache.has(value))
-      return transformCache.get(value);
-    const newValue = transformCachableValue(value);
-    if (newValue !== value) {
-      transformCache.set(value, newValue);
-      reverseTransformCache.set(newValue, value);
-    }
-    return newValue;
-  }
-  var unwrap = (value) => reverseTransformCache.get(value);
-  function openDB(name, version, { blocked, upgrade, blocking, terminated } = {}) {
-    const request = indexedDB.open(name, version);
-    const openPromise = wrap(request);
-    if (upgrade) {
-      request.addEventListener("upgradeneeded", (event) => {
-        upgrade(wrap(request.result), event.oldVersion, event.newVersion, wrap(request.transaction), event);
-      });
-    }
-    if (blocked) {
-      request.addEventListener("blocked", (event) => blocked(
-        // Casting due to https://github.com/microsoft/TypeScript-DOM-lib-generator/pull/1405
-        event.oldVersion,
-        event.newVersion,
-        event
-      ));
-    }
-    openPromise.then((db) => {
-      if (terminated)
-        db.addEventListener("close", () => terminated());
-      if (blocking) {
-        db.addEventListener("versionchange", (event) => blocking(event.oldVersion, event.newVersion, event));
-      }
-    }).catch(() => {
-    });
-    return openPromise;
-  }
-  var readMethods = ["get", "getKey", "getAll", "getAllKeys", "count"];
-  var writeMethods = ["put", "add", "delete", "clear"];
-  var cachedMethods = /* @__PURE__ */ new Map();
-  function getMethod(target, prop) {
-    if (!(target instanceof IDBDatabase && !(prop in target) && typeof prop === "string")) {
-      return;
-    }
-    if (cachedMethods.get(prop))
-      return cachedMethods.get(prop);
-    const targetFuncName = prop.replace(/FromIndex$/, "");
-    const useIndex = prop !== targetFuncName;
-    const isWrite = writeMethods.includes(targetFuncName);
-    if (
-      // Bail if the target doesn't exist on the target. Eg, getAll isn't in Edge.
-      !(targetFuncName in (useIndex ? IDBIndex : IDBObjectStore).prototype) || !(isWrite || readMethods.includes(targetFuncName))
-    ) {
-      return;
-    }
-    const method = async function(storeName, ...args) {
-      const tx = this.transaction(storeName, isWrite ? "readwrite" : "readonly");
-      let target2 = tx.store;
-      if (useIndex)
-        target2 = target2.index(args.shift());
-      return (await Promise.all([
-        target2[targetFuncName](...args),
-        isWrite && tx.done
-      ]))[0];
-    };
-    cachedMethods.set(prop, method);
-    return method;
-  }
-  replaceTraps((oldTraps) => ({
-    ...oldTraps,
-    get: (target, prop, receiver) => getMethod(target, prop) || oldTraps.get(target, prop, receiver),
-    has: (target, prop) => !!getMethod(target, prop) || oldTraps.has(target, prop)
-  }));
-  var advanceMethodProps = ["continue", "continuePrimaryKey", "advance"];
-  var methodMap = {};
-  var advanceResults = /* @__PURE__ */ new WeakMap();
-  var ittrProxiedCursorToOriginalProxy = /* @__PURE__ */ new WeakMap();
-  var cursorIteratorTraps = {
-    get(target, prop) {
-      if (!advanceMethodProps.includes(prop))
-        return target[prop];
-      let cachedFunc = methodMap[prop];
-      if (!cachedFunc) {
-        cachedFunc = methodMap[prop] = function(...args) {
-          advanceResults.set(this, ittrProxiedCursorToOriginalProxy.get(this)[prop](...args));
-        };
-      }
-      return cachedFunc;
-    }
-  };
-  async function* iterate(...args) {
-    let cursor = this;
-    if (!(cursor instanceof IDBCursor)) {
-      cursor = await cursor.openCursor(...args);
-    }
-    if (!cursor)
-      return;
-    cursor = cursor;
-    const proxiedCursor = new Proxy(cursor, cursorIteratorTraps);
-    ittrProxiedCursorToOriginalProxy.set(proxiedCursor, cursor);
-    reverseTransformCache.set(proxiedCursor, unwrap(cursor));
-    while (cursor) {
-      yield proxiedCursor;
-      cursor = await (advanceResults.get(proxiedCursor) || cursor.continue());
-      advanceResults.delete(proxiedCursor);
-    }
-  }
-  function isIteratorProp(target, prop) {
-    return prop === Symbol.asyncIterator && instanceOfAny(target, [IDBIndex, IDBObjectStore, IDBCursor]) || prop === "iterate" && instanceOfAny(target, [IDBIndex, IDBObjectStore]);
-  }
-  replaceTraps((oldTraps) => ({
-    ...oldTraps,
-    get(target, prop, receiver) {
-      if (isIteratorProp(target, prop))
-        return iterate;
-      return oldTraps.get(target, prop, receiver);
-    },
-    has(target, prop) {
-      return isIteratorProp(target, prop) || oldTraps.has(target, prop);
-    }
-  }));
-
-  // src/model/utils.ts
-  function newId() {
-    return "uri:uuid:" + crypto.randomUUID();
-  }
-
-  // src/model/config.ts
-  var ConfigID = "config";
-  function NewConfig() {
-    return {
-      id: ConfigID,
-      generatorId: newId(),
-      generatorName: "Unknown Device",
-      encryptionKey: new ArrayBuffer(0),
-      encryptionKeyIV: new Uint8Array(),
-      encryptionKeySalt: new Uint8Array(),
-      lastMessageId: "",
-      isEncryptedMessages: false,
-      isDesktopNotifications: false,
-      isHideOnBlur: false,
-      ready: false
-    };
-  }
-
   // src/model/group.ts
   function NewGroup(codec) {
     return {
@@ -17827,6 +17827,10 @@
     const binaryString = globalThis.atob(padded);
     return Uint8Array.from(binaryString, (c2) => c2.codePointAt(0));
   }
+  function uint8ArrayToBase64(bytes) {
+    const binaryString = Array.from(bytes, (b2) => String.fromCodePoint(b2)).join("");
+    return globalThis.btoa(binaryString);
+  }
   function newId2() {
     return "uri:uuid:" + crypto.randomUUID();
   }
@@ -17857,6 +17861,377 @@
       removed: before.filter((item) => !afterSet.has(item))
     };
   }
+
+  // src/service/emojikeys.ts
+  async function emojiKey(signature) {
+    const checksum = await crypto.subtle.digest("SHA-256", signature.slice(0));
+    const checksumHash = new Uint8Array(checksum);
+    if (checksumHash.length != 32) {
+      throw new Error("Checksum must be 32 characters long");
+    }
+    const base64 = uint8ArrayToBase64(checksumHash);
+    let result = new Array(5);
+    for (let i2 = 0; i2 < 5; i2++) {
+      const first = checksumHash[i2 * 2];
+      const second = checksumHash[i2 * 2 + 1];
+      const combined = first << 8 | second;
+      const index = combined % emojiSet.length;
+      result[i2] = emojiSet[index];
+    }
+    return [base64, result];
+  }
+  var emojiSet = [
+    ["\u{1F436}", "Dog"],
+    ["\u{1F431}", "Cat"],
+    ["\u{1F981}", "Lion"],
+    ["\u{1F40E}", "Horse"],
+    ["\u{1F984}", "Unicorn"],
+    ["\u{1F437}", "Pig"],
+    ["\u{1F418}", "Elephant"],
+    ["\u{1F430}", "Rabbit"],
+    ["\u{1F43C}", "Panda"],
+    ["\u{1F413}", "Rooster"],
+    ["\u{1F427}", "Penguin"],
+    ["\u{1F422}", "Turtle"],
+    ["\u{1F41F}", "Fish"],
+    ["\u{1F419}", "Octopus"],
+    ["\u{1F98B}", "Butterfly"],
+    ["\u{1F337}", "Flower"],
+    ["\u{1F333}", "Tree"],
+    ["\u{1F335}", "Cactus"],
+    ["\u{1F344}", "Mushroom"],
+    ["\u{1F30F}", "Globe"],
+    ["\u{1F319}", "Moon"],
+    ["\u2601\uFE0F", "Cloud"],
+    ["\u{1F525}", "Fire"],
+    ["\u{1F34C}", "Banana"],
+    ["\u{1F34E}", "Apple"],
+    ["\u{1F353}", "Strawberry"],
+    ["\u{1F33D}", "Corn"],
+    ["\u{1F355}", "Pizza"],
+    ["\u{1F382}", "Cake"],
+    ["\u2764\uFE0F", "Heart"],
+    ["\u{1F600}", "Smiley"],
+    ["\u{1F916}", "Robot"],
+    ["\u{1F3A9}", "Hat"],
+    ["\u{1F453}", "Glasses"],
+    ["\u{1F527}", "Spanner"],
+    ["\u{1F385}", "Santa"],
+    ["\u{1F44D}", "Thumbs Up"],
+    ["\u2602\uFE0F", "Umbrella"],
+    ["\u231B", "Hourglass"],
+    ["\u23F0", "Clock"],
+    ["\u{1F381}", "Gift"],
+    ["\u{1F4A1}", "Light Bulb"],
+    ["\u{1F4D5}", "Book"],
+    ["\u270F\uFE0F", "Pencil"],
+    ["\u{1F4CE}", "Paperclip"],
+    ["\u2702\uFE0F", "Scissors"],
+    ["\u{1F512}", "Lock"],
+    ["\u{1F511}", "Key"],
+    ["\u{1F528}", "Hammer"],
+    ["\u260E\uFE0F", "Telephone"],
+    ["\u{1F3C1}", "Flag"],
+    ["\u{1F682}", "Train"],
+    ["\u{1F6B2}", "Bicycle"],
+    ["\u2708\uFE0F", "Aeroplane"],
+    ["\u{1F680}", "Rocket"],
+    ["\u{1F3C6}", "Trophy"],
+    ["\u26BD", "Ball"],
+    ["\u{1F3B8}", "Guitar"],
+    ["\u{1F3BA}", "Trumpet"],
+    ["\u{1F514}", "Bell"],
+    ["\u2693", "Anchor"],
+    ["\u{1F3A7}", "Headphones"],
+    ["\u{1F4C1}", "Folder"],
+    ["\u{1F4CC}", "Pin"],
+    ["0\uFE0F\u20E3", "Zero"],
+    ["1\uFE0F\u20E3", "One"],
+    ["2\uFE0F\u20E3", "Two"],
+    ["3\uFE0F\u20E3", "Three"],
+    ["4\uFE0F\u20E3", "Four"],
+    ["5\uFE0F\u20E3", "Five"],
+    ["6\uFE0F\u20E3", "Six"],
+    ["7\uFE0F\u20E3", "Seven"],
+    ["8\uFE0F\u20E3", "Eight"],
+    ["9\uFE0F\u20E3", "Nine"],
+    ["\u267B\uFE0F", "Recycle"],
+    ["\u26A1", "Lightning"],
+    ["\u{1F48E}", "Diamond"],
+    ["\u{1F308}", "Rainbow"],
+    ["\u2744\uFE0F", "Snowflake"],
+    ["\u{1F30A}", "Wave"],
+    ["\u{1F3B2}", "Dice"],
+    ["\u{1F9F2}", "Magnet"],
+    ["\u{1FA90}", "Saturn"],
+    ["\u{1F30B}", "Volcano"],
+    ["\u2B50", "Star"],
+    ["\u{1F42C}", "Dolphin"],
+    ["\u{1F98A}", "Fox"],
+    ["\u{1F989}", "Owl"],
+    ["\u{1F3D4}\uFE0F", "Mountain"],
+    ["\u{1F9CA}", "Ice"],
+    ["\u{1F3AF}", "Target"],
+    ["\u{1F6E1}\uFE0F", "Shield"],
+    ["\u2699\uFE0F", "Gear"],
+    ["\u{1F531}", "Trident"],
+    ["\u{1F980}", "Crab"],
+    ["\u{1F988}", "Shark"],
+    ["\u{1F438}", "Frog"],
+    ["\u{1F9A9}", "Flamingo"],
+    ["\u{1F99C}", "Parrot"],
+    ["\u{1F40D}", "Snake"],
+    ["\u{1F99E}", "Lobster"],
+    ["\u{1F42A}", "Camel"],
+    ["\u{1F992}", "Giraffe"],
+    ["\u{1F40A}", "Crocodile"],
+    ["\u{1F349}", "Watermelon"],
+    ["\u{1F347}", "Grapes"],
+    ["\u{1F352}", "Cherry"],
+    ["\u{1F965}", "Coconut"],
+    ["\u{1F336}\uFE0F", "Chilli"],
+    ["\u{1F9C0}", "Cheese"],
+    ["\u{1F369}", "Donut"],
+    ["\u{1F9C1}", "Cupcake"],
+    ["\u{1F37F}", "Popcorn"],
+    ["\u{1F3E0}", "House"],
+    ["\u{1F3F0}", "Castle"],
+    ["\u26F5", "Sailboat"],
+    ["\u{1F681}", "Helicopter"],
+    ["\u{1F6F8}", "UFO"],
+    ["\u{1F3AD}", "Theatre"],
+    ["\u{1F3AA}", "Circus"],
+    ["\u{1F388}", "Balloon"],
+    ["\u{1F9E9}", "Puzzle"],
+    ["\u{1FA81}", "Kite"],
+    ["\u{1F3F9}", "Bow"],
+    ["\u{1FAB4}", "Plant"],
+    ["\u{1F33B}", "Sunflower"],
+    ["\u{1F334}", "Palm"],
+    ["\u{1F342}", "Leaf"],
+    ["\u{1F41A}", "Shell"],
+    ["\u{1F98E}", "Lizard"],
+    ["\u{1F9AD}", "Seal"],
+    ["\u{1F994}", "Hedgehog"],
+    ["\u{1F99A}", "Peacock"],
+    ["\u{1F41E}", "Ladybug"],
+    ["\u{1F577}\uFE0F", "Spider"],
+    ["\u{1F3B1}", "Billiards"],
+    ["\u{1F6F6}", "Canoe"],
+    ["\u{1F3BB}", "Violin"],
+    ["\u{1F941}", "Drum"],
+    ["\u{1F3A4}", "Microphone"],
+    ["\u{1F52D}", "Telescope"],
+    ["\u{1F52C}", "Microscope"],
+    ["\u{1F48A}", "Pill"],
+    ["\u{1F9EC}", "DNA"],
+    ["\u{1F9EA}", "Test Tube"],
+    ["\u{1F56F}\uFE0F", "Candle"],
+    ["\u{1F4B0}", "Money Bag"],
+    ["\u{1F451}", "Crown"],
+    ["\u{1FAB6}", "Feather"],
+    ["\u26CF\uFE0F", "Pickaxe"],
+    ["\u{1FAA8}", "Rock"],
+    ["\u{1F3EE}", "Lantern"],
+    ["\u{1F380}", "Ribbon"],
+    ["\u{1FAB5}", "Log"],
+    ["\u{1F6DE}", "Wheel"],
+    ["\u{1FA9C}", "Ladder"],
+    ["\u{1F9EF}", "Extinguisher"],
+    ["\u{1F393}", "Graduation"],
+    ["\u{1F48D}", "Ring"],
+    ["\u{1FA7A}", "Stethoscope"],
+    ["\u{1FA83}", "Boomerang"],
+    ["\u{1F3FA}", "Amphora"],
+    ["\u{1F5FF}", "Moai"],
+    ["\u{1F5FD}", "Liberty"],
+    ["\u26E9\uFE0F", "Shrine"],
+    ["\u{1F54C}", "Mosque"],
+    ["\u{1F3A1}", "Ferris Wheel"],
+    ["\u{1F3A2}", "Roller Coaster"],
+    ["\u{1F6A2}", "Ship"],
+    ["\u{1F6F0}\uFE0F", "Satellite"],
+    ["\u{1F320}", "Shooting Star"],
+    ["\u{1F300}", "Cyclone"],
+    ["\u{1F52E}", "Crystal Ball"],
+    ["\u{1FAA9}", "Mirror Ball"],
+    ["\u{1F3B5}", "Music"],
+    ["\u{1F579}\uFE0F", "Joystick"],
+    ["\u{1F5A8}\uFE0F", "Printer"],
+    ["\u{1F4BE}", "Floppy"],
+    ["\u{1F50B}", "Battery"],
+    ["\u{1F4E1}", "Dish"],
+    ["\u{1F3CB}\uFE0F", "Weightlifter"],
+    ["\u{1F93F}", "Diving"],
+    ["\u{1F6F9}", "Skateboard"],
+    ["\u{1F9F3}", "Suitcase"],
+    ["\u{1FA9D}", "Hook"],
+    ["\u{1F9F8}", "Teddy Bear"],
+    ["\u{1F38F}", "Carp Streamer"],
+    ["\u{1F3D5}\uFE0F", "Camping"],
+    ["\u{1F5FA}\uFE0F", "World Map"],
+    ["\u{1F9F6}", "Yarn"],
+    ["\u{1F390}", "Wind Chime"],
+    ["\u{1F987}", "Bat"],
+    ["\u{1F6D2}", "Cart"],
+    ["\u{1F9B7}", "Tooth"],
+    ["\u{1FAC0}", "Heart Organ"],
+    ["\u{1F9E0}", "Brain"],
+    ["\u{1F441}\uFE0F", "Eye"],
+    ["\u{1F9B4}", "Bone"],
+    ["\u{1FAB8}", "Coral"],
+    ["\u{1F40C}", "Snail"],
+    ["\u{1F982}", "Scorpion"],
+    ["\u{1F54A}\uFE0F", "Dove"],
+    ["\u{1F999}", "Llama"],
+    ["\u{1F998}", "Kangaroo"],
+    ["\u{1F9AB}", "Beaver"],
+    ["\u{1F9A6}", "Otter"],
+    ["\u{1F9A5}", "Sloth"],
+    ["\u{1F351}", "Peach"],
+    ["\u{1F95D}", "Kiwi"],
+    ["\u{1F951}", "Avocado"],
+    ["\u{1F955}", "Carrot"],
+    ["\u{1F968}", "Pretzel"],
+    ["\u{1F950}", "Croissant"],
+    ["\u{1F36D}", "Lollipop"],
+    ["\u{1FAD0}", "Blueberry"],
+    ["\u{1F966}", "Broccoli"],
+    ["\u{1F330}", "Chestnut"],
+    ["\u{1F95C}", "Peanut"],
+    ["\u{1F36F}", "Honey"],
+    ["\u{1F9C2}", "Salt"],
+    ["\u{1FAD6}", "Teapot"],
+    ["\u{1F375}", "Tea"],
+    ["\u{1F9C3}", "Juice Box"],
+    ["\u{1FA98}", "Long Drum"],
+    ["\u{1F3B7}", "Saxophone"],
+    ["\u{1F3B9}", "Piano"],
+    ["\u{1FA97}", "Accordion"],
+    ["\u{1F3D7}\uFE0F", "Crane"],
+    ["\u{1F5FC}", "Tower"],
+    ["\u26F2", "Fountain"],
+    ["\u{1F3A0}", "Carousel"],
+    ["\u{1F6E5}\uFE0F", "Speedboat"],
+    ["\u{1F69C}", "Tractor"],
+    ["\u{1F692}", "Fire Engine"],
+    ["\u{1F691}", "Ambulance"],
+    ["\u{1F6F4}", "Scooter"],
+    ["\u{1FA82}", "Parachute"],
+    ["\u{1F3C4}", "Surfer"],
+    ["\u26F7\uFE0F", "Skier"],
+    ["\u{1F3CA}", "Swimmer"],
+    ["\u{1F6F7}", "Sled"],
+    ["\u{1F9E8}", "Firecracker"],
+    ["\u{1F383}", "Pumpkin"],
+    ["\u{1F3B3}", "Bowling"],
+    ["\u{1F3D3}", "Ping Pong"],
+    ["\u{1F94A}", "Boxing"],
+    ["\u{1F3D2}", "Hockey"],
+    ["\u{1F3BF}", "Ski"],
+    ["\u{1FA80}", "Yo-Yo"],
+    ["\u{1F6FC}", "Roller Skate"],
+    ["\u{1F9D7}", "Climber"],
+    ["\u{1F3C7}", "Jockey"],
+    ["\u{1FA88}", "Flute"],
+    ["\u{1F4EF}", "Horn"],
+    ["\u{1F399}\uFE0F", "Studio Mic"],
+    ["\u{1F4FB}", "Radio"],
+    ["\u{1F4FA}", "Television"],
+    ["\u{1F5A5}\uFE0F", "Desktop"],
+    ["\u{1F4BF}", "CD"],
+    ["\u{1F526}", "Flashlight"],
+    ["\u{1FAAB}", "Low Battery"],
+    ["\u{1F9F0}", "Toolbox"],
+    ["\u{1FA9A}", "Saw"],
+    ["\u{1F529}", "Nut & Bolt"],
+    ["\u{1F9F1}", "Brick"],
+    ["\u26D3\uFE0F", "Chain"],
+    ["\u{1FAA3}", "Bucket"],
+    ["\u{1FAA6}", "Headstone"],
+    ["\u{1F517}", "Link"],
+    ["\u{1FA9F}", "Window"],
+    ["\u{1F6AA}", "Door"],
+    ["\u{1F6CF}\uFE0F", "Bed"],
+    ["\u{1FA91}", "Chair"],
+    ["\u{1F6BF}", "Shower"],
+    ["\u{1F9F4}", "Lotion"],
+    ["\u{1F9FD}", "Sponge"],
+    ["\u{1F576}\uFE0F", "Sunglasses"],
+    ["\u{1F97E}", "Boot"],
+    ["\u{1F452}", "Sun Hat"],
+    ["\u{1F9E4}", "Gloves"],
+    ["\u{1F9E3}", "Scarf"],
+    ["\u{1F454}", "Necktie"],
+    ["\u{1F457}", "Dress"],
+    ["\u{1FA70}", "Ballet"],
+    ["\u{1FAAD}", "Fan"],
+    ["\u{1F484}", "Lipstick"],
+    ["\u{1F488}", "Barber Pole"],
+    ["\u{1F50D}", "Magnifier"],
+    ["\u{1F4FF}", "Prayer Beads"],
+    ["\u{1FAAC}", "Hamsa"],
+    ["\u265F\uFE0F", "Chess Pawn"],
+    ["\u{1F004}", "Mahjong"],
+    ["\u{1F0CF}", "Joker"],
+    ["\u{1F5BC}\uFE0F", "Frame"],
+    ["\u{1FA86}", "Nesting Doll"],
+    ["\u{1F3F7}\uFE0F", "Label"],
+    ["\u{1F4EE}", "Postbox"],
+    ["\u{1F5D1}\uFE0F", "Wastebasket"],
+    ["\u{1F6A9}", "Red Flag"],
+    ["\u{1F3F4}\u200D\u2620\uFE0F", "Pirate Flag"],
+    ["\u{1FAA7}", "Placard"],
+    ["\u{1F4EC}", "Mailbox"],
+    ["\u{1FA99}", "Coin"],
+    ["\u{1F4B3}", "Credit Card"],
+    ["\u{1F4D0}", "Triangle Ruler"],
+    ["\u{1F5D3}\uFE0F", "Calendar"],
+    ["\u{1F4CA}", "Bar Chart"],
+    ["\u{1F516}", "Bookmark"],
+    ["\u{1F3F5}\uFE0F", "Rosette"],
+    ["\u{1F397}\uFE0F", "Reminder Ribbon"],
+    ["\u{1FAA2}", "Knot"],
+    ["\u{1FA7B}", "X-Ray"],
+    ["\u{1FAAA}", "ID Card"],
+    ["\u{1F6D7}", "Elevator"],
+    ["\u{1F6A6}", "Traffic Light"],
+    ["\u26FD", "Fuel Pump"],
+    ["\u{1F6A7}", "Construction"],
+    ["\u{1F6DF}", "Ring Buoy"],
+    ["\u{1FA94}", "Diya Lamp"],
+    ["\u{1F391}", "Moon Viewing"],
+    ["\u{1F9E7}", "Red Envelope"],
+    ["\u{1F38D}", "Bamboo"],
+    ["\u{1FAB7}", "Lotus"],
+    ["\u{1F341}", "Maple Leaf"],
+    ["\u2618\uFE0F", "Shamrock"],
+    ["\u{1F9A0}", "Microbe"],
+    ["\u{1FABA}", "Nest"],
+    ["\u{1F9EE}", "Abacus"],
+    ["\u{1F4E3}", "Megaphone"],
+    ["\u{1F3C5}", "Medal"],
+    ["\u26FA", "Tent"],
+    ["\u{1FAE7}", "Soap Bubble"],
+    ["\u{1F3F3}\uFE0F\u200D\u{1F308}", "Pride Flag"],
+    ["\u{1F3F3}\uFE0F\u200D\u26A7\uFE0F", "Transgender Flag"],
+    ["\u{1F3F4}", "Black Flag"],
+    ["\u{1F1EF}\u{1F1F5}", "Japan"],
+    ["\u{1F1E7}\u{1F1F7}", "Brazil"],
+    ["\u{1F1E8}\u{1F1E6}", "Canada"],
+    ["\u2600\uFE0F", "Sun"],
+    ["\u{1F315}", "Full Moon"],
+    ["\u{1F530}", "Beginner"],
+    ["\u267E\uFE0F", "Infinity"],
+    ["\u{1F3DD}\uFE0F", "Island"],
+    ["\u{1F33E}", "Rice"],
+    ["\u{1FAF6}", "Heart Hands"],
+    ["\u{1F9A4}", "Dodo"],
+    ["\u{1FACF}", "Donkey"],
+    ["\u{1F409}", "Dragon"],
+    ["\u{1F9AC}", "Bison"],
+    ["\u{1FABB}", "Hyacinth"]
+  ];
 
   // src/service/database.ts
   async function NewIndexedDB(actorId) {
@@ -17992,17 +18367,10 @@
     loadKeyPackage = async () => {
       return await this.#db.get("keyPackage", "self");
     };
-    // saveKeyPackage saves the ID, public, and private portions of the KeyPackage to the database
-    saveKeyPackage = async (keyPackageId, publicPackage, privatePackage) => {
-      const dbKeyPackage = {
-        id: "self",
-        keyPackageURL: keyPackageId,
-        publicKeyPackage: publicPackage,
-        privateKeyPackage: privatePackage,
-        createDate: Date.now()
-      };
-      await this.#db.put("keyPackage", dbKeyPackage);
-      return dbKeyPackage;
+    // saveKeyPackage saves the KeyPackage to the database, recomputing the signature and emojiKey.
+    saveKeyPackage = async (record) => {
+      await this.#db.put("keyPackage", record);
+      return record;
     };
     deleteKeyPackage = async () => {
       await this.#db.delete("keyPackage", "self");
@@ -18881,26 +19249,28 @@
   ];
 
   // src/model/ap-keypackage.ts
-  function NewAPKeyPackage(keyPackageId, generatorId, generatorName, actorID, publicPackage) {
-    const keyPackageAsBase64 = encodeKeyPackage(publicPackage);
+  function NewAPKeyPackage(dbKeyPackage) {
+    const keyPackageAsBase64 = encodeKeyPackage(dbKeyPackage);
     return {
-      id: keyPackageId,
+      id: dbKeyPackage.keyPackageURL,
       type: "KeyPackage",
       to: "Public",
-      attributedTo: actorID,
+      attributedTo: dbKeyPackage.actorId,
       mediaType: "message/mls",
       encoding: "base64",
       content: keyPackageAsBase64,
+      name: dbKeyPackage.signature,
+      summary: dbKeyPackage.emojiKey.map((emoji) => emoji[0]).join(""),
       generator: {
-        id: generatorId,
+        id: dbKeyPackage.generatorId,
         type: "Application",
-        name: generatorName
+        name: dbKeyPackage.generatorName
       },
       ciphersuite: cipherSuiteName(CIPHER_X25519_AES128) ?? ""
     };
   }
-  function encodeKeyPackage(keyPackage) {
-    return bytesToBase64(encode(keyPackageEncoder, keyPackage));
+  function encodeKeyPackage(dbKeyPackage) {
+    return bytesToBase64(encode(keyPackageEncoder, dbKeyPackage.publicKeyPackage));
   }
 
   // node_modules/@js-temporal/polyfill/dist/index.esm.js
@@ -23111,29 +23481,17 @@
     #delivery;
     #proxy;
     #actorId;
-    // ID of the local actor 
-    #generatorId;
-    // ID of the generator
-    #generatorName;
-    // Name of the generator
+    // ID of the local actor
     constructor(delivery, proxy, actorId) {
       this.#delivery = delivery;
       this.#actorId = actorId;
-      this.#generatorId = "";
-      this.#generatorName = "";
       this.#proxy = proxy;
     }
     stop = () => {
       this.#actorId = "";
-      this.#generatorId = "";
-      this.#generatorName = "";
     };
     setActor = (actor) => {
       this.#actorId = actor.id();
-    };
-    setGenerator = (generatorId, generatorName) => {
-      this.#generatorId = generatorId;
-      this.#generatorName = generatorName;
     };
     // getKeyPackage loads the KeyPackages published by a single actor
     getKeyPackages = async (actorIds) => {
@@ -23162,28 +23520,12 @@
     };
     // createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
     // It returns the ID of the newly created KeyPackage or throws an error on failure.
-    createKeyPackage = async (publicPackage) => {
-      const keyPackage = NewAPKeyPackage(
-        "",
-        // ID will be assigned by the server
-        this.#generatorId,
-        this.#generatorName,
-        this.#actorId,
-        publicPackage
-      );
-      return await this.#createObject(keyPackage);
+    createKeyPackage = async (dbKeyPackage) => {
+      return await this.#createObject(NewAPKeyPackage(dbKeyPackage));
     };
     // updateKeyPackage sends the provided KeyPackage to the server as an ActivityPub `Update` activity.
-    // It returns the ID of the updated KeyPackage or throws an error on failure.
-    updateKeyPackage = async (keyPackageId, publicPackage) => {
-      const keyPackage = NewAPKeyPackage(
-        keyPackageId,
-        this.#generatorId,
-        this.#generatorName,
-        this.#actorId,
-        publicPackage
-      );
-      await this.#updateObject(keyPackage);
+    updateKeyPackage = async (dbKeyPackage) => {
+      await this.#updateObject(NewAPKeyPackage(dbKeyPackage));
     };
     // deleteKeyPackage removes a single KeyPackage from the server
     deleteKeyPackage = async (keyPackageId) => {
@@ -23373,379 +23715,6 @@
   var import_mithril = __toESM(require_mithril(), 1);
   var import_stream2 = __toESM(require_stream2(), 1);
 
-  // src/service/emojikeys.ts
-  async function keyPackageEmojiKey(keyPackage) {
-    return await emojiKey(keyPackage.signature);
-  }
-  async function emojiKey(signature) {
-    const checksum = await crypto.subtle.digest("SHA-256", signature.slice(0));
-    const checksumHash = new Uint8Array(checksum);
-    if (checksumHash.length != 32) {
-      throw new Error("Checksum must be 32 characters long");
-    }
-    let result = new Array(5);
-    for (let i2 = 0; i2 < 5; i2++) {
-      const first = checksumHash[i2 * 2];
-      const second = checksumHash[i2 * 2 + 1];
-      const combined = first << 8 | second;
-      const index = combined % emojiSet.length;
-      result[i2] = emojiSet[index];
-    }
-    return result;
-  }
-  var emojiSet = [
-    ["\u{1F436}", "Dog"],
-    ["\u{1F431}", "Cat"],
-    ["\u{1F981}", "Lion"],
-    ["\u{1F40E}", "Horse"],
-    ["\u{1F984}", "Unicorn"],
-    ["\u{1F437}", "Pig"],
-    ["\u{1F418}", "Elephant"],
-    ["\u{1F430}", "Rabbit"],
-    ["\u{1F43C}", "Panda"],
-    ["\u{1F413}", "Rooster"],
-    ["\u{1F427}", "Penguin"],
-    ["\u{1F422}", "Turtle"],
-    ["\u{1F41F}", "Fish"],
-    ["\u{1F419}", "Octopus"],
-    ["\u{1F98B}", "Butterfly"],
-    ["\u{1F337}", "Flower"],
-    ["\u{1F333}", "Tree"],
-    ["\u{1F335}", "Cactus"],
-    ["\u{1F344}", "Mushroom"],
-    ["\u{1F30F}", "Globe"],
-    ["\u{1F319}", "Moon"],
-    ["\u2601\uFE0F", "Cloud"],
-    ["\u{1F525}", "Fire"],
-    ["\u{1F34C}", "Banana"],
-    ["\u{1F34E}", "Apple"],
-    ["\u{1F353}", "Strawberry"],
-    ["\u{1F33D}", "Corn"],
-    ["\u{1F355}", "Pizza"],
-    ["\u{1F382}", "Cake"],
-    ["\u2764\uFE0F", "Heart"],
-    ["\u{1F600}", "Smiley"],
-    ["\u{1F916}", "Robot"],
-    ["\u{1F3A9}", "Hat"],
-    ["\u{1F453}", "Glasses"],
-    ["\u{1F527}", "Spanner"],
-    ["\u{1F385}", "Santa"],
-    ["\u{1F44D}", "Thumbs Up"],
-    ["\u2602\uFE0F", "Umbrella"],
-    ["\u231B", "Hourglass"],
-    ["\u23F0", "Clock"],
-    ["\u{1F381}", "Gift"],
-    ["\u{1F4A1}", "Light Bulb"],
-    ["\u{1F4D5}", "Book"],
-    ["\u270F\uFE0F", "Pencil"],
-    ["\u{1F4CE}", "Paperclip"],
-    ["\u2702\uFE0F", "Scissors"],
-    ["\u{1F512}", "Lock"],
-    ["\u{1F511}", "Key"],
-    ["\u{1F528}", "Hammer"],
-    ["\u260E\uFE0F", "Telephone"],
-    ["\u{1F3C1}", "Flag"],
-    ["\u{1F682}", "Train"],
-    ["\u{1F6B2}", "Bicycle"],
-    ["\u2708\uFE0F", "Aeroplane"],
-    ["\u{1F680}", "Rocket"],
-    ["\u{1F3C6}", "Trophy"],
-    ["\u26BD", "Ball"],
-    ["\u{1F3B8}", "Guitar"],
-    ["\u{1F3BA}", "Trumpet"],
-    ["\u{1F514}", "Bell"],
-    ["\u2693", "Anchor"],
-    ["\u{1F3A7}", "Headphones"],
-    ["\u{1F4C1}", "Folder"],
-    ["\u{1F4CC}", "Pin"],
-    ["0\uFE0F\u20E3", "Zero"],
-    ["1\uFE0F\u20E3", "One"],
-    ["2\uFE0F\u20E3", "Two"],
-    ["3\uFE0F\u20E3", "Three"],
-    ["4\uFE0F\u20E3", "Four"],
-    ["5\uFE0F\u20E3", "Five"],
-    ["6\uFE0F\u20E3", "Six"],
-    ["7\uFE0F\u20E3", "Seven"],
-    ["8\uFE0F\u20E3", "Eight"],
-    ["9\uFE0F\u20E3", "Nine"],
-    ["\u267B\uFE0F", "Recycle"],
-    ["\u26A1", "Lightning"],
-    ["\u{1F48E}", "Diamond"],
-    ["\u{1F308}", "Rainbow"],
-    ["\u2744\uFE0F", "Snowflake"],
-    ["\u{1F30A}", "Wave"],
-    ["\u{1F3B2}", "Dice"],
-    ["\u{1F9F2}", "Magnet"],
-    ["\u{1FA90}", "Saturn"],
-    ["\u{1F30B}", "Volcano"],
-    ["\u2B50", "Star"],
-    ["\u{1F42C}", "Dolphin"],
-    ["\u{1F98A}", "Fox"],
-    ["\u{1F989}", "Owl"],
-    ["\u{1F3D4}\uFE0F", "Mountain"],
-    ["\u{1F9CA}", "Ice"],
-    ["\u{1F3AF}", "Target"],
-    ["\u{1F6E1}\uFE0F", "Shield"],
-    ["\u2699\uFE0F", "Gear"],
-    ["\u{1F531}", "Trident"],
-    ["\u{1F980}", "Crab"],
-    ["\u{1F988}", "Shark"],
-    ["\u{1F438}", "Frog"],
-    ["\u{1F9A9}", "Flamingo"],
-    ["\u{1F99C}", "Parrot"],
-    ["\u{1F40D}", "Snake"],
-    ["\u{1F99E}", "Lobster"],
-    ["\u{1F42A}", "Camel"],
-    ["\u{1F992}", "Giraffe"],
-    ["\u{1F40A}", "Crocodile"],
-    ["\u{1F349}", "Watermelon"],
-    ["\u{1F347}", "Grapes"],
-    ["\u{1F352}", "Cherry"],
-    ["\u{1F965}", "Coconut"],
-    ["\u{1F336}\uFE0F", "Chilli"],
-    ["\u{1F9C0}", "Cheese"],
-    ["\u{1F369}", "Donut"],
-    ["\u{1F9C1}", "Cupcake"],
-    ["\u{1F37F}", "Popcorn"],
-    ["\u{1F3E0}", "House"],
-    ["\u{1F3F0}", "Castle"],
-    ["\u26F5", "Sailboat"],
-    ["\u{1F681}", "Helicopter"],
-    ["\u{1F6F8}", "UFO"],
-    ["\u{1F3AD}", "Theatre"],
-    ["\u{1F3AA}", "Circus"],
-    ["\u{1F388}", "Balloon"],
-    ["\u{1F9E9}", "Puzzle"],
-    ["\u{1FA81}", "Kite"],
-    ["\u{1F3F9}", "Bow"],
-    ["\u{1FAB4}", "Plant"],
-    ["\u{1F33B}", "Sunflower"],
-    ["\u{1F334}", "Palm"],
-    ["\u{1F342}", "Leaf"],
-    ["\u{1F41A}", "Shell"],
-    ["\u{1F98E}", "Lizard"],
-    ["\u{1F9AD}", "Seal"],
-    ["\u{1F994}", "Hedgehog"],
-    ["\u{1F99A}", "Peacock"],
-    ["\u{1F41E}", "Ladybug"],
-    ["\u{1F577}\uFE0F", "Spider"],
-    ["\u{1F3B1}", "Billiards"],
-    ["\u{1F6F6}", "Canoe"],
-    ["\u{1F3BB}", "Violin"],
-    ["\u{1F941}", "Drum"],
-    ["\u{1F3A4}", "Microphone"],
-    ["\u{1F52D}", "Telescope"],
-    ["\u{1F52C}", "Microscope"],
-    ["\u{1F48A}", "Pill"],
-    ["\u{1F9EC}", "DNA"],
-    ["\u{1F9EA}", "Test Tube"],
-    ["\u{1F56F}\uFE0F", "Candle"],
-    ["\u{1F4B0}", "Money Bag"],
-    ["\u{1F451}", "Crown"],
-    ["\u{1FAB6}", "Feather"],
-    ["\u26CF\uFE0F", "Pickaxe"],
-    ["\u{1FAA8}", "Rock"],
-    ["\u{1F3EE}", "Lantern"],
-    ["\u{1F380}", "Ribbon"],
-    ["\u{1FAB5}", "Log"],
-    ["\u{1F6DE}", "Wheel"],
-    ["\u{1FA9C}", "Ladder"],
-    ["\u{1F9EF}", "Extinguisher"],
-    ["\u{1F393}", "Graduation"],
-    ["\u{1F48D}", "Ring"],
-    ["\u{1FA7A}", "Stethoscope"],
-    ["\u{1FA83}", "Boomerang"],
-    ["\u{1F3FA}", "Amphora"],
-    ["\u{1F5FF}", "Moai"],
-    ["\u{1F5FD}", "Liberty"],
-    ["\u26E9\uFE0F", "Shrine"],
-    ["\u{1F54C}", "Mosque"],
-    ["\u{1F3A1}", "Ferris Wheel"],
-    ["\u{1F3A2}", "Roller Coaster"],
-    ["\u{1F6A2}", "Ship"],
-    ["\u{1F6F0}\uFE0F", "Satellite"],
-    ["\u{1F320}", "Shooting Star"],
-    ["\u{1F300}", "Cyclone"],
-    ["\u{1F52E}", "Crystal Ball"],
-    ["\u{1FAA9}", "Mirror Ball"],
-    ["\u{1F3B5}", "Music"],
-    ["\u{1F579}\uFE0F", "Joystick"],
-    ["\u{1F5A8}\uFE0F", "Printer"],
-    ["\u{1F4BE}", "Floppy"],
-    ["\u{1F50B}", "Battery"],
-    ["\u{1F4E1}", "Dish"],
-    ["\u{1F3CB}\uFE0F", "Weightlifter"],
-    ["\u{1F93F}", "Diving"],
-    ["\u{1F6F9}", "Skateboard"],
-    ["\u{1F9F3}", "Suitcase"],
-    ["\u{1FA9D}", "Hook"],
-    ["\u{1F9F8}", "Teddy Bear"],
-    ["\u{1F38F}", "Carp Streamer"],
-    ["\u{1F3D5}\uFE0F", "Camping"],
-    ["\u{1F5FA}\uFE0F", "World Map"],
-    ["\u{1F9F6}", "Yarn"],
-    ["\u{1F390}", "Wind Chime"],
-    ["\u{1F987}", "Bat"],
-    ["\u{1F6D2}", "Cart"],
-    ["\u{1F9B7}", "Tooth"],
-    ["\u{1FAC0}", "Heart Organ"],
-    ["\u{1F9E0}", "Brain"],
-    ["\u{1F441}\uFE0F", "Eye"],
-    ["\u{1F9B4}", "Bone"],
-    ["\u{1FAB8}", "Coral"],
-    ["\u{1F40C}", "Snail"],
-    ["\u{1F982}", "Scorpion"],
-    ["\u{1F54A}\uFE0F", "Dove"],
-    ["\u{1F999}", "Llama"],
-    ["\u{1F998}", "Kangaroo"],
-    ["\u{1F9AB}", "Beaver"],
-    ["\u{1F9A6}", "Otter"],
-    ["\u{1F9A5}", "Sloth"],
-    ["\u{1F351}", "Peach"],
-    ["\u{1F95D}", "Kiwi"],
-    ["\u{1F951}", "Avocado"],
-    ["\u{1F955}", "Carrot"],
-    ["\u{1F968}", "Pretzel"],
-    ["\u{1F950}", "Croissant"],
-    ["\u{1F36D}", "Lollipop"],
-    ["\u{1FAD0}", "Blueberry"],
-    ["\u{1F966}", "Broccoli"],
-    ["\u{1F330}", "Chestnut"],
-    ["\u{1F95C}", "Peanut"],
-    ["\u{1F36F}", "Honey"],
-    ["\u{1F9C2}", "Salt"],
-    ["\u{1FAD6}", "Teapot"],
-    ["\u{1F375}", "Tea"],
-    ["\u{1F9C3}", "Juice Box"],
-    ["\u{1FA98}", "Long Drum"],
-    ["\u{1F3B7}", "Saxophone"],
-    ["\u{1F3B9}", "Piano"],
-    ["\u{1FA97}", "Accordion"],
-    ["\u{1F3D7}\uFE0F", "Crane"],
-    ["\u{1F5FC}", "Tower"],
-    ["\u26F2", "Fountain"],
-    ["\u{1F3A0}", "Carousel"],
-    ["\u{1F6E5}\uFE0F", "Speedboat"],
-    ["\u{1F69C}", "Tractor"],
-    ["\u{1F692}", "Fire Engine"],
-    ["\u{1F691}", "Ambulance"],
-    ["\u{1F6F4}", "Scooter"],
-    ["\u{1FA82}", "Parachute"],
-    ["\u{1F3C4}", "Surfer"],
-    ["\u26F7\uFE0F", "Skier"],
-    ["\u{1F3CA}", "Swimmer"],
-    ["\u{1F6F7}", "Sled"],
-    ["\u{1F9E8}", "Firecracker"],
-    ["\u{1F383}", "Pumpkin"],
-    ["\u{1F3B3}", "Bowling"],
-    ["\u{1F3D3}", "Ping Pong"],
-    ["\u{1F94A}", "Boxing"],
-    ["\u{1F3D2}", "Hockey"],
-    ["\u{1F3BF}", "Ski"],
-    ["\u{1FA80}", "Yo-Yo"],
-    ["\u{1F6FC}", "Roller Skate"],
-    ["\u{1F9D7}", "Climber"],
-    ["\u{1F3C7}", "Jockey"],
-    ["\u{1FA88}", "Flute"],
-    ["\u{1F4EF}", "Horn"],
-    ["\u{1F399}\uFE0F", "Studio Mic"],
-    ["\u{1F4FB}", "Radio"],
-    ["\u{1F4FA}", "Television"],
-    ["\u{1F5A5}\uFE0F", "Desktop"],
-    ["\u{1F4BF}", "CD"],
-    ["\u{1F526}", "Flashlight"],
-    ["\u{1FAAB}", "Low Battery"],
-    ["\u{1F9F0}", "Toolbox"],
-    ["\u{1FA9A}", "Saw"],
-    ["\u{1F529}", "Nut & Bolt"],
-    ["\u{1F9F1}", "Brick"],
-    ["\u26D3\uFE0F", "Chain"],
-    ["\u{1FAA3}", "Bucket"],
-    ["\u{1FAA6}", "Headstone"],
-    ["\u{1F517}", "Link"],
-    ["\u{1FA9F}", "Window"],
-    ["\u{1F6AA}", "Door"],
-    ["\u{1F6CF}\uFE0F", "Bed"],
-    ["\u{1FA91}", "Chair"],
-    ["\u{1F6BF}", "Shower"],
-    ["\u{1F9F4}", "Lotion"],
-    ["\u{1F9FD}", "Sponge"],
-    ["\u{1F576}\uFE0F", "Sunglasses"],
-    ["\u{1F97E}", "Boot"],
-    ["\u{1F452}", "Sun Hat"],
-    ["\u{1F9E4}", "Gloves"],
-    ["\u{1F9E3}", "Scarf"],
-    ["\u{1F454}", "Necktie"],
-    ["\u{1F457}", "Dress"],
-    ["\u{1FA70}", "Ballet"],
-    ["\u{1FAAD}", "Fan"],
-    ["\u{1F484}", "Lipstick"],
-    ["\u{1F488}", "Barber Pole"],
-    ["\u{1F50D}", "Magnifier"],
-    ["\u{1F4FF}", "Prayer Beads"],
-    ["\u{1FAAC}", "Hamsa"],
-    ["\u265F\uFE0F", "Chess Pawn"],
-    ["\u{1F004}", "Mahjong"],
-    ["\u{1F0CF}", "Joker"],
-    ["\u{1F5BC}\uFE0F", "Frame"],
-    ["\u{1FA86}", "Nesting Doll"],
-    ["\u{1F3F7}\uFE0F", "Label"],
-    ["\u{1F4EE}", "Postbox"],
-    ["\u{1F5D1}\uFE0F", "Wastebasket"],
-    ["\u{1F6A9}", "Red Flag"],
-    ["\u{1F3F4}\u200D\u2620\uFE0F", "Pirate Flag"],
-    ["\u{1FAA7}", "Placard"],
-    ["\u{1F4EC}", "Mailbox"],
-    ["\u{1FA99}", "Coin"],
-    ["\u{1F4B3}", "Credit Card"],
-    ["\u{1F4D0}", "Triangle Ruler"],
-    ["\u{1F5D3}\uFE0F", "Calendar"],
-    ["\u{1F4CA}", "Bar Chart"],
-    ["\u{1F516}", "Bookmark"],
-    ["\u{1F3F5}\uFE0F", "Rosette"],
-    ["\u{1F397}\uFE0F", "Reminder Ribbon"],
-    ["\u{1FAA2}", "Knot"],
-    ["\u{1FA7B}", "X-Ray"],
-    ["\u{1FAAA}", "ID Card"],
-    ["\u{1F6D7}", "Elevator"],
-    ["\u{1F6A6}", "Traffic Light"],
-    ["\u26FD", "Fuel Pump"],
-    ["\u{1F6A7}", "Construction"],
-    ["\u{1F6DF}", "Ring Buoy"],
-    ["\u{1FA94}", "Diya Lamp"],
-    ["\u{1F391}", "Moon Viewing"],
-    ["\u{1F9E7}", "Red Envelope"],
-    ["\u{1F38D}", "Bamboo"],
-    ["\u{1FAB7}", "Lotus"],
-    ["\u{1F341}", "Maple Leaf"],
-    ["\u2618\uFE0F", "Shamrock"],
-    ["\u{1F9A0}", "Microbe"],
-    ["\u{1FABA}", "Nest"],
-    ["\u{1F9EE}", "Abacus"],
-    ["\u{1F4E3}", "Megaphone"],
-    ["\u{1F3C5}", "Medal"],
-    ["\u26FA", "Tent"],
-    ["\u{1FAE7}", "Soap Bubble"],
-    ["\u{1F3F3}\uFE0F\u200D\u{1F308}", "Pride Flag"],
-    ["\u{1F3F3}\uFE0F\u200D\u26A7\uFE0F", "Transgender Flag"],
-    ["\u{1F3F4}", "Black Flag"],
-    ["\u{1F1EF}\u{1F1F5}", "Japan"],
-    ["\u{1F1E7}\u{1F1F7}", "Brazil"],
-    ["\u{1F1E8}\u{1F1E6}", "Canada"],
-    ["\u2600\uFE0F", "Sun"],
-    ["\u{1F315}", "Full Moon"],
-    ["\u{1F530}", "Beginner"],
-    ["\u267E\uFE0F", "Infinity"],
-    ["\u{1F3DD}\uFE0F", "Island"],
-    ["\u{1F33E}", "Rice"],
-    ["\u{1FAF6}", "Heart Hands"],
-    ["\u{1F9A4}", "Dodo"],
-    ["\u{1FACF}", "Donkey"],
-    ["\u{1F409}", "Dragon"],
-    ["\u{1F9AC}", "Bison"],
-    ["\u{1FABB}", "Hyacinth"]
-  ];
-
   // src/service/codecMls.ts
   var CodecMls = class {
     #controller;
@@ -23882,7 +23851,7 @@
           remove: { removed: ownLeafIndex }
         }
       });
-      await this.#sendMlsMessage(
+      this.#sendMlsMessage(
         ObjectTypeMlsGroupInfo,
         group.members,
         proposal.message
@@ -24459,7 +24428,6 @@
     #allowPlaintextMessages;
     #allowEncryptedMessages;
     #encryptionKey;
-    emojiKey = [];
     config;
     groups;
     messages;
@@ -24539,7 +24507,6 @@
       this.#delivery.setActor(this.#actor);
       this.#delivery.setSignout(() => this.stop("SESSION-EXPIRED"));
       this.#directory.setActor(this.#actor);
-      this.#directory.setGenerator(this.config.generatorId, this.config.generatorName);
       if (this.useEncryptedMessages()) {
         try {
           await this.#validateKeyPackages();
@@ -24558,7 +24525,6 @@
             this.#actor,
             this.config.generatorId
           );
-          this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage);
         } catch (error) {
           console.error("Unable to initialize MLS service", error);
           this.stop("SERVER-DOWN");
@@ -24818,26 +24784,36 @@
         await this.createOrUpdateKeyPackage();
       }
     };
-    // createOrUpdateKeyPackage creates a new KeyPackage and POSTs it 
-    // to the server to replaces the current one. If there is no 
+    // createOrUpdateKeyPackage creates a new KeyPackage and POSTs it
+    // to the server to replaces the current one. If there is no
     // existing KeyPackage, then the new one is created
     createOrUpdateKeyPackage = async () => {
-      let activityId;
-      let keyPackageId;
       if (!this.#allowEncryptedMessages) {
         throw new Error("Server does not support sending of encrypted messages");
       }
+      const existing = await this.#database.loadKeyPackage();
       const keyPackageResult = await newKeyPackage(this.#actor.id());
-      const keyPackage = await this.#database.loadKeyPackage();
-      if (keyPackage == void 0) {
-        [activityId, keyPackageId] = await this.#directory.createKeyPackage(keyPackageResult.publicPackage);
+      const [signature, emojiKeyValue] = await emojiKey(keyPackageResult.publicPackage.signature);
+      const dbKeyPackage = {
+        id: "self",
+        keyPackageURL: existing?.keyPackageURL ?? "",
+        publicKeyPackage: keyPackageResult.publicPackage,
+        privateKeyPackage: keyPackageResult.privatePackage,
+        generatorId: this.config.generatorId,
+        generatorName: this.config.generatorName,
+        actorId: this.#actorId,
+        signature,
+        emojiKey: emojiKeyValue,
+        createDate: Date.now()
+      };
+      if (existing == void 0) {
+        const [activityId, keyPackageURL] = await this.#directory.createKeyPackage(dbKeyPackage);
+        dbKeyPackage.keyPackageURL = keyPackageURL;
         await this.lastMessage(activityId);
       } else {
-        keyPackageId = keyPackage.keyPackageURL;
-        await this.#directory.updateKeyPackage(keyPackageId, keyPackageResult.publicPackage);
+        await this.#directory.updateKeyPackage(dbKeyPackage);
       }
-      this.emojiKey = await keyPackageEmojiKey(keyPackageResult.publicPackage);
-      return await this.#database.saveKeyPackage(keyPackageId, keyPackageResult.publicPackage, keyPackageResult.privatePackage);
+      return await this.#database.saveKeyPackage(dbKeyPackage);
     };
     // loadOrCreateKeyPackage tries to load the KeyPackage for the 
     // current Actor. If none exists, then a new one is created and returned

@@ -1,19 +1,18 @@
-import { type KeyPackage } from "ts-mls"
+import { uint8ArrayToBase64 } from "./utils";
+import { type EmojiKey } from "../model/emoji";
 
-export type EmojiKey = [string, string]
 
-export async function keyPackageEmojiKey(keyPackage: KeyPackage): Promise<EmojiKey[]> {
-	return await emojiKey(keyPackage.signature)
-}
 
 // emojiKey: Uint8Array (raw key bytes) or hex string
-export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<EmojiKey[]> {
+export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<[string, EmojiKey[]]> {
 	const checksum = await crypto.subtle.digest('SHA-256', signature.slice(0))
 	const checksumHash = new Uint8Array(checksum);
 
 	if (checksumHash.length != 32) {
 		throw new Error("Checksum must be 32 characters long")
 	}
+
+	const base64 = uint8ArrayToBase64(checksumHash)
 
 	let result: EmojiKey[] = new Array(5)
 
@@ -25,7 +24,7 @@ export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<
 		result[i] = emojiSet[index]!; // Add to result (non-null assertion since we know the index is valid)
 	}
 
-	return result;
+	return [base64, result];
 }
 
 const emojiSet: EmojiKey[] = [

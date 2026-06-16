@@ -1,6 +1,3 @@
-// MLS Types
-import { type KeyPackage, type PrivateKeyPackage } from "ts-mls"
-
 // IDB Objects
 import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 
@@ -13,6 +10,7 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 // Model Objects
 import { diffArrays, newId } from "./utils"
 import type { IHost } from "./interfaces"
+import { emojiKey } from "./emojikeys"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
@@ -245,23 +243,14 @@ export class Database {
 		return await this.#db.get("keyPackage", "self")
 	}
 
-	// saveKeyPackage saves the ID, public, and private portions of the KeyPackage to the database
-	saveKeyPackage = async (keyPackageId: string, publicPackage: KeyPackage, privatePackage: PrivateKeyPackage) => {
-
-		// Create a DBKeyPackage record
-		const dbKeyPackage = {
-			id: "self",
-			keyPackageURL: keyPackageId,
-			publicKeyPackage: publicPackage,
-			privateKeyPackage: privatePackage,
-			createDate: Date.now(),
-		}
+	// saveKeyPackage saves the KeyPackage to the database, recomputing the signature and emojiKey.
+	saveKeyPackage = async (record: DBKeyPackage) => {
 
 		// Save it to the database
-		await this.#db.put("keyPackage", dbKeyPackage)
+		await this.#db.put("keyPackage", record)
 
 		// Return to caller
-		return dbKeyPackage
+		return record
 	}
 
 	deleteKeyPackage = async () => {

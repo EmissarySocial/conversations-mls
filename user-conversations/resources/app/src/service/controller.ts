@@ -3,7 +3,7 @@ import m from "mithril"
 import Stream from "mithril/stream"
 
 // ts-mls
-import type { KeyPackage } from "ts-mls"
+import { type KeyPackage } from "ts-mls"
 
 // ActivityPub objects
 import { Actor } from "../as/actor"
@@ -21,10 +21,10 @@ import { Message, NewMessage } from "../model/message"
 
 // Services
 import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver } from "./interfaces"
-import { type EmojiKey, keyPackageEmojiKey } from "./emojikeys"
 import { CodecMls } from "./codecMls"
 import { ActivityPubAuthenticationService } from "./authService"
 import { CodecPlaintext } from "./codecPlaintext"
+import { emojiKey } from "./emojikeys"
 
 // Other utility functions
 import { cipherSuiteImplementation, decodeKeyPackage, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, keyPackageIsExpired, newKeyPackage, shouldRefreshKeyPackage, unwrapKey, wrapKey } from "./cryptography"
@@ -48,7 +48,6 @@ export class Controller {
 	#allowPlaintextMessages: boolean
 	#allowEncryptedMessages: boolean
 	#encryptionKey?: CryptoKey
-	emojiKey: EmojiKey[] = []
 
 	config: Config
 	groups: Group[]
@@ -174,7 +173,6 @@ export class Controller {
 		this.#delivery.setActor(this.#actor)
 		this.#delivery.setSignout(() => this.stop("SESSION-EXPIRED"))
 		this.#directory.setActor(this.#actor)
-		this.#directory.setGenerator(this.config.generatorId, this.config.generatorName)
 
 		// Initialize MLS (if supported by the server)
 		if (this.useEncryptedMessages()) {
@@ -202,9 +200,6 @@ export class Controller {
 					this.#actor,
 					this.config.generatorId,
 				)
-
-				// Calculate EmojiKey
-				this.emojiKey = await keyPackageEmojiKey(keyPackage.publicKeyPackage)
 
 			} catch (error) {
 				console.error("Unable to initialize MLS service", error)
@@ -596,42 +591,49 @@ export class Controller {
 	}
 
 
-	// createOrUpdateKeyPackage creates a new KeyPackage and POSTs it 
-	// to the server to replaces the current one. If there is no 
+	// createOrUpdateKeyPackage creates a new KeyPackage and POSTs it
+	// to the server to replaces the current one. If there is no
 	// existing KeyPackage, then the new one is created
 	createOrUpdateKeyPackage = async (): Promise<DBKeyPackage> => {
-
-		let activityId: string
-		let keyPackageId: string
 
 		// RULE: Require server support for encrypted messages
 		if (!this.#allowEncryptedMessages) {
 			throw new Error("Server does not support sending of encrypted messages")
 		}
 
-		// Generate initial key package for this user
+		// Try to find an existing KeyPackage record
+		const existing = await this.#database.loadKeyPackage()
+
+		// Generate a new key package for this user
 		const keyPackageResult = await newKeyPackage(this.#actor.id())
 
-		// Try to find an existing KeyPackage record
-		const keyPackage = await this.#database.loadKeyPackage()
+		// Compute the signature and emojiKey from the public key package
+		const [signature, emojiKeyValue] = await emojiKey(keyPackageResult.publicPackage.signature)
 
-		// If we don't already have a KeyPackage, then create a new one
-		if (keyPackage == undefined) {
-			[activityId, keyPackageId] = await this.#directory.createKeyPackage(keyPackageResult.publicPackage)
-			await this.lastMessage(activityId)
-
-		} else {
-
-			// Otherwise, update the existing KeyPackage
-			keyPackageId = keyPackage.keyPackageURL
-			await this.#directory.updateKeyPackage(keyPackageId, keyPackageResult.publicPackage)
+		// Build the DBKeyPackage with all required fields
+		const dbKeyPackage: DBKeyPackage = {
+			id: "self",
+			keyPackageURL: existing?.keyPackageURL ?? "",
+			publicKeyPackage: keyPackageResult.publicPackage,
+			privateKeyPackage: keyPackageResult.privatePackage,
+			generatorId: this.config.generatorId,
+			generatorName: this.config.generatorName,
+			actorId: this.#actorId,
+			signature: signature,
+			emojiKey: emojiKeyValue,
+			createDate: Date.now(),
 		}
 
-		// Recalculate the EmojiKey for this KeyPackage
-		this.emojiKey = await keyPackageEmojiKey(keyPackageResult.publicPackage)
+		if (existing == undefined) {
+			const [activityId, keyPackageURL] = await this.#directory.createKeyPackage(dbKeyPackage)
+			dbKeyPackage.keyPackageURL = keyPackageURL
+			await this.lastMessage(activityId)
+		} else {
+			await this.#directory.updateKeyPackage(dbKeyPackage)
+		}
 
-		// Save the KeyPackage to the local database and return
-		return await this.#database.saveKeyPackage(keyPackageId, keyPackageResult.publicPackage, keyPackageResult.privatePackage)
+		// Save to the local database and return
+		return await this.#database.saveKeyPackage(dbKeyPackage)
 	}
 
 	// loadOrCreateKeyPackage tries to load the KeyPackage for the 

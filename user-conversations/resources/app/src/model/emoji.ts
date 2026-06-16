@@ -8,3 +8,5 @@ export type Emoji = {
 	emoji: string
 	name: string
 }
+
+export type EmojiKey = [string, string]
