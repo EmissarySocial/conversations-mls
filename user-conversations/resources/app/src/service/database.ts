@@ -9,8 +9,7 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 
 // Model Objects
 import { diffArrays, newId } from "./utils"
-import type { IHost } from "./interfaces"
-import { emojiKey } from "./emojikeys"
+import { type IHost } from "./interfaces"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
