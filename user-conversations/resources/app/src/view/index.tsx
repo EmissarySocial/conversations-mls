@@ -45,18 +45,19 @@ export class Index {
 
 	private viewDetails(vnode: IndexVnode): JSX.Element {
 
-		// If there are no groups, then only show the empty page.
-		const groups = vnode.attrs.controller.groups
+		const controller = vnode.attrs.controller
+		const group = controller.groupStream()
 
-		if (groups.length == 0) {
-			return <Empty controller={vnode.attrs.controller} />
+		// If no group is selected, show the empty page. The selected group is shown
+		// even when it is filtered out of the sidebar list, so this depends on the
+		// selection (empty id) rather than on the sidebar list being empty.
+		if (group.id == "") {
+			return <Empty controller={controller} />
 		}
 
 		// Special case: if the group state is "WELCOME", then only show the welcome page.
-		const group = vnode.attrs.controller.groupStream()
-
 		if (group.stateId == "WELCOME") {
-			return <GroupWelcome controller={vnode.attrs.controller} />
+			return <GroupWelcome controller={controller} />
 		}
 
 		// Otherwise, show the user's selected page

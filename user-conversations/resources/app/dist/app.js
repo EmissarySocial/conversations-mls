@@ -24511,7 +24511,9 @@
       this.filters = [];
       this.message = void 0;
       this.inReplyTo = void 0;
-      this.groupStream = (0, import_stream2.default)(NewGroup("PLAINTEXT"));
+      const placeholderGroup = NewGroup("PLAINTEXT");
+      placeholderGroup.id = "";
+      this.groupStream = (0, import_stream2.default)(placeholderGroup);
       this.groupMemberStream = this.groupStream.map((group) => group.members);
       this.groupContactStream = this.groupMemberStream.map((members) => members.map((id) => this.#contacts.getContactStream(id)));
       this.config = NewConfig();
@@ -24971,7 +24973,7 @@
       } else {
         this.groups = await this.#database.searchGroups(filter.tags, filter.states);
       }
-      await this.selectGroup(this.selectedGroupId());
+      await this.reconcileSelectedGroup();
     };
     // loadFilters retrieves all conversation filters from the database
     loadFilters = async () => {
@@ -25047,16 +25049,14 @@
       await this.#database.deleteMessagesByGroup(groupId);
       await this.loadGroups();
     };
-    // selectGroup updates the "selectedGroupId" and reloads messages for that group
+    // selectGroup displays the group with the specified ID and reloads its messages.
+    // The group is loaded directly from the database, so it is displayed even when
+    // it is not present in the (filtered) sidebar list.
     selectGroup = async (groupId) => {
-      if (this.groups.length == 0) {
-        this.groupStream(NewGroup("PLAINTEXT"));
-        this.messages = [];
-        return;
-      }
-      let group = this.groups.find((group2) => group2.id == groupId);
+      const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
-        group = this.groups[0];
+        this.clearSelectedGroup();
+        return;
       }
       this.groupStream(group);
       if (group.unread) {
@@ -25064,10 +25064,36 @@
         await this.saveGroup(group);
         this.syncGroup(group);
       }
-      this.groupStream(group);
       await this.loadMessages();
       this.inReplyTo = void 0;
       this.page_group_messages();
+    };
+    // clearSelectedGroup resets the displayed group to an empty placeholder. The
+    // placeholder uses an empty ID so selectedGroupId() reports "nothing selected".
+    clearSelectedGroup = () => {
+      const placeholder = NewGroup("PLAINTEXT");
+      placeholder.id = "";
+      this.groupStream(placeholder);
+      this.messages = [];
+    };
+    // reconcileSelectedGroup keeps a valid group displayed after the sidebar list
+    // is (re)loaded. The currently displayed group is left in place when it still
+    // exists, so the active filter never changes what conversation is shown. Only
+    // when nothing is selected yet does it fall back to the first group in the list.
+    reconcileSelectedGroup = async () => {
+      const currentId = this.selectedGroupId();
+      if (currentId != "") {
+        const current = await this.#database.loadGroup(currentId);
+        if (current != void 0) {
+          return;
+        }
+      }
+      const first = this.groups[0];
+      if (first == void 0) {
+        this.clearSelectedGroup();
+        return;
+      }
+      await this.selectGroup(first.id);
     };
     selectedGroupId = () => {
       return this.groupStream().id;
@@ -26959,13 +26985,13 @@
       return /* @__PURE__ */ (0, import_mithril26.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril26.default)(Groups, { controller: vnode.attrs.controller })), this.viewDetails(vnode), this.viewModals(vnode));
     }
     viewDetails(vnode) {
-      const groups = vnode.attrs.controller.groups;
-      if (groups.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril26.default)(Empty, { controller: vnode.attrs.controller });
+      const controller2 = vnode.attrs.controller;
+      const group = controller2.groupStream();
+      if (group.id == "") {
+        return /* @__PURE__ */ (0, import_mithril26.default)(Empty, { controller: controller2 });
       }
-      const group = vnode.attrs.controller.groupStream();
       if (group.stateId == "WELCOME") {
-        return /* @__PURE__ */ (0, import_mithril26.default)(GroupWelcome, { controller: vnode.attrs.controller });
+        return /* @__PURE__ */ (0, import_mithril26.default)(GroupWelcome, { controller: controller2 });
       }
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-MEMBERS":

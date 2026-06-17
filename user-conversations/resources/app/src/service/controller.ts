@@ -104,8 +104,11 @@ export class Controller {
 		this.message = undefined
 		this.inReplyTo = undefined
 
-		// Reactive Streams
-		this.groupStream = Stream(NewGroup("PLAINTEXT"))
+		// Reactive Streams. The initial group is an empty-id placeholder meaning
+		// "nothing selected" (see clearSelectedGroup / viewDetails).
+		const placeholderGroup = NewGroup("PLAINTEXT")
+		placeholderGroup.id = ""
+		this.groupStream = Stream(placeholderGroup)
 		this.groupMemberStream = this.groupStream.map(group => group.members)
 		this.groupContactStream = this.groupMemberStream.map((members) => members.map(id => this.#contacts.getContactStream(id)))
 
@@ -803,8 +806,8 @@ export class Controller {
 			this.groups = await this.#database.searchGroups(filter.tags, filter.states)
 		}
 
-		// Find/set the selected group
-		await this.selectGroup(this.selectedGroupId())
+		// Keep a valid group displayed without letting the filter change the selection
+		await this.reconcileSelectedGroup()
 	}
 
 	// loadFilters retrieves all conversation filters from the database
@@ -916,22 +919,19 @@ export class Controller {
 		await this.loadGroups()
 	}
 
-	// selectGroup updates the "selectedGroupId" and reloads messages for that group
+	// selectGroup displays the group with the specified ID and reloads its messages.
+	// The group is loaded directly from the database, so it is displayed even when
+	// it is not present in the (filtered) sidebar list.
 	selectGroup = async (groupId: string) => {
 
-		// If there are no groups, then clear values and exit.
-		if (this.groups.length == 0) {
-			this.groupStream(NewGroup("PLAINTEXT"))
-			this.messages = []
-			return
-		}
+		// Load the requested group from the database (not just the filtered list),
+		// so the selection survives even when the active filter excludes it.
+		const group = await this.#database.loadGroup(groupId)
 
-		// Find the group with the specified ID
-		let group = this.groups.find((group) => group.id == groupId)
-
-		// If the group can't be found, then just use the first group in the list
+		// If the group can't be found, then clear the selection and exit.
 		if (group == undefined) {
-			group = this.groups[0]!
+			this.clearSelectedGroup()
+			return
 		}
 
 		// Set the current group stream
@@ -944,11 +944,44 @@ export class Controller {
 			this.syncGroup(group) // (run async)
 		}
 
-		this.groupStream(group)
 		await this.loadMessages()
 		this.inReplyTo = undefined
 
 		this.page_group_messages()
+	}
+
+	// clearSelectedGroup resets the displayed group to an empty placeholder. The
+	// placeholder uses an empty ID so selectedGroupId() reports "nothing selected".
+	clearSelectedGroup = () => {
+		const placeholder = NewGroup("PLAINTEXT")
+		placeholder.id = ""
+		this.groupStream(placeholder)
+		this.messages = []
+	}
+
+	// reconcileSelectedGroup keeps a valid group displayed after the sidebar list
+	// is (re)loaded. The currently displayed group is left in place when it still
+	// exists, so the active filter never changes what conversation is shown. Only
+	// when nothing is selected yet does it fall back to the first group in the list.
+	reconcileSelectedGroup = async () => {
+
+		// If a real group is already displayed and still exists, leave it alone.
+		const currentId = this.selectedGroupId()
+		if (currentId != "") {
+			const current = await this.#database.loadGroup(currentId)
+			if (current != undefined) {
+				return
+			}
+		}
+
+		// Nothing valid is selected: fall back to the first group in the list (if any).
+		const first = this.groups[0]
+		if (first == undefined) {
+			this.clearSelectedGroup()
+			return
+		}
+
+		await this.selectGroup(first.id)
 	}
 
 	selectedGroupId = () => {
