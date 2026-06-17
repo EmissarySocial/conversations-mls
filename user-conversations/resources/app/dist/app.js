@@ -18619,7 +18619,7 @@
 
   // src/service/database.ts
   async function NewIndexedDB(actorId) {
-    return await openDB(actorId, 1, {
+    return await openDB(actorId, 2, {
       upgrade(db, oldVersion, _newVersion, transaction) {
         if (oldVersion < 1) {
           db.createObjectStore("config", { keyPath: "id" });
@@ -18627,6 +18627,9 @@
           db.createObjectStore("keyPackage", { keyPath: "id" });
           db.createObjectStore("message", { keyPath: "id" });
           transaction.objectStore("message").createIndex("groupId", "groupId", { unique: false });
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore("filter", { keyPath: "id" });
         }
       }
     });
@@ -18749,6 +18752,32 @@
         await this.#db.delete("message", message);
       }
       await this.#db.delete("group", groupId);
+      this.#onchange();
+    };
+    /////////////////////////////////////////////
+    // Filters
+    /////////////////////////////////////////////
+    // allFilters returns all conversation filters, sorted by their sort field ascending
+    allFilters = async () => {
+      const filters = await this.#db.getAll("filter");
+      filters.sort((a2, b2) => a2.sort - b2.sort);
+      return filters;
+    };
+    // loadFilter retrieves a single filter from the database
+    loadFilter = async (filterId) => {
+      return await this.#db.get("filter", filterId);
+    };
+    // saveFilter saves a filter to the database
+    saveFilter = async (filter) => {
+      if (filter.id == void 0 || filter.id == "") {
+        throw new Error("Filter must have an ID");
+      }
+      await this.#db.put("filter", filter);
+      this.#onchange();
+    };
+    // deleteFilter removes a filter from the database
+    deleteFilter = async (filterId) => {
+      await this.#db.delete("filter", filterId);
       this.#onchange();
     };
     /////////////////////////////////////////////

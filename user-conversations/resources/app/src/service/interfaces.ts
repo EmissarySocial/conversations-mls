@@ -17,6 +17,7 @@ import { type Actor } from "../as/actor"
 // Model types
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
+import { type Filter } from "../model/filter"
 import { type Group, type EncryptedGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
@@ -70,6 +71,12 @@ export interface IDatabase {
 	loadGroup(groupId: string): Promise<Group | EncryptedGroup | undefined>
 	saveGroup(group: Group): Promise<void>
 	deleteGroup(groupId: string): Promise<void>
+
+	// Filter methods
+	allFilters(): Promise<Filter[]>
+	loadFilter(filterId: string): Promise<Filter | undefined>
+	saveFilter(filter: Filter): Promise<void>
+	deleteFilter(filterId: string): Promise<void>
 
 	// KeyPackage methods
 	loadKeyPackage(): Promise<DBKeyPackage | undefined>

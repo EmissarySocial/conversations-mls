@@ -3,6 +3,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 
 // Model Types
 import { type Config, ConfigID, NewConfig } from "../model/config"
+import { type Filter } from "../model/filter"
 import { type EncryptedGroup, type Group, type GroupState } from "../model/group"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
@@ -16,6 +17,14 @@ interface Schema extends DBSchema {
 	config: {
 		key: string
 		value: Config
+		indexes: {
+			id: string
+		}
+	}
+
+	filter: {
+		key: string
+		value: Filter
 		indexes: {
 			id: string
 		}
@@ -50,7 +59,7 @@ interface Schema extends DBSchema {
 type callbackFunction = () => void
 
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
-	return await openDB<Schema>(actorId, 1, {
+	return await openDB<Schema>(actorId, 2, {
 		upgrade(db, oldVersion, _newVersion, transaction) {
 
 			if (oldVersion < 1) {
@@ -63,6 +72,10 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 
 				// Create indexes for efficient queries
 				transaction.objectStore("message").createIndex("groupId", "groupId", { unique: false })
+			}
+
+			if (oldVersion < 2) {
+				db.createObjectStore("filter", { keyPath: "id" })
 			}
 		},
 	})
@@ -238,6 +251,40 @@ export class Database {
 
 		// Delete the group itself
 		await this.#db.delete("group", groupId)
+		this.#onchange()
+	}
+
+	/////////////////////////////////////////////
+	// Filters
+	/////////////////////////////////////////////
+
+	// allFilters returns all conversation filters, sorted by their sort field ascending
+	allFilters = async (): Promise<Filter[]> => {
+		const filters = await this.#db.getAll("filter")
+		filters.sort((a, b) => a.sort - b.sort)
+		return filters
+	}
+
+	// loadFilter retrieves a single filter from the database
+	loadFilter = async (filterId: string): Promise<Filter | undefined> => {
+		return await this.#db.get("filter", filterId)
+	}
+
+	// saveFilter saves a filter to the database
+	saveFilter = async (filter: Filter) => {
+
+		// RULE: Filter must have an ID
+		if (filter.id == undefined || filter.id == "") {
+			throw new Error("Filter must have an ID")
+		}
+
+		await this.#db.put("filter", filter)
+		this.#onchange()
+	}
+
+	// deleteFilter removes a filter from the database
+	deleteFilter = async (filterId: string) => {
+		await this.#db.delete("filter", filterId)
 		this.#onchange()
 	}
 

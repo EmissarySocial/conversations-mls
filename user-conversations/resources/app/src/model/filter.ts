@@ -5,11 +5,13 @@ import { newId } from "./utils"
 export type Filter = {
 	id: string
 	name: string
+	sort: number // Sort order used to arrange filters in the UI (ascending)
 }
 
 export function NewFilter(): Filter {
 	return {
 		id: newId(),
 		name: "",
+		sort: 0,
 	}
 }
