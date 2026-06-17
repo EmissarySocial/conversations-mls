@@ -111,7 +111,7 @@ export class AppSettings {
 
 			case "FILTERS":
 			default:
-				return <AppSettingsFilters />
+				return <AppSettingsFilters controller={controller} />
 		}
 	}
 

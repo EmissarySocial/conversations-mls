@@ -11,17 +11,9 @@ interface FilterMenuArgs {
 
 interface FilterMenuState { }
 
-// FILTERS is a placeholder list of conversation filters. These will be replaced
-// by dynamically-defined filters once filter management is built.
-const FILTERS: { id: string, label: string }[] = [
-	{ id: "", label: "All Conversations" },
-	{ id: "important", label: "Important Only" },
-	{ id: "archived", label: "Archived Only" },
-]
-
 // FilterMenu is the conversation filter pop-up. It uses the reusable Popup
-// component to render a "filter" button and a menu of conversation filters.
-// NOTE: the actual filtering of the list is not yet implemented.
+// component to render a "filter" button and a menu of the user's conversation
+// filters. NOTE: the actual filtering of the list is not yet implemented.
 export class FilterMenu {
 
 	view(vnode: FilterMenuVnode) {
@@ -47,10 +39,10 @@ export class FilterMenu {
 
 		return (
 			<div>
-				{FILTERS.map(filter => (
-					<div key={filter.label} class="filter-menu-item clickable" role="button" tabIndex="0" onclick={() => this.select(controller, close, filter.id)} onkeypress={synthClick}>
+				{controller.filters.map(filter => (
+					<div key={filter.id} class="filter-menu-item clickable" role="button" tabIndex="0" onclick={() => this.select(controller, close, filter.id)} onkeypress={synthClick}>
 						<span class="filter-menu-icon">{(filter.id == selectedId) ? <i class="bi bi-check"></i> : null}</span>
-						<span>{filter.label}</span>
+						<span>{filter.name}</span>
 					</div>
 				))}
 

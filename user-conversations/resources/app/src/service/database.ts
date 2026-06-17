@@ -3,7 +3,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 
 // Model Types
 import { type Config, ConfigID, NewConfig } from "../model/config"
-import { type Filter } from "../model/filter"
+import { type Filter, normalizeFilter } from "../model/filter"
 import { type EncryptedGroup, type Group, type GroupState } from "../model/group"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
@@ -262,13 +262,15 @@ export class Database {
 	// ascending, then by name ascending to break ties
 	allFilters = async (): Promise<Filter[]> => {
 		const filters = await this.#db.getAll("filter")
-		filters.sort((a, b) => (a.sort - b.sort) || a.name.localeCompare(b.name))
 		return filters
+			.map(normalizeFilter)
+			.sort((a, b) => (a.sort - b.sort) || a.name.localeCompare(b.name))
 	}
 
 	// loadFilter retrieves a single filter from the database
 	loadFilter = async (filterId: string): Promise<Filter | undefined> => {
-		return await this.#db.get("filter", filterId)
+		const filter = await this.#db.get("filter", filterId)
+		return (filter == undefined) ? undefined : normalizeFilter(filter)
 	}
 
 	// saveFilter saves a filter to the database
