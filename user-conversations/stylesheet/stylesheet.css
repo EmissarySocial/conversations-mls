@@ -305,6 +305,22 @@
 	width: 1.5em;
 }
 
+/* A "pressed"/recessed button state — a softer alternative to the primary blue,
+   used for the group-status buttons that reflect the current selection. */
+button.pressed,
+.button.pressed {
+	background-color: var(--gray30);
+	color: var(--gray90);
+}
+
+button.pressed:hover,
+button.pressed:focus,
+.button.pressed:hover,
+.button.pressed:focus {
+	background-color: var(--gray30);
+	color: var(--gray90);
+}
+
 /* Filter list drag-to-reorder */
 .filter-grip {
 	cursor: grab;

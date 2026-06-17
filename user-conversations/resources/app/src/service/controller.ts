@@ -1008,6 +1008,23 @@ export class Controller {
 		}
 	}
 
+	// setSelectedGroupState changes the currently displayed group's state, persists
+	// it (syncing to other devices), and redraws. Changing the state may move the
+	// group in or out of the active filter's sidebar list.
+	setSelectedGroupState = async (stateId: GroupState) => {
+
+		const group = this.groupStream()
+
+		// Nothing to do when the state is unchanged
+		if (group.stateId == stateId) {
+			return
+		}
+
+		this.setGroupState(group, stateId)
+		await this.saveGroupAndSync(group)
+		m.redraw()
+	}
+
 
 	//////////////////////////////////////////
 	// Group Members

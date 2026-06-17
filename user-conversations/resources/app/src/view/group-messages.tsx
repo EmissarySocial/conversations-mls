@@ -8,7 +8,7 @@ import { WidgetMessageCreate } from "./widget-message-create"
 import { ViewMessage } from "./message"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
-import { groupIsEncrypted } from "../model/group"
+import { groupIsEncrypted, type Group, type EncryptedGroup, type GroupState } from "../model/group"
 import { synthClick } from "./utils"
 
 dayjs.extend(relativeTime)
@@ -42,6 +42,23 @@ export class GroupMessages {
 		}
 	}
 
+	// viewStateButton renders one of the group-status buttons (Important / Active /
+	// Archived). The button matching the group's current state appears selected;
+	// clicking an unselected button changes the group's state. The label is used as
+	// the accessible name for the icon-only button.
+	viewStateButton(controller: Controller, group: Group | EncryptedGroup, state: GroupState, icon: string, label: string): m.Children {
+
+		const isSelected = (group.stateId == state)
+		const cssClass = "text-sm" + (isSelected ? " pressed" : "")
+		const iconClass = "bi bi-" + icon + (isSelected ? "-fill" : "")
+
+		return (
+			<button type="button" class={cssClass} title={label} aria-label={label} aria-pressed={isSelected ? "true" : "false"} onclick={() => controller.setSelectedGroupState(state)}>
+				<i class={iconClass}></i>
+			</button>
+		)
+	}
+
 	scrollToBottom(vnode: GroupMessagesVnode) {
 		vnode.state.previousMessageCount = vnode.attrs.controller.messages.length;
 
@@ -65,11 +82,16 @@ export class GroupMessages {
 		// Display messages
 		return (
 			<div id="conversation-details">
-				<div id="conversation-header">
-					<div role="tablist" class="margin-none padding-none underlined">
+				<div id="conversation-header" class="flex-row flex-align-center">
+					<div role="tablist" class="margin-none padding-none underlined flex-grow">
 						<div role="tab" aria-selected="true">{group.name || group.defaultName || "Messages"}</div>
 						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
 						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
+					</div>
+					<div class="button-group">
+						{this.viewStateButton(controller, group, "IMPORTANT", "star", "Important")}
+						{this.viewStateButton(controller, group, "ACTIVE", "chat", "Active")}
+						{this.viewStateButton(controller, group, "ARCHIVED", "archive", "Archived")}
 					</div>
 				</div>
 				<div id="conversation-messages" class={classNames}>

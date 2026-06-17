@@ -25114,6 +25114,18 @@
         default:
       }
     }
+    // setSelectedGroupState changes the currently displayed group's state, persists
+    // it (syncing to other devices), and redraws. Changing the state may move the
+    // group in or out of the active filter's sidebar list.
+    setSelectedGroupState = async (stateId) => {
+      const group = this.groupStream();
+      if (group.stateId == stateId) {
+        return;
+      }
+      this.setGroupState(group, stateId);
+      await this.saveGroupAndSync(group);
+      import_mithril.default.redraw();
+    };
     //////////////////////////////////////////
     // Group Members
     //////////////////////////////////////////
@@ -26473,6 +26485,16 @@
         this.scrollToBottom(vnode);
       }
     }
+    // viewStateButton renders one of the group-status buttons (Important / Active /
+    // Archived). The button matching the group's current state appears selected;
+    // clicking an unselected button changes the group's state. The label is used as
+    // the accessible name for the icon-only button.
+    viewStateButton(controller2, group, state, icon, label) {
+      const isSelected = group.stateId == state;
+      const cssClass = "text-sm" + (isSelected ? " pressed" : "");
+      const iconClass = "bi bi-" + icon + (isSelected ? "-fill" : "");
+      return /* @__PURE__ */ (0, import_mithril13.default)("button", { type: "button", class: cssClass, title: label, "aria-label": label, "aria-pressed": isSelected ? "true" : "false", onclick: () => controller2.setSelectedGroupState(state) }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: iconClass }));
+    }
     scrollToBottom(vnode) {
       vnode.state.previousMessageCount = vnode.attrs.controller.messages.length;
       const domElement = document.getElementById("conversation-messages");
@@ -26485,7 +26507,7 @@
       const group = controller2.groupStream();
       let lastSender = "";
       const classNames = groupIsEncrypted(group) ? "encrypted" : "";
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tablist", class: "margin-none padding-none underlined" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", "aria-selected": "true" }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_notes(), onkeypress: synthClick }, "Notes"), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", tabIndex: "0", onclick: () => controller2.page_group_members(), onkeypress: synthClick }, "People (", group.members.length, ")"))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages", class: classNames }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-header", class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tablist", class: "margin-none padding-none underlined flex-grow" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", "aria-selected": "true" }, group.name || group.defaultName || "Messages"), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", tabIndex: "0", onclick: () => vnode.attrs.controller.page_group_notes(), onkeypress: synthClick }, "Notes"), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "tab", tabIndex: "0", onclick: () => controller2.page_group_members(), onkeypress: synthClick }, "People (", group.members.length, ")")), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "button-group" }, this.viewStateButton(controller2, group, "IMPORTANT", "star", "Important"), this.viewStateButton(controller2, group, "ACTIVE", "chat", "Active"), this.viewStateButton(controller2, group, "ARCHIVED", "archive", "Archived"))), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "conversation-messages", class: classNames }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         let sender;
         if (message.sender != lastSender) {
           sender = vnode.state.contacts.find((contact) => contact().id == message.sender);
