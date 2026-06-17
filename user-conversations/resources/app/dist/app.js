@@ -10333,6 +10333,15 @@
     };
   }
 
+  // src/model/filter.ts
+  function NewFilter() {
+    return {
+      id: newId(),
+      name: "",
+      sort: 0
+    };
+  }
+
   // node_modules/ts-mls/dist/src/codec/tlsEncoder.js
   function encode(enc, t2) {
     const [len, write] = enc(t2);
@@ -24594,6 +24603,17 @@
       const wrappedKey = await wrapKey(encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer);
       this.config.encryptionKey = wrappedKey;
       await this.#database.saveConfig(this.config);
+      const defaultFilters = [
+        { name: "All Conversations", sort: 1 },
+        { name: "Featured Only", sort: 2 },
+        { name: "Archived", sort: 3 }
+      ];
+      for (const { name, sort } of defaultFilters) {
+        const filter = NewFilter();
+        filter.name = name;
+        filter.sort = sort;
+        await this.#database.saveFilter(filter);
+      }
       await this.start();
     };
     // saveConfiguration is called when the user submits their options from the initial welcome screen
