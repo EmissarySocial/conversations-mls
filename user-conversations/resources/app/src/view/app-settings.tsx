@@ -61,7 +61,7 @@ export class AppSettings {
 
 				<hr class="margin-vertical-sm" />
 
-				{this.viewTab(vnode, "FILTERS", "funnel", "Filters")}
+				{this.viewTab(vnode, "FILTERS", "filter-circle", "Filters")}
 				{this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications")}
 				{this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption")}
 				{this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase")}

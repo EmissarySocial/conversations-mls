@@ -10343,13 +10343,6 @@
       tags: []
     };
   }
-  function normalizeFilter(filter) {
-    return {
-      ...filter,
-      states: filter.states ?? [],
-      tags: filter.tags ?? []
-    };
-  }
 
   // node_modules/ts-mls/dist/src/codec/tlsEncoder.js
   function encode(enc, t2) {
@@ -18779,12 +18772,11 @@
     // ascending, then by name ascending to break ties
     allFilters = async () => {
       const filters = await this.#db.getAll("filter");
-      return filters.map(normalizeFilter).sort((a2, b2) => a2.sort - b2.sort || a2.name.localeCompare(b2.name));
+      return filters.sort((a2, b2) => a2.sort - b2.sort || a2.name.localeCompare(b2.name));
     };
     // loadFilter retrieves a single filter from the database
     loadFilter = async (filterId) => {
-      const filter = await this.#db.get("filter", filterId);
-      return filter == void 0 ? void 0 : normalizeFilter(filter);
+      return await this.#db.get("filter", filterId);
     };
     // saveFilter saves a filter to the database
     saveFilter = async (filter) => {
@@ -24593,12 +24585,11 @@
       }
       this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => this.stop("SESSION-EXPIRED"));
       this.#database.onchange(async () => {
+        await this.loadFilters();
         await this.loadGroups();
         await this.loadMessages();
-        await this.loadFilters();
       });
-      this.loadGroups();
-      this.loadFilters();
+      this.loadFilters().then(() => this.loadGroups());
       this.pageView = "GROUPS";
       import_mithril.default.redraw();
     };
@@ -24616,14 +24607,15 @@
       const wrappedKey = await wrapKey(encryptionKey, wrappingKey, this.config.encryptionKeyIV.buffer);
       this.config.encryptionKey = wrappedKey;
       const defaultFilters = [
-        { name: "Current Conversations", sort: 1 },
-        { name: "Featured Only", sort: 2 },
-        { name: "Archived", sort: 3 }
+        { name: "Current Conversations", sort: 1, states: ["ACTIVE", "IMPORTANT"] },
+        { name: "Important", sort: 2, states: ["IMPORTANT"] },
+        { name: "Archived", sort: 3, states: ["ARCHIVED"] }
       ];
-      for (const { name, sort } of defaultFilters) {
+      for (const { name, sort, states } of defaultFilters) {
         const filter = NewFilter();
         filter.name = name;
         filter.sort = sort;
+        filter.states = states;
         await this.#database.saveFilter(filter);
         if (this.config.selectedFilterId == "") {
           this.config.selectedFilterId = filter.id;
@@ -24711,12 +24703,17 @@
       this.settingsTab = "FILTERS";
       import_mithril.default.redraw();
     };
-    // setConversationFilter records the currently selected conversation filter and
-    // persists it. NOTE: the actual filtering of the conversation list is not yet
-    // implemented; this only stores and surfaces the selection.
+    // selectedFilterName returns the display name of the currently selected
+    // conversation filter (empty string if none is selected).
+    selectedFilterName = () => {
+      return this.filters.find((filter) => filter.id == this.config.selectedFilterId)?.name ?? "";
+    };
+    // setConversationFilter records the currently selected conversation filter,
+    // persists it, and reloads the conversation list to match the new filter.
     setConversationFilter = async (filterId) => {
       this.config.selectedFilterId = filterId;
       await this.#database.saveConfig(this.config);
+      await this.loadGroups();
       import_mithril.default.redraw();
     };
     page_groups = () => {
@@ -24965,9 +24962,15 @@
       import_mithril.default.redraw();
       this.syncGroup(group);
     };
-    // loadGroups retrieves all groups from the database
+    // loadGroups retrieves the groups matching the currently selected filter from
+    // the database. When no filter is selected, every group is loaded.
     loadGroups = async () => {
-      this.groups = await this.#database.allGroups();
+      const filter = this.filters.find((f2) => f2.id == this.config.selectedFilterId);
+      if (filter == void 0) {
+        this.groups = await this.#database.allGroups();
+      } else {
+        this.groups = await this.#database.searchGroups(filter.tags, filter.states);
+      }
       await this.selectGroup(this.selectedGroupId());
     };
     // loadFilters retrieves all conversation filters from the database
@@ -24978,9 +24981,16 @@
     saveFilter = async (filter) => {
       await this.#database.saveFilter(filter);
     };
-    // deleteFilter removes a conversation filter from the database
+    // deleteFilter removes a conversation filter from the database. If the deleted
+    // filter was the selected one, the selection falls back to the first remaining
+    // filter (as if no filter were selected).
     deleteFilter = async (filterId) => {
       await this.#database.deleteFilter(filterId);
+      if (this.config.selectedFilterId == filterId) {
+        await this.loadFilters();
+        this.config.selectedFilterId = this.filters[0]?.id ?? "";
+        await this.saveConfig();
+      }
     };
     saveGroupAndSync = async (group) => {
       await this.saveGroup(group);
@@ -26140,7 +26150,7 @@
       return /* @__PURE__ */ (0, import_mithril9.default)(
         Popup,
         {
-          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-lg text-gray margin-none clickable", role: "button", tabindex: "0", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-filter-circle" })),
+          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-lg text-gray padding-none margin-none clickable", role: "button", tabindex: "0", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-filter-circle" })),
           content: (close) => this.viewMenu(controller2, close)
         }
       );
@@ -26166,22 +26176,13 @@
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center clickable hover-trigger", role: "link", tabIndex: "0", onclick: () => controller2.page_settings(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "circle width-32 hover-show text-lg margin-none align-center" }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-gear" })), /* @__PURE__ */ (0, import_mithril10.default)("img", { src: controller2.actorIcon(), class: "width-32 circle hover-hide", alt: "" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none" }, "Conversations")), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "link text-lg margin-none", role: "button", tabindex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril10.default)("label", { class: "bi bi-search", for: "idSearch" }), /* @__PURE__ */ (0, import_mithril10.default)(
-        "input",
-        {
-          id: "idSearch",
-          type: "text",
-          placeholder: "Search",
-          class: "flex-grow margin-none padding-none",
-          style: "border:none; outline:none;"
-        }
-      )), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 })), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
+      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "link text-lg margin-none padding-xs", role: "button", tabindex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
         let cssClass = "flex-row flex-align-center padding hover-trigger";
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
         return /* @__PURE__ */ (0, import_mithril10.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${this.groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
-      })));
+      })), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-horizontal clickable", role: "button", tabIndex: "0", onclick: () => controller2.page_settings(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril10.default)("span", null, "Settings")));
     }
     groupColor(group) {
       if (group.stateId == "WELCOME") {
@@ -27119,12 +27120,12 @@
     oninit(vnode) {
       const filter = vnode.attrs.filter;
       vnode.state.name = filter.name;
-      vnode.state.states = [...filter.states ?? []];
-      vnode.state.tags = (filter.tags ?? []).map((tag) => "#" + tag).join(" ");
+      vnode.state.states = [...filter.states];
+      vnode.state.tags = filter.tags.map((tag) => "#" + tag).join(" ");
     }
     view(vnode) {
       const isNew = !vnode.attrs.controller.filters.some((f2) => f2.id == vnode.attrs.filter.id);
-      return /* @__PURE__ */ (0, import_mithril32.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril32.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-title" }, isNew ? /* @__PURE__ */ (0, import_mithril32.default)("span", null, /* @__PURE__ */ (0, import_mithril32.default)("i", { class: "bi bi-plus" }), " Add a Filter") : /* @__PURE__ */ (0, import_mithril32.default)("span", null, /* @__PURE__ */ (0, import_mithril32.default)("i", { class: "bi bi-pencil" }), " Edit Filter")), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "filterName" }, "Filter Name"), " ", /* @__PURE__ */ (0, import_mithril32.default)("input", { id: "filterName", type: "text", value: vnode.state.name, oninput: (event) => this.setName(vnode, event) })), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "filterTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril32.default)("input", { id: "filterTags", type: "text", placeholder: "#add #hashtags #here", value: vnode.state.tags, oninput: (event) => this.setTags(vnode, event) })), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", null, "State(s)"), " ", STATE_OPTIONS.map((option) => /* @__PURE__ */ (0, import_mithril32.default)("label", { key: option.state, for: "state-" + option.state }, " ", /* @__PURE__ */ (0, import_mithril32.default)(
+      return /* @__PURE__ */ (0, import_mithril32.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril32.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-title" }, isNew ? /* @__PURE__ */ (0, import_mithril32.default)("span", null, /* @__PURE__ */ (0, import_mithril32.default)("i", { class: "bi bi-plus" }), " Add a Filter") : /* @__PURE__ */ (0, import_mithril32.default)("span", null, /* @__PURE__ */ (0, import_mithril32.default)("i", { class: "bi bi-pencil" }), " Edit Filter")), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "filterName" }, "Filter Name"), " ", /* @__PURE__ */ (0, import_mithril32.default)("input", { id: "filterName", type: "text", tabIndex: "0", value: vnode.state.name, oninput: (event) => this.setName(vnode, event) })), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", { for: "filterTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril32.default)("input", { id: "filterTags", type: "text", placeholder: "#add #hashtags #here", value: vnode.state.tags, oninput: (event) => this.setTags(vnode, event) })), /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril32.default)("label", null, "State(s)"), " ", STATE_OPTIONS.map((option) => /* @__PURE__ */ (0, import_mithril32.default)("label", { key: option.state, for: "state-" + option.state }, " ", /* @__PURE__ */ (0, import_mithril32.default)(
         "input",
         {
           id: "state-" + option.state,
@@ -27160,10 +27161,15 @@
   };
 
   // src/view/app-settings-filters.tsx
+  var AUTOSCROLL_EDGE = 48;
+  var AUTOSCROLL_STEP = 8;
   var AppSettingsFilters = class {
+    oninit(vnode) {
+      vnode.state.announcement = "";
+    }
     view(vnode) {
       const filters = vnode.attrs.controller.filters;
-      return /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "text-lg bold margin-bottom" }, "Filters"), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "table" }, filters.map((filter) => /* @__PURE__ */ (0, import_mithril33.default)("div", { key: filter.id, class: "flex-row flex-align-center clickable", role: "button", tabIndex: "0", onclick: () => this.openEdit(vnode, filter), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "text-sm text-gray" }, this.summary(filter))), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "align-right" }, filters.length > 1 && /* @__PURE__ */ (0, import_mithril33.default)("button", { type: "button", class: "text-xs", onclick: (event) => this.deleteFilter(event, vnode, filter) }, "Remove"))))), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "link margin-top", role: "button", tabIndex: "0", onclick: () => this.addFilter(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-plus" }), " Add a Filter"), vnode.state.editFilter && /* @__PURE__ */ (0, import_mithril33.default)(
+      return /* @__PURE__ */ (0, import_mithril33.default)("div", null, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "text-lg bold margin-bottom" }, "Filters"), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "table filter-list" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "flex-row flex-align-center clickable link", role: "button", tabIndex: "0", onclick: () => this.addFilter(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-plus" }), " Add a Filter")), this.viewRows(vnode, filters)), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "visually-hidden", "aria-live": "polite" }, vnode.state.announcement), this.viewGhost(vnode), vnode.state.editFilter && /* @__PURE__ */ (0, import_mithril33.default)(
         WidgetFilterEdit,
         {
           controller: vnode.attrs.controller,
@@ -27172,15 +27178,286 @@
         }
       ));
     }
+    // viewRows renders the filter rows, interleaving the drop-indicator line at
+    // the current drop position while dragging.
+    viewRows(vnode, filters) {
+      const dropIndex = vnode.state.dragId == void 0 ? void 0 : vnode.state.dropIndex;
+      const rows = [];
+      filters.forEach((filter, index) => {
+        if (dropIndex === index) {
+          rows.push(/* @__PURE__ */ (0, import_mithril33.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
+        }
+        rows.push(this.viewRow(vnode, filters, filter));
+      });
+      if (dropIndex === filters.length) {
+        rows.push(/* @__PURE__ */ (0, import_mithril33.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
+      }
+      return rows;
+    }
+    // viewRow renders a single filter row
+    viewRow(vnode, filters, filter) {
+      let cssClass = "flex-row flex-align-center clickable filter-row";
+      if (vnode.state.dragId === filter.id) {
+        cssClass += " dragging";
+      }
+      return /* @__PURE__ */ (0, import_mithril33.default)("div", { key: filter.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => this.openEdit(vnode, filter), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril33.default)(
+        "div",
+        {
+          class: "filter-grip",
+          role: "button",
+          tabIndex: "0",
+          "aria-label": `Reorder ${filter.name}. Press up or down arrow to move.`,
+          onpointerdown: (event) => this.onGripDown(event, vnode, filter),
+          onkeydown: (event) => this.onGripKey(event, vnode, filter),
+          onclick: (event) => event.stopPropagation(),
+          oncreate: (grip) => this.maybeFocus(grip, vnode, filter),
+          onupdate: (grip) => this.maybeFocus(grip, vnode, filter)
+        },
+        /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-grip-vertical" })
+      ), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "text-sm text-gray" }, this.summary(filter))), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "align-right" }, filters.length > 1 && /* @__PURE__ */ (0, import_mithril33.default)("button", { type: "button", class: "text-xs", onclick: (event) => this.deleteFilter(event, vnode, filter) }, "Remove")));
+    }
+    // viewGhost renders the floating copy of the row being dragged. It tracks the
+    // cursor vertically and stays pinned to the row's horizontal position.
+    viewGhost(vnode) {
+      const filter = vnode.attrs.controller.filters.find((f2) => f2.id === vnode.state.dragId);
+      if (filter == void 0) {
+        return null;
+      }
+      const style = `left:${vnode.state.ghostLeft ?? 0}px; width:${vnode.state.ghostWidth ?? 0}px; top:${vnode.state.ghostTop ?? 0}px;`;
+      return /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "filter-drag-ghost flex-row flex-align-center", style }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "filter-grip" }, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-grip-vertical" })), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril33.default)("div", { class: "text-sm text-gray" }, this.summary(filter))));
+    }
     // summary describes a filter's states and tags in a single line
     summary(filter) {
-      const states = (filter.states ?? []).map((state) => STATE_OPTIONS.find((option) => option.state == state)?.label ?? state);
-      const tags = (filter.tags ?? []).map((tag) => "#" + tag);
+      const states = filter.states.map((state) => STATE_OPTIONS.find((option) => option.state == state)?.label ?? state);
+      const tags = filter.tags.map((tag) => "#" + tag);
       return [...states, ...tags].join(" \xB7 ");
     }
-    // addFilter opens the edit dialog for a brand-new filter
+    /////////////////////////////////////////////
+    // Pointer drag-and-drop
+    /////////////////////////////////////////////
+    // onGripDown begins a drag from the grip handle
+    onGripDown(event, vnode, filter) {
+      if (event.button !== 0) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const grip = event.currentTarget;
+      grip.setPointerCapture(event.pointerId);
+      vnode.state.dragId = filter.id;
+      vnode.state.pointerY = event.clientY;
+      vnode.state.listEl = grip.closest(".filter-list");
+      vnode.state.scrollContainer = grip.closest(".scroll-vertical");
+      vnode.state.dropIndex = this.computeDropIndex(vnode, event.clientY);
+      const rect = grip.closest(".filter-row").getBoundingClientRect();
+      vnode.state.grabOffsetY = event.clientY - rect.top;
+      vnode.state.ghostLeft = rect.left;
+      vnode.state.ghostWidth = rect.width;
+      vnode.state.ghostTop = rect.top;
+      document.body.classList.add("filter-dragging");
+      vnode.state.moveHandler = (e2) => this.onMove(e2, vnode);
+      vnode.state.upHandler = (e2) => this.onUp(e2, vnode);
+      vnode.state.cancelHandler = () => this.onCancel(vnode);
+      document.addEventListener("pointermove", vnode.state.moveHandler);
+      document.addEventListener("pointerup", vnode.state.upHandler);
+      document.addEventListener("pointercancel", vnode.state.cancelHandler);
+    }
+    // onMove tracks the pointer and updates the drop position
+    onMove(event, vnode) {
+      if (vnode.state.dragId == void 0) {
+        return;
+      }
+      event.preventDefault();
+      vnode.state.pointerY = event.clientY;
+      vnode.state.ghostTop = event.clientY - (vnode.state.grabOffsetY ?? 0);
+      vnode.state.dropIndex = this.computeDropIndex(vnode, event.clientY);
+      this.updateAutoScroll(vnode);
+      import_mithril33.default.redraw();
+    }
+    // onUp commits the reorder and ends the drag
+    onUp(_event, vnode) {
+      this.commitReorder(vnode);
+      this.endDrag(vnode);
+      import_mithril33.default.redraw();
+    }
+    // onCancel ends the drag without committing
+    onCancel(vnode) {
+      this.endDrag(vnode);
+      import_mithril33.default.redraw();
+    }
+    // endDrag tears down all drag listeners and state
+    endDrag(vnode) {
+      if (vnode.state.moveHandler) {
+        document.removeEventListener("pointermove", vnode.state.moveHandler);
+      }
+      if (vnode.state.upHandler) {
+        document.removeEventListener("pointerup", vnode.state.upHandler);
+      }
+      if (vnode.state.cancelHandler) {
+        document.removeEventListener("pointercancel", vnode.state.cancelHandler);
+      }
+      if (vnode.state.scrollRAF != void 0) {
+        cancelAnimationFrame(vnode.state.scrollRAF);
+      }
+      delete vnode.state.moveHandler;
+      delete vnode.state.upHandler;
+      delete vnode.state.cancelHandler;
+      delete vnode.state.scrollRAF;
+      delete vnode.state.scrollDir;
+      delete vnode.state.dragId;
+      delete vnode.state.dropIndex;
+      delete vnode.state.pointerY;
+      delete vnode.state.listEl;
+      delete vnode.state.scrollContainer;
+      delete vnode.state.grabOffsetY;
+      delete vnode.state.ghostLeft;
+      delete vnode.state.ghostWidth;
+      delete vnode.state.ghostTop;
+      document.body.classList.remove("filter-dragging");
+    }
+    // commitReorder moves the dragged filter to the drop position and persists the new order
+    commitReorder(vnode) {
+      const dragId = vnode.state.dragId;
+      const dropIndex = vnode.state.dropIndex;
+      if (dragId == void 0 || dropIndex == void 0) {
+        return;
+      }
+      const filters = vnode.attrs.controller.filters;
+      const from = filters.findIndex((f2) => f2.id === dragId);
+      if (from < 0) {
+        return;
+      }
+      let to2 = dropIndex;
+      if (to2 > from) {
+        to2 -= 1;
+      }
+      if (to2 === from) {
+        return;
+      }
+      const moved = filters.splice(from, 1)[0];
+      if (moved == void 0) {
+        return;
+      }
+      filters.splice(to2, 0, moved);
+      this.persistOrder(vnode);
+      this.announce(vnode, `${moved.name} moved to position ${to2 + 1} of ${filters.length}`);
+    }
+    // computeDropIndex returns the filter index where the dragged row would land
+    // for the given pointer Y position.
+    computeDropIndex(vnode, clientY) {
+      const listEl = vnode.state.listEl;
+      if (listEl == void 0) {
+        return vnode.attrs.controller.filters.length;
+      }
+      const rows = listEl.querySelectorAll(".filter-row");
+      for (let i2 = 0; i2 < rows.length; i2++) {
+        const row = rows[i2];
+        if (row == void 0) {
+          continue;
+        }
+        const rect = row.getBoundingClientRect();
+        if (clientY < rect.top + rect.height / 2) {
+          return i2;
+        }
+      }
+      return rows.length;
+    }
+    /////////////////////////////////////////////
+    // Auto-scroll while dragging near an edge
+    /////////////////////////////////////////////
+    // updateAutoScroll starts/stops the auto-scroll loop based on pointer position
+    updateAutoScroll(vnode) {
+      const container = vnode.state.scrollContainer;
+      if (container == void 0) {
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const y2 = vnode.state.pointerY ?? 0;
+      let dir = 0;
+      if (y2 < rect.top + AUTOSCROLL_EDGE) {
+        dir = -1;
+      } else if (y2 > rect.bottom - AUTOSCROLL_EDGE) {
+        dir = 1;
+      }
+      vnode.state.scrollDir = dir;
+      if (dir !== 0 && vnode.state.scrollRAF == void 0) {
+        this.autoScrollTick(vnode);
+      }
+    }
+    // autoScrollTick scrolls the container and re-evaluates the drop position each frame
+    autoScrollTick(vnode) {
+      const container = vnode.state.scrollContainer;
+      const dir = vnode.state.scrollDir ?? 0;
+      if (container == void 0 || dir === 0 || vnode.state.dragId == void 0) {
+        delete vnode.state.scrollRAF;
+        return;
+      }
+      container.scrollTop += dir * AUTOSCROLL_STEP;
+      vnode.state.dropIndex = this.computeDropIndex(vnode, vnode.state.pointerY ?? 0);
+      import_mithril33.default.redraw();
+      vnode.state.scrollRAF = requestAnimationFrame(() => this.autoScrollTick(vnode));
+    }
+    /////////////////////////////////////////////
+    // Keyboard reordering
+    /////////////////////////////////////////////
+    // onGripKey moves the filter up/down when the handle is focused
+    onGripKey(event, vnode, filter) {
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        this.moveByKeyboard(vnode, filter, -1);
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        this.moveByKeyboard(vnode, filter, 1);
+      }
+    }
+    // moveByKeyboard moves the filter one slot in the given direction and persists the order
+    moveByKeyboard(vnode, filter, direction) {
+      const filters = vnode.attrs.controller.filters;
+      const from = filters.findIndex((f2) => f2.id === filter.id);
+      const to2 = from + direction;
+      if (to2 < 0 || to2 >= filters.length) {
+        return;
+      }
+      const moved = filters.splice(from, 1)[0];
+      if (moved == void 0) {
+        return;
+      }
+      filters.splice(to2, 0, moved);
+      this.persistOrder(vnode);
+      this.announce(vnode, `${moved.name} moved to position ${to2 + 1} of ${filters.length}`);
+      vnode.state.focusFilterId = filter.id;
+    }
+    // maybeFocus restores focus to a grip handle after a keyboard move
+    maybeFocus(grip, vnode, filter) {
+      if (vnode.state.focusFilterId === filter.id) {
+        grip.dom.focus();
+        delete vnode.state.focusFilterId;
+      }
+    }
+    /////////////////////////////////////////////
+    // Shared helpers
+    /////////////////////////////////////////////
+    // persistOrder renumbers every filter's sort field (contiguous 1..N) and saves it
+    persistOrder(vnode) {
+      const filters = vnode.attrs.controller.filters;
+      filters.forEach((filter, index) => {
+        filter.sort = index + 1;
+        vnode.attrs.controller.saveFilter(filter);
+      });
+    }
+    // announce updates the aria-live region for screen readers
+    announce(vnode, message) {
+      vnode.state.announcement = message;
+    }
+    /////////////////////////////////////////////
+    // Add / edit / delete
+    /////////////////////////////////////////////
+    // addFilter opens the edit dialog for a brand-new filter, appended at the bottom
     addFilter(vnode) {
-      vnode.state.editFilter = NewFilter();
+      const filters = vnode.attrs.controller.filters;
+      const filter = NewFilter();
+      filter.sort = filters.length > 0 ? Math.max(...filters.map((f2) => f2.sort)) + 1 : 1;
+      vnode.state.editFilter = filter;
     }
     // openEdit opens the edit dialog for an existing filter
     openEdit(vnode, filter) {
@@ -27229,7 +27506,7 @@
     // viewSidebar renders the back button, title, and tab navigation
     viewSidebar(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril35.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "FILTERS", "funnel", "Filters"), this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications"), this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril35.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "FILTERS", "filter-circle", "Filters"), this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications"), this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
     }
     // viewTab renders a single navigation row in the sidebar. The icon argument is
     // a Bootstrap Icon stem (e.g. "shield"); the unselected tab uses the outline

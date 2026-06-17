@@ -18,7 +18,7 @@ import { type Actor } from "../as/actor"
 import { type Config } from "../model/config"
 import { type Contact } from "../model/contact"
 import { type Filter } from "../model/filter"
-import { type Group, type EncryptedGroup } from "../model/group"
+import { type Group, type EncryptedGroup, type GroupState } from "../model/group"
 import { type Message } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 import type { Collection } from "../as/collection"
@@ -68,6 +68,7 @@ export interface IDatabase {
 
 	// Group methods
 	allGroups(): Promise<(Group | EncryptedGroup)[]>
+	searchGroups(tags: string[], stateIds?: GroupState[]): Promise<Group[]>
 	loadGroup(groupId: string): Promise<Group | EncryptedGroup | undefined>
 	saveGroup(group: Group): Promise<void>
 	deleteGroup(groupId: string): Promise<void>

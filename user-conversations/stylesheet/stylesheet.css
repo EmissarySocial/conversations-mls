@@ -304,3 +304,58 @@
 	flex-shrink: 0;
 	width: 1.5em;
 }
+
+/* Filter list drag-to-reorder */
+.filter-grip {
+	cursor: grab;
+	touch-action: none;
+	padding: 0 calc(var(--rhythm) * 0.5);
+	color: var(--gray40);
+}
+
+.filter-grip:active {
+	cursor: grabbing;
+}
+
+.filter-row.dragging {
+	opacity: 0.4;
+}
+
+/* Override the table-row padding/border the drop line would otherwise inherit */
+.table > .filter-drop-line {
+	height: 4px;
+	padding: 0;
+	border: none;
+	background-color: var(--blue50);
+}
+
+/* Floating copy of the row being dragged */
+.filter-drag-ghost {
+	position: fixed;
+	z-index: 1000;
+	pointer-events: none;
+	box-sizing: border-box;
+	padding: 10px 6px;
+	background-color: var(--white);
+	border-radius: var(--rhythm);
+	box-shadow: 0 calc(var(--rhythm) * 0.5) calc(var(--rhythm) * 1.5) rgba(0, 0, 0, 0.25);
+	opacity: 0.95;
+}
+
+/* Force the grabbing cursor everywhere while a filter is being dragged */
+.filter-dragging, .filter-dragging * {
+	cursor: grabbing !important;
+}
+
+/* Visually hidden, but available to screen readers (e.g. aria-live regions) */
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	clip-path: inset(50%);
+	overflow: hidden;
+	white-space: nowrap;
+}

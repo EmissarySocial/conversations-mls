@@ -23,7 +23,7 @@ export class FilterMenu {
 		return (
 			<Popup
 				trigger={(toggle: () => void) => (
-					<div class="text-lg text-gray margin-none clickable" role="button" tabindex="0" onclick={toggle} onkeypress={synthClick}>
+					<div class="text-lg text-gray padding-none margin-none clickable" role="button" tabindex="0" onclick={toggle} onkeypress={synthClick}>
 						<i class="bi bi-filter-circle"></i>
 					</div>
 				)}

@@ -19,30 +19,12 @@ export class Groups {
 
 		return (
 			<div class="conversations-pane">
-				<div class="flex-row flex-align-center padding-horizontal">
-					<div class="flex-row flex-align-center clickable hover-trigger" role="link" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
-						<div class="circle width-32 hover-show text-lg margin-none align-center"><i class="bi bi-gear"></i></div>
-						<img src={controller.actorIcon()} class="width-32 circle hover-hide" alt="" />
-						<div class="bold text-lg margin-none">Conversations</div>
-					</div>
-					<div class="flex-grow"></div>
-					<div class="link text-lg margin-none" role="button" tabindex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
+				<div class="flex-row flex-align-center padding-left">
+					<div class="bold text-lg margin-none flex-grow ellipsis" style="min-width:0">{controller.selectedFilterName()}</div>
+					<FilterMenu controller={controller} />
+					<div class="link text-lg margin-none padding-xs" role="button" tabindex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
 						<i class="bi bi-plus-circle-fill"></i>
 					</div>
-				</div>
-
-				<div class="flex-row flex-align-center padding text-sm">
-					<div role="textbox" class="flex-grow flex-row flex-align-center">
-						<label class="bi bi-search" for="idSearch">{/* NOSONOR typescript:S6853 */}</label>
-						<input
-							id="idSearch"
-							type="text"
-							placeholder="Search"
-							class="flex-grow margin-none padding-none"
-							style="border:none; outline:none;"
-						/>
-					</div>
-					<FilterMenu controller={controller} />
 				</div>
 
 				<hr class="margin-vertical-sm" />
@@ -69,6 +51,13 @@ export class Groups {
 							</div>
 						)
 					})}
+				</div>
+
+				<hr class="margin-vertical-sm" />
+
+				<div class="flex-row flex-align-center padding-horizontal clickable" role="button" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
+					<i class="bi bi-gear"></i>
+					<span>Settings</span>
 				</div>
 			</div>
 		)

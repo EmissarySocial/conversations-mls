@@ -20,13 +20,3 @@ export function NewFilter(): Filter {
 		tags: [],
 	}
 }
-
-// normalizeFilter fills in any fields that may be missing from filter records
-// stored before those fields were added to the model.
-export function normalizeFilter(filter: Filter): Filter {
-	return {
-		...filter,
-		states: filter.states ?? [],
-		tags: filter.tags ?? [],
-	}
-}

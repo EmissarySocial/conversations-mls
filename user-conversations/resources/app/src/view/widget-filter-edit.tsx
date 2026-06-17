@@ -32,8 +32,8 @@ export class WidgetFilterEdit {
 	oninit(vnode: FilterEditVnode) {
 		const filter = vnode.attrs.filter
 		vnode.state.name = filter.name
-		vnode.state.states = [...(filter.states ?? [])]
-		vnode.state.tags = (filter.tags ?? []).map((tag) => "#" + tag).join(" ")
+		vnode.state.states = [...filter.states]
+		vnode.state.tags = filter.tags.map((tag) => "#" + tag).join(" ")
 	}
 
 	view(vnode: FilterEditVnode) {
@@ -52,7 +52,7 @@ export class WidgetFilterEdit {
 
 							<div class="layout-element">
 								<label for="filterName">Filter Name</label> {/* NOSONAR: "for" works fine in Mithril */}
-								<input id="filterName" type="text" value={vnode.state.name} oninput={(event: Event) => this.setName(vnode, event)} />
+								<input id="filterName" type="text" tabIndex="0" value={vnode.state.name} oninput={(event: Event) => this.setName(vnode, event)} />
 							</div>
 
 							<div class="layout-element">
