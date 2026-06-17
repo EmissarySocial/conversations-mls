@@ -258,10 +258,11 @@ export class Database {
 	// Filters
 	/////////////////////////////////////////////
 
-	// allFilters returns all conversation filters, sorted by their sort field ascending
+	// allFilters returns all conversation filters, sorted by their sort field
+	// ascending, then by name ascending to break ties
 	allFilters = async (): Promise<Filter[]> => {
 		const filters = await this.#db.getAll("filter")
-		filters.sort((a, b) => a.sort - b.sort)
+		filters.sort((a, b) => (a.sort - b.sort) || a.name.localeCompare(b.name))
 		return filters
 	}
 

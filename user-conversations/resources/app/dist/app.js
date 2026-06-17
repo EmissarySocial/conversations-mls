@@ -18757,10 +18757,11 @@
     /////////////////////////////////////////////
     // Filters
     /////////////////////////////////////////////
-    // allFilters returns all conversation filters, sorted by their sort field ascending
+    // allFilters returns all conversation filters, sorted by their sort field
+    // ascending, then by name ascending to break ties
     allFilters = async () => {
       const filters = await this.#db.getAll("filter");
-      filters.sort((a2, b2) => a2.sort - b2.sort);
+      filters.sort((a2, b2) => a2.sort - b2.sort || a2.name.localeCompare(b2.name));
       return filters;
     };
     // loadFilter retrieves a single filter from the database
