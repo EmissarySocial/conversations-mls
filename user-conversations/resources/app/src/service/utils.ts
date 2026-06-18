@@ -1,4 +1,12 @@
 
+// htmlToText converts an HTML string into plain text using the browser's own
+// HTML parser. Used to derive a text-only summary (e.g. group.lastMessage) from
+// message content that arrives as HTML.
+export function htmlToText(html: string): string {
+	const doc = new DOMParser().parseFromString(html, "text/html")
+	return (doc.body.textContent || "").trim()
+}
+
 // rangeToArray consumes all values from a generator and returns them as an array
 export function rangeToArray<T>(generator: Generator<T>): T[] {
 	let result = []

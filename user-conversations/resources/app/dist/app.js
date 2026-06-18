@@ -17835,6 +17835,10 @@
   }
 
   // src/service/utils.ts
+  function htmlToText(html) {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return (doc.body.textContent || "").trim();
+  }
   function base64ToUint8Array(base64) {
     const normalized = base64.replaceAll("-", "+").replaceAll("_", "/").replaceAll(/\s+/g, "");
     const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
@@ -25214,7 +25218,7 @@
       await this.#database.saveMessage(message);
       this.removeReply();
       await this.loadMessages();
-      group.lastMessage = content;
+      group.lastMessage = htmlToText(content);
       group.lastMessageId = message.id;
       group.updateDate = Temporal.Now.instant().epochMilliseconds;
       await this.saveGroup(group);
@@ -25463,7 +25467,7 @@
       }
       await this.#database.saveMessage(message);
       group.lastMessageId = message.id;
-      group.lastMessage = object.content();
+      group.lastMessage = htmlToText(object.content());
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
           group.unread = true;

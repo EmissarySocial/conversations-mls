@@ -29,7 +29,7 @@ import { emojiKey } from "./emojikeys"
 // Other utility functions
 import { cipherSuiteImplementation, decodeKeyPackage, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, keyPackageIsExpired, newKeyPackage, shouldRefreshKeyPackage, unwrapKey, wrapKey } from "./cryptography"
 
-import { newId } from "./utils"
+import { newId, htmlToText } from "./utils"
 import { NewFilter, type Filter } from "../model/filter"
 
 // SettingsTab identifies which tab is active on the settings screen.
@@ -1161,8 +1161,8 @@ export class Controller {
 		this.removeReply()
 		await this.loadMessages()
 
-		// Update the group with the message metadata
-		group.lastMessage = content
+		// Update the group with the message metadata (lastMessage is text, not HTML)
+		group.lastMessage = htmlToText(content)
 		group.lastMessageId = message.id
 		group.updateDate = Temporal.Now.instant().epochMilliseconds
 
@@ -1573,8 +1573,8 @@ export class Controller {
 		// Track the most recent message in the group
 		group.lastMessageId = message.id
 
-		// Mark the group with the lastMessage content
-		group.lastMessage = object.content()
+		// Mark the group with the lastMessage content (text, not HTML)
+		group.lastMessage = htmlToText(object.content())
 
 		if (!sentByMe) {
 
