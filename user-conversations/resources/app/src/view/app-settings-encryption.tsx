@@ -2,7 +2,7 @@ import m, { type Vnode } from "mithril"
 import type { Controller } from "../service/controller"
 import type { EmojiKey } from "../model/emoji"
 import { synthClick } from "./utils"
-import { savedNotice } from "./app-settings-saved"
+import { SavedNotice } from "./widget-saved-notice"
 
 type EncryptionVnode = Vnode<EncryptionArgs, EncryptionState>
 
@@ -60,7 +60,7 @@ export class AppSettingsEncryption {
 					<div class="margin-top flex-row flex-align-center">
 						<button class="primary" onclick={() => this.saveChanges(vnode)}>Save Changes</button>
 						<button onclick={() => controller.page_index()}>Cancel</button>
-						{savedNotice(vnode.attrs.saved)}
+						<span class="margin-left-sm"><SavedNotice saved={vnode.attrs.saved} /></span>
 					</div>
 				</div>
 

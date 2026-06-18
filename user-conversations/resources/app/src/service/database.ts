@@ -284,6 +284,13 @@ export class Database {
 
 	// deleteFilter removes a filter from the database
 	deleteFilter = async (filterId: string) => {
+
+		// RULE: locked (built-in) filters cannot be deleted
+		const filter = await this.#db.get("filter", filterId)
+		if (filter?.locked) {
+			throw new Error("Cannot delete a locked filter")
+		}
+
 		await this.#db.delete("filter", filterId)
 		this.#onchange()
 	}

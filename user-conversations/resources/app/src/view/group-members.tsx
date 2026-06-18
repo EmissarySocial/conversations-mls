@@ -27,7 +27,7 @@ export class GroupMembers {
 		const group = controller.groupStream()
 		const contactStreams = controller.groupContactStream()
 		const isEncrypted = groupIsEncrypted(group)
-		const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:var(--green70)"
+		const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:#F2C94C; color:black"
 
 		const contacts = contactStreams
 			.map(contactStream => contactStream())

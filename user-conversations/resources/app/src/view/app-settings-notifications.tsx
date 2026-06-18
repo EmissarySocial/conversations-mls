@@ -1,13 +1,11 @@
 import m, { type Vnode } from "mithril"
 import type { Controller } from "../service/controller"
-import { savedNotice } from "./app-settings-saved"
+import { SavedNotice } from "./widget-saved-notice"
 
 type NotificationsVnode = Vnode<NotificationsArgs, NotificationsState>
 
 interface NotificationsArgs {
 	controller: Controller
-	save: () => void
-	saved: boolean
 }
 
 interface NotificationsState {
@@ -15,11 +13,13 @@ interface NotificationsState {
 	isSoundNotifications: boolean
 	isHideOnBlur: boolean
 	permission: "granted" | "denied" | "default"
+	saved: boolean
+	savedTimeout?: ReturnType<typeof setTimeout>
 }
 
-// AppSettingsNotifications renders the "Notifications" settings tab,
-// which controls desktop and sound notifications. Edits are held in local
-// state and only applied to the config when the user clicks "Save Changes".
+// AppSettingsNotifications renders the "Notifications" settings tab, which
+// controls desktop and sound notifications. Changes are saved automatically as
+// soon as a value is toggled, and a transient "Changes saved" notice is shown.
 export class AppSettingsNotifications {
 
 	oninit(vnode: NotificationsVnode) {
@@ -28,15 +28,23 @@ export class AppSettingsNotifications {
 		vnode.state.isSoundNotifications = config.isSoundNotifications
 		vnode.state.isHideOnBlur = config.isHideOnBlur
 		vnode.state.permission = Notification.permission
+		vnode.state.saved = false
+	}
+
+	onremove(vnode: NotificationsVnode) {
+		if (vnode.state.savedTimeout != undefined) {
+			clearTimeout(vnode.state.savedTimeout)
+		}
 	}
 
 	view(vnode: NotificationsVnode) {
 
-		const controller = vnode.attrs.controller
-
 		return (
-			<div class="card padding">
-				<div class="text-lg bold margin-bottom">Notifications</div>
+			<div>
+				<div class="flex-row flex-align-center margin-bottom">
+					<div class="text-lg bold flex-grow">Notifications</div>
+					<SavedNotice saved={vnode.state.saved} />
+				</div>
 
 				<div class="layout-vertical">
 					<div class="layout-elements">
@@ -65,12 +73,6 @@ export class AppSettingsNotifications {
 
 					</div>
 				</div>
-
-				<div class="margin-top flex-row flex-align-center">
-					<button class="primary" onclick={() => this.saveChanges(vnode)}>Save Changes</button>
-					<button onclick={() => controller.page_index()}>Cancel</button>
-					{savedNotice(vnode.attrs.saved)}
-				</div>
 			</div>
 		)
 	}
@@ -83,29 +85,47 @@ export class AppSettingsNotifications {
 			const permission = await Notification.requestPermission()
 			vnode.state.permission = permission
 			vnode.state.isDesktopNotifications = (permission == "granted")
+			this.save(vnode)
 			m.redraw()
 			return
 		}
 
 		vnode.state.isDesktopNotifications = false
+		this.save(vnode)
 	}
 
 	setSoundNotifications(vnode: NotificationsVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.isSoundNotifications = target.checked
+		this.save(vnode)
 	}
 
 	setHideOnBlur(vnode: NotificationsVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.isHideOnBlur = target.checked
+		this.save(vnode)
 	}
 
-	// saveChanges applies the local edits to the config and persists them
-	saveChanges(vnode: NotificationsVnode) {
-		const config = vnode.attrs.controller.config
-		config.isDesktopNotifications = vnode.state.isDesktopNotifications
-		config.isSoundNotifications = vnode.state.isSoundNotifications
-		config.isHideOnBlur = vnode.state.isHideOnBlur
-		vnode.attrs.save()
+	// save applies the current values to the config, persists them, and shows the
+	// transient "Changes saved" notice for three seconds.
+	save(vnode: NotificationsVnode) {
+
+		const controller = vnode.attrs.controller
+		controller.config.isDesktopNotifications = vnode.state.isDesktopNotifications
+		controller.config.isSoundNotifications = vnode.state.isSoundNotifications
+		controller.config.isHideOnBlur = vnode.state.isHideOnBlur
+		controller.saveConfig()
+
+		// Show the "Changes saved" confirmation and hide it again after two seconds
+		vnode.state.saved = true
+
+		if (vnode.state.savedTimeout != undefined) {
+			clearTimeout(vnode.state.savedTimeout)
+		}
+
+		vnode.state.savedTimeout = setTimeout(() => {
+			vnode.state.saved = false
+			m.redraw()
+		}, 2000)
 	}
 }

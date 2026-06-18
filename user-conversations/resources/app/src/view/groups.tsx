@@ -73,7 +73,7 @@ export class Groups {
 			return "var(--blue50)"
 		}
 
-		return "var(--green70)"
+		return "#F2C94C"
 	}
 
 	groupIcon(group: Group): JSX.Element {
@@ -95,7 +95,10 @@ export class Groups {
 		}
 
 		return <>
-			<div class="flex-row bold">{group.name || group.defaultName || ""}</div>
+			<div class="flex-row flex-align-center bold">
+				<span class="flex-grow ellipsis">{group.name || group.defaultName || ""}</span>
+				{(group.stateId == "IMPORTANT") && <i class="bi bi-star-fill" style="color:#f5b400"></i>}
+			</div>
 			<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
 		</>
 	}

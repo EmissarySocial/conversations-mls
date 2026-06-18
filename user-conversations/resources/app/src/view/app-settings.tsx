@@ -104,7 +104,7 @@ export class AppSettings {
 				return <AppSettingsEncryption controller={controller} save={save} saved={saved} />
 
 			case "NOTIFICATIONS":
-				return <AppSettingsNotifications controller={controller} save={save} saved={saved} />
+				return <AppSettingsNotifications controller={controller} />
 
 			case "SIGNOUT":
 				return <AppSettingsSignout controller={controller} />

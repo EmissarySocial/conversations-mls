@@ -1,6 +1,7 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
+import { groupIsEncrypted } from "../model/group"
 import { Modal } from "./modal"
 import { synthClick } from "./utils"
 
@@ -27,6 +28,13 @@ export class EditMessage {
 	}
 
 	view(vnode: EditMessageVnode) {
+
+		// Use the gold "success" button for unencrypted groups, matching the other
+		// unencrypted-message action buttons; encrypted groups keep the primary blue.
+		const isEncrypted = groupIsEncrypted(vnode.attrs.controller.groupStream())
+		const saveButtonClass = isEncrypted ? "primary" : "success"
+		const textareaClass = isEncrypted ? "" : "unencrypted-textbox"
+
 		return (
 			<Modal close={vnode.attrs.close}>
 				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)}>
@@ -36,14 +44,14 @@ export class EditMessage {
 						</div>
 						<div class="layout-elements">
 							<div class="layout-element">
-								<textarea rows="8" value={vnode.state.content} oninput={(event: Event) => this.setMessage(vnode, event)}></textarea>
+								<textarea rows="8" tabindex="0" class={textareaClass} value={vnode.state.content} oninput={(event: Event) => this.setMessage(vnode, event)}></textarea>
 								<div class="text-sm text-gray">Changes will be sent to all participants, but some apps may not display edits.</div>
 							</div>
 						</div>
 					</div>
 					<div class="margin-top flex-row">
 						<div class="flex-grow">
-							<button class="primary" tabindex="0">Save Changes</button>
+							<button class={saveButtonClass} tabindex="0">{isEncrypted ? null : <i class="bi bi-chat-fill"></i>} Save Changes</button>
 							<button onclick={vnode.attrs.close} tabIndex="0">Close</button>
 						</div>
 						<div>

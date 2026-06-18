@@ -51,7 +51,7 @@ export class WidgetMessageCreate {
 			<div class="flex-row flex-justify" style={backgroundStyle}>
 				<div class="flex-grow">
 					{this.drawReply(vnode)}
-					<div role="textbox" class="flex-grow flex-row flex-align-center">
+					<div role="textbox" class={"flex-grow flex-row flex-align-center" + (isEncrypted ? "" : " unencrypted-textbox")}>
 
 						<textarea
 							id="message-input"

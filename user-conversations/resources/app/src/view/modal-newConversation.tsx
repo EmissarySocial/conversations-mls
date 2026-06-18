@@ -105,7 +105,7 @@ export class NewConversation {
 			return <>If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.</>
 		}
 
-		return <>One or more recipients (above in green) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.</>
+		return <>One or more recipients (above in yellow) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.</>
 	}
 
 	submitButton(vnode: NewConversationVnode): JSX.Element {

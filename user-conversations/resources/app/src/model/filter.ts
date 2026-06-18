@@ -9,6 +9,7 @@ export type Filter = {
 	sort: number // Sort order used to arrange filters in the UI (ascending)
 	states: GroupState[] // Conversation states this filter includes (empty = any)
 	tags: string[] // Tags this filter matches (empty = any)
+	locked: boolean // When true, the filter is built-in and cannot be deleted by the user
 }
 
 export function NewFilter(): Filter {
@@ -18,5 +19,6 @@ export function NewFilter(): Filter {
 		sort: 0,
 		states: [],
 		tags: [],
+		locked: false,
 	}
 }

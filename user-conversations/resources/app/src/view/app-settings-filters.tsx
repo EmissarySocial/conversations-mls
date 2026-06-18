@@ -101,16 +101,25 @@ export class AppSettingsFilters {
 		return rows
 	}
 
-	// viewRow renders a single filter row
+	// viewRow renders a single filter row. Locked filters are not editable, so the
+	// row body is not rendered as a clickable link for them.
 	viewRow(vnode: FiltersVnode, filters: Filter[], filter: Filter): m.Children {
 
-		let cssClass = "flex-row flex-align-center clickable filter-row"
+		let cssClass = "flex-row flex-align-center filter-row"
+		if (!filter.locked) {
+			cssClass += " clickable"
+		}
 		if (vnode.state.dragId === filter.id) {
 			cssClass += " dragging"
 		}
 
+		// Locked filters are not editable: render the row without link affordances.
+		const linkAttrs = filter.locked
+			? {}
+			: { role: "button", tabIndex: "0", onclick: () => this.openEdit(vnode, filter), onkeypress: synthClick }
+
 		return (
-			<div key={filter.id} class={cssClass} role="button" tabIndex="0" onclick={() => this.openEdit(vnode, filter)} onkeypress={synthClick}>
+			<div key={filter.id} class={cssClass} {...linkAttrs}>
 				<div
 					class="filter-grip"
 					role="button"
@@ -128,7 +137,7 @@ export class AppSettingsFilters {
 					<div class="text-sm text-gray">{this.summary(filter)}</div>
 				</div>
 				<div class="align-right">
-					{(filters.length > 1) &&
+					{(filters.length > 1) && !filter.locked &&
 						<button type="button" class="text-xs" onclick={(event: MouseEvent) => this.deleteFilter(event, vnode, filter)}>Remove</button>
 					}
 				</div>
@@ -452,6 +461,12 @@ export class AppSettingsFilters {
 
 	// openEdit opens the edit dialog for an existing filter
 	openEdit(vnode: FiltersVnode, filter: Filter) {
+
+		// RULE: locked (built-in) filters cannot be edited
+		if (filter.locked) {
+			throw new Error("Cannot edit a locked filter")
+		}
+
 		vnode.state.editFilter = filter
 	}
 

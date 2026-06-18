@@ -104,9 +104,9 @@
 					justify-content:flex-end;
 
 					.bubble {
-						background-color: var(--green70);
-						border-color: var(--green70);
-						color:white;
+						background-color: #F8D97A;
+						border-color: #F8D97A;
+						color:black;
 
 						a, button {
 							color: inherit;
@@ -116,7 +116,7 @@
 							}
 
 							&.selected {
-								outline:solid 1px var(--green70);
+								outline:solid 1px #F8D97A;
 							}
 						}
 					}
@@ -303,6 +303,60 @@
 	justify-content: center;
 	flex-shrink: 0;
 	width: 1.5em;
+}
+
+/* The message-composer textbox for UNENCRYPTED groups uses the gold accent for its
+   focus highlight instead of the Emissary default (system blue). */
+[role="textbox"].unencrypted-textbox:focus-visible,
+[role="textbox"].unencrypted-textbox:focus,
+[role="textbox"].unencrypted-textbox:has(*:focus, *:focus-visible),
+textarea.unencrypted-textbox:focus-visible,
+textarea.unencrypted-textbox:focus {
+	outline: solid 2px #F2C94C;
+	outline-offset: 1px;
+}
+
+/* Actor tags for recipients who can't use encryption (actor-search widget). Gold
+   with black text, matching the unencrypted accent used elsewhere. */
+.tag.unencrypted-tag {
+	background-color: #F2C94C;
+	color: black !important;
+}
+
+.tag.unencrypted-tag:hover {
+	background-color: #E5B93A;
+	color: black !important;
+}
+
+/* Unencrypted-message action buttons (".success" is used only for the plaintext
+   "Send Direct Message" / "Add People (Not Encrypted)" buttons). Gold, with black
+   text, to match the unencrypted speech-bubble color. */
+button.success,
+.button.success {
+	background-color: #F2C94C;
+	color: black;
+}
+
+button.success:hover,
+button.success:focus,
+.button.success:hover,
+.button.success:focus {
+	background-color: #E5B93A;
+	color: black;
+}
+
+/* Reusable "Changes saved" confirmation (see widget-saved-notice.tsx). It stays
+   mounted and fades opacity in/out via the .visible class. */
+.saved-notice {
+	color: var(--green70);
+	white-space: nowrap;
+	opacity: 0;
+	transition: opacity 0.4s ease;
+	pointer-events: none;
+}
+
+.saved-notice.visible {
+	opacity: 1;
 }
 
 /* A "pressed"/recessed button state — a softer alternative to the primary blue,
