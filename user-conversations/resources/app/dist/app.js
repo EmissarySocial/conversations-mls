@@ -19506,6 +19506,9 @@
         return 0;
       }
       case "object":
+        if (value == null) {
+          return 0;
+        }
         if (Array.isArray(value)) {
           if (value.length == 0) {
             return 0;
@@ -19519,6 +19522,9 @@
   function toMap(value) {
     switch (typeof value) {
       case "object":
+        if (value == null) {
+          return {};
+        }
         if (Array.isArray(value)) {
           if (value.length == 0) {
             return {};
@@ -19539,6 +19545,9 @@
       case "boolean":
         return value.toString();
       case "object":
+        if (value == null) {
+          return "";
+        }
         if (Array.isArray(value)) {
           if (value.length == 0) {
             return "";

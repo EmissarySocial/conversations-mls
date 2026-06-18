@@ -47,6 +47,11 @@ export function toInteger(value: any): number {
 
 		case "object":
 
+			// typeof null is "object"; guard against the null deref below
+			if (value == null) {
+				return 0
+			}
+
 			if (Array.isArray(value)) {
 				if (value.length == 0) {
 					return 0
@@ -64,6 +69,11 @@ export function toMap(value: any): { [key: string]: any } {
 
 	switch (typeof value) {
 		case "object":
+
+			// typeof null is "object"; treat null as an empty map
+			if (value == null) {
+				return {}
+			}
 
 			if (Array.isArray(value)) {
 				if (value.length == 0) {
@@ -93,6 +103,11 @@ export function toString(value: any): string {
 			return value.toString()
 
 		case "object":
+
+			// typeof null is "object"; guard against the null deref below
+			if (value == null) {
+				return ""
+			}
 
 			if (Array.isArray(value)) {
 				if (value.length == 0) {
