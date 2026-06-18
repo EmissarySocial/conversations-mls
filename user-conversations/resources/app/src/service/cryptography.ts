@@ -201,6 +201,11 @@ export function shouldRefreshKeyPackage(document: Document): boolean {
 // keyPackageIdentity returns a human-readable identifier for a KeyPackage based on its credential identity (the actor ID)
 function keyPackageIdentity(keyPackage: KeyPackage): string {
 
+	// RULE: A malformed KeyPackage may be missing its leafNode/credential entirely
+	if (keyPackage?.leafNode?.credential == undefined) {
+		return ""
+	}
+
 	if (keyPackage.leafNode.credential.credentialType !== defaultCredentialTypes.basic) {
 		console.warn("Unsupported credential type in KeyPackage:", keyPackage.leafNode.credential.credentialType)
 		return ""

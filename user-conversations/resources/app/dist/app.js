@@ -24623,6 +24623,9 @@
     return result;
   }
   function keyPackageIdentity(keyPackage) {
+    if (keyPackage?.leafNode?.credential == void 0) {
+      return "";
+    }
     if (keyPackage.leafNode.credential.credentialType !== defaultCredentialTypes.basic) {
       console.warn("Unsupported credential type in KeyPackage:", keyPackage.leafNode.credential.credentialType);
       return "";
