@@ -4,7 +4,7 @@ import { Controller } from "../service/controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
-import { formatFileSize, formatHTML, isEmoji, synthClick } from "./utils"
+import { formatFileSize, isEmoji, synthClick } from "./utils"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
@@ -173,7 +173,7 @@ export class ViewMessage {
 					</a>
 				)
 			))}
-			<div class="padding-xs">{m.trust(formatHTML(message.content))}</div>
+			<div class="padding-xs">{m.trust(message.content)}</div>
 		</>
 
 	}

@@ -345,6 +345,16 @@ button.success:focus,
 	color: black;
 }
 
+/* Mastodon content markup: ".invisible" hides URL protocol/path fragments inside
+   links, and ".ellipsis" marks truncated link text with a trailing ellipsis. */
+.invisible {
+	display: none;
+}
+
+.ellipsis::after {
+	content: "…";
+}
+
 /* Reusable "Changes saved" confirmation (see widget-saved-notice.tsx). It stays
    mounted and fades opacity in/out via the .visible class. */
 .saved-notice {

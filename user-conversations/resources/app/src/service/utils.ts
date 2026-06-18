@@ -1,10 +1,98 @@
 
+import DOMPurify from "dompurify"
+
 // htmlToText converts an HTML string into plain text using the browser's own
 // HTML parser. Used to derive a text-only summary (e.g. group.lastMessage) from
 // message content that arrives as HTML.
 export function htmlToText(html: string): string {
 	const doc = new DOMParser().parseFromString(html, "text/html")
 	return (doc.body.textContent || "").trim()
+}
+
+// Mastodon-compatible allowlist for sanitizing message HTML.
+const SANITIZE_ALLOWED_TAGS = ["p", "span", "br", "a", "del", "pre", "code", "em", "strong", "b", "i", "u", "ul", "ol", "li", "blockquote"]
+const SANITIZE_ALLOWED_ATTR = ["href", "rel", "class"]
+
+// Semantic CSS classes Mastodon uses in status content (mentions, hashtags, and
+// the markup that shows/hides portions of links and handles).
+const SANITIZE_ALLOWED_CLASSES = new Set(["mention", "hashtag", "invisible", "ellipsis"])
+
+// Microformat class prefixes Mastodon preserves (h-card, u-url, p-name, etc.)
+const SANITIZE_CLASS_PREFIXES = ["h-", "p-", "u-", "dt-", "e-"]
+
+// classIsAllowed reports whether a single CSS class name is allowed to survive
+// sanitization (a Mastodon semantic class or a microformats-prefixed class).
+function classIsAllowed(name: string): boolean {
+	return SANITIZE_ALLOWED_CLASSES.has(name) || SANITIZE_CLASS_PREFIXES.some(prefix => name.startsWith(prefix))
+}
+
+let sanitizeHooksInstalled = false
+
+// installSanitizeHooks registers DOMPurify hooks (once) that (a) filter class
+// attributes down to the Mastodon allowlist and (b) force safe link attributes.
+function installSanitizeHooks() {
+
+	if (sanitizeHooksInstalled) {
+		return
+	}
+	sanitizeHooksInstalled = true
+
+	// Filter class names down to the Mastodon allowlist; drop the attribute entirely
+	// if nothing survives. (DOMPurify allows the "class" attribute but does not
+	// inspect its values, so we do that here.)
+	DOMPurify.addHook("uponSanitizeAttribute", (_node, data) => {
+		if (data.attrName !== "class") {
+			return
+		}
+
+		const kept = data.attrValue.split(/\s+/).filter(name => name != "" && classIsAllowed(name))
+
+		if (kept.length === 0) {
+			data.keepAttr = false
+			return
+		}
+
+		data.attrValue = kept.join(" ")
+	})
+
+	// Force safe link attributes on every anchor that survives sanitization.
+	DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+		if (node.tagName === "A") {
+			node.setAttribute("rel", "noopener noreferrer nofollow")
+			node.setAttribute("target", "_blank")
+		}
+	})
+}
+
+// sanitizeHTML removes any unsafe markup from an HTML string, keeping only the
+// Mastodon-compatible tags, attributes, and classes. Used at every boundary where
+// untrusted HTML (e.g. an inbound ActivityPub "content" field) enters the app.
+export function sanitizeHTML(html: string): string {
+	installSanitizeHooks()
+	return DOMPurify.sanitize(html, {
+		ALLOWED_TAGS: SANITIZE_ALLOWED_TAGS,
+		ALLOWED_ATTR: SANITIZE_ALLOWED_ATTR,
+	})
+}
+
+// formatMessageContent converts plain text typed by the local user into the
+// sanitized HTML we store and render. It escapes the text, turns newlines into
+// <br> tags, and runs the result through sanitizeHTML. Additional replacements
+// (mentions, links, emoji, etc.) will be added here later.
+export function formatMessageContent(text: string): string {
+
+	// Escape HTML special characters so typed markup becomes literal text
+	const escaped = text
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;")
+
+	// Convert newlines to <br> tags
+	const withBreaks = escaped.replaceAll("\n", "<br>")
+
+	return sanitizeHTML(withBreaks)
 }
 
 // rangeToArray consumes all values from a generator and returns them as an array

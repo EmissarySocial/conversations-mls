@@ -65,13 +65,3 @@ export function formatFileSize(bytes: number): string {
 	return `${Math.round(bytes / Math.pow(1024, i))} ${units[i]}`;
 }
 
-export function formatHTML(html: string): string {
-
-	// strip all HTML tags
-	html = html.replace(/<\/?[^>]+(>|$)/g, "");
-
-	// convert newlines to <br> tags
-	html = html.replaceAll('\n', "<br>");
-
-	return html
-}

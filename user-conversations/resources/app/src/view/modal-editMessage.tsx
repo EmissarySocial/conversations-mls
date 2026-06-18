@@ -2,6 +2,7 @@ import m from "mithril"
 import { type Vnode } from "mithril"
 import { Controller } from "../service/controller"
 import { groupIsEncrypted } from "../model/group"
+import { htmlToText } from "../service/utils"
 import { Modal } from "./modal"
 import { synthClick } from "./utils"
 
@@ -24,7 +25,8 @@ export class EditMessage {
 			throw new Error("No message selected for editing")
 		}
 
-		vnode.state.content = vnode.attrs.controller.message.content
+		// The stored content is sanitized HTML; edit it as plain text
+		vnode.state.content = htmlToText(vnode.attrs.controller.message.content)
 	}
 
 	view(vnode: EditMessageVnode) {

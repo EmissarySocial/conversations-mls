@@ -29,7 +29,7 @@ import { emojiKey } from "./emojikeys"
 // Other utility functions
 import { cipherSuiteImplementation, decodeKeyPackage, decodeKeyFromBase64, deriveKeyFromPassword, encodeKeyToBase64, generateAESKey, keyPackageIsExpired, newKeyPackage, shouldRefreshKeyPackage, unwrapKey, wrapKey } from "./cryptography"
 
-import { newId, htmlToText } from "./utils"
+import { newId, htmlToText, sanitizeHTML, formatMessageContent } from "./utils"
 import { NewFilter, type Filter } from "../model/filter"
 
 // SettingsTab identifies which tab is active on the settings screen.
@@ -1126,7 +1126,7 @@ export class Controller {
 		const message = NewMessage()
 		message.groupId = group.id
 		message.sender = this.#actor.id()
-		message.content = content
+		message.content = formatMessageContent(content)
 		message.type = "SENT"
 
 		if (this.inReplyTo != undefined) {
@@ -1224,6 +1224,9 @@ export class Controller {
 		if (message.sender != this.actorId()) {
 			return
 		}
+
+		// Format the edited (plain text) content into sanitized HTML for storage/display
+		message.content = formatMessageContent(message.content)
 
 		// RULE: Can only update messages in the current group.
 		if (message.groupId != group.id) {
@@ -1554,7 +1557,7 @@ export class Controller {
 			groupId: groupId,
 			type: (sentByMe ? "SENT" : "RECEIVED"),
 			sender: object.attributedToId(),
-			content: object.content(),
+			content: sanitizeHTML(object.content()),
 			reactions: {},
 			history: [],
 			received: [],
@@ -1742,9 +1745,9 @@ export class Controller {
 			message.history = []
 		}
 
-		// Update the message content
+		// Update the message content (sanitize the inbound HTML)
 		message.history.push(message.content)
-		message.content = object.content()
+		message.content = sanitizeHTML(object.content())
 		message.updateDate = Date.now()
 
 		// Save the message to the database
