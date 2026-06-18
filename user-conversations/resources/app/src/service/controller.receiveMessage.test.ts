@@ -4,6 +4,7 @@ import { expect, test } from 'vitest'
 import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 import { makeController, FakeDatabase } from "./testHarness"
+import { NewGroup } from "../model/group"
 
 // These tests drive the real receive pipeline (controller.receiveActivity → the
 // real CodecPlaintext → the create/update message handlers) and assert that the
@@ -124,4 +125,48 @@ test('receiving an Update (edit) sanitizes the new content before saving', async
 	expect(content).not.toContain("onerror")
 	expect(content).not.toContain("javascript:")
 	expect(content).toContain("Hello")
+})
+
+test('receiving an Update of a group context applies the new metadata', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed the group that the context update will modify
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.name = "Old Name"
+	group.stateId = "ACTIVE"
+	database.groups.set(GROUP_ID, group)
+
+	// An Update activity whose embedded object is an emissary:Context for this group
+	const activity = new Activity({
+		type: vocab.ActivityTypeUpdate,
+		actor: ALICE,
+		context: GROUP_ID,
+		object: {
+			id: GROUP_ID,
+			type: vocab.ObjectTypeEmissaryContext,
+			context: GROUP_ID,
+			name: "New Name",
+			summary: "An updated summary",
+			tag: ["news", "updates"],
+			unread: true,
+			lastMessage: "the latest message",
+			lastMessageId: "https://example.test/messages/latest",
+			stateId: "IMPORTANT",
+		},
+	})
+
+	await controller.receiveActivity(activity)
+
+	const updated = await database.loadGroup(GROUP_ID)
+	expect(updated!.name).toBe("New Name")
+	expect(updated!.summary).toBe("An updated summary")
+	expect(updated!.tags).toEqual(["news", "updates"])
+	expect(updated!.lastMessage).toBe("the latest message")
+	expect(updated!.lastMessageId).toBe("https://example.test/messages/latest")
+	expect(updated!.stateId).toBe("IMPORTANT")
+	// NOTE: "unread" is intentionally not asserted here — saveGroup reloads and
+	// reconciles the selection, and selecting this (only) group marks it read.
 })
