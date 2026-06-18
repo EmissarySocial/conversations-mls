@@ -20,10 +20,11 @@ import { type EncryptedGroup, type Group, type GroupState, NewGroup, groupIsEncr
 import { Message, NewMessage } from "../model/message"
 
 // Services
-import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver } from "./interfaces"
+import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver, type IWebFinger } from "./interfaces"
 import { CodecMls } from "./codecMls"
 import { ActivityPubAuthenticationService } from "./authService"
 import { CodecPlaintext } from "./codecPlaintext"
+import { WebFinger } from "./webfinger"
 import { emojiKey } from "./emojikeys"
 
 // Other utility functions
@@ -46,6 +47,7 @@ export class Controller {
 	readonly #host: IHost
 	readonly #codecPlaintext: CodecPlaintext
 	readonly #proxy: IProxy
+	readonly #webfinger: IWebFinger
 
 	#actor: Actor
 	#codecMls?: CodecMls
@@ -96,6 +98,7 @@ export class Controller {
 		this.#allowEncryptedMessages = false
 		this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId)
 		this.#proxy = proxy
+		this.#webfinger = new WebFinger()
 
 		// Application State
 		this.groups = []
@@ -1126,7 +1129,7 @@ export class Controller {
 		const message = NewMessage()
 		message.groupId = group.id
 		message.sender = this.#actor.id()
-		message.content = formatMessageContent(content)
+		message.content = await formatMessageContent(content, (handle) => this.#webfinger.resolveActorURL(handle))
 		message.type = "SENT"
 
 		if (this.inReplyTo != undefined) {
@@ -1226,7 +1229,7 @@ export class Controller {
 		}
 
 		// Format the edited (plain text) content into sanitized HTML for storage/display
-		message.content = formatMessageContent(message.content)
+		message.content = await formatMessageContent(message.content, (handle) => this.#webfinger.resolveActorURL(handle))
 
 		// RULE: Can only update messages in the current group.
 		if (message.groupId != group.id) {

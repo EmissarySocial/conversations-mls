@@ -53,13 +53,13 @@ test('sanitizeHTML forces safe rel/target on links', () => {
 	expect(result).toContain('target="_blank"')
 })
 
-test('formatMessageContent escapes typed markup as literal text', () => {
-	const result = formatMessageContent('<script>alert(1)</script>')
+test('formatMessageContent escapes typed markup as literal text', async () => {
+	const result = await formatMessageContent('<script>alert(1)</script>')
 	expect(result).not.toContain("<script>")
 	expect(result).toContain("&lt;script&gt;")
 })
 
-test('formatMessageContent converts newlines to <br>', () => {
-	const result = formatMessageContent("line one\nline two")
+test('formatMessageContent converts newlines to <br>', async () => {
+	const result = await formatMessageContent("line one\nline two")
 	expect(result).toContain("line one<br>line two")
 })

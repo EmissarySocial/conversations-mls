@@ -355,6 +355,15 @@ button.success:focus,
 	content: "…";
 }
 
+/* Mention/hashtag links read as links via a dashed underline (they otherwise
+   inherit the bubble text color and look like plain text). */
+a.mention,
+a.hashtag {
+	text-decoration: underline dotted;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 2px;
+}
+
 /* Reusable "Changes saved" confirmation (see widget-saved-notice.tsx). It stays
    mounted and fades opacity in/out via the .visible class. */
 .saved-notice {

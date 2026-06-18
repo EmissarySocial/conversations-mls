@@ -19324,9 +19324,65 @@
       ALLOWED_ATTR: SANITIZE_ALLOWED_ATTR
     });
   }
-  function formatMessageContent(text2) {
+  var LINK_DISPLAY_MAX = 30;
+  var URL_PATTERN = /https?:\/\/[^\s<]+[^\s<.,!?;:)'"]/g;
+  var MENTION_PATTERN = /(^|[^\w@/])@([a-zA-Z0-9_.-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  function linkifyURL(escapedUrl) {
+    const schemeMatch = /^(https?:\/\/)(.*)$/.exec(escapedUrl);
+    if (schemeMatch == null) {
+      return `<a href="${escapedUrl}">${escapedUrl}</a>`;
+    }
+    const scheme = schemeMatch[1];
+    const rest = schemeMatch[2];
+    const visible = rest.slice(0, LINK_DISPLAY_MAX);
+    const overflow = rest.slice(LINK_DISPLAY_MAX);
+    const hiddenScheme = `<span class="invisible">${scheme}</span>`;
+    const tail = overflow == "" ? "" : `<span class="invisible">${overflow}</span>`;
+    return `<a href="${escapedUrl}">${hiddenScheme}${visible}${tail}</a>`;
+  }
+  async function linkifyMentions(text2, resolveMention) {
+    const matches = [...text2.matchAll(MENTION_PATTERN)];
+    if (matches.length == 0) {
+      return text2;
+    }
+    const hrefs = await Promise.all(matches.map(async (match) => {
+      const user = match[2];
+      const domain = match[3];
+      if (resolveMention == void 0) {
+        return `https://${domain}/@${user}`;
+      }
+      return await resolveMention(`@${user}@${domain}`);
+    }));
+    let result = "";
+    let lastIndex = 0;
+    matches.forEach((match, index) => {
+      const prefix = match[1];
+      const user = match[2];
+      const href = hrefs[index];
+      const start = match.index;
+      result += text2.slice(lastIndex, start);
+      if (href == "") {
+        result += match[0];
+      } else {
+        result += `${prefix}<a href="${href}" class="u-url mention">@<span>${user}</span></a>`;
+      }
+      lastIndex = start + match[0].length;
+    });
+    result += text2.slice(lastIndex);
+    return result;
+  }
+  async function linkify(escaped, resolveMention) {
+    const withUrls = escaped.replaceAll(URL_PATTERN, (url) => linkifyURL(url));
+    const pieces = withUrls.split(/(<a\b[^>]*>.*?<\/a>)/g);
+    const linkedPieces = await Promise.all(
+      pieces.map((piece, index) => index % 2 === 0 ? linkifyMentions(piece, resolveMention) : Promise.resolve(piece))
+    );
+    return linkedPieces.join("");
+  }
+  async function formatMessageContent(text2, resolveMention) {
     const escaped = text2.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-    const withBreaks = escaped.replaceAll("\n", "<br>");
+    const linked = await linkify(escaped, resolveMention);
+    const withBreaks = linked.replaceAll("\n", "<br>");
     return sanitizeHTML(withBreaks);
   }
   function base64ToUint8Array(base64) {
@@ -25601,6 +25657,51 @@
     }
   };
 
+  // src/service/webfinger.ts
+  var WebFinger = class {
+    #cache = /* @__PURE__ */ new Map();
+    // resolveActorURL returns the actor URL for a "@user@host" handle, or "" if the
+    // handle is malformed or cannot be resolved.
+    async resolveActorURL(handle) {
+      const normalized = handle.startsWith("@") ? handle.slice(1) : handle;
+      const parts = normalized.split("@");
+      if (parts.length != 2 || parts[0] == "" || parts[1] == "") {
+        return "";
+      }
+      const user = parts[0];
+      const host = parts[1];
+      const cached = this.#cache.get(normalized);
+      if (cached != void 0) {
+        return cached;
+      }
+      const url = `https://${host}/.well-known/webfinger?resource=acct:${user}@${host}`;
+      let actorUrl = "";
+      try {
+        const response = await fetch(url, {
+          headers: { Accept: "application/jrd+json" }
+        });
+        if (!response.ok) {
+          throw new Error(`WebFinger request failed: ${response.status} ${response.statusText}`);
+        }
+        const jrd = await response.json();
+        actorUrl = this.#findSelfLink(jrd?.links ?? []);
+      } catch (error) {
+        console.warn(`WebFinger: unable to resolve handle '${handle}':`, error);
+        actorUrl = "";
+      }
+      this.#cache.set(normalized, actorUrl);
+      return actorUrl;
+    }
+    // findSelfLink returns the href of the WebFinger "self" link that points at the
+    // ActivityPub actor document, or "" if none is present.
+    #findSelfLink(links) {
+      const selfLink = links.find(
+        (link) => link != null && link.rel == "self" && (link.type == "application/activity+json" || link.type == 'application/ld+json; profile="https://www.w3.org/ns/activitystreams"')
+      );
+      return selfLink?.href ?? "";
+    }
+  };
+
   // src/service/emojikeys.ts
   async function emojiKey(signature) {
     const checksum = await crypto.subtle.digest("SHA-256", signature.slice(0));
@@ -25983,6 +26084,7 @@
     #host;
     #codecPlaintext;
     #proxy;
+    #webfinger;
     #actor;
     #codecMls;
     #allowPlaintextMessages;
@@ -26017,6 +26119,7 @@
       this.#allowEncryptedMessages = false;
       this.#codecPlaintext = new CodecPlaintext(this.#database, this.#delivery, this.#actorId);
       this.#proxy = proxy;
+      this.#webfinger = new WebFinger();
       this.groups = [];
       this.messages = [];
       this.filters = [];
@@ -26698,7 +26801,7 @@
       const message = NewMessage();
       message.groupId = group.id;
       message.sender = this.#actor.id();
-      message.content = formatMessageContent(content);
+      message.content = await formatMessageContent(content, (handle) => this.#webfinger.resolveActorURL(handle));
       message.type = "SENT";
       if (this.inReplyTo != void 0) {
         message.inReplyTo = this.inReplyTo.id;
@@ -26759,7 +26862,7 @@
       if (message.sender != this.actorId()) {
         return;
       }
-      message.content = formatMessageContent(message.content);
+      message.content = await formatMessageContent(message.content, (handle) => this.#webfinger.resolveActorURL(handle));
       if (message.groupId != group.id) {
         return;
       }

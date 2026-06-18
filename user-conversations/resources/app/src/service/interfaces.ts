@@ -152,6 +152,11 @@ export interface IProxy {
 	Collection(url: string): Promise<Collection>
 }
 
+// IWebFinger resolves fediverse handles (@user@host) into the actor's profile URL.
+export interface IWebFinger {
+	resolveActorURL(handle: string): Promise<string>
+}
+
 // IReceiver wraps all of the methods that the Controller uses
 // to receive SSE updates.
 export interface IReceiver {
