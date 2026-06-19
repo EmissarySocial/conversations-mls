@@ -24,12 +24,15 @@ function stubObjectFetch(json?: object) {
 
 // stubFailingFetch makes every fetch reject, simulating an unreachable / rejected
 // object URL (e.g. a reflected "Leave" whose group collection the server now 400s).
+// Returns the spy so tests can assert whether a fetch was attempted at all.
 function stubFailingFetch() {
-	vi.stubGlobal("fetch", async () => ({
+	const fetchSpy = vi.fn(async () => ({
 		ok: false,
 		status: 400,
 		statusText: "Bad Request",
 	}))
+	vi.stubGlobal("fetch", fetchSpy)
+	return fetchSpy
 }
 
 afterEach(() => {
@@ -450,7 +453,7 @@ test('receiving a Leave for an unknown group does not throw, even when its objec
 
 	// The Leave's object is a bare URL the server now rejects (400) — the exact
 	// reflected-Leave scenario. Resolving it must not crash the receive pipeline.
-	stubFailingFetch()
+	const fetchSpy = stubFailingFetch()
 
 	const leave = new Activity({
 		"@context": "https://www.w3.org/ns/activitystreams",
@@ -461,6 +464,10 @@ test('receiving a Leave for an unknown group does not throw, even when its objec
 	})
 
 	await expect(controller.receiveActivity(leave)).resolves.toBeUndefined()
+
+	// A Leave never reads its resolved object, so we must NOT even attempt to fetch
+	// the (unreachable) object URL — no doomed request, no console warning.
+	expect(fetchSpy).not.toHaveBeenCalled()
 
 	// No junk group was created for the group we no longer have.
 	expect(database.groups.has("https://example.test/groups/already-left/pub/collections/xyz")).toBe(false)

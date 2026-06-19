@@ -27029,13 +27029,7 @@
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
       console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount);
-      let object;
-      try {
-        object = await activity.object();
-      } catch (error) {
-        console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error);
-        object = new Document({});
-      }
+      const object = await this.#resolveActivityObject(activity);
       const codec = this.#getCodecForActivity(object);
       try {
         const decodedValue = await codec.receiveActivity(activity, object);
@@ -27083,6 +27077,24 @@
         }
       } catch (error) {
         console.error("Error receiving activity:", error);
+      }
+    };
+    // resolveActivityObject returns the activity's "object" as a Document. Leave and
+    // Delete reference their object by bare URL and never read the resolved Document
+    // (they use objectId()), so we skip resolving it — and avoid a doomed fetch of a
+    // URL the server may reject. For other types, resolve it (usually embedded, so no
+    // network), tolerating a failed fetch with an empty Document.
+    #resolveActivityObject = async (activity) => {
+      switch (activity.type()) {
+        case ActivityTypeLeave:
+        case ActivityTypeDelete:
+          return new Document({});
+      }
+      try {
+        return await activity.object();
+      } catch (error) {
+        console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error);
+        return new Document({});
       }
     };
     #receiveActivity_Acknowledge = async (activity) => {

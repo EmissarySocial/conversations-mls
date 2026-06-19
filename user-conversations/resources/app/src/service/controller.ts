@@ -1416,19 +1416,14 @@ export class Controller {
 
 		console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount)
 
-		// Retrieve the object from the activity. It is usually embedded, but for
-		// activities that reference their object by URL (Leave/Delete/Undo) we may have
-		// to fetch it. That fetch can legitimately fail — e.g. a reflected "Leave" for a
-		// group we just left, whose collection URL the server now rejects (400/404).
-		// Such activities don't need the resolved object (their handlers use objectId()),
-		// so fall back to an empty Document rather than failing the whole pipeline.
-		let object: Document
-		try {
-			object = await activity.object()
-		} catch (error) {
-			console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error)
-			object = new Document({})
-		}
+		// Resolve the activity's object into a Document. Leave/Delete reference their
+		// object by bare URL and never use the resolved Document (their handlers and the
+		// codec work from objectId()), so we skip resolving it — that URL is often
+		// unreachable anyway (e.g. a reflected "Leave" for a group we just left, whose
+		// collection the server now 400s). For every other type we resolve it (usually
+		// embedded, so no network), but still tolerate a failed fetch by falling back to
+		// an empty Document rather than crashing the whole pipeline.
+		const object = await this.#resolveActivityObject(activity)
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(object)
@@ -1517,6 +1512,27 @@ export class Controller {
 				object: activity.id(),
 			})
 			*/
+		}
+	}
+
+	// resolveActivityObject returns the activity's "object" as a Document. Leave and
+	// Delete reference their object by bare URL and never read the resolved Document
+	// (they use objectId()), so we skip resolving it — and avoid a doomed fetch of a
+	// URL the server may reject. For other types, resolve it (usually embedded, so no
+	// network), tolerating a failed fetch with an empty Document.
+	readonly #resolveActivityObject = async (activity: Activity): Promise<Document> => {
+
+		switch (activity.type()) {
+			case vocab.ActivityTypeLeave:
+			case vocab.ActivityTypeDelete:
+				return new Document({})
+		}
+
+		try {
+			return await activity.object()
+		} catch (error) {
+			console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error)
+			return new Document({})
 		}
 	}
 
