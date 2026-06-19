@@ -47,5 +47,10 @@
 		"skipLibCheck": false,
 
 		"esModuleInterop": true
-	}
+	},
+
+	// Only the app source under rootDir is part of the build; the test-runner
+	// config lives at the project root and is excluded so it does not violate
+	// rootDir (it is type-checked by vitest/vite itself, not this program).
+	"exclude": ["vitest.config.ts", "dist"]
 }
