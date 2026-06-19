@@ -498,23 +498,6 @@ export class Controller {
 		this.modalView = "MESSAGE-HISTORY"
 	}
 
-	modal_sendEmoji = async () => {
-		this.modalView = "MESSAGE-SEND-EMOJI"
-	}
-
-	modal_sendEmoji_callback = async (emoji: Emoji) => {
-
-		this.modalView = ""
-		const group = this.groupStream()
-
-		if (group.stateId == "CLOSED") {
-			console.error("Cannot send emoji post to a CLOSED group.")
-			return
-		}
-
-		this.sendMessage(emoji.emoji)
-	}
-
 	modal_startReaction = async (message: Message) => {
 		this.message = message
 		this.modalView = "MESSAGE-START-REACTION"

@@ -1,9 +1,11 @@
 import m, { type Vnode } from "mithril"
 import type { Controller } from "../service/controller"
 import type { Message } from "../model/message"
+import type { Emoji } from "../model/emoji"
 import { groupIsEncrypted } from "../model/group"
 import { synthClick } from "./utils"
 import { MentionPopup, type MentionPopupController } from "./widget-mention-popup"
+import { PickEmoji } from "./modal-pickEmoji"
 import { activeMentionToken, replaceMentionToken, type MentionToken } from "./mentionToken"
 import { caretCoordinates } from "./caretCoordinates"
 
@@ -32,12 +34,18 @@ type WidgetMessageCreateState = {
 	mention: MentionContext | null
 	// mentionPopup is the popup's imperative handle, used to route keyboard nav.
 	mentionPopup?: MentionPopupController
+	// savedCaret is the caret position captured when the emoji picker is opened,
+	// before the modal steals focus from the textarea.
+	savedCaret?: number
+	// showEmojiPicker is true while this composer's own emoji picker modal is open.
+	showEmojiPicker: boolean
 }
 
 export class WidgetMessageCreate {
 	oninit(vnode: WidgetMessageCreateVnode) {
 		vnode.state.message = ""
 		vnode.state.mention = null
+		vnode.state.showEmojiPicker = false
 	}
 
 	view(vnode: WidgetMessageCreateVnode) {
@@ -85,9 +93,15 @@ export class WidgetMessageCreate {
 
 						{this.drawMentionPopup(vnode)}
 
+						{vnode.state.showEmojiPicker &&
+							<PickEmoji
+								onselect={(emoji: Emoji) => this.insertEmoji(vnode, emoji.emoji)}
+								close={() => this.closeEmojiPicker(vnode)} />
+						}
+
 						<button
 							tabIndex="0"
-							onclick={() => controller.modal_sendEmoji()}
+							onclick={() => this.openEmojiPicker(vnode)}
 							style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
 
 						{/* NOSONAR: typescript:S6853 */} <label
@@ -252,11 +266,47 @@ export class WidgetMessageCreate {
 		}
 
 		const { text, caret } = replaceMentionToken(vnode.state.message, mention.token, handle + " ")
-		vnode.state.message = text
 		vnode.state.mention = null
+		this.applyComposedText(vnode, text, caret)
+	}
 
-		// Restore focus and place the caret just past the inserted handle. Done after
-		// the redraw so the textarea reflects the new value before we set the caret.
+	// openEmojiPicker snapshots the caret position (before the modal steals focus
+	// from the textarea) and opens this composer's own emoji picker.
+	openEmojiPicker(vnode: WidgetMessageCreateVnode) {
+		const field = document.getElementById(MESSAGE_INPUT_ID) as HTMLTextAreaElement | null
+		vnode.state.savedCaret = field?.selectionStart ?? vnode.state.message.length
+		vnode.state.showEmojiPicker = true
+	}
+
+	// closeEmojiPicker dismisses the emoji picker, mirroring the modal-router's
+	// fade-out: drop the #modal "ready" class, then unmount after the transition.
+	closeEmojiPicker(vnode: WidgetMessageCreateVnode) {
+		document.getElementById("modal")?.classList.remove("ready")
+		globalThis.setTimeout(() => {
+			vnode.state.showEmojiPicker = false
+			m.redraw()
+		}, 240)
+	}
+
+	// insertEmoji inserts an emoji at the caret position captured when the picker was
+	// opened (defaulting to the end of the text), then restores the caret just past
+	// it. Used by the emoji picker instead of sending the emoji as its own message.
+	insertEmoji(vnode: WidgetMessageCreateVnode, emoji: string) {
+
+		const at = vnode.state.savedCaret ?? vnode.state.message.length
+		delete vnode.state.savedCaret
+
+		const text = vnode.state.message.slice(0, at) + emoji + vnode.state.message.slice(at)
+		this.applyComposedText(vnode, text, at + emoji.length)
+	}
+
+	// applyComposedText commits new composer text and restores the caret to `caret`.
+	// The caret is set after the redraw (via rAF) so the textarea reflects the new
+	// value first.
+	applyComposedText(vnode: WidgetMessageCreateVnode, text: string, caret: number) {
+
+		vnode.state.message = text
+
 		const field = document.getElementById(MESSAGE_INPUT_ID) as HTMLTextAreaElement | null
 		requestAnimationFrame(() => {
 			if (field != null) {

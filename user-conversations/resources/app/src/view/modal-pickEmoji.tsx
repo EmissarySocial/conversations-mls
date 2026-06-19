@@ -1,7 +1,6 @@
 import m, { type VnodeDOM } from "mithril"
 import Stream from "mithril/stream"
 
-import { Controller } from "../service/controller"
 import { Modal } from "./modal"
 import { type Emoji, type EmojiGroup } from "../model/emoji"
 import { synthClick } from "./utils"
@@ -9,7 +8,6 @@ import { synthClick } from "./utils"
 type PickEmojiVnode = VnodeDOM<PickEmojiAttrs, PickEmojiState>
 
 interface PickEmojiAttrs {
-	controller: Controller
 	onselect: (emoji: Emoji) => void
 	close: () => void
 }
