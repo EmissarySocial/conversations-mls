@@ -375,13 +375,11 @@ button.success:focus,
 }
 
 /* Mastodon content markup: ".invisible" hides URL protocol/path fragments inside
-   links, and ".ellipsis" marks truncated link text with a trailing ellipsis. */
+   links. (Note: ".ellipsis" is intentionally NOT styled here — that class name is
+   the global theme's text-truncation utility, used by the group labels; defining a
+   local ".ellipsis::after" here collided with it and appended a stray "…".) */
 .invisible {
 	display: none;
-}
-
-.ellipsis::after {
-	content: "…";
 }
 
 /* Links inside message content (mentions, hashtags, and pasted URLs) read as links

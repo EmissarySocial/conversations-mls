@@ -31,7 +31,7 @@ export class Groups {
 
 				<div class="conversations-scroll">
 					{controller.groups.map((group) => {
-						let cssClass = "flex-row flex-align-center padding hover-trigger"
+						let cssClass = "flex-row flex-align-center padding padding-right-sm hover-trigger"
 
 						if (group.id == controller.selectedGroupId()) {
 							cssClass += " highlight"
@@ -42,7 +42,7 @@ export class Groups {
 								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
 									{this.groupIcon(group)}
 								</div>
-								<div class="flex-row flex-grow nowrap ellipsis pos-relative">
+								<div class="flex-row flex-grow nowrap pos-relative">
 									<div class="flex-grow">
 										{this.groupLabel(group)}
 									</div>
@@ -96,7 +96,7 @@ export class Groups {
 
 		return <>
 			<div class="flex-row flex-align-center bold">
-				<span class="flex-grow ellipsis">{group.name || group.defaultName || ""}</span>
+				<span class="flex-grow ellipsis" style="min-width:0">{group.name || group.defaultName || ""}</span>
 				{(group.stateId == "IMPORTANT") && <i class="bi bi-star-fill" style="color:#f5b400"></i>}
 			</div>
 			<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
@@ -105,17 +105,22 @@ export class Groups {
 
 	unreadMarker(vnode: GroupsVnode, group: Group) {
 
+		// Only display the marker if the group is unread
 		if (!group.unread) {
 			return null
 		}
 
-		if (groupIsEncrypted(group)) {
-			return <div class="text-xs" style="color:var(--blue50);">
-				<i class="bi bi-circle-fill"></i>
-			</div>
+		// A group in the WELCOME state is a pending invitation, not an active
+		// conversation, so it does not show an unread-messages indicator.
+		if (group.stateId == "WELCOME") {
+			return null
 		}
 
-		return <div class="text-xs" style="color:var(--green50);">
+		// Encrypted groups use the blue accent; plaintext groups use the gold
+		// unencrypted accent (#F2C94C), matching the rest of the app.
+		const color = groupIsEncrypted(group) ? "var(--blue50)" : "#F2C94C"
+
+		return <div class="text-xs" style={`color:${color};`}>
 			<i class="bi bi-circle-fill"></i>
 		</div>
 	}
