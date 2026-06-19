@@ -1041,8 +1041,8 @@ export class Controller {
 		// Read the current value of the "selected group"
 		const group = this.groupStream()
 
-		// RULE: Remove actors who are already in the group
-		actorIds = actorIds.filter(actorId => !group.members.includes(actorId))
+		// RULE: De-duplicate the request, and remove actors already in the group
+		actorIds = [...new Set(actorIds)].filter(actorId => !group.members.includes(actorId))
 
 		// If there are no additional actors to add, then exit early
 		if (actorIds.length == 0) {

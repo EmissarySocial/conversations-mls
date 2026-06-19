@@ -138,8 +138,8 @@ export class AppSettingsGeneral {
 		const controller = vnode.attrs.controller
 
 		return (
-			<div class="margin-top">
-				<div class="text-lg bold margin-bottom">EmojiKey</div>
+			<div class="margin-top card padding">
+				<div class="bold margin-bottom">EmojiKeys</div>
 				<div class="margin-bottom-lg">
 					EmojiKeys give you an easy way to verify your identity.
 					When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey.

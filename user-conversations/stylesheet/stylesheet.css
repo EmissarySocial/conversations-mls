@@ -254,11 +254,11 @@
 	position: relative;
 }
 
+/* `.popup` is chrome only — the visual card, with NO positioning. Position is the
+   caller's job: trigger-anchored pop-ups add `.popup-below`; the caret-anchored
+   mention pop-up positions itself inline. Keeping positioning out of the base class
+   means callers never have to claw back `top`/`left`/`transform` they don't want. */
 .popup {
-	position: absolute;
-	top: calc(100% + var(--rhythm));
-	left: 50%;
-	transform: translateX(-50%);
 	z-index: 100;
 	min-width: 200px;
 	padding: 0;
@@ -266,6 +266,14 @@
 	border: 1px solid var(--gray20);
 	border-radius: calc(var(--rhythm) * 1.5);
 	box-shadow: 0 calc(var(--rhythm) * 0.5) calc(var(--rhythm) * 2) rgba(0, 0, 0, 0.18);
+}
+
+/* Trigger-anchored placement: centered just below the `.popup-anchor` it lives in. */
+.popup-below {
+	position: absolute;
+	top: calc(100% + var(--rhythm));
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .popup-caret {
@@ -280,29 +288,50 @@
 	border-bottom: var(--rhythm) solid var(--white);
 }
 
-.filter-menu-item {
+/* A selectable row inside any `.popup` used as a menu (the filter menu, the
+   @mention autocomplete, and future menus). `.highlight` is the keyboard-navigation
+   selected state; it and :hover share the same gray so mouse and keyboard match. */
+.popup-menu-item {
 	display: flex;
 	align-items: center;
 	margin: calc(var(--rhythm) * 0.5);
+	border-radius: var(--rhythm);
 	white-space: nowrap;
 	cursor: pointer;
 }
 
-/* Higher specificity than the generic "#app-sidebar [role=button]" rule so the
-   item radius actually wins. */
-#conversations #app-sidebar .popup .filter-menu-item {
-	border-radius: var(--rhythm);
-}
-
-.filter-menu-item:hover {
+.popup-menu-item.highlight,
+.popup-menu-item:hover {
 	background-color: var(--gray10);
 }
 
-.filter-menu-icon {
+/* Higher specificity than the generic "#app-sidebar [role=button]" rule so the
+   item radius actually wins inside the sidebar's filter pop-up. */
+#conversations #app-sidebar .popup .popup-menu-item {
+	border-radius: var(--rhythm);
+}
+
+.popup-menu-icon {
 	display: inline-flex;
 	justify-content: center;
 	flex-shrink: 0;
 	width: 1.5em;
+}
+
+/* @mention autocomplete popup (see widget-mention-popup.tsx). The composer pins it
+   at the caret via inline `position:fixed; left; bottom` (it opens upward). It uses
+   `.popup` for chrome only — no positioning to override, since that now lives in
+   `.popup-below` rather than the base class. */
+.mention-popup {
+	min-width: 240px;
+	max-width: 320px;
+	/* A min-height keeps the popup visible as an empty card before results arrive
+	   (the empty state) rather than collapsing to a sliver. */
+	min-height: calc(var(--rhythm) * 4);
+	max-height: 260px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: calc(var(--rhythm) * 0.5);
 }
 
 /* The message-composer textbox for UNENCRYPTED groups uses the gold accent for its

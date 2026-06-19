@@ -3,6 +3,11 @@ import type { Controller } from "../service/controller"
 import type { Message } from "../model/message"
 import { groupIsEncrypted } from "../model/group"
 import { synthClick } from "./utils"
+import { MentionPopup, type MentionPopupController } from "./widget-mention-popup"
+import { activeMentionToken, replaceMentionToken, type MentionToken } from "./mentionToken"
+import { caretCoordinates } from "./caretCoordinates"
+
+const MESSAGE_INPUT_ID = "message-input"
 
 type WidgetMessageCreateVnode = Vnode<WidgetMessageCreateAttrs, WidgetMessageCreateState>
 
@@ -11,13 +16,28 @@ type WidgetMessageCreateAttrs = {
 	inReplyTo: Message | undefined
 }
 
+// MentionContext describes an in-progress @mention: the token being typed and the
+// viewport coordinates at which to anchor the autocomplete popup. `bottom` is the
+// distance from the viewport's bottom edge to the caret line — the popup pins its
+// bottom edge there and opens upward.
+interface MentionContext {
+	token: MentionToken
+	left: number
+	bottom: number
+}
+
 type WidgetMessageCreateState = {
 	message: string
+	// mention is the active @mention autocomplete context, or null when none is open.
+	mention: MentionContext | null
+	// mentionPopup is the popup's imperative handle, used to route keyboard nav.
+	mentionPopup?: MentionPopupController
 }
 
 export class WidgetMessageCreate {
 	oninit(vnode: WidgetMessageCreateVnode) {
 		vnode.state.message = ""
+		vnode.state.mention = null
 	}
 
 	view(vnode: WidgetMessageCreateVnode) {
@@ -54,11 +74,16 @@ export class WidgetMessageCreate {
 					<div role="textbox" class={"flex-grow flex-row flex-align-center" + (isEncrypted ? "" : " unencrypted-textbox")}>
 
 						<textarea
-							id="message-input"
+							id={MESSAGE_INPUT_ID}
 							value={vnode.state.message}
 							style="border:none; min-height:1em; field-sizing:content; resize:none;"
 							oninput={(e: Event) => this.oninput(vnode, e)}
-							onkeydown={(e: KeyboardEvent) => this.onkeydown(vnode, e)}></textarea>
+							onkeydown={(e: KeyboardEvent) => this.onkeydown(vnode, e)}
+							onkeyup={(e: KeyboardEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
+							onclick={(e: MouseEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
+							onblur={() => this.closeMention(vnode)}></textarea>
+
+						{this.drawMentionPopup(vnode)}
 
 						<button
 							tabIndex="0"
@@ -100,12 +125,59 @@ export class WidgetMessageCreate {
 		)
 	}
 
-	// Send message on enter (but not shift+enter)
 	onkeydown(vnode: WidgetMessageCreateVnode, event: KeyboardEvent) {
 
+		// While the mention popup is open, navigation keys drive the popup instead
+		// of editing or sending the message.
+		if (this.mentionPopupIsActive(vnode)) {
+			if (this.handleMentionKey(vnode, event)) {
+				return
+			}
+		}
+
+		// Send message on Enter (but not Shift+Enter)
 		if (event.key === "Enter" && !event.shiftKey) {
 			event.preventDefault()
 			this.sendMessage(vnode)
+		}
+	}
+
+	// mentionPopupIsActive reports whether the autocomplete popup is open with results.
+	mentionPopupIsActive(vnode: WidgetMessageCreateVnode): boolean {
+		return (vnode.state.mention != null) && (vnode.state.mentionPopup?.isActive() ?? false)
+	}
+
+	// handleMentionKey routes a navigation key to the open popup. It returns true if
+	// the key was consumed (and the caller should do nothing further).
+	handleMentionKey(vnode: WidgetMessageCreateVnode, event: KeyboardEvent): boolean {
+
+		const popup = vnode.state.mentionPopup
+
+		switch (event.key) {
+
+			case "ArrowDown":
+				event.preventDefault()
+				popup?.moveHighlight(1)
+				return true
+
+			case "ArrowUp":
+				event.preventDefault()
+				popup?.moveHighlight(-1)
+				return true
+
+			case "Enter":
+			case "Tab":
+				event.preventDefault()
+				popup?.selectHighlighted()
+				return true
+
+			case "Escape":
+				event.preventDefault()
+				this.closeMention(vnode)
+				return true
+
+			default:
+				return false
 		}
 	}
 
@@ -114,6 +186,86 @@ export class WidgetMessageCreate {
 		// Update the message state as the user types
 		const target = event.target as HTMLTextAreaElement
 		vnode.state.message = target.value
+
+		// Recompute the active @mention (if any) and its popup position
+		this.syncMention(vnode, target)
+	}
+
+	//////////////////////////////////////////
+	// @mention autocomplete
+
+	// drawMentionPopup renders the autocomplete popup when a mention is in progress.
+	drawMentionPopup(vnode: WidgetMessageCreateVnode): m.Children {
+
+		const mention = vnode.state.mention
+		if (mention == null) {
+			return null
+		}
+
+		return (
+			<MentionPopup
+				controller={vnode.attrs.controller}
+				query={mention.token.query}
+				left={mention.left}
+				bottom={mention.bottom}
+				onselect={(handle: string) => this.insertMention(vnode, handle)}
+				onready={(popup: MentionPopupController) => { vnode.state.mentionPopup = popup }} />
+		)
+	}
+
+	// syncMention recomputes the active @mention token from the field's caret and
+	// updates (or clears) the popup context accordingly.
+	syncMention(vnode: WidgetMessageCreateVnode, field: HTMLTextAreaElement) {
+
+		const token = activeMentionToken(field.value, field.selectionStart)
+
+		if (token == null) {
+			this.closeMention(vnode)
+			return
+		}
+
+		// Anchor the popup's bottom edge just above the caret line so it opens upward
+		// (the composer sits at the bottom of the screen).
+		const caret = caretCoordinates(field, token.start)
+		vnode.state.mention = {
+			token,
+			left: caret.left,
+			bottom: window.innerHeight - caret.top,
+		}
+	}
+
+	// closeMention dismisses the popup and clears its context.
+	closeMention(vnode: WidgetMessageCreateVnode) {
+		if (vnode.state.mention != null) {
+			vnode.state.mention = null
+			m.redraw()
+		}
+	}
+
+	// insertMention replaces the in-progress token with the chosen "@user@host"
+	// handle (plus a trailing space), restores the caret, and closes the popup.
+	insertMention(vnode: WidgetMessageCreateVnode, handle: string) {
+
+		const mention = vnode.state.mention
+		if (mention == null) {
+			return
+		}
+
+		const { text, caret } = replaceMentionToken(vnode.state.message, mention.token, handle + " ")
+		vnode.state.message = text
+		vnode.state.mention = null
+
+		// Restore focus and place the caret just past the inserted handle. Done after
+		// the redraw so the textarea reflects the new value before we set the caret.
+		const field = document.getElementById(MESSAGE_INPUT_ID) as HTMLTextAreaElement | null
+		requestAnimationFrame(() => {
+			if (field != null) {
+				field.focus()
+				field.setSelectionRange(caret, caret)
+			}
+		})
+
+		m.redraw()
 	}
 
 	sendMessage(vnode: WidgetMessageCreateVnode) {
@@ -125,6 +277,7 @@ export class WidgetMessageCreate {
 
 		vnode.attrs.controller.sendMessage(vnode.state.message)
 		vnode.state.message = ""
+		vnode.state.mention = null
 	}
 
 	sendFile(vnode: WidgetMessageCreateVnode, event: Event) {

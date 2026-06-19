@@ -41,7 +41,7 @@ export class Popup {
 			<div class="popup-anchor">
 				{vnode.attrs.trigger(() => this.toggle(vnode), vnode.state.isOpen)}
 				{vnode.state.isOpen &&
-					<div class="popup">
+					<div class="popup popup-below">
 						<div class="popup-caret"></div>
 						{vnode.attrs.content(() => this.close(vnode))}
 					</div>
