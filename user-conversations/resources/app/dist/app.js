@@ -27457,6 +27457,7 @@
       vnode.state.actors = [];
       vnode.state.keyPackages = {};
       vnode.state.highlightedOption = -1;
+      vnode.state.requestSeq = 0;
     }
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "input" }, vnode.attrs.value.map((actor, index) => {
@@ -27552,22 +27553,44 @@
         return;
       }
       vnode.state.loading = true;
+      const seq = ++vnode.state.requestSeq;
       import_mithril4.default.redraw();
       try {
         const actors = await import_mithril4.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
-        vnode.state.actors = actors.map((object) => new Actor(object));
+        if (seq != vnode.state.requestSeq) {
+          return;
+        }
+        vnode.state.actors = this.#dedupeActors(actors.map((object) => new Actor(object)));
+        vnode.state.highlightedOption = vnode.state.actors.length > 0 ? 0 : -1;
       } catch (error) {
         if (error.code === 401) {
           vnode.attrs.controller.stop("SESSION-EXPIRED");
           return;
         }
         console.error("ActorSearch: Error loading options:", error);
-        vnode.state.actors = [];
+        if (seq == vnode.state.requestSeq) {
+          vnode.state.actors = [];
+          vnode.state.highlightedOption = -1;
+        }
       } finally {
-        vnode.state.loading = false;
-        vnode.state.highlightedOption = -1;
+        if (seq == vnode.state.requestSeq) {
+          vnode.state.loading = false;
+        }
         import_mithril4.default.redraw();
       }
+    }
+    // dedupeActors returns the actors with duplicate ids removed, keeping first-seen
+    // order, so result rows have stable unique keys.
+    #dedupeActors(actors) {
+      const seen = /* @__PURE__ */ new Set();
+      return actors.filter((actor) => {
+        const id = actor.id();
+        if (seen.has(id)) {
+          return false;
+        }
+        seen.add(id);
+        return true;
+      });
     }
     onblur(vnode) {
       requestAnimationFrame(() => {

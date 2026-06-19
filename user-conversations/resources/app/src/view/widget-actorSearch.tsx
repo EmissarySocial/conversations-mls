@@ -24,6 +24,9 @@ interface ActorSearchState {
 	keyPackages: { [key: string]: KeyPackage[] }
 	highlightedOption: number
 	encrypted: boolean
+	// requestSeq guards against out-of-order async responses: only the most recent
+	// search is allowed to apply its results.
+	requestSeq: number
 }
 
 export class ActorSearch {
@@ -34,6 +37,7 @@ export class ActorSearch {
 		vnode.state.actors = []
 		vnode.state.keyPackages = {}
 		vnode.state.highlightedOption = -1
+		vnode.state.requestSeq = 0
 	}
 
 	view(vnode: ActorSearchVnode) {
@@ -161,23 +165,55 @@ export class ActorSearch {
 		}
 
 		vnode.state.loading = true
+		const seq = ++vnode.state.requestSeq
 		m.redraw()
 
 		try {
 			const actors: Object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
-			vnode.state.actors = actors.map(object => new Actor(object))
+
+			// Ignore a stale response that a newer request has already superseded;
+			// otherwise it would clobber the current results and desync the highlight.
+			if (seq != vnode.state.requestSeq) {
+				return
+			}
+
+			// De-duplicate by actor id. The endpoint can return the same actor more
+			// than once, which would collide row keys (breaking Mithril's keyed diff,
+			// so the highlight paints on the wrong row) and offer duplicate options.
+			vnode.state.actors = this.#dedupeActors(actors.map(object => new Actor(object)))
+
+			// Auto-highlight the first match so Enter selects it immediately.
+			vnode.state.highlightedOption = (vnode.state.actors.length > 0) ? 0 : -1
 		} catch (error) {
 			if ((error as any).code === 401) {
 				vnode.attrs.controller.stop("SESSION-EXPIRED")
 				return
 			}
 			console.error("ActorSearch: Error loading options:", error)
-			vnode.state.actors = []
+			if (seq == vnode.state.requestSeq) {
+				vnode.state.actors = []
+				vnode.state.highlightedOption = -1
+			}
 		} finally {
-			vnode.state.loading = false
-			vnode.state.highlightedOption = -1
+			if (seq == vnode.state.requestSeq) {
+				vnode.state.loading = false
+			}
 			m.redraw()
 		}
+	}
+
+	// dedupeActors returns the actors with duplicate ids removed, keeping first-seen
+	// order, so result rows have stable unique keys.
+	#dedupeActors(actors: Actor[]): Actor[] {
+		const seen = new Set<string>()
+		return actors.filter(actor => {
+			const id = actor.id()
+			if (seen.has(id)) {
+				return false
+			}
+			seen.add(id)
+			return true
+		})
 	}
 
 	onblur(vnode: ActorSearchVnode) {
