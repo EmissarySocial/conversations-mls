@@ -43,7 +43,7 @@ export class ViewMessage {
 					return (
 						<div key={vnode.attrs.key} class="message sent">
 							<div class="bubble">
-								<div class="align-center margin-none padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
+								<div class="margin-none padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
 								<div class="message-options flex-row flex-align-center">
 									<div class="text-gray">
 										<button tabIndex="0" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>
