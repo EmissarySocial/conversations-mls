@@ -46,10 +46,26 @@ export function getFocusElements(node: Element): [HTMLInputElement | undefined, 
 	return [firstElement, lastElement]
 }
 
+// graphemeSegmenter splits a string into user-perceived characters (grapheme
+// clusters), so a single emoji counts as one even when it is built from several
+// code points (e.g. ❤️ = heart + variation selector, or a ZWJ / skin-tone sequence).
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" })
+
+// graphemeCount returns the number of user-perceived characters in `str`.
+function graphemeCount(str: string): number {
+	let count = 0
+	for (const _ of graphemeSegmenter.segment(str)) {
+		count++
+	}
+	return count
+}
+
 export function isEmoji(char: string): boolean {
 
-	// Only expand emoji messages if it is a single character.
-	if (char.length > 1) {
+	// Only expand emoji messages if it is a single (user-perceived) character. Using
+	// grapheme count, not .length: most emoji span multiple UTF-16 code units, so
+	// .length would reject them (e.g. "😀".length === 2).
+	if (graphemeCount(char) != 1) {
 		return false
 	}
 
