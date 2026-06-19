@@ -57,3 +57,36 @@ export function NewGroup(codec: GroupCodec): Group {
 export function groupIsEncrypted(group: Group | EncryptedGroup): group is EncryptedGroup {
 	return (group.codec === "MLS")
 }
+
+// filterAndSortGroups returns the groups that include EVERY one of the given tags
+// and match one of the given stateIds, sorted with IMPORTANT groups first and then
+// by updateDate descending within each tier. Empty `tags` / `stateIds` mean "do not
+// filter on that field".
+//
+// Groups in the WELCOME state are always included when filtering by state: a pending
+// invitation should surface no matter which filter is selected, so whenever stateIds
+// are provided, WELCOME is implicitly added to them.
+//
+// This is the pure core of Database.searchGroups (extracted so it can be tested
+// without IndexedDB).
+export function filterAndSortGroups(groups: Group[], tags: string[], stateIds: GroupState[] = []): Group[] {
+
+	const effectiveStateIds = (stateIds.length === 0) ? [] : [...stateIds, "WELCOME" as GroupState]
+
+	return groups
+		.filter(g => tags.every(tag => g.tags.includes(tag)))
+		.filter(g => effectiveStateIds.length === 0 || effectiveStateIds.includes(g.stateId))
+		.sort((a, b) => {
+
+			if (a.stateId === "IMPORTANT") {
+				if (b.stateId !== "IMPORTANT") {
+					return -1
+				}
+			} else if (b.stateId === "IMPORTANT") {
+				return 1
+			}
+
+			// Within the same tier, sort by updateDate descending
+			return b.updateDate - a.updateDate
+		})
+}

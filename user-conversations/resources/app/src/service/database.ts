@@ -4,7 +4,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 // Model Types
 import { type Config, ConfigID, NewConfig } from "../model/config"
 import { type Filter } from "../model/filter"
-import { type EncryptedGroup, type Group, type GroupState } from "../model/group"
+import { type EncryptedGroup, type Group, type GroupState, filterAndSortGroups } from "../model/group"
 import { Message, NewMessage, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
@@ -214,35 +214,12 @@ export class Database {
 		this.#onchange()
 	}
 
-	// searchGroups returns all groups that include every one of the specified tags
-	// and match one of the specified stateIds. Results are sorted with IMPORTANT
-	// groups first, then by updateDate descending within each tier.
-	// An empty tags or stateIds array means "do not filter on that field".
-	//
-	// Groups in the WELCOME state are always included when filtering by state: a
-	// pending invitation should surface no matter which filter is selected, so
-	// whenever stateIds are provided, WELCOME is implicitly added to them.
+	// searchGroups returns the stored groups matching the given tags and stateIds,
+	// sorted with IMPORTANT groups first. See filterAndSortGroups for the filtering
+	// and sorting rules (including the WELCOME-always-included behavior).
 	searchGroups = async (tags: string[], stateIds: GroupState[] = []): Promise<Group[]> => {
-
-		const effectiveStateIds = (stateIds.length === 0) ? [] : [...stateIds, "WELCOME" as GroupState]
-
 		const groups = await this.#db.getAll("group")
-		return groups
-			.filter(g => tags.every(tag => g.tags.includes(tag)))
-			.filter(g => effectiveStateIds.length === 0 || effectiveStateIds.includes(g.stateId))
-			.sort((a, b) => {
-
-				if (a.stateId === "IMPORTANT") {
-					if (b.stateId !== "IMPORTANT") {
-						return -1
-					}
-				} else if (b.stateId === "IMPORTANT") {
-					return 1
-				}
-
-				// Within the same tier, sort by updateDate descending
-				return b.updateDate - a.updateDate
-			})
+		return filterAndSortGroups(groups, tags, stateIds)
 	}
 
 	// deleteGroup removes a group from the database

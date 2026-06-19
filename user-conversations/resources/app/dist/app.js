@@ -17789,6 +17789,19 @@
   function groupIsEncrypted(group) {
     return group.codec === "MLS";
   }
+  function filterAndSortGroups(groups, tags, stateIds = []) {
+    const effectiveStateIds = stateIds.length === 0 ? [] : [...stateIds, "WELCOME"];
+    return groups.filter((g2) => tags.every((tag) => g2.tags.includes(tag))).filter((g2) => effectiveStateIds.length === 0 || effectiveStateIds.includes(g2.stateId)).sort((a2, b2) => {
+      if (a2.stateId === "IMPORTANT") {
+        if (b2.stateId !== "IMPORTANT") {
+          return -1;
+        }
+      } else if (b2.stateId === "IMPORTANT") {
+        return 1;
+      }
+      return b2.updateDate - a2.updateDate;
+    });
+  }
 
   // src/model/message.ts
   var Message = class {
@@ -20302,27 +20315,12 @@
       await this.#db.put("group", group);
       this.#onchange();
     };
-    // searchGroups returns all groups that include every one of the specified tags
-    // and match one of the specified stateIds. Results are sorted with IMPORTANT
-    // groups first, then by updateDate descending within each tier.
-    // An empty tags or stateIds array means "do not filter on that field".
-    //
-    // Groups in the WELCOME state are always included when filtering by state: a
-    // pending invitation should surface no matter which filter is selected, so
-    // whenever stateIds are provided, WELCOME is implicitly added to them.
+    // searchGroups returns the stored groups matching the given tags and stateIds,
+    // sorted with IMPORTANT groups first. See filterAndSortGroups for the filtering
+    // and sorting rules (including the WELCOME-always-included behavior).
     searchGroups = async (tags, stateIds = []) => {
-      const effectiveStateIds = stateIds.length === 0 ? [] : [...stateIds, "WELCOME"];
       const groups = await this.#db.getAll("group");
-      return groups.filter((g2) => tags.every((tag) => g2.tags.includes(tag))).filter((g2) => effectiveStateIds.length === 0 || effectiveStateIds.includes(g2.stateId)).sort((a2, b2) => {
-        if (a2.stateId === "IMPORTANT") {
-          if (b2.stateId !== "IMPORTANT") {
-            return -1;
-          }
-        } else if (b2.stateId === "IMPORTANT") {
-          return 1;
-        }
-        return b2.updateDate - a2.updateDate;
-      });
+      return filterAndSortGroups(groups, tags, stateIds);
     };
     // deleteGroup removes a group from the database
     deleteGroup = async (groupId) => {
