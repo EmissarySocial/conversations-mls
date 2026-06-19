@@ -27085,6 +27085,9 @@
       await this.#database.saveMessage(message);
       group.lastMessageId = message.id;
       group.lastMessage = htmlToText(object.content());
+      if (group.stateId == "ARCHIVED") {
+        this.setGroupState(group, "ACTIVE");
+      }
       if (!sentByMe) {
         if (groupId != this.selectedGroupId()) {
           group.unread = true;
@@ -27863,11 +27866,11 @@
     view(vnode) {
       const controller2 = vnode.attrs.controller;
       return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "link text-lg margin-none padding-xs", role: "button", tabindex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
-        let cssClass = "flex-row flex-align-center padding hover-trigger";
+        let cssClass = "flex-row flex-align-center padding padding-right-sm hover-trigger";
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril10.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${this.groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-grow nowrap ellipsis pos-relative" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
+        return /* @__PURE__ */ (0, import_mithril10.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${this.groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-grow nowrap pos-relative" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
       })), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-horizontal clickable", role: "button", tabIndex: "0", onclick: () => controller2.page_settings(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril10.default)("span", null, "Settings")));
     }
     groupColor(group) {
@@ -27889,16 +27892,17 @@
       if (group.stateId == "WELCOME") {
         return /* @__PURE__ */ (0, import_mithril10.default)(import_mithril10.default.Fragment, null, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold" }, "Invitation (", groupIsEncrypted(group) ? "Encrypted" : "Plaintext", ")"), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.defaultName || ""));
       }
-      return /* @__PURE__ */ (0, import_mithril10.default)(import_mithril10.default.Fragment, null, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center bold" }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "flex-grow ellipsis" }, group.name || group.defaultName || ""), group.stateId == "IMPORTANT" && /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-star-fill", style: "color:#f5b400" })), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || ""));
+      return /* @__PURE__ */ (0, import_mithril10.default)(import_mithril10.default.Fragment, null, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center bold" }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "flex-grow ellipsis", style: "min-width:0" }, group.name || group.defaultName || ""), group.stateId == "IMPORTANT" && /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-star-fill", style: "color:#f5b400" })), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || ""));
     }
     unreadMarker(vnode, group) {
       if (!group.unread) {
         return null;
       }
-      if (groupIsEncrypted(group)) {
-        return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs", style: "color:var(--blue50);" }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-circle-fill" }));
+      if (group.stateId == "WELCOME") {
+        return null;
       }
-      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs", style: "color:var(--green50);" }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-circle-fill" }));
+      const color = groupIsEncrypted(group) ? "var(--blue50)" : "#F2C94C";
+      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs", style: `color:${color};` }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-circle-fill" }));
     }
   };
 
