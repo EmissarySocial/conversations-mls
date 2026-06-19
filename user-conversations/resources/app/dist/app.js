@@ -25576,6 +25576,12 @@
     //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
+      if (activity.type() == ActivityTypeLeave) {
+        const group2 = await this.#database.loadGroup(activity.objectId());
+        if (group2 == void 0) {
+          return activity;
+        }
+      }
       const referencesMessage = this.#referencesExistingMessage(activity, object);
       if (referencesMessage) {
         const messageId = this.#referencedMessageId(activity, object);
@@ -27023,7 +27029,13 @@
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
       console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount);
-      const object = await activity.object();
+      let object;
+      try {
+        object = await activity.object();
+      } catch (error) {
+        console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error);
+        object = new Document({});
+      }
       const codec = this.#getCodecForActivity(object);
       try {
         const decodedValue = await codec.receiveActivity(activity, object);

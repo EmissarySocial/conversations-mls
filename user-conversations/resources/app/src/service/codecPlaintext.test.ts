@@ -311,6 +311,21 @@ describe("receiveActivity", () => {
 		expect(result!.context()).toBe(GROUP_ID)
 	})
 
+	test("a Leave for a group we do not have is a safe no-op (no group created)", async () => {
+		// e.g. a reflected "Leave" for a group we already left. It must pass through
+		// without creating a junk group.
+		const leaveActivity = new Activity({
+			type: vocab.ActivityTypeLeave,
+			actor: ALICE,
+			object: "https://example.test/groups/already-gone",
+		})
+
+		const result = await codec.receiveActivity(leaveActivity, new Document({}))
+
+		expect(result).toBeDefined()
+		expect(await database.loadGroup("https://example.test/groups/already-gone")).toBeUndefined()
+	})
+
 	test("rejects an activity whose group is not plaintext", async () => {
 		const mls = NewGroup("MLS")
 		mls.id = GROUP_ID

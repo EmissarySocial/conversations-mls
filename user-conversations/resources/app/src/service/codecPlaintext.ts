@@ -132,11 +132,19 @@ export class CodecPlaintext {
 	// receiveActivity processes an incoming activity and creates/finds the correct group for it.
 	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
 
-		// SPECIAL CASE: Like/Delete/Undo reference an existing message by id; they do
-		// not establish a group. If we don't have the referenced message locally, pass
-		// the activity through unchanged so the controller's handler can no-op — and
-		// importantly, do NOT fall into the group-creation path below (only Create and
-		// Update may auto-create a group, the way regular ActivityPub messages do).
+		// SPECIAL CASE: if this is a "Leave" activity, then check to see if we have
+		// the referenced group locally. If not, then this is likely a reflected "Leave"
+		// for a group we just left — so just return so the controller can no-op.
+		if (activity.type() == vocab.ActivityTypeLeave) {
+			const group = await this.#database.loadGroup(activity.objectId())
+			if (group == undefined) {
+				return activity
+			}
+		}
+
+		// SPECIAL CASE: If this activity references a message that we don't have locally
+		// (for instance, attempting to Like/Delete/Undo a message that we don't have)
+		// then just return the activity so the controller can no-op.
 		const referencesMessage = this.#referencesExistingMessage(activity, object)
 
 		if (referencesMessage) {

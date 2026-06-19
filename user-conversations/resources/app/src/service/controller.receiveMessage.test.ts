@@ -22,6 +22,16 @@ function stubObjectFetch(json?: object) {
 	}))
 }
 
+// stubFailingFetch makes every fetch reject, simulating an unreachable / rejected
+// object URL (e.g. a reflected "Leave" whose group collection the server now 400s).
+function stubFailingFetch() {
+	vi.stubGlobal("fetch", async () => ({
+		ok: false,
+		status: 400,
+		statusText: "Bad Request",
+	}))
+}
+
 afterEach(() => {
 	vi.unstubAllGlobals()
 })
@@ -431,4 +441,27 @@ test('receiving an Undo of a Like removes that actor reaction', async () => {
 	const saved = database.savedMessages.find(m => m.id == "msg-undo")
 	expect(saved).toBeDefined()
 	expect(saved!.reactions["❤️"]).toBeUndefined()
+})
+
+test('receiving a Leave for an unknown group does not throw, even when its object URL is unreachable', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// The Leave's object is a bare URL the server now rejects (400) — the exact
+	// reflected-Leave scenario. Resolving it must not crash the receive pipeline.
+	stubFailingFetch()
+
+	const leave = new Activity({
+		"@context": "https://www.w3.org/ns/activitystreams",
+		type: vocab.ActivityTypeLeave,
+		actor: ME,
+		to: ME,
+		object: "https://example.test/groups/already-left/pub/collections/xyz",
+	})
+
+	await expect(controller.receiveActivity(leave)).resolves.toBeUndefined()
+
+	// No junk group was created for the group we no longer have.
+	expect(database.groups.has("https://example.test/groups/already-left/pub/collections/xyz")).toBe(false)
 })

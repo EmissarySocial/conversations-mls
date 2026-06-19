@@ -1416,9 +1416,19 @@ export class Controller {
 
 		console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount)
 
-		// Retrieve the object from the activity. This should be embedded,
-		// but we can load from the network if needed.
-		const object = await activity.object()
+		// Retrieve the object from the activity. It is usually embedded, but for
+		// activities that reference their object by URL (Leave/Delete/Undo) we may have
+		// to fetch it. That fetch can legitimately fail — e.g. a reflected "Leave" for a
+		// group we just left, whose collection URL the server now rejects (400/404).
+		// Such activities don't need the resolved object (their handlers use objectId()),
+		// so fall back to an empty Document rather than failing the whole pipeline.
+		let object: Document
+		try {
+			object = await activity.object()
+		} catch (error) {
+			console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error)
+			object = new Document({})
+		}
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(object)
