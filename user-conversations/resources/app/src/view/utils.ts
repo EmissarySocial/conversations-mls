@@ -51,25 +51,41 @@ export function getFocusElements(node: Element): [HTMLInputElement | undefined, 
 // code points (e.g. ❤️ = heart + variation selector, or a ZWJ / skin-tone sequence).
 const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" })
 
-// graphemeCount returns the number of user-perceived characters in `str`.
-function graphemeCount(str: string): number {
-	let count = 0
-	for (const _ of graphemeSegmenter.segment(str)) {
-		count++
+// Maximum number of emoji a message can contain and still get the enlarged
+// "jumbo emoji" display.
+const MAX_JUMBO_EMOJI = 6
+
+// isEmoji reports whether `text` is a short, emoji-only message (1 to
+// MAX_JUMBO_EMOJI emoji, ignoring surrounding/interspersed whitespace) — the
+// condition for rendering it as enlarged "jumbo" emoji.
+//
+// It counts user-perceived characters (grapheme clusters), not .length: most emoji
+// span multiple UTF-16 code units or code points (e.g. "😀".length === 2, "❤️" is
+// two code points, ZWJ sequences are many), all of which .length would miscount.
+export function isEmoji(text: string): boolean {
+
+	// Treat each grapheme as one unit, skipping whitespace, and require at least one
+	// emoji and no non-emoji, non-whitespace graphemes.
+	let emojiCount = 0
+
+	for (const { segment } of graphemeSegmenter.segment(text)) {
+
+		if (/^\s+$/.test(segment)) {
+			continue
+		}
+
+		if (!/\p{Extended_Pictographic}/u.test(segment)) {
+			return false
+		}
+
+		emojiCount++
+
+		if (emojiCount > MAX_JUMBO_EMOJI) {
+			return false
+		}
 	}
-	return count
-}
 
-export function isEmoji(char: string): boolean {
-
-	// Only expand emoji messages if it is a single (user-perceived) character. Using
-	// grapheme count, not .length: most emoji span multiple UTF-16 code units, so
-	// .length would reject them (e.g. "😀".length === 2).
-	if (graphemeCount(char) != 1) {
-		return false
-	}
-
-	return /\p{Extended_Pictographic}/u.test(char);
+	return emojiCount > 0
 }
 
 export function formatFileSize(bytes: number): string {

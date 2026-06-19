@@ -73,17 +73,6 @@ describe("synthClick", () => {
 
 describe("keyCode", () => {
 
-	// withUserAgent runs `fn` with navigator.userAgent stubbed to the given value.
-	function withUserAgent(ua: string, fn: () => void) {
-		const original = globalThis.navigator.userAgent
-		Object.defineProperty(globalThis.navigator, "userAgent", { value: ua, configurable: true })
-		try {
-			fn()
-		} finally {
-			Object.defineProperty(globalThis.navigator, "userAgent", { value: original, configurable: true })
-		}
-	}
-
 	test("returns the bare key with no modifiers", () => {
 		expect(keyCode(fakeKeyEvent({ key: "a" }))).toBe("a")
 	})
@@ -158,16 +147,31 @@ describe("isEmoji", () => {
 		expect(isEmoji("👍")).toBe(true)
 	})
 
-	test("returns false for a regular letter", () => {
-		expect(isEmoji("a")).toBe(false)
+	test("returns true for a short string of emoji (up to 6)", () => {
+		expect(isEmoji("😀😀")).toBe(true)
+		expect(isEmoji("👍❤️😀")).toBe(true)
+		expect(isEmoji("😀😀😀😀😀😀")).toBe(true) // exactly 6
 	})
 
-	test("returns false for multi-character strings", () => {
+	test("ignores whitespace between emoji", () => {
+		expect(isEmoji("👍 ❤️")).toBe(true)
+		expect(isEmoji("  😀  ")).toBe(true)
+	})
+
+	test("returns false for more than 6 emoji", () => {
+		expect(isEmoji("😀😀😀😀😀😀😀")).toBe(false) // 7
+	})
+
+	test("returns false when any non-emoji character is present", () => {
+		expect(isEmoji("a")).toBe(false)
 		expect(isEmoji("hello")).toBe(false)
-		// an emoji followed by text is not a single emoji
 		expect(isEmoji("😀!")).toBe(false)
-		// two emoji is not a single emoji
-		expect(isEmoji("😀😀")).toBe(false)
+		expect(isEmoji("😀 hi 😀")).toBe(false)
+	})
+
+	test("returns false for an empty or whitespace-only string", () => {
+		expect(isEmoji("")).toBe(false)
+		expect(isEmoji("   ")).toBe(false)
 	})
 })
 

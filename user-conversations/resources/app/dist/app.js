@@ -27432,11 +27432,23 @@
     const lastElement = focusElements[focusElements.length - 1];
     return [firstElement, lastElement];
   }
-  function isEmoji(char) {
-    if (char.length > 1) {
-      return false;
+  var graphemeSegmenter = new Intl.Segmenter(void 0, { granularity: "grapheme" });
+  var MAX_JUMBO_EMOJI = 6;
+  function isEmoji(text2) {
+    let emojiCount = 0;
+    for (const { segment } of graphemeSegmenter.segment(text2)) {
+      if (/^\s+$/.test(segment)) {
+        continue;
+      }
+      if (!/\p{Extended_Pictographic}/u.test(segment)) {
+        return false;
+      }
+      emojiCount++;
+      if (emojiCount > MAX_JUMBO_EMOJI) {
+        return false;
+      }
     }
-    return /\p{Extended_Pictographic}/u.test(char);
+    return emojiCount > 0;
   }
   function formatFileSize(bytes) {
     if (bytes === 0) {
