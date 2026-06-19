@@ -1,10 +1,30 @@
 // @vitest-environment jsdom
-import { expect, test } from 'vitest'
+import { expect, test, afterEach, vi } from 'vitest'
 
 import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 import { makeController, FakeDatabase } from "./testHarness"
 import { NewGroup } from "../model/group"
+import { NewMessage } from "../model/message"
+
+// stubObjectFetch makes the dispatcher's eager `activity.object()` resolve without
+// a real network call. Activities whose "object" is a bare URL (Like/Delete/Undo,
+// which reference a message/activity by id) trigger a fetch at the top of
+// receiveActivity; this returns a minimal JSON document for any such fetch so the
+// activity can route to its handler, which resolves the real target from the
+// database via objectId().
+function stubObjectFetch(json?: object) {
+	const body = json ?? { id: "https://example.test/stub", type: vocab.ObjectTypeNote }
+	vi.stubGlobal("fetch", async () => ({
+		ok: true,
+		status: 200,
+		text: async () => JSON.stringify(body),
+	}))
+}
+
+afterEach(() => {
+	vi.unstubAllGlobals()
+})
 
 // These tests drive the real receive pipeline (controller.receiveActivity → the
 // real CodecPlaintext → the create/update message handlers) and assert that the
@@ -255,3 +275,58 @@ test('receiving an Update of a group context applies the new metadata', async ()
 	// NOTE: "unread" is intentionally not asserted here — saveGroup reloads and
 	// reconciles the selection, and selecting this (only) group marks it read.
 })
+
+// seedMessage stores a message authored by `sender` in GROUP_ID.
+function seedMessage(database: FakeDatabase, id: string, sender: string) {
+	database.messages.set(id, NewMessage({
+		id,
+		groupId: GROUP_ID,
+		sender,
+		content: "hello",
+	}))
+}
+
+test('receiving a Like adds the actor reaction to the target message', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+	seedMessage(database, "msg-like", ME)
+	stubObjectFetch()
+
+	const like = new Activity({
+		type: vocab.ActivityTypeLike,
+		actor: ALICE,
+		content: "🎉",
+		object: "msg-like",
+	})
+
+	await controller.receiveActivity(like)
+
+	const saved = database.savedMessages.find(m => m.id == "msg-like")
+	expect(saved).toBeDefined()
+	expect(saved!.reactions["🎉"]).toEqual([ALICE])
+})
+
+test('receiving a Like for a missing message is a no-op (no save)', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+	stubObjectFetch()
+
+	const like = new Activity({
+		type: vocab.ActivityTypeLike,
+		actor: ALICE,
+		object: "msg-missing",
+	})
+
+	await controller.receiveActivity(like)
+	expect(database.savedMessages.length).toBe(0)
+})
+
+// NOTE: Delete and Undo activities are intentionally NOT tested through the public
+// receiveActivity() path here. The plaintext codec's #findGroupForActivity only
+// recognizes Leave/Like/Create/Update and throws on Delete/Undo, so for plaintext
+// groups those activities never reach #receiveActivity_DeleteMessage /
+// #receiveActivity_Undo — they die in the codec and trigger the retry loop. This
+// looks like a latent gap (see the note to the team); testing those handlers would
+// require either a codec change or exercising the private methods directly.
