@@ -323,10 +323,84 @@ test('receiving a Like for a missing message is a no-op (no save)', async () => 
 	expect(database.savedMessages.length).toBe(0)
 })
 
-// NOTE: Delete and Undo activities are intentionally NOT tested through the public
-// receiveActivity() path here. The plaintext codec's #findGroupForActivity only
-// recognizes Leave/Like/Create/Update and throws on Delete/Undo, so for plaintext
-// groups those activities never reach #receiveActivity_DeleteMessage /
-// #receiveActivity_Undo — they die in the codec and trigger the retry loop. This
-// looks like a latent gap (see the note to the team); testing those handlers would
-// require either a codec change or exercising the private methods directly.
+test('receiving a Delete from the message sender removes the message', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+	seedMessage(database, "msg-del", ALICE)
+	stubObjectFetch()
+
+	const del = new Activity({
+		type: vocab.ActivityTypeDelete,
+		actor: ALICE, // same as the message sender
+		object: "msg-del",
+	})
+
+	await controller.receiveActivity(del)
+	expect(database.messages.has("msg-del")).toBe(false)
+})
+
+test('receiving a Delete from someone other than the sender is ignored', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+	seedMessage(database, "msg-keep", ME) // authored by ME
+	stubObjectFetch()
+
+	const del = new Activity({
+		type: vocab.ActivityTypeDelete,
+		actor: ALICE, // NOT the sender
+		object: "msg-keep",
+	})
+
+	await controller.receiveActivity(del)
+	expect(database.messages.has("msg-keep")).toBe(true)
+})
+
+test('receiving a Delete for a message we do not have is a safe no-op', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+	stubObjectFetch()
+
+	const del = new Activity({
+		type: vocab.ActivityTypeDelete,
+		actor: ALICE,
+		object: "msg-unknown",
+	})
+
+	// Must not throw, and must not create a junk group for the unknown message.
+	await controller.receiveActivity(del)
+	expect(database.groups.has("")).toBe(false)
+})
+
+test('receiving an Undo of a Like removes that actor reaction', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed a message that ALICE has already reacted to
+	const message = NewMessage({ id: "msg-undo", groupId: GROUP_ID, sender: ME, content: "hi" })
+	message.setReaction(ALICE, "❤️")
+	database.messages.set("msg-undo", message)
+
+	// The Undo's object is the inner Like activity (embedded so it resolves without a
+	// fetch); that Like's object is the message id being un-liked.
+	stubObjectFetch({ type: vocab.ActivityTypeLike, actor: ALICE, object: "msg-undo" })
+
+	const undo = new Activity({
+		type: vocab.ActivityTypeUndo,
+		actor: ALICE,
+		object: {
+			type: vocab.ActivityTypeLike,
+			actor: ALICE,
+			object: "msg-undo",
+		},
+	})
+
+	await controller.receiveActivity(undo)
+
+	const saved = database.savedMessages.find(m => m.id == "msg-undo")
+	expect(saved).toBeDefined()
+	expect(saved!.reactions["❤️"]).toBeUndefined()
+})

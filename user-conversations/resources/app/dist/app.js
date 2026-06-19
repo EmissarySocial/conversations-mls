@@ -25578,6 +25578,13 @@
     //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
+      if (this.#referencesExistingMessage(activity, object)) {
+        const messageId = this.#referencedMessageId(activity, object);
+        const message = await this.#database.loadMessage(messageId);
+        if (message == void 0) {
+          return activity;
+        }
+      }
       const groupId = await this.#findGroupForActivity(activity, object);
       let group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
@@ -25606,10 +25613,14 @@
           console.log("Leave activity");
           return activity.objectId();
         }
-        // "Like" activities use the group of the message being liked.
-        case ActivityTypeLike: {
-          console.log("Like activity");
-          let message = await this.#database.loadMessage(activity.objectId());
+        // "Like", "Delete", and "Undo" activities reference a message by id; the
+        // group is that message's group. receiveActivity has already verified the
+        // referenced message exists locally before reaching here.
+        case ActivityTypeLike:
+        case ActivityTypeDelete:
+        case ActivityTypeUndo: {
+          console.log("Like/Delete/Undo activity");
+          const message = await this.#database.loadMessage(this.#referencedMessageId(activity, object));
           return message.groupId;
         }
         // "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
@@ -25634,6 +25645,30 @@
         }
       }
       throw new Error("Unrecognized activity type " + activity.type());
+    }
+    // referencesExistingMessage reports whether this activity acts on a message that
+    // must already exist (Like/Delete/Undo) — as opposed to Create/Update, which may
+    // establish a new message and group. Used to decide whether a missing referenced
+    // message means "no-op" rather than "create a group".
+    #referencesExistingMessage(activity, _object) {
+      switch (activity.type()) {
+        case ActivityTypeLike:
+        case ActivityTypeDelete:
+        case ActivityTypeUndo:
+          return true;
+        default:
+          return false;
+      }
+    }
+    // referencedMessageId returns the id of the message a Like/Delete/Undo acts on.
+    // For Like/Delete the activity's "object" is the message id directly; for Undo
+    // the activity's "object" is the inner activity (e.g. a Like) whose own "object"
+    // is the message id.
+    #referencedMessageId(activity, object) {
+      if (activity.type() == ActivityTypeUndo) {
+        return object.getString("as", PropertyObject);
+      }
+      return activity.objectId();
     }
     // findNewGroupMembers returns the actors involved in this activity who are not
     // already members of the group. The result is de-duplicated, because the
