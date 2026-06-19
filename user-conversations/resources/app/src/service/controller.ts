@@ -1582,6 +1582,11 @@ export class Controller {
 		// Mark the group with the lastMessage content (text, not HTML)
 		group.lastMessage = htmlToText(object.content())
 
+		// RULE: A new message in an ARCHIVED group revives it to the ACTIVE state.
+		if (group.stateId == "ARCHIVED") {
+			this.setGroupState(group, "ACTIVE")
+		}
+
 		if (!sentByMe) {
 
 			// Mark the group as "unread"
