@@ -127,6 +127,91 @@ test('receiving an Update (edit) sanitizes the new content before saving', async
 	expect(content).toContain("Hello")
 })
 
+test('receiving a message in an ARCHIVED group revives it to ACTIVE', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed an archived group so the incoming message must revive it
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.stateId = "ARCHIVED"
+	group.members = [ME, ALICE]
+	database.groups.set(GROUP_ID, group)
+
+	await controller.receiveActivity(makeCreateActivity("msg-revive", "hi again"))
+
+	const updated = await database.loadGroup(GROUP_ID)
+	expect(updated!.stateId).toBe("ACTIVE")
+})
+
+test('receiving a message does not change a non-archived group state', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// An IMPORTANT group should keep its state when a new message arrives
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.stateId = "IMPORTANT"
+	group.members = [ME, ALICE]
+	database.groups.set(GROUP_ID, group)
+
+	await controller.receiveActivity(makeCreateActivity("msg-keep", "still important"))
+
+	const updated = await database.loadGroup(GROUP_ID)
+	expect(updated!.stateId).toBe("IMPORTANT")
+})
+
+test('receiving a message from someone else marks the (unselected) group unread', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed a second group and select it, so the group receiving the message is NOT
+	// the selected group (otherwise reconciliation would mark it read).
+	const other = NewGroup("PLAINTEXT")
+	other.id = "https://example.test/groups/other"
+	database.groups.set(other.id, other)
+	controller.selectGroup(other.id)
+
+	await controller.receiveActivity(makeCreateActivity("msg-unread", "ping"))
+
+	const group = await database.loadGroup(GROUP_ID)
+	expect(group!.unread).toBe(true)
+})
+
+test('receiving a message records lastMessage (as text) and lastMessageId', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	await controller.receiveActivity(makeCreateActivity("msg-last", "<p>Hello <strong>world</strong></p>"))
+
+	const group = await database.loadGroup(GROUP_ID)
+	expect(group!.lastMessageId).toBe("msg-last")
+	expect(group!.lastMessage).toBe("Hello world")
+})
+
+test('receiving a message does not duplicate the sender already in the member list', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Group already contains ALICE (the sender) and ME
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.members = [ME, ALICE]
+	database.groups.set(GROUP_ID, group)
+
+	await controller.receiveActivity(makeCreateActivity("msg-dup", "hello"))
+
+	const updated = await database.loadGroup(GROUP_ID)
+	// ALICE (actor + recipient via the activity) must not be added a second time
+	expect(updated!.members.filter(m => m == ALICE).length).toBe(1)
+	expect(updated!.members.filter(m => m == ME).length).toBe(1)
+})
+
 test('receiving an Update of a group context applies the new metadata', async () => {
 
 	const database = new FakeDatabase()
