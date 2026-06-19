@@ -62,6 +62,8 @@ describe("formatMessageContent — mentions", () => {
 	test("links a fully-qualified @user@domain handle and hides the domain", async () => {
 		const result = await formatMessageContent("hi @alice@example.social !")
 
+		// wrapped in the h-card microformat
+		expect(result).toContain('<span class="h-card">')
 		// href carries the full handle; display shows only the username
 		expect(result).toContain('href="https://example.social/@alice"')
 		expect(result).toContain('class="u-url mention"')

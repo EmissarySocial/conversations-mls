@@ -1,8 +1,7 @@
 import m, { type Vnode } from "mithril"
 import type { Controller, SettingsTab } from "../service/controller"
 import { synthClick } from "./utils"
-import { AppSettingsNotifications } from "./app-settings-notifications"
-import { AppSettingsEncryption } from "./app-settings-encryption"
+import { AppSettingsGeneral } from "./app-settings-general"
 import { AppSettingsFilters } from "./app-settings-filters"
 import { AppSettingsSignout } from "./app-settings-signout"
 
@@ -13,8 +12,6 @@ interface AppSettingsArgs {
 }
 
 interface AppSettingsState {
-	saved: boolean
-	savedTimeout?: ReturnType<typeof setTimeout>
 }
 
 // AppSettings is the shell for the settings screen. It mirrors the conversations
@@ -22,10 +19,6 @@ interface AppSettingsState {
 // The active tab lives on the controller so it survives the component being
 // unmounted and remounted (e.g. when the window loses and regains focus).
 export class AppSettings {
-
-	oninit(vnode: AppSettingsVnode) {
-		vnode.state.saved = false
-	}
 
 	view(vnode: AppSettingsVnode) {
 
@@ -61,9 +54,8 @@ export class AppSettings {
 
 				<hr class="margin-vertical-sm" />
 
+				{this.viewTab(vnode, "GENERAL", "gear", "General")}
 				{this.viewTab(vnode, "FILTERS", "filter-circle", "Filters")}
-				{this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications")}
-				{this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption")}
 				{this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase")}
 			</div>
 		)
@@ -95,16 +87,11 @@ export class AppSettings {
 	viewSection(vnode: AppSettingsVnode): JSX.Element {
 
 		const controller = vnode.attrs.controller
-		const save = () => this.save(vnode)
-		const saved = vnode.state.saved
 
 		switch (controller.settingsTab) {
 
-			case "ENCRYPTION":
-				return <AppSettingsEncryption controller={controller} save={save} saved={saved} />
-
-			case "NOTIFICATIONS":
-				return <AppSettingsNotifications controller={controller} />
+			case "GENERAL":
+				return <AppSettingsGeneral controller={controller} />
 
 			case "SIGNOUT":
 				return <AppSettingsSignout controller={controller} />
@@ -117,24 +104,5 @@ export class AppSettings {
 
 	selectTab(vnode: AppSettingsVnode, tab: SettingsTab) {
 		vnode.attrs.controller.settingsTab = tab
-	}
-
-	// save persists the current config and shows a transient confirmation
-	save(vnode: AppSettingsVnode) {
-
-		// Persist the current in-memory config
-		vnode.attrs.controller.saveConfig()
-
-		// Show the "Change is saved" confirmation and hide it again after a short delay
-		vnode.state.saved = true
-
-		if (vnode.state.savedTimeout != undefined) {
-			clearTimeout(vnode.state.savedTimeout)
-		}
-
-		vnode.state.savedTimeout = setTimeout(() => {
-			vnode.state.saved = false
-			m.redraw()
-		}, 2000)
 	}
 }

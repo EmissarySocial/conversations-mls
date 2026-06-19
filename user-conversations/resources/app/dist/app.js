@@ -19364,7 +19364,7 @@
       if (href == "") {
         result += match[0];
       } else {
-        result += `${prefix}<a href="${href}" class="u-url mention">@<span>${user}</span></a>`;
+        result += `${prefix}<span class="h-card"><a href="${href}" class="u-url mention">@<span>${user}</span></a></span>`;
       }
       lastIndex = start + match[0].length;
     });
@@ -26100,7 +26100,7 @@
     message;
     inReplyTo;
     pageView = "LOADING";
-    settingsTab = "FILTERS";
+    settingsTab = "GENERAL";
     modalView = "";
     isWindowFocused = true;
     isApplicationRunning = true;
@@ -26319,7 +26319,7 @@
     };
     page_settings = () => {
       this.pageView = "SETTINGS";
-      this.settingsTab = "FILTERS";
+      this.settingsTab = "GENERAL";
       import_mithril.default.redraw();
     };
     // selectedFilterName returns the display name of the currently selected
@@ -27993,13 +27993,13 @@
           if (isEmoji(message.content)) {
             return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "align-center margin-none padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, /* @__PURE__ */ (0, import_mithril12.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-pencil-square" }), " Edit"), this.drawAcknowledgements(vnode), this.drawPostTime(vnode)))));
           }
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(message), this.drawReactions(vnode)));
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode)));
         }
         case "RECEIVED": {
           if (isEmoji(message.content)) {
             return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", null, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "text-gray" }, this.drawPostTime(vnode))))));
           }
-          return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(message), this.drawReactions(vnode))));
+          return /* @__PURE__ */ (0, import_mithril12.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode))));
         }
         case "ADD-ACTOR": {
           const contact = vnode.attrs.controller.getContactStream(message.sender)();
@@ -28016,8 +28016,40 @@
       }
       throw new Error(`Unknown message type: ${message.type}`);
     }
-    drawContent(message) {
-      return /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, message.attachments.map((attachment) => attachment.startsWith("data:image") ? /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: attachment, class: "width-100% rounded", alt: "" }), " ") : /* @__PURE__ */ (0, import_mithril12.default)("a", { href: attachment, class: "attachment", target: "_blank", rel: "noopener noreferrer" }, " ", /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(attachment.length), ")")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs" }, import_mithril12.default.trust(message.content)));
+    drawContent(controller2, message) {
+      return /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, message.attachments.map((attachment) => attachment.startsWith("data:image") ? /* @__PURE__ */ (0, import_mithril12.default)(import_mithril12.default.Fragment, null, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: attachment, class: "width-100% rounded", alt: "" }), " ") : /* @__PURE__ */ (0, import_mithril12.default)("a", { href: attachment, class: "attachment", target: "_blank", rel: "noopener noreferrer" }, " ", /* @__PURE__ */ (0, import_mithril12.default)("i", { class: "bi bi-file-earmark-arrow-down" }), " Download File (", formatFileSize(attachment.length), ")")), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "padding-xs message-content", onclick: (event) => this.onContentClick(controller2, event), onkeydown: (event) => this.onContentKeydown(controller2, event) }, import_mithril12.default.trust(message.content)));
+    }
+    // mentionActorId returns the profile URL of the mention link containing the given
+    // event target, or "" if the target is not inside a mention. Mentions are
+    // identified by the Mastodon ".h-card" microformat wrapper, and the href is the
+    // actor's profile URL (the WebFinger "self" link).
+    mentionActorId(target) {
+      const anchor = target?.closest(".h-card a");
+      return anchor?.getAttribute("href") ?? "";
+    }
+    // onContentClick intercepts clicks on @mention links inside rendered message
+    // content (an inert m.trust island) and routes them to the host's profile viewer
+    // instead of navigating to the remote profile URL.
+    onContentClick(controller2, event) {
+      const actorId = this.mentionActorId(event.target);
+      if (actorId == "") {
+        return;
+      }
+      event.preventDefault();
+      controller2.host_actor(actorId);
+    }
+    // onContentKeydown handles keyboard activation (Enter/Space) of a focused mention
+    // link, routing it to the host profile viewer like a click.
+    onContentKeydown(controller2, event) {
+      if (event.key != "Enter" && event.key != " ") {
+        return;
+      }
+      const actorId = this.mentionActorId(event.target);
+      if (actorId == "") {
+        return;
+      }
+      event.preventDefault();
+      controller2.host_actor(actorId);
     }
     drawReactions(vnode) {
       const controller2 = vnode.attrs.controller;
@@ -28686,8 +28718,8 @@
   // src/view/app-settings.tsx
   var import_mithril35 = __toESM(require_mithril(), 1);
 
-  // src/view/app-settings-notifications.tsx
-  var import_mithril30 = __toESM(require_mithril(), 1);
+  // src/view/app-settings-general.tsx
+  var import_mithril31 = __toESM(require_mithril(), 1);
 
   // src/view/widget-saved-notice.tsx
   var import_mithril29 = __toESM(require_mithril(), 1);
@@ -28699,15 +28731,62 @@
     }
   };
 
-  // src/view/app-settings-notifications.tsx
-  var AppSettingsNotifications = class {
+  // src/view/widget-toggle.tsx
+  var import_mithril30 = __toESM(require_mithril(), 1);
+  var Toggle = class {
+    view(vnode) {
+      const { value, trueText, falseText, text: text2, disabled } = vnode.attrs;
+      const stateText = value ? trueText : falseText;
+      const label = stateText != void 0 && stateText != "" ? stateText : text2;
+      return /* @__PURE__ */ (0, import_mithril30.default)(
+        "span",
+        {
+          class: "toggle-container",
+          role: "switch",
+          tabIndex: disabled ? -1 : 0,
+          "aria-checked": value ? "true" : "false",
+          "aria-disabled": disabled ? "true" : "false",
+          value: value ? "true" : "false",
+          onclick: () => this.activate(vnode),
+          onkeydown: (event) => this.onKeydown(vnode, event)
+        },
+        /* @__PURE__ */ (0, import_mithril30.default)("span", { class: "toggle" }, /* @__PURE__ */ (0, import_mithril30.default)("span", { class: "marker" })),
+        label != void 0 && /* @__PURE__ */ (0, import_mithril30.default)("label", null, label)
+      );
+    }
+    // activate requests the opposite of the current value (unless disabled).
+    activate(vnode) {
+      if (vnode.attrs.disabled) {
+        return;
+      }
+      vnode.attrs.onchange(!vnode.attrs.value);
+    }
+    // onKeydown activates the toggle on Space or Enter, matching native switch
+    // keyboard behavior (the _hyperscript version listens for Space).
+    onKeydown(vnode, event) {
+      if (event.key != " " && event.key != "Enter") {
+        return;
+      }
+      event.preventDefault();
+      this.activate(vnode);
+    }
+  };
+
+  // src/view/app-settings-general.tsx
+  var AppSettingsGeneral = class {
     oninit(vnode) {
       const config = vnode.attrs.controller.config;
       vnode.state.isDesktopNotifications = config.isDesktopNotifications;
       vnode.state.isSoundNotifications = config.isSoundNotifications;
       vnode.state.isHideOnBlur = config.isHideOnBlur;
+      vnode.state.isEncryptedMessages = config.isEncryptedMessages;
       vnode.state.permission = Notification.permission;
       vnode.state.saved = false;
+      vnode.state.emojiKey = [];
+      vnode.attrs.controller.loadKeyPackage().then((keyPackage) => {
+        vnode.state.emojiKey = keyPackage?.emojiKey ?? [];
+        import_mithril31.default.redraw();
+      });
     }
     onremove(vnode) {
       if (vnode.state.savedTimeout != void 0) {
@@ -28715,38 +28794,83 @@
       }
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril30.default)("div", null, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-lg bold flex-grow" }, "Notifications"), /* @__PURE__ */ (0, import_mithril30.default)(SavedNotice, { saved: vnode.state.saved })), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.permission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril30.default)("div", null, vnode.state.permission == "granted" ? "Allow Desktop Notifications" : "Desktop Notifications Denied"), vnode.state.permission === "denied" && /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", tabIndex: "0", id: "isSoundNotifications", checked: vnode.state.isSoundNotifications, onchange: (event) => this.setSoundNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isSoundNotifications" }, " ", /* @__PURE__ */ (0, import_mithril30.default)("div", null, "Play Sound for New Messages"))), /* @__PURE__ */ (0, import_mithril30.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril30.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril30.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril30.default)("div", null, "Hide When Window Loses Focus"))))));
+      return /* @__PURE__ */ (0, import_mithril31.default)("div", null, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "flex-row flex-align-center margin-bottom" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-lg bold flex-grow" }, "General"), /* @__PURE__ */ (0, import_mithril31.default)(SavedNotice, { saved: vnode.state.saved })), this.viewNotifications(vnode), /* @__PURE__ */ (0, import_mithril31.default)("hr", { class: "margin-vertical" }), this.viewEncryption(vnode));
     }
-    async setDesktopNotifications(vnode, event) {
-      const target = event.target;
-      if (target.checked) {
+    // viewNotifications renders the desktop/sound/focus notification preferences.
+    viewNotifications(vnode) {
+      const desktopDenied = vnode.state.permission === "denied";
+      return /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril31.default)(
+        Toggle,
+        {
+          value: vnode.state.isDesktopNotifications,
+          text: desktopDenied ? "Desktop Notifications Denied" : "Allow Desktop Notifications",
+          disabled: desktopDenied,
+          onchange: (next) => this.setDesktopNotifications(vnode, next)
+        }
+      ), desktopDenied && /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-xs text-gray margin-top-xs" }, "To re-enable desktop notifications, go to your browser settings.")), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril31.default)(
+        Toggle,
+        {
+          value: vnode.state.isSoundNotifications,
+          text: "Play Sound for New Messages",
+          onchange: (next) => this.setSoundNotifications(vnode, next)
+        }
+      )), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril31.default)(
+        Toggle,
+        {
+          value: vnode.state.isHideOnBlur,
+          text: "Hide When Window Loses Focus",
+          onchange: (next) => this.setHideOnBlur(vnode, next)
+        }
+      ))));
+    }
+    // viewEncryption renders the encryption toggle and, when enabled, the EmojiKey.
+    viewEncryption(vnode) {
+      return /* @__PURE__ */ (0, import_mithril31.default)("div", null, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-lg bold margin-top-lg margin-bottom" }, "Encrypted Messaging"), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril31.default)(
+        Toggle,
+        {
+          value: vnode.state.isEncryptedMessages,
+          text: "Send Encrypted Messages When Possible",
+          onchange: (next) => this.setEncryptedMessages(vnode, next)
+        }
+      )))), vnode.state.isEncryptedMessages && this.viewEmojiKey(vnode));
+    }
+    // viewEmojiKey renders the EmojiKey, shown only when encrypted messaging is enabled
+    viewEmojiKey(vnode) {
+      const controller2 = vnode.attrs.controller;
+      return /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril31.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "flex-row" }, vnode.state.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril31.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-xs text-gray" }, name)))));
+    }
+    async setDesktopNotifications(vnode, value) {
+      if (value) {
         const permission = await Notification.requestPermission();
         vnode.state.permission = permission;
         vnode.state.isDesktopNotifications = permission == "granted";
         this.save(vnode);
-        import_mithril30.default.redraw();
+        import_mithril31.default.redraw();
         return;
       }
       vnode.state.isDesktopNotifications = false;
       this.save(vnode);
     }
-    setSoundNotifications(vnode, event) {
-      const target = event.target;
-      vnode.state.isSoundNotifications = target.checked;
+    setSoundNotifications(vnode, value) {
+      vnode.state.isSoundNotifications = value;
       this.save(vnode);
     }
-    setHideOnBlur(vnode, event) {
-      const target = event.target;
-      vnode.state.isHideOnBlur = target.checked;
+    setHideOnBlur(vnode, value) {
+      vnode.state.isHideOnBlur = value;
+      this.save(vnode);
+    }
+    setEncryptedMessages(vnode, value) {
+      vnode.state.isEncryptedMessages = value;
       this.save(vnode);
     }
     // save applies the current values to the config, persists them, and shows the
-    // transient "Changes saved" notice for three seconds.
+    // transient "Changes saved" notice for two seconds.
     save(vnode) {
       const controller2 = vnode.attrs.controller;
       controller2.config.isDesktopNotifications = vnode.state.isDesktopNotifications;
       controller2.config.isSoundNotifications = vnode.state.isSoundNotifications;
       controller2.config.isHideOnBlur = vnode.state.isHideOnBlur;
+      controller2.config.isEncryptedMessages = vnode.state.isEncryptedMessages;
       controller2.saveConfig();
       vnode.state.saved = true;
       if (vnode.state.savedTimeout != void 0) {
@@ -28754,39 +28878,8 @@
       }
       vnode.state.savedTimeout = setTimeout(() => {
         vnode.state.saved = false;
-        import_mithril30.default.redraw();
-      }, 2e3);
-    }
-  };
-
-  // src/view/app-settings-encryption.tsx
-  var import_mithril31 = __toESM(require_mithril(), 1);
-  var AppSettingsEncryption = class {
-    oninit(vnode) {
-      vnode.state.isEncryptedMessages = vnode.attrs.controller.config.isEncryptedMessages;
-      vnode.state.emojiKey = [];
-      vnode.attrs.controller.loadKeyPackage().then((keyPackage) => {
-        vnode.state.emojiKey = keyPackage?.emojiKey ?? [];
         import_mithril31.default.redraw();
-      });
-    }
-    view(vnode) {
-      const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril31.default)("div", null, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-lg bold margin-bottom" }, "Encryption"), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril31.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril31.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril31.default)("div", null, "Send Encrypted Messages When Possible"))))), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "margin-top flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril31.default)("button", { class: "primary", onclick: () => this.saveChanges(vnode) }, "Save Changes"), /* @__PURE__ */ (0, import_mithril31.default)("button", { onclick: () => controller2.page_index() }, "Cancel"), /* @__PURE__ */ (0, import_mithril31.default)("span", { class: "margin-left-sm" }, /* @__PURE__ */ (0, import_mithril31.default)(SavedNotice, { saved: vnode.attrs.saved })))), vnode.state.isEncryptedMessages && this.viewEmojiKey(vnode));
-    }
-    // viewEmojiKey renders the EmojiKey card, shown only when encrypted messaging is enabled
-    viewEmojiKey(vnode) {
-      const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-lg bold margin-bottom" }, "EmojiKey"), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril31.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "flex-row" }, vnode.state.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril31.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "text-xs text-gray" }, name)))));
-    }
-    setEncryptedMessages(vnode, event) {
-      const target = event.target;
-      vnode.state.isEncryptedMessages = target.checked;
-    }
-    // saveChanges applies the local edits to the config and persists them
-    saveChanges(vnode) {
-      vnode.attrs.controller.config.isEncryptedMessages = vnode.state.isEncryptedMessages;
-      vnode.attrs.save();
+      }, 2e3);
     }
   };
 
@@ -29189,16 +29282,13 @@
 
   // src/view/app-settings.tsx
   var AppSettings = class {
-    oninit(vnode) {
-      vnode.state.saved = false;
-    }
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril35.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, this.viewSidebar(vnode)), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "app-content scroll-vertical flex-grow padding" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "max-width-800" }, this.viewSection(vnode), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "padding-vertical-xl" }))));
     }
     // viewSidebar renders the back button, title, and tab navigation
     viewSidebar(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril35.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "FILTERS", "filter-circle", "Filters"), this.viewTab(vnode, "NOTIFICATIONS", "bell", "Notifications"), this.viewTab(vnode, "ENCRYPTION", "lock", "Encryption"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril35.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "GENERAL", "gear", "General"), this.viewTab(vnode, "FILTERS", "filter-circle", "Filters"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
     }
     // viewTab renders a single navigation row in the sidebar. The icon argument is
     // a Bootstrap Icon stem (e.g. "shield"); the unselected tab uses the outline
@@ -29215,13 +29305,9 @@
     // viewSection renders the content for the currently selected tab
     viewSection(vnode) {
       const controller2 = vnode.attrs.controller;
-      const save = () => this.save(vnode);
-      const saved = vnode.state.saved;
       switch (controller2.settingsTab) {
-        case "ENCRYPTION":
-          return /* @__PURE__ */ (0, import_mithril35.default)(AppSettingsEncryption, { controller: controller2, save, saved });
-        case "NOTIFICATIONS":
-          return /* @__PURE__ */ (0, import_mithril35.default)(AppSettingsNotifications, { controller: controller2 });
+        case "GENERAL":
+          return /* @__PURE__ */ (0, import_mithril35.default)(AppSettingsGeneral, { controller: controller2 });
         case "SIGNOUT":
           return /* @__PURE__ */ (0, import_mithril35.default)(AppSettingsSignout, { controller: controller2 });
         case "FILTERS":
@@ -29231,18 +29317,6 @@
     }
     selectTab(vnode, tab) {
       vnode.attrs.controller.settingsTab = tab;
-    }
-    // save persists the current config and shows a transient confirmation
-    save(vnode) {
-      vnode.attrs.controller.saveConfig();
-      vnode.state.saved = true;
-      if (vnode.state.savedTimeout != void 0) {
-        clearTimeout(vnode.state.savedTimeout);
-      }
-      vnode.state.savedTimeout = setTimeout(() => {
-        vnode.state.saved = false;
-        import_mithril35.default.redraw();
-      }, 2e3);
     }
   };
 

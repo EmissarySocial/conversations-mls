@@ -155,7 +155,9 @@ async function linkifyMentions(text: string, resolveMention?: MentionResolver): 
 			// Lookup failed: keep the mention as plain text
 			result += match[0]
 		} else {
-			result += `${prefix}<a href="${href}" class="u-url mention">@<span>${user}</span></a>`
+			// Mastodon's full h-card microformat: the .h-card wrapper marks this as a
+			// person reference (the hook used to route clicks to the host profile viewer).
+			result += `${prefix}<span class="h-card"><a href="${href}" class="u-url mention">@<span>${user}</span></a></span>`
 		}
 
 		lastIndex = start + match[0].length

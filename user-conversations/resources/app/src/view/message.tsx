@@ -59,7 +59,7 @@ export class ViewMessage {
 				return (
 					<div key={vnode.attrs.key} class="message sent">
 						<div class="bubble">
-							{this.drawContent(message)}
+							{this.drawContent(controller, message)}
 							{this.drawReactions(vnode)}
 						</div>
 					</div>
@@ -103,7 +103,7 @@ export class ViewMessage {
 								<div class="sender">{sender.name || "..."}</div>
 							)}
 							<div class="bubble">
-								{this.drawContent(message)}
+								{this.drawContent(controller, message)}
 								{this.drawReactions(vnode)}
 							</div>
 						</div>
@@ -161,7 +161,7 @@ export class ViewMessage {
 		throw new Error(`Unknown message type: ${message.type}`)
 	}
 
-	drawContent(message: Message): JSX.Element {
+	drawContent(controller: Controller, message: Message): JSX.Element {
 
 		return <>
 			{message.attachments.map(attachment => (
@@ -173,9 +173,46 @@ export class ViewMessage {
 					</a>
 				)
 			))}
-			<div class="padding-xs">{m.trust(message.content)}</div>
+			{/* NOSONAR S6848/S1082: the interactive elements are the native <a> mentions
+			    inside the trusted HTML; this is a delegation layer that also handles keyboard. */}
+			<div class="padding-xs message-content" onclick={(event: MouseEvent) => this.onContentClick(controller, event)} onkeydown={(event: KeyboardEvent) => this.onContentKeydown(controller, event)}>{m.trust(message.content)}</div>
 		</>
 
+	}
+
+	// mentionActorId returns the profile URL of the mention link containing the given
+	// event target, or "" if the target is not inside a mention. Mentions are
+	// identified by the Mastodon ".h-card" microformat wrapper, and the href is the
+	// actor's profile URL (the WebFinger "self" link).
+	mentionActorId(target: EventTarget | null): string {
+		const anchor = (target as HTMLElement | null)?.closest(".h-card a") as HTMLAnchorElement | null
+		return anchor?.getAttribute("href") ?? ""
+	}
+
+	// onContentClick intercepts clicks on @mention links inside rendered message
+	// content (an inert m.trust island) and routes them to the host's profile viewer
+	// instead of navigating to the remote profile URL.
+	onContentClick(controller: Controller, event: MouseEvent) {
+		const actorId = this.mentionActorId(event.target)
+		if (actorId == "") {
+			return
+		}
+		event.preventDefault()
+		controller.host_actor(actorId)
+	}
+
+	// onContentKeydown handles keyboard activation (Enter/Space) of a focused mention
+	// link, routing it to the host profile viewer like a click.
+	onContentKeydown(controller: Controller, event: KeyboardEvent) {
+		if (event.key != "Enter" && event.key != " ") {
+			return
+		}
+		const actorId = this.mentionActorId(event.target)
+		if (actorId == "") {
+			return
+		}
+		event.preventDefault()
+		controller.host_actor(actorId)
 	}
 
 	drawReactions(vnode: ViewMessageVnode): (JSX.Element | undefined) {

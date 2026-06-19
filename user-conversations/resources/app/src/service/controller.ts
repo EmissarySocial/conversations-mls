@@ -34,7 +34,7 @@ import { newId, htmlToText, sanitizeHTML, formatMessageContent } from "./utils"
 import { NewFilter, type Filter } from "../model/filter"
 
 // SettingsTab identifies which tab is active on the settings screen.
-export type SettingsTab = "FILTERS" | "NOTIFICATIONS" | "ENCRYPTION" | "SIGNOUT"
+export type SettingsTab = "FILTERS" | "GENERAL" | "SIGNOUT"
 
 export class Controller {
 
@@ -68,7 +68,7 @@ export class Controller {
 	inReplyTo: Message | undefined
 
 	pageView: string = "LOADING"
-	settingsTab: SettingsTab = "FILTERS"
+	settingsTab: SettingsTab = "GENERAL"
 	modalView: string = ""
 	isWindowFocused: boolean = true
 	isApplicationRunning: boolean = true
@@ -403,7 +403,7 @@ export class Controller {
 		this.pageView = "SETTINGS"
 
 		// Deliberately entering settings always starts on the default tab
-		this.settingsTab = "FILTERS"
+		this.settingsTab = "GENERAL"
 		m.redraw()
 	}
 
