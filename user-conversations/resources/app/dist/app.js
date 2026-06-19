@@ -25578,7 +25578,8 @@
     //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
     async receiveActivity(activity, object) {
-      if (this.#referencesExistingMessage(activity, object)) {
+      const referencesMessage = this.#referencesExistingMessage(activity, object);
+      if (referencesMessage) {
         const messageId = this.#referencedMessageId(activity, object);
         const message = await this.#database.loadMessage(messageId);
         if (message == void 0) {
@@ -25596,9 +25597,11 @@
       if (group.createdById == "") {
         group.createdById = activity.actorId();
       }
-      let newMembers = this.#findNewGroupMembers(group, activity);
-      if (newMembers.length > 0) {
-        group.members = uniqueStrings([...group.members, ...newMembers]);
+      if (!referencesMessage) {
+        const newMembers = this.#findNewGroupMembers(group, activity);
+        if (newMembers.length > 0) {
+          group.members = uniqueStrings([...group.members, ...newMembers]);
+        }
       }
       await this.#database.saveGroup(group);
       activity.setContext(group.id);

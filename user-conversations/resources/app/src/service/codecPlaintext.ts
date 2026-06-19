@@ -137,7 +137,9 @@ export class CodecPlaintext {
 		// the activity through unchanged so the controller's handler can no-op — and
 		// importantly, do NOT fall into the group-creation path below (only Create and
 		// Update may auto-create a group, the way regular ActivityPub messages do).
-		if (this.#referencesExistingMessage(activity, object)) {
+		const referencesMessage = this.#referencesExistingMessage(activity, object)
+
+		if (referencesMessage) {
 			const messageId = this.#referencedMessageId(activity, object)
 			const message = await this.#database.loadMessage(messageId)
 			if (message == undefined) {
@@ -164,10 +166,14 @@ export class CodecPlaintext {
 			group.createdById = activity.actorId()
 		}
 
-		// If we need to add new members to the group, then save the changes
-		let newMembers = this.#findNewGroupMembers(group, activity)
-		if (newMembers.length > 0) {
-			group.members = uniqueStrings([...group.members, ...newMembers])
+		// If we need to add new members to the group, then save the changes. Skip this
+		// for Like/Delete/Undo: those act on an existing message and must not change
+		// who belongs to the group (the liker/deleter is not necessarily a member).
+		if (!referencesMessage) {
+			const newMembers = this.#findNewGroupMembers(group, activity)
+			if (newMembers.length > 0) {
+				group.members = uniqueStrings([...group.members, ...newMembers])
+			}
 		}
 
 		// Save the group if any changes were made

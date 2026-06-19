@@ -323,6 +323,34 @@ test('receiving a Like for a missing message is a no-op (no save)', async () => 
 	expect(database.savedMessages.length).toBe(0)
 })
 
+test('receiving a Like from a non-member does not change group membership', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// A group whose only members are ME and BOB
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.members = [ME, "https://bob.test/users/bob"]
+	database.groups.set(GROUP_ID, group)
+
+	seedMessage(database, "msg-likemember", ME)
+	stubObjectFetch()
+
+	// ALICE (not a member) likes the message
+	const like = new Activity({
+		type: vocab.ActivityTypeLike,
+		actor: ALICE,
+		content: "👍",
+		object: "msg-likemember",
+	})
+
+	await controller.receiveActivity(like)
+
+	const updated = await database.loadGroup(GROUP_ID)
+	expect(updated!.members).toEqual([ME, "https://bob.test/users/bob"])
+})
+
 test('receiving a Delete from the message sender removes the message', async () => {
 
 	const database = new FakeDatabase()
