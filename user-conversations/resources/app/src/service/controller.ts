@@ -1223,8 +1223,14 @@ export class Controller {
 		const codec = this.#getCodecForGroup(group)
 		const object = await codec.encodeMessage(group, message)
 
+		// The server locates the existing object to update by its "id", so the Update's
+		// object MUST carry the message's (server-assigned) id. (Create lets the server
+		// assign the id; Update must reference the one it already gave us.)
+		;(object as Record<string, unknown>)["id"] = message.id
+
 		// Create an "Update" activity
 		const activity = new Activity({
+			context: group.id,
 			actor: this.actorId(),
 			type: vocab.ActivityTypeUpdate,
 			to: group.members,
