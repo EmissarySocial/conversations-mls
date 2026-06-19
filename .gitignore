@@ -7,3 +7,4 @@ node_modules/
 # Javascript source maps
 *.map
 /user-conversations/resources/app/src/coverage
+/user-conversations/resources/app/coverage
