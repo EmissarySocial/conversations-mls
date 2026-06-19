@@ -42,7 +42,7 @@ export class ViewMessage {
 				if (isEmoji(message.content)) {
 					return (
 						<div key={vnode.attrs.key} class="message sent">
-							<div>
+							<div class="bubble">
 								<div class="align-center margin-none padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
 								<div class="message-options flex-row flex-align-center">
 									<div class="text-gray">
@@ -72,13 +72,15 @@ export class ViewMessage {
 					return (
 						<div key={vnode.attrs.key} class="message received">
 
-							<div class="sender-icon"></div>
+							<div class="sender-icon">
+								{(sender != undefined) && <img src={sender.icon} class="circle width-48" alt="" />}
+							</div>
 
 							<div class="flex-grow">
 								{(sender != undefined) && (
 									<div class="sender">{sender.name || "..."}</div>
 								)}
-								<div>
+								<div class="bubble">
 									<div class="padding-top-lg padding-bottom-sm" style="font-size:48px;">{message.content}</div>
 									<div class="message-options flex-row flex-align-center">
 										<div class="text-gray">
