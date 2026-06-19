@@ -218,11 +218,18 @@ export class Database {
 	// and match one of the specified stateIds. Results are sorted with IMPORTANT
 	// groups first, then by updateDate descending within each tier.
 	// An empty tags or stateIds array means "do not filter on that field".
+	//
+	// Groups in the WELCOME state are always included when filtering by state: a
+	// pending invitation should surface no matter which filter is selected, so
+	// whenever stateIds are provided, WELCOME is implicitly added to them.
 	searchGroups = async (tags: string[], stateIds: GroupState[] = []): Promise<Group[]> => {
+
+		const effectiveStateIds = (stateIds.length === 0) ? [] : [...stateIds, "WELCOME" as GroupState]
+
 		const groups = await this.#db.getAll("group")
 		return groups
 			.filter(g => tags.every(tag => g.tags.includes(tag)))
-			.filter(g => stateIds.length === 0 || stateIds.includes(g.stateId))
+			.filter(g => effectiveStateIds.length === 0 || effectiveStateIds.includes(g.stateId))
 			.sort((a, b) => {
 
 				if (a.stateId === "IMPORTANT") {
