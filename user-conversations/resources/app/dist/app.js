@@ -26613,7 +26613,7 @@
       }
       const codec = this.#getCodec(encrypted);
       let group = await codec.createGroup(recipients);
-      group.stateId = "ACTIVE";
+      this.setGroupState(group, "ACTIVE");
       this.groupStream(group);
       await this.sendMessage(initialMessage);
       this.pageView = "GROUP-MESSAGES";
@@ -26623,7 +26623,7 @@
         console.error("Can only join groups that are in the WELCOME state");
         return;
       }
-      group.stateId = "ACTIVE";
+      this.setGroupState(group, "ACTIVE");
       await this.saveGroup(group);
       import_mithril.default.redraw();
       this.syncGroup(group);

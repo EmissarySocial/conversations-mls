@@ -226,10 +226,27 @@ describe("setGroupState", () => {
 		expect(group.stateId).toBe("IMPORTANT")
 	})
 
+	test("accepts every user-settable state", () => {
+		for (const state of ["IMPORTANT", "ACTIVE", "ARCHIVED", "CLOSED"] as const) {
+			const group = NewGroup("PLAINTEXT")
+			controller.setGroupState(group, state)
+			expect(group.stateId).toBe(state)
+		}
+	})
+
 	test("ignores an invalid state", () => {
 		const group = NewGroup("PLAINTEXT")
 		group.stateId = "ACTIVE"
 		controller.setGroupState(group, "BOGUS")
+		expect(group.stateId).toBe("ACTIVE")
+	})
+
+	test("ignores WELCOME (it is not a user-settable state)", () => {
+		// WELCOME is reached only by invitation, never by a manual transition, so
+		// setGroupState deliberately rejects it.
+		const group = NewGroup("PLAINTEXT")
+		group.stateId = "ACTIVE"
+		controller.setGroupState(group, "WELCOME")
 		expect(group.stateId).toBe("ACTIVE")
 	})
 })
@@ -254,6 +271,30 @@ describe("setSelectedGroupState", () => {
 
 		await controller.setSelectedGroupState("ACTIVE")
 
+		expect(database.savedGroups.length).toBe(0)
+	})
+})
+
+describe("joinGroup", () => {
+
+	test("moves a WELCOME group to ACTIVE and persists it", async () => {
+		const group = seedGroup(database, { id: "g1", stateId: "WELCOME" })
+
+		await controller.joinGroup(group)
+
+		expect(group.stateId).toBe("ACTIVE")
+		const saved = await database.loadGroup("g1")
+		expect(saved!.stateId).toBe("ACTIVE")
+	})
+
+	test("refuses to join a group that is not in the WELCOME state", async () => {
+		const group = seedGroup(database, { id: "g1", stateId: "ACTIVE" })
+		database.savedGroups = []
+
+		await controller.joinGroup(group)
+
+		// State is unchanged and nothing was saved
+		expect(group.stateId).toBe("ACTIVE")
 		expect(database.savedGroups.length).toBe(0)
 	})
 })

@@ -772,7 +772,7 @@ export class Controller {
 		let group = await codec.createGroup(recipients)
 
 		// Since we're creating this group, it becomes active immediately (no WELCOME step)
-		group.stateId = "ACTIVE"
+		this.setGroupState(group, "ACTIVE")
 
 		// Save the group as the "current" group in the UX
 		this.groupStream(group)
@@ -791,7 +791,7 @@ export class Controller {
 			return
 		}
 
-		group.stateId = "ACTIVE"
+		this.setGroupState(group, "ACTIVE")
 		await this.saveGroup(group)
 		m.redraw()
 
