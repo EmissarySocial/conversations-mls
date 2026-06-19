@@ -4,7 +4,7 @@ import * as vocab from "../as/vocab"
 
 import { type Group, NewGroup } from "../model/group"
 import { type Message } from "../model/message"
-import { newId } from "../model/utils"
+import { newId, uniqueStrings } from "../model/utils"
 import type { IDatabase, IDelivery } from "./interfaces"
 
 export class CodecPlaintext {
@@ -70,9 +70,10 @@ export class CodecPlaintext {
 		return group.members
 	}
 
-	// addGroupMembers adds new members to the group and saves it to the database
+	// addGroupMembers adds new members to the group, skipping any who are already
+	// members (and de-duplicating the incoming list itself), then returns the group.
 	async addGroupMembers(group: Group, newMembers: string[]): Promise<Group> {
-		group.members.push(...newMembers)
+		group.members = uniqueStrings([...group.members, ...newMembers])
 		return group
 	}
 
@@ -153,7 +154,7 @@ export class CodecPlaintext {
 		// If we need to add new members to the group, then save the changes
 		let newMembers = this.#findNewGroupMembers(group, activity)
 		if (newMembers.length > 0) {
-			group.members.push(...newMembers)
+			group.members = uniqueStrings([...group.members, ...newMembers])
 		}
 
 		// Save the group if any changes were made
@@ -220,14 +221,16 @@ export class CodecPlaintext {
 		throw new Error("Unrecognized activity type " + activity.type())
 	}
 
-	// findNewGroupMembers returns the actors involved in this activity who are not already members of the group.
+	// findNewGroupMembers returns the actors involved in this activity who are not
+	// already members of the group. The result is de-duplicated, because the
+	// activity's recipient list (to/cc) and actor can name the same actor more
+	// than once.
 	#findNewGroupMembers(group: Group, activity: Activity): string[] {
 
-		// Find members (from/to/cc addressess) of the activity
-		let members = activity.recipients()
-		members.push(activity.actorId())
+		// Find members (from/to/cc addressess) of the activity, plus its actor
+		const members = uniqueStrings([...activity.recipients(), activity.actorId()])
 
-		// Filter members that are NOT already members of the group
+		// Keep only those who are NOT already members of the group
 		return members.filter(member => !group.members.includes(member))
 	}
 

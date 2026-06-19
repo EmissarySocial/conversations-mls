@@ -105,6 +105,20 @@ describe("addGroupMembers / removeGroupMember", () => {
 		expect(group.members).toEqual([ME, ALICE])
 	})
 
+	test("addGroupMembers does not duplicate an existing member", async () => {
+		const group = NewGroup("PLAINTEXT")
+		group.members = [ME, ALICE]
+		await codec.addGroupMembers(group, [ALICE])
+		expect(group.members).toEqual([ME, ALICE])
+	})
+
+	test("addGroupMembers de-duplicates within the incoming list", async () => {
+		const group = NewGroup("PLAINTEXT")
+		group.members = [ME]
+		await codec.addGroupMembers(group, [ALICE, ALICE])
+		expect(group.members).toEqual([ME, ALICE])
+	})
+
 	test("removeGroupMember filters out the actor", async () => {
 		const group = NewGroup("PLAINTEXT")
 		group.members = [ME, ALICE]
@@ -234,6 +248,31 @@ describe("receiveActivity", () => {
 		expect(group).toBeDefined()
 		expect(group!.members).toContain(ALICE)
 		expect(group!.createdById).toBe(ALICE)
+	})
+
+	test("does not duplicate members when the activity names an actor more than once", async () => {
+		// ALICE is both the actor and a recipient, and ME appears twice in "to".
+		// Neither should produce a duplicate in the group's member list.
+		seedPlaintextGroup(GROUP_ID, [ME])
+
+		const activity = new Activity({
+			type: vocab.ActivityTypeCreate,
+			actor: ALICE,
+			context: GROUP_ID,
+			to: [ME, ME, ALICE],
+			object: {
+				id: "https://example.test/messages/dup",
+				type: vocab.ObjectTypeNote,
+				attributedTo: ALICE,
+				context: GROUP_ID,
+				content: "hi",
+			},
+		})
+
+		await codec.receiveActivity(activity, await activity.object())
+
+		const group = await database.loadGroup(GROUP_ID)
+		expect(group!.members).toEqual([ME, ALICE])
 	})
 
 	test("routes a Like activity to the group of the liked message", async () => {
