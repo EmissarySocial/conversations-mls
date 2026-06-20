@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { expect, test, afterEach, vi } from 'vitest'
 
+import { Temporal } from "@js-temporal/polyfill"
+;(globalThis as any).Temporal ??= Temporal
+
 import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 import { makeController, FakeDatabase } from "./testHarness"
@@ -257,14 +260,17 @@ test('receiving an Update of a group context applies the new metadata', async ()
 	group.stateId = "ACTIVE"
 	database.groups.set(GROUP_ID, group)
 
-	// An Update activity whose embedded object is an emissary:Context for this group
+	// An Update activity whose embedded object is an emissary:Context for this group.
+	// A context update is my own group-metadata change reflected back to me, so the
+	// actor MUST be ME — the controller rejects context updates from anyone else.
 	const activity = new Activity({
 		type: vocab.ActivityTypeUpdate,
-		actor: ALICE,
+		actor: ME,
 		context: GROUP_ID,
 		object: {
 			id: GROUP_ID,
 			type: vocab.ObjectTypeEmissaryContext,
+			attributedTo: ME,
 			context: GROUP_ID,
 			name: "New Name",
 			summary: "An updated summary",
@@ -289,8 +295,50 @@ test('receiving an Update of a group context applies the new metadata', async ()
 	// reconciles the selection, and selecting this (only) group marks it read.
 })
 
-// seedMessage stores a message authored by `sender` in GROUP_ID.
+test('rejects a group context Update from someone other than me', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed a group with a known name
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.name = "Original Name"
+	database.groups.set(GROUP_ID, group)
+
+	// A context Update from ALICE (not ME) must NOT be allowed to rewrite my group.
+	const activity = new Activity({
+		type: vocab.ActivityTypeUpdate,
+		actor: ALICE,
+		context: GROUP_ID,
+		object: {
+			id: GROUP_ID,
+			type: vocab.ObjectTypeEmissaryContext,
+			attributedTo: ALICE,
+			context: GROUP_ID,
+			name: "Hijacked Name",
+		},
+	})
+
+	// The update is rejected internally (its actor is not me); the controller swallows
+	// the error and resolves cleanly, so receiveActivity never throws to the caller.
+	await expect(controller.receiveActivity(activity)).resolves.toBeUndefined()
+
+	// The group name must be unchanged.
+	const updated = await database.loadGroup(GROUP_ID)
+	expect(updated!.name).toBe("Original Name")
+})
+
+// seedMessage stores a message authored by `sender` in GROUP_ID, and guarantees
+// the message's (plaintext) group exists. The codec validates Like/Delete against
+// an existing plaintext group, so a message with no group is treated as a no-op.
 function seedMessage(database: FakeDatabase, id: string, sender: string) {
+	if (!database.groups.has(GROUP_ID)) {
+		const group = NewGroup("PLAINTEXT")
+		group.id = GROUP_ID
+		group.members = [ME, sender]
+		database.groups.set(GROUP_ID, group)
+	}
 	database.messages.set(id, NewMessage({
 		id,
 		groupId: GROUP_ID,
@@ -471,4 +519,92 @@ test('receiving a Leave for an unknown group does not throw, even when its objec
 
 	// No junk group was created for the group we no longer have.
 	expect(database.groups.has("https://example.test/groups/already-left/pub/collections/xyz")).toBe(false)
+})
+
+/******************************************
+ * Implicit Create
+ *
+ * A bare Document (e.g. a top-level "Note" with no enclosing activity verb) is
+ * treated as an implicit "Create": the plaintext codec passes the unrecognized
+ * type through, and the controller re-wraps it as a Create and stores the message.
+ ******************************************/
+
+test('a bare Note (implicit Create) is stored as a message in its group', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// The implicit-Create handler requires the group to already exist.
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.members = [ME, ALICE]
+	database.groups.set(GROUP_ID, group)
+
+	// A top-level Note: its "type" is a Document type, not an activity verb.
+	const note = new Activity({
+		type: vocab.ObjectTypeNote,
+		id: "note-implicit",
+		attributedTo: ALICE,
+		context: GROUP_ID,
+		to: [ME],
+		content: "<p>hello implicit</p>",
+	})
+
+	await controller.receiveActivity(note)
+
+	const saved = database.savedMessages.find(m => m.id == "note-implicit")
+	expect(saved).toBeDefined()
+	expect(saved!.groupId).toBe(GROUP_ID)
+	expect(saved!.sender).toBe(ALICE)
+	expect(saved!.content).toContain("hello implicit")
+})
+
+test('an implicit Create resolves recipients without any network fetch', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	group.members = [ME, ALICE]
+	database.groups.set(GROUP_ID, group)
+
+	// If the implicit-Create path resolved its bare-URL recipients into Actors, it
+	// would attempt to fetch them — this guards against that regression.
+	const fetchSpy = stubFailingFetch()
+
+	const note = new Activity({
+		type: vocab.ObjectTypeNote,
+		id: "note-nofetch",
+		attributedTo: ALICE,
+		context: GROUP_ID,
+		to: [ME],
+		content: "hi",
+	})
+
+	await controller.receiveActivity(note)
+
+	expect(fetchSpy).not.toHaveBeenCalled()
+	expect(database.savedMessages.some(m => m.id == "note-nofetch")).toBe(true)
+})
+
+test('an unrecognized NON-document activity is a safe no-op', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// "Announce" is neither a known activity verb nor a Document type, so the implicit
+	// Create handler must skip it (notDocument == true) and store nothing.
+	const announce = new Activity({
+		type: "Announce",
+		id: "announce-1",
+		actor: ALICE,
+		context: GROUP_ID,
+		object: "https://example.test/messages/whatever",
+	})
+
+	await controller.receiveActivity(announce)
+
+	expect(database.savedMessages.length).toBe(0)
+	expect(database.savedGroups.length).toBe(0)
 })
