@@ -1569,7 +1569,7 @@ export class Controller {
 		}
 
 		// A message from another actor in a group we're not currently viewing marks the group "unread".
-		if (sentByOther && groupId != this.selectedGroupId()) {
+		if (sentByOther && (groupId != this.selectedGroupId())) {
 			group.unread = true
 			group.updateDate = Temporal.Now.instant().epochMilliseconds
 		}
@@ -1577,7 +1577,7 @@ export class Controller {
 		// Persist all of the group changes in a single save
 		await this.saveGroup(group)
 
-		// Additional rules for messages that were sent by other actors
+		// Notifications trigger once no other statements might fail/throw
 		if (sentByOther) {
 
 			// Send desktop notifications (if requested, and only when the window is not focused)
