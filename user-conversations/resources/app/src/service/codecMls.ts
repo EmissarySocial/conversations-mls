@@ -574,20 +574,21 @@ export class CodecMls implements ICodec {
 		const group = await this.#database.loadGroup(groupId)
 
 		if (group == undefined) {
-			console.error("Received message for unknown group", groupId)
-			return undefined
+			throw new Error("Received message for unknown group: " + groupId + ". This should be retried.")
 		}
 
 		console.log("Loaded group from database: ", group)
 
 		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
-			throw new Error("Cannot receive MLS-encrypted messages for unencrypted group")
+			console.warn("Received MLS-encrypted message for unencrypted group: " + groupId + ". This will NOT be retried.")
+			return undefined
 		}
 
 		// RULE: Sender must be a member of the group
 		if (!group.members.includes(document.attributedToId())) {
-			throw new Error("Received MLS message from a sender that is not a member of the group: " + document.toJSON())
+			console.warn("Received MLS message from a sender that is not a member of the group: " + document.toJSON() + ". This will NOT be retried.")
+			return undefined
 		}
 
 		// RULE: Do not accept messages for closed groups
@@ -597,33 +598,17 @@ export class CodecMls implements ICodec {
 
 		const _this = this // NOSONAR: typescript:S7740 (this is required to make the callback work correctly... IDK man.)
 
-		// Diagnostic logging before processMessage to detect epoch mismatches
-		const groupEpoch = group.clientState.groupContext.epoch
-		let msgEpoch: bigint | number | undefined
-		let msgWireformat: string
-		if (mlsMessage.wireformat === wireformats.mls_private_message) {
-			msgEpoch = mlsMessage.privateMessage.epoch
-			msgWireformat = "PrivateMessage(2)"
-		} else {
-			msgEpoch = mlsMessage.publicMessage.content.epoch
-			msgWireformat = "PublicMessage(1)"
-		}
-
 		// Decode the message using ts-mls
 		let decodedMessage: Awaited<ReturnType<typeof processMessage>>
-		try {
-			decodedMessage = await processMessage({
-				context: this.#context(),
-				state: group.clientState,
-				message: mlsMessage,
-				callback: (message) => {
-					return _this.#processMessageCallback(message, group)
-				}
-			})
-		} catch (err) {
-			console.error(`CodecMls.processMessage FAILED: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}`, err)
-			throw err
-		}
+
+		decodedMessage = await processMessage({
+			context: this.#context(),
+			state: group.clientState,
+			message: mlsMessage,
+			callback: (message) => {
+				return _this.#processMessageCallback(message, group)
+			}
+		})
 
 		// If no action is taken, then do not write it to the group.
 		if (decodedMessage.kind == "newState") {

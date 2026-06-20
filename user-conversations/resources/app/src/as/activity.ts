@@ -152,7 +152,8 @@ export class Activity extends ASObject {
 			return false
 		}
 
-		// Next, get the object directly (MLS objects are always embedded, so we don't need to trigger a network fetch)
+		// MLS objects MUST be embedded. Linked objects CANNOT be MLS objects, 
+		// so it's ok to get the object straight from the activity without a network fetch.
 		const object = this.objectAsDocument()
 		return object.isMlsDocument()
 	}

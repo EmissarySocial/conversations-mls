@@ -1415,91 +1415,72 @@ export class Controller {
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(activity)
+		let decodedActivity: Activity | undefined
 
 		try {
 
-			// Process the activity through the codec. This will handle decryption and verification of
-			// the activity, and will throw an error if the activity is invalid or cannot be processed
-			const decodedActivity = await codec.receiveActivity(activity)
+			// Step 1. Receive the activity through the codec. This decrypts and verifies the activity,
+			// and will throw an error if the activity is invalid or cannot be processed
+			decodedActivity = await codec.receiveActivity(activity)
 
 			// If the codec reports a NO-OP, then all message processing has already been handled.
 			if (decodedActivity == undefined) {
 				return
 			}
 
-			// Otherwise, continue processing using the decodedActivity
-			activity = decodedActivity
+			// Step 2. Process the activity after it has been decoded and verified by the codec.
+			// `return await` (not bare `return`) so a handler rejection is caught by the catch
+			// below — a bare return of a rejected promise would escape this try/catch.
+			return await this.#receiveActivity_Internal(decodedActivity)
 
 		} catch (error) {
 
-			// retry every second for up to 2 minutes
-			// This should be moved into a better retry queue
-			if (retryCount < 120) {
-				console.log("Retrying decoding error: ", error)
-				setTimeout(() => {
-					this.receiveActivity(activity, retryCount + 1)
-				}, 1000)
-				return
+			// retry every 2 seconds for up to 1 minute
+			if (retryCount < 30) {
+				setTimeout(async () => {
+					console.error("Retrying receiveActivity", error)
+					await this.receiveActivity(activity, retryCount + 1)
+				}, 2000)
 			}
-
-			console.error("Failed to process activity after multiple attempts:", error)
-			return
 		}
-
-		return this.#receiveActivity_Internal(activity)
 	}
 
 	// #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
-	readonly #receiveActivity_Internal = async (activity: Activity, retryCount = 0): Promise<void> => {
+	readonly #receiveActivity_Internal = async (activity: Activity): Promise<void> => {
 
-		// Route the activity based on its type, and apply changes to the local database and UX as needed.
-		try {
+		// NOTE: each handler is `return await`ed (not bare `return`) so that a rejected
+		// handler promise rejects THIS method's promise, letting the caller's
+		// (receiveActivity) try/catch see the error. A bare `return` of a rejected
+		// promise from inside a try would not be caught by an enclosing try/catch.
+		switch (activity.type()) {
 
-			// NOTE: each handler is `return await`ed (not bare `return`) so that a
-			// rejected handler promise is caught by the try/catch below rather than
-			// escaping this method.
-			switch (activity.type()) {
+			case vocab.ActivityTypeAcknowledge:
+				return await this.#receiveActivity_Acknowledge(activity)
 
-				case vocab.ActivityTypeAcknowledge:
-					return await this.#receiveActivity_Acknowledge(activity)
+			case vocab.ActivityTypeCreate:
+				return await this.#receiveActivity_Create(activity)
 
-				case vocab.ActivityTypeCreate:
-					return await this.#receiveActivity_Create(activity)
+			case vocab.ActivityTypeDelete:
+				return await this.#receiveActivity_Delete(activity)
 
-				case vocab.ActivityTypeDelete:
-					return await this.#receiveActivity_Delete(activity)
+			case vocab.ActivityTypeFailure:
+				return await this.#receiveActivity_Failure(activity)
 
-				case vocab.ActivityTypeFailure:
-					return await this.#receiveActivity_Failure(activity)
+			case vocab.ActivityTypeLeave:
+				return await this.#receiveActivity_Leave(activity)
 
-				case vocab.ActivityTypeLeave:
-					return await this.#receiveActivity_Leave(activity)
+			case vocab.ActivityTypeLike:
+				return await this.#receiveActivity_Like(activity)
 
-				case vocab.ActivityTypeLike:
-					return await this.#receiveActivity_Like(activity)
+			case vocab.ActivityTypeUndo:
+				return await this.#receiveActivity_Undo(activity)
 
-				case vocab.ActivityTypeUndo:
-					return await this.#receiveActivity_Undo(activity)
+			case vocab.ActivityTypeUpdate:
+				return await this.#receiveActivity_Update(activity)
 
-				case vocab.ActivityTypeUpdate:
-					return await this.#receiveActivity_Update(activity)
-
-				// If no *recognized* activity is present, then process this as an "implicit Create"
-				default:
-					return await this.#receiveActivity_Unknown(activity)
-			}
-
-		} catch (error) {
-			console.error("Error processing activity:", error)
-
-			// TODO: Restore this "Failure" response?
-			/*
-			this.#delivery.sendActivity({
-				actor: this.actorId(),
-				type: vocab.ActivityTypeFailure,
-				object: activity.id(),
-			})
-			*/
+			// implicit Create
+			default:
+				return await this.#receiveActivity_Unknown(activity)
 		}
 	}
 
@@ -1554,11 +1535,11 @@ export class Controller {
 		}
 
 		// Create a new message record in the database for this incoming message.
-		const sentByMe = (object.attributedToId() == this.actorId())
+		const sentByOther = (object.attributedToId() != this.actorId())
 		const message = NewMessage({
 			id: object.id(),
 			groupId: groupId,
-			type: (sentByMe ? "SENT" : "RECEIVED"),
+			type: (sentByOther ? "RECEIVED" : "SENT"),
 			sender: object.attributedToId(),
 			content: sanitizeHTML(object.content()),
 			reactions: {},
@@ -1573,7 +1554,7 @@ export class Controller {
 			message.attachments = [object.attachment()] // TODO: support multiple attachments
 		}
 
-		// Save the message to the database
+		// Save the message to the database (this is idempotent)
 		await this.#database.saveMessage(message)
 
 		// Track the most recent message in the group
@@ -1587,29 +1568,23 @@ export class Controller {
 			this.setGroupState(group, "ACTIVE")
 		}
 
-		if (!sentByMe) {
-
-			// Mark the group as "unread"
-			// If not currentlly viewing this group
-			if (groupId != this.selectedGroupId()) {
-
-				// Mark it as "unread"
-				group.unread = true
-				group.updateDate = Temporal.Now.instant().epochMilliseconds
-
-				// Send desktop notifications (if requested)
-				if (this.config.isDesktopNotifications) {
-					if (!this.isWindowFocused) {
-						this.#host.notify(message.sender, message.content)
-					}
-				}
-			}
+		// A message from another actor in a group we're not currently viewing marks the group "unread".
+		if (sentByOther && groupId != this.selectedGroupId()) {
+			group.unread = true
+			group.updateDate = Temporal.Now.instant().epochMilliseconds
 		}
 
-		console.log("Saving new message to group...", group, message)
+		// Persist all of the group changes in a single save
+		await this.saveGroup(group)
 
-		// Update the group
-		return this.saveGroup(group)
+		// Additional rules for messages that were sent by other actors
+		if (sentByOther) {
+
+			// Send desktop notifications (if requested, and only when the window is not focused)
+			if (this.config.isDesktopNotifications && !this.isWindowFocused) {
+				this.#host.notify(message.sender, message.content)
+			}
+		}
 	}
 
 	// #receiveActivity_Create_KeyPackage will alert the user that a new KeyPackage has been created on one of their other devices.

@@ -20509,7 +20509,7 @@
       }
       return NewMessage(data);
     };
-    // saveMessage saves a message to the database
+    // saveMessage saves a message to the database (this action is idempotent)
     saveMessage = async (message) => {
       await this.#db.put("message", message);
       this.#onchange();
@@ -25423,44 +25423,30 @@
       console.log("Decoded groupId: ", groupId);
       const group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
-        console.error("Received message for unknown group", groupId);
-        return void 0;
+        throw new Error("Received message for unknown group: " + groupId + ". This should be retried.");
       }
       console.log("Loaded group from database: ", group);
       if (!groupIsEncrypted(group)) {
-        throw new Error("Cannot receive MLS-encrypted messages for unencrypted group");
+        console.warn("Received MLS-encrypted message for unencrypted group: " + groupId + ". This will NOT be retried.");
+        return void 0;
       }
       if (!group.members.includes(document2.attributedToId())) {
-        throw new Error("Received MLS message from a sender that is not a member of the group: " + document2.toJSON());
+        console.warn("Received MLS message from a sender that is not a member of the group: " + document2.toJSON() + ". This will NOT be retried.");
+        return void 0;
       }
       if (group.stateId == "CLOSED") {
         return void 0;
       }
       const _this = this;
-      const groupEpoch = group.clientState.groupContext.epoch;
-      let msgEpoch;
-      let msgWireformat;
-      if (mlsMessage.wireformat === wireformats.mls_private_message) {
-        msgEpoch = mlsMessage.privateMessage.epoch;
-        msgWireformat = "PrivateMessage(2)";
-      } else {
-        msgEpoch = mlsMessage.publicMessage.content.epoch;
-        msgWireformat = "PublicMessage(1)";
-      }
       let decodedMessage;
-      try {
-        decodedMessage = await processMessage({
-          context: this.#context(),
-          state: group.clientState,
-          message: mlsMessage,
-          callback: (message) => {
-            return _this.#processMessageCallback(message, group);
-          }
-        });
-      } catch (err) {
-        console.error(`CodecMls.processMessage FAILED: wireformat=${msgWireformat}, groupEpoch=${groupEpoch}, msgEpoch=${msgEpoch}`, err);
-        throw err;
-      }
+      decodedMessage = await processMessage({
+        context: this.#context(),
+        state: group.clientState,
+        message: mlsMessage,
+        callback: (message) => {
+          return _this.#processMessageCallback(message, group);
+        }
+      });
       if (decodedMessage.kind == "newState") {
         if (decodedMessage.actionTaken == "reject") {
           return void 0;
@@ -27174,51 +27160,44 @@
     receiveActivity = async (activity, retryCount = 0) => {
       console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount);
       const codec = this.#getCodecForActivity(activity);
+      let decodedActivity;
       try {
-        const decodedActivity = await codec.receiveActivity(activity);
+        decodedActivity = await codec.receiveActivity(activity);
         if (decodedActivity == void 0) {
           return;
         }
-        activity = decodedActivity;
+        return await this.#receiveActivity_Internal(decodedActivity);
       } catch (error) {
-        if (retryCount < 120) {
-          console.log("Retrying decoding error: ", error);
-          setTimeout(() => {
-            this.receiveActivity(activity, retryCount + 1);
-          }, 1e3);
-          return;
+        if (retryCount < 30) {
+          setTimeout(async () => {
+            console.error("Retrying receiveActivity", error);
+            await this.receiveActivity(activity, retryCount + 1);
+          }, 2e3);
         }
-        console.error("Failed to process activity after multiple attempts:", error);
-        return;
       }
-      return this.#receiveActivity_Internal(activity);
     };
     // #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
-    #receiveActivity_Internal = async (activity, retryCount = 0) => {
-      try {
-        switch (activity.type()) {
-          case ActivityTypeAcknowledge:
-            return await this.#receiveActivity_Acknowledge(activity);
-          case ActivityTypeCreate:
-            return await this.#receiveActivity_Create(activity);
-          case ActivityTypeDelete:
-            return await this.#receiveActivity_Delete(activity);
-          case ActivityTypeFailure:
-            return await this.#receiveActivity_Failure(activity);
-          case ActivityTypeLeave:
-            return await this.#receiveActivity_Leave(activity);
-          case ActivityTypeLike:
-            return await this.#receiveActivity_Like(activity);
-          case ActivityTypeUndo:
-            return await this.#receiveActivity_Undo(activity);
-          case ActivityTypeUpdate:
-            return await this.#receiveActivity_Update(activity);
-          // If no *recognized* activity is present, then process this as an "implicit Create"
-          default:
-            return await this.#receiveActivity_Unknown(activity);
-        }
-      } catch (error) {
-        console.error("Error processing activity:", error);
+    #receiveActivity_Internal = async (activity) => {
+      switch (activity.type()) {
+        case ActivityTypeAcknowledge:
+          return await this.#receiveActivity_Acknowledge(activity);
+        case ActivityTypeCreate:
+          return await this.#receiveActivity_Create(activity);
+        case ActivityTypeDelete:
+          return await this.#receiveActivity_Delete(activity);
+        case ActivityTypeFailure:
+          return await this.#receiveActivity_Failure(activity);
+        case ActivityTypeLeave:
+          return await this.#receiveActivity_Leave(activity);
+        case ActivityTypeLike:
+          return await this.#receiveActivity_Like(activity);
+        case ActivityTypeUndo:
+          return await this.#receiveActivity_Undo(activity);
+        case ActivityTypeUpdate:
+          return await this.#receiveActivity_Update(activity);
+        // implicit Create
+        default:
+          return await this.#receiveActivity_Unknown(activity);
       }
     };
     // #receiveActivity_Acknowledge processes "Acknowledge" activities
@@ -27250,11 +27229,11 @@
       if (group == void 0) {
         throw new Error("Group not found for incoming message: " + activity.toJSON());
       }
-      const sentByMe = object.attributedToId() == this.actorId();
+      const sentByOther = object.attributedToId() != this.actorId();
       const message = NewMessage({
         id: object.id(),
         groupId,
-        type: sentByMe ? "SENT" : "RECEIVED",
+        type: sentByOther ? "RECEIVED" : "SENT",
         sender: object.attributedToId(),
         content: sanitizeHTML(object.content()),
         reactions: {},
@@ -27273,19 +27252,16 @@
       if (group.stateId == "ARCHIVED") {
         this.setGroupState(group, "ACTIVE");
       }
-      if (!sentByMe) {
-        if (groupId != this.selectedGroupId()) {
-          group.unread = true;
-          group.updateDate = Temporal.Now.instant().epochMilliseconds;
-          if (this.config.isDesktopNotifications) {
-            if (!this.isWindowFocused) {
-              this.#host.notify(message.sender, message.content);
-            }
-          }
+      if (sentByOther && groupId != this.selectedGroupId()) {
+        group.unread = true;
+        group.updateDate = Temporal.Now.instant().epochMilliseconds;
+      }
+      await this.saveGroup(group);
+      if (sentByOther) {
+        if (this.config.isDesktopNotifications && !this.isWindowFocused) {
+          this.#host.notify(message.sender, message.content);
         }
       }
-      console.log("Saving new message to group...", group, message);
-      return this.saveGroup(group);
     };
     // #receiveActivity_Create_KeyPackage will alert the user that a new KeyPackage has been created on one of their other devices.
     #receiveActivity_Create_KeyPackage = async (activity) => {

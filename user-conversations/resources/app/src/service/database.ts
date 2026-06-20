@@ -340,7 +340,7 @@ export class Database implements IDatabase {
 		return NewMessage(data)
 	}
 
-	// saveMessage saves a message to the database
+	// saveMessage saves a message to the database (this action is idempotent)
 	saveMessage = async (message: Message) => {
 		await this.#db.put("message", message)
 		this.#onchange()
