@@ -125,22 +125,26 @@ function mlsDoc(overrides: Record<string, any> = {}): Document {
 	})
 }
 
-describe("Document.isMLSMessage", () => {
+describe("Document.isMlsDocument", () => {
 
 	test("returns true for a well-formed MLS message", () => {
-		expect(mlsDoc().isMLSMessage()).toBe(true)
+		expect(mlsDoc().isMlsDocument()).toBe(true)
 	})
 
 	test("returns false when the mediaType is wrong", () => {
-		expect(mlsDoc({ mediaType: "text/plain" }).isMLSMessage()).toBe(false)
+		expect(mlsDoc({ mediaType: "text/plain" }).isMlsDocument()).toBe(false)
+	})
+
+	test("returns false when the mediaType is missing", () => {
+		expect(new Document({ encoding: "base64", content: "AAAA" }).isMlsDocument()).toBe(false)
 	})
 
 	test("returns false when the encoding is wrong", () => {
-		expect(mlsDoc({ encoding: "hex" }).isMLSMessage()).toBe(false)
+		expect(mlsDoc({ encoding: "hex" }).isMlsDocument()).toBe(false)
 	})
 
 	test("returns false when the content is empty", () => {
-		expect(mlsDoc({ content: "" }).isMLSMessage()).toBe(false)
+		expect(mlsDoc({ content: "" }).isMlsDocument()).toBe(false)
 	})
 })
 

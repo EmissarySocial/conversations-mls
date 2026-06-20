@@ -1,5 +1,5 @@
 // MLS functions and types
-import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type AuthenticationService, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage, unsafeTestingAuthenticationService } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage, unsafeTestingAuthenticationService } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -11,7 +11,7 @@ import * as vocab from "../as/vocab"
 import { type EncryptedGroup, type Group, NewGroup, groupIsEncrypted } from "../model/group"
 import { type Message } from "../model/message"
 
-import { type IController, type IDatabase, type IDelivery, type IDirectory } from "./interfaces"
+import { type ICodec, type IController, type IDatabase, type IDelivery, type IDirectory } from "./interfaces"
 
 import { uint8ArrayEqual, uint8ArraysContain, base64ToUint8Array } from "./utils"
 import { keyPackageIsExpired } from "./cryptography"
@@ -20,12 +20,11 @@ import { algorithms, CIPHER_X25519_AES128 } from "./algorithms"
 // MLS service encrypts/decrypts messages using the MLS protocol.
 // This is intended to be a reusable service that could be called
 // by any software component that needs to use MLS-encrypted messages.
-export class CodecMls {
+export class CodecMls implements ICodec {
 	readonly #controller: IController
 	readonly #database: IDatabase
 	readonly #delivery: IDelivery
 	readonly #directory: IDirectory
-	readonly #authService: AuthenticationService
 	readonly #cipherSuite: CiphersuiteImpl
 	readonly #generatorId: string
 
@@ -38,7 +37,6 @@ export class CodecMls {
 		database: IDatabase,
 		delivery: IDelivery,
 		directory: IDirectory,
-		authService: AuthenticationService,
 		cipherSuite: CiphersuiteImpl,
 
 		publicKeyPackage: KeyPackage,
@@ -50,7 +48,6 @@ export class CodecMls {
 		this.#database = database
 		this.#delivery = delivery
 		this.#directory = directory
-		this.#authService = authService
 		this.#cipherSuite = cipherSuite
 
 		this.#actor = actor
@@ -201,6 +198,7 @@ export class CodecMls {
 		// (async) Send welcome to new members
 		if (commitResult.welcome != undefined) {
 			this.#sendMlsMessage(
+				group,
 				vocab.ObjectTypeMlsWelcome,
 				newMembers,
 				commitResult.welcome,
@@ -210,7 +208,8 @@ export class CodecMls {
 		// (async) Send commit to existing members
 		if (currentMembers.length > 0) {
 			this.#sendMlsMessage(
-				vocab.ObjectTypeMlsGroupInfo,
+				group,
+				vocab.ObjectTypeMlsPrivateMessage,
 				currentMembers,
 				commitResult.commit,
 			)
@@ -246,6 +245,7 @@ export class CodecMls {
 
 		// Send a message to the group members
 		this.#sendMlsMessage(
+			group,
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			proposal.message,
@@ -345,6 +345,7 @@ export class CodecMls {
 
 		// send the activity to all group members
 		await this.#sendMlsMessage(
+			group,
 			vocab.ObjectTypeMlsPrivateMessage,
 			activity.getArrayOfString("as", vocab.PropertyTo),
 			applicationMessage.message,
@@ -354,7 +355,7 @@ export class CodecMls {
 	}
 
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-	async #sendMlsMessage(type: string, recipients: string[], message: MlsMessage) {
+	async #sendMlsMessage(group: EncryptedGroup, type: string, recipients: string[], message: MlsMessage) {
 
 		console.log("#sendMlsMessage", type, recipients)
 
@@ -374,11 +375,13 @@ export class CodecMls {
 			actor: this.#actor.id(),
 			to: recipients,
 			instrument: this.#generatorId,
+			context: group.id,
 			object: {
 				type: type,
 				attributedTo: this.#actor.id(),
 				to: recipients,
 				content: contentBase64,
+				context: group.id,
 				mediaType: vocab.MediaTypeMLSMessage,
 				encoding: vocab.EncodingTypeBase64,
 			},
@@ -397,9 +400,12 @@ export class CodecMls {
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
 	// null is returned.
-	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
+	async receiveActivity(activity: Activity): Promise<Activity | undefined> {
 
 		console.log("CodecMls.receiveActivity called with activity:", activity.toObject())
+
+		// Expect the object to be embedded in the Activity (as MLS+ActivityPub requires)
+		const object = activity.objectAsDocument()
 
 		// Parse the message content
 		const message = object.content()
@@ -493,11 +499,47 @@ export class CodecMls {
 	}
 
 	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-	async #receiveActivity_GroupInfo(_document: Document, _message: MlsGroupInfo): Promise<undefined> {
+	async #receiveActivity_GroupInfo(document: Document, message: MlsGroupInfo): Promise<undefined> {
 
-		// var clientState: ClientState
+		// ===== DIAGNOSTIC DUMP: print ALL available data from this GroupInfo message =====
+		console.group("===== GroupInfo message received =====")
 
-		// Returning `undefined` means that the controller won't take 
+		// The raw ActivityPub document that carried this message
+		console.log("document (ActivityPub):", document.toObject())
+		console.log("document attributedTo:", document.attributedToId())
+
+		// Top-level MLS message envelope
+		console.log("mlsMessage.wireformat:", message.wireformat)
+		console.log("mlsMessage.version:", (message as any).version)
+
+		// The fully-expanded GroupInfo structure (Uint8Arrays -> hex, BigInts -> string)
+		console.log("groupInfo (deep dump):", JSON.stringify(dumpValue(message), null, 2))
+
+		// Convenience: decode the human-readable groupId
+		try {
+			console.log("groupId (decoded text):", decodeText(message.groupInfo.groupContext.groupId))
+		} catch (err) {
+			console.warn("Could not decode groupId as text:", err)
+		}
+
+		// Convenience: pull out the GroupContext fields individually
+		const ctx = message.groupInfo.groupContext
+		console.log("groupContext.epoch:", ctx.epoch)
+		console.log("groupContext.cipherSuite:", ctx.cipherSuite)
+		console.log("groupContext.protocolVersion:", (ctx as any).version ?? (ctx as any).protocolVersion)
+		console.log("groupContext.treeHash (hex):", toHex((ctx as any).treeHash))
+		console.log("groupContext.confirmedTranscriptHash (hex):", toHex((ctx as any).confirmedTranscriptHash))
+		console.log("groupContext.extensions:", dumpValue((ctx as any).extensions))
+
+		// Convenience: extensions / signer / signature on the GroupInfo itself
+		console.log("groupInfo.extensions:", dumpValue((message.groupInfo as any).extensions))
+		console.log("groupInfo.signer (leaf index):", (message.groupInfo as any).signer)
+		console.log("groupInfo.signature (hex):", toHex((message.groupInfo as any).signature))
+
+		console.groupEnd()
+		// ===== END DIAGNOSTIC DUMP =====
+
+		// Returning `undefined` means that the controller won't take
 		// any additional actions to process this message.
 		return undefined
 	}
@@ -615,9 +657,16 @@ export class CodecMls {
 
 		// Otherwise, this IS an application message, so return the decrypted JSON-LD to the controller.
 		const plaintext = decodeText(decodedMessage.message)
+		console.log(plaintext)
 
-		// Create a result object and embed additional context data
+		// Create a result object
 		const result = new Activity().fromJSON(plaintext)
+
+		// Force the context to be the group ID so malicious clients
+		// can't spoof this and trick the controller into sending messages to the wrong group.
+		result.setContext(group.id)
+		console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type())
+		console.log(result.toObject())
 
 		// Send Acknowledge message for certain kinds of activities.
 		this.#maybeSendAcknowledgement(group, result)
@@ -717,6 +766,7 @@ export class CodecMls {
 
 		// (async) Send commit to all members
 		this.#sendMlsMessage(
+			group,
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			commitResult.commit,
@@ -880,6 +930,46 @@ type incomingCommit = {
 	kind: "commit";
 	senderLeafIndex: LeafIndex | undefined;
 	proposals: ProposalWithSender[];
+}
+
+// toHex converts a Uint8Array to a hex string for logging. Returns undefined for non-arrays.
+export function toHex(bytes: Uint8Array | undefined): string | undefined {
+	if (bytes == undefined) {
+		return undefined
+	}
+	return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("")
+}
+
+// dumpValue recursively converts a value into a JSON-safe structure for logging.
+// Uint8Arrays become hex strings, BigInts become strings, and everything else is
+// walked recursively so that console.log / JSON.stringify can render the full message.
+export function dumpValue(value: any): any {
+
+	if (value == undefined) {
+		return value
+	}
+
+	if (value instanceof Uint8Array) {
+		return { __type: "Uint8Array", length: value.length, hex: toHex(value) }
+	}
+
+	if (typeof value === "bigint") {
+		return value.toString()
+	}
+
+	if (Array.isArray(value)) {
+		return value.map(dumpValue)
+	}
+
+	if (typeof value === "object") {
+		const result: Record<string, any> = {}
+		for (const key of Object.keys(value)) {
+			result[key] = dumpValue(value[key])
+		}
+		return result
+	}
+
+	return value
 }
 
 // encodeText is a shorthand for using the ts-mls TextEncoder

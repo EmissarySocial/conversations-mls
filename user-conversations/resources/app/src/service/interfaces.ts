@@ -35,7 +35,7 @@ export interface ICodec {
 	addGroupMembers(group: Group, newMembers: string[]): Promise<Group>
 	leaveGroup(group: Group): Promise<void>
 	removeGroupMember(group: Group, actorId: string): Promise<void>
-	receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined>
+	receiveActivity(activity: Activity): Promise<Activity | undefined>
 	sendActivity(group: Group, activity: Activity): Promise<string>
 }
 

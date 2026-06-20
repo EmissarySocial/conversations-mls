@@ -16,6 +16,17 @@ export const ActivityTypeUndo = "Undo"
 
 export const ActivityTypeUpdate = "Update"
 
+// Actor Types
+export const ActorTypeApplication = "Application"
+
+export const ActorTypeGroup = "Group"
+
+export const ActorTypeOrganization = "Organization"
+
+export const ActorTypePerson = "Person"
+
+export const ActorTypeService = "Service"
+
 // Context Values
 
 export const ContextActivityStreams = "https://www.w3.org/ns/activitystreams"
@@ -47,6 +58,8 @@ export const MediaTypeMLSMessage = "message/mls"
 
 export const ObjectTypeArticle = "Article"
 
+export const ObjectTypeAudio = "Audio"
+
 export const ObjectTypeHashtag = "Hashtag"
 
 export const ObjectTypeImage = "Image"
@@ -55,11 +68,13 @@ export const ObjectTypeNote = "Note"
 
 export const ObjectTypeEmissaryContext = "emissary:Context"
 
+export const ObjectTypeMlsGroupInfo = "GroupInfo"
+
 export const ObjectTypeMlsKeyPackage = "KeyPackage"
 
 export const ObjectTypeMlsPrivateMessage = "PrivateMessage"
 
-export const ObjectTypeMlsGroupInfo = "GroupInfo"
+export const ObjectTypeMlsPublicMessage = "PublicMessage"
 
 export const ObjectTypeMlsWelcome = "Welcome"
 

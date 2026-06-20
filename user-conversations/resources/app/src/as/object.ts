@@ -34,6 +34,7 @@ export class ASObject {
 
 	///////////////////////////////////
 	// Conversion methods
+	///////////////////////////////////
 
 	// withProxy sets a proxyUrl for fetching remote objects.
 	withProxy(proxyUrl: string) {
@@ -146,16 +147,20 @@ export class ASObject {
 		return JSON.stringify(this.#value)
 	}
 
+
 	///////////////////////////////////
 	// Setters
+	///////////////////////////////////
 
 	// set sets a property on the JSONLD struct with the given name and value
 	set(name: string, value: any) {
 		this.#value[name] = value
 	}
 
+
 	///////////////////////////////////
 	// Property conversion methods
+	///////////////////////////////////
 
 	get(namespace: string, property: string): any {
 		let result = this.#value[property]
@@ -220,6 +225,7 @@ export class ASObject {
 
 	///////////////////////////////////
 	// Properties
+	///////////////////////////////////
 
 	type(): string {
 		return this.getString("as", "type")
@@ -233,25 +239,88 @@ export class ASObject {
 		return this.getString("as", "id")
 	}
 
-	/*
 	///////////////////////////////////
-	// Additional ActivityStreams objects
+	// Meta-Data
+	///////////////////////////////////
 
-	async newActor(value: any): Promise<Actor> {
-		return new Actor().withProxy(this.#proxyUrl).fromValue(value)
+	// isActivity returns TRUE if this object is a known ActivityStreams Activity type
+	isActivity(): boolean {
+
+		switch (this.type()) {
+
+			// Default Activity Vocabulary types
+			case vocab.ActivityTypeCreate:
+			case vocab.ActivityTypeDelete:
+			case vocab.ActivityTypeLeave:
+			case vocab.ActivityTypeLike:
+			case vocab.ActivityTypeUndo:
+			case vocab.ActivityTypeUpdate:
+
+			// Extended MLS types
+			case vocab.ActivityTypeAcknowledge:
+			case vocab.ActivityTypeFailure:
+				return true
+		}
+
+		return false
 	}
 
-	async newActivity(value: any): Promise<Activity> {
-		return new Activity().withProxy(this.#proxyUrl).fromValue(value)
+	// isDocument returns TRUE if this object is a known ActivityStreams Document type
+	isDocument(): boolean {
+
+		switch (this.type()) {
+
+			// Default Activity Vocabulary types
+			case vocab.ObjectTypeArticle:
+			case vocab.ObjectTypeAudio:
+			case vocab.ObjectTypeHashtag:
+			case vocab.ObjectTypeImage:
+			case vocab.ObjectTypeNote:
+
+			// Extended MLS types
+			case vocab.ObjectTypeMlsGroupInfo:
+			case vocab.ObjectTypeMlsKeyPackage:
+			case vocab.ObjectTypeMlsWelcome:
+			case vocab.ObjectTypeMlsPrivateMessage:
+			case vocab.ObjectTypeMlsPublicMessage:
+
+			// Extended Emissary types
+			case vocab.ObjectTypeEmissaryContext:
+				return true
+		}
+
+		return false
 	}
 
-	async newCollection(value: any): Promise<Collection> {
-		return new Collection().withProxy(this.#proxyUrl).fromValue(value)
+
+	// isActor returns TRUE if this object is a known ActivityStreams Actor type
+	isActor(): boolean {
+		switch (this.type()) {
+
+			// Default Activity Vocabulary types
+			case vocab.ActorTypeApplication:
+			case vocab.ActorTypeGroup:
+			case vocab.ActorTypeOrganization:
+			case vocab.ActorTypePerson:
+			case vocab.ActorTypeService:
+				return true
+		}
+
+		return false
 	}
 
-	async newDocument(value: any): Promise<Document> {
-		return new Document().withProxy(this.#proxyUrl).fromValue(value)
+	// notActivity returns TRUE if this object is NOT a known ActivityStreams Activity type
+	notActivity(): boolean {
+		return !this.isActivity()
 	}
-	*/
 
+	// notDocument returns TRUE if this object is NOT a known ActivityStreams Document type
+	notDocument(): boolean {
+		return !this.isDocument()
+	}
+
+	// notActor returns TRUE if this object is NOT a known ActivityStreams Actor type
+	notActor(): boolean {
+		return !this.isActor()
+	}
 }

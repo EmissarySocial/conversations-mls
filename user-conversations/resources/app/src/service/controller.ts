@@ -22,7 +22,6 @@ import { Message, NewMessage } from "../model/message"
 // Services
 import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver, type IWebFinger } from "./interfaces"
 import { CodecMls } from "./codecMls"
-import { ActivityPubAuthenticationService } from "./authService"
 import { CodecPlaintext } from "./codecPlaintext"
 import { WebFinger } from "./webfinger"
 import { emojiKey } from "./emojikeys"
@@ -198,7 +197,6 @@ export class Controller {
 				// Load async dependencies: ciphersuite and keyPackage
 				const cipherSuite = await cipherSuiteImplementation()
 				const keyPackage = await this.loadOrCreateKeyPackage()
-				const authenticationService = new ActivityPubAuthenticationService(this.#directory)
 
 				// Create the MLS encoder service
 				this.#codecMls = new CodecMls(
@@ -206,7 +204,6 @@ export class Controller {
 					this.#database,
 					this.#delivery,
 					this.#directory,
-					authenticationService,
 					cipherSuite,
 					keyPackage.publicKeyPackage,
 					keyPackage.privateKeyPackage,
@@ -1223,10 +1220,10 @@ export class Controller {
 		const codec = this.#getCodecForGroup(group)
 		const object = await codec.encodeMessage(group, message)
 
-		// The server locates the existing object to update by its "id", so the Update's
-		// object MUST carry the message's (server-assigned) id. (Create lets the server
-		// assign the id; Update must reference the one it already gave us.)
-		;(object as Record<string, unknown>)["id"] = message.id
+			// The server locates the existing object to update by its "id", so the Update's
+			// object MUST carry the message's (server-assigned) id. (Create lets the server
+			// assign the id; Update must reference the one it already gave us.)
+			(object as Record<string, unknown>)["id"] = message.id
 
 		// Create an "Update" activity
 		const activity = new Activity({
@@ -1412,41 +1409,33 @@ export class Controller {
 	// Receiving Activities
 	//////////////////////////////////////////
 
-	receiveActivity = async (activity: Activity, retryCount: number = 0) => {
+	receiveActivity = async (activity: Activity, retryCount: number = 0): Promise<void> => {
 
 		console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount)
 
-		// Resolve the activity's object into a Document. Leave/Delete reference their
-		// object by bare URL and never use the resolved Document (their handlers and the
-		// codec work from objectId()), so we skip resolving it — that URL is often
-		// unreachable anyway (e.g. a reflected "Leave" for a group we just left, whose
-		// collection the server now 400s). For every other type we resolve it (usually
-		// embedded, so no network), but still tolerate a failed fetch by falling back to
-		// an empty Document rather than crashing the whole pipeline.
-		const object = await this.#resolveActivityObject(activity)
-
 		// Find the codec for this activity
-		const codec = this.#getCodecForActivity(object)
+		const codec = this.#getCodecForActivity(activity)
 
 		try {
 
 			// Process the activity through the codec. This will handle decryption and verification of
 			// the activity, and will throw an error if the activity is invalid or cannot be processed
-			const decodedValue = await codec.receiveActivity(activity, object)
+			const decodedActivity = await codec.receiveActivity(activity)
 
-			// If this is null, the Codec is saying it has already done all the work,
-			// and there's nothing else for US to process. So just exit.
-			if (decodedValue == null) {
+			// If the codec reports a NO-OP, then all message processing has already been handled.
+			if (decodedActivity == undefined) {
 				return
 			}
 
-			// Otherwise, use the decodedValue as the activity and continue processing
-			activity = decodedValue
+			// Otherwise, continue processing using the decodedActivity
+			activity = decodedActivity
 
 		} catch (error) {
 
-			if (retryCount < 120) { // retry every second for up to 2 minutes
-				console.log("Retrying error processing activity with codec:", error)
+			// retry every second for up to 2 minutes
+			// This should be moved into a better retry queue
+			if (retryCount < 120) {
+				console.log("Retrying decoding error: ", error)
 				setTimeout(() => {
 					this.receiveActivity(activity, retryCount + 1)
 				}, 1000)
@@ -1457,25 +1446,28 @@ export class Controller {
 			return
 		}
 
-		// Part 2: Route the activity based on its type, and apply changes to the 
-		// local database and UX as needed.
+		return this.#receiveActivity_Internal(activity)
+	}
+
+	// #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
+	readonly #receiveActivity_Internal = async (activity: Activity, retryCount = 0): Promise<void> => {
+
+		// Route the activity based on its type, and apply changes to the local database and UX as needed.
 		try {
 
+			// NOTE: each handler is `return await`ed (not bare `return`) so that a
+			// rejected handler promise is caught by the try/catch below rather than
+			// escaping this method.
 			switch (activity.type()) {
 
 				case vocab.ActivityTypeAcknowledge:
 					return await this.#receiveActivity_Acknowledge(activity)
 
 				case vocab.ActivityTypeCreate:
-
-					if (object.type() == vocab.ObjectTypeMlsKeyPackage) {
-						return
-					}
-
-					return await this.#receiveActivity_CreateMessage(codec, activity)
+					return await this.#receiveActivity_Create(activity)
 
 				case vocab.ActivityTypeDelete:
-					return await this.#receiveActivity_DeleteMessage(activity)
+					return await this.#receiveActivity_Delete(activity)
 
 				case vocab.ActivityTypeFailure:
 					return await this.#receiveActivity_Failure(activity)
@@ -1490,21 +1482,17 @@ export class Controller {
 					return await this.#receiveActivity_Undo(activity)
 
 				case vocab.ActivityTypeUpdate:
+					return await this.#receiveActivity_Update(activity)
 
-					// Group updates are handled differently than message updates, so we need to check the object type to route properly.
-					if (object.type() == vocab.ObjectTypeEmissaryContext) {
-						return await this.#receiveActivity_UpdateContext(activity)
-					}
-
-					return await this.#receiveActivity_UpdateMessage(activity)
-
+				// If no *recognized* activity is present, then process this as an "implicit Create"
 				default:
-					return
+					return await this.#receiveActivity_Unknown(activity)
 			}
 
 		} catch (error) {
+			console.error("Error processing activity:", error)
 
-			console.error("Error receiving activity:", error)
+			// TODO: Restore this "Failure" response?
 			/*
 			this.#delivery.sendActivity({
 				actor: this.actorId(),
@@ -1515,58 +1503,55 @@ export class Controller {
 		}
 	}
 
-	// resolveActivityObject returns the activity's "object" as a Document. Leave and
-	// Delete reference their object by bare URL and never read the resolved Document
-	// (they use objectId()), so we skip resolving it — and avoid a doomed fetch of a
-	// URL the server may reject. For other types, resolve it (usually embedded, so no
-	// network), tolerating a failed fetch with an empty Document.
-	readonly #resolveActivityObject = async (activity: Activity): Promise<Document> => {
-
-		switch (activity.type()) {
-			case vocab.ActivityTypeLeave:
-			case vocab.ActivityTypeDelete:
-				return new Document({})
-		}
-
-		try {
-			return await activity.object()
-		} catch (error) {
-			console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error)
-			return new Document({})
-		}
-	}
-
+	// #receiveActivity_Acknowledge processes "Acknowledge" activities
 	readonly #receiveActivity_Acknowledge = async (activity: Activity) => {
 
 		// Find the message referred in the activity
-		const message = await this.#database.loadMessage(activity.objectId())
+		let message = await this.#database.loadMessage(activity.objectId())
 
 		// RULE: Verify that the message exists before trying to delete it
 		if (message == undefined) {
 			return
 		}
 
-		// If we have not already received an acknowledgement from this actor, then add it to the "received" list for this message
-		if (!message.received.includes(activity.actorId())) {
-			message.received.push(activity.actorId())
-			await this.#database.saveMessage(message)
-			this.loadMessages()
+		// If we have already received an acknowledgement from this actor, then exit 
+		if (message.received.includes(activity.actorId())) {
+			return
 		}
+
+		// Add the message sender to the "received" list for this message
+		message.received.push(activity.actorId())
+		await this.#database.saveMessage(message)
+
+		// Refresh the UX
+		this.loadMessages()
 	}
 
-	readonly #receiveActivity_CreateMessage = async (codec: ICodec, activity: Activity) => {
+	// #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
+	readonly #receiveActivity_Create = async (activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
 
 		// RULE: The message must be attributed to the actor who sent the activity
 		if (object.attributedToId() != activity.actorId()) {
-			throw new Error("Decrypted activity actor must match object's attributedTo")
+			console.error("Decrypted activity actor must match object's attributedTo")
+			console.error(activity.toObject())
+			return
+		}
+
+		// Special rules to create KeyPackages
+		if (object.type() == vocab.ObjectTypeMlsKeyPackage) {
+			return this.#receiveActivity_Create_KeyPackage(activity)
 		}
 
 		// Locate the group assigned to this activity
-		const groupId = activity.context()
-		const group = await codec.getGroup(groupId)
+		const groupId = await activity.calcGroupId()
+		const group = await this.#database.loadGroup(groupId)
+
+		if (group == undefined) {
+			throw new Error("Group not found for incoming message: " + activity.toJSON())
+		}
 
 		// Create a new message record in the database for this incoming message.
 		const sentByMe = (object.attributedToId() == this.actorId())
@@ -1585,7 +1570,7 @@ export class Controller {
 		})
 
 		if (object.attachment() != "") {
-			message.attachments = [object.attachment()]
+			message.attachments = [object.attachment()] // TODO: support multiple attachments
 		}
 
 		// Save the message to the database
@@ -1624,13 +1609,25 @@ export class Controller {
 		console.log("Saving new message to group...", group, message)
 
 		// Update the group
-		await this.saveGroup(group)
+		return this.saveGroup(group)
+	}
+
+	// #receiveActivity_Create_KeyPackage will alert the user that a new KeyPackage has been created on one of their other devices.
+	readonly #receiveActivity_Create_KeyPackage = async (activity: Activity) => {
+
+		// RULE: Do not worry about other people's KeyPackages.
+		if (activity.actorId() != this.actorId()) {
+			return
+		}
+
+		// Here is where we'll do the work.... later.
+		console.log("Received KeyPackage activity:", activity.toObject())
 	}
 
 	readonly #receiveActivity_Failure = async (activity: Activity) => {
 	}
 
-	readonly #receiveActivity_DeleteMessage = async (activity: Activity) => {
+	readonly #receiveActivity_Delete = async (activity: Activity) => {
 
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
@@ -1719,31 +1716,15 @@ export class Controller {
 		}
 	}
 
-	readonly #receiveActivity_UpdateContext = async (activity: Activity) => {
-
-		const object = await activity.object()
-
-		const group = await this.#database.loadGroup(object.id())
-
-		if (group == undefined) {
-			return
-		}
-
-		group.name = object.name()
-		group.summary = object.summary()
-		group.tags = object.getArray("as", "tag")
-		group.unread = object.getBoolean("emissary", "unread")
-		group.lastMessage = object.getString("emissary", "lastMessage")
-		group.lastMessageId = object.getString("emissary", "lastMessageId")
-		this.setGroupState(group, object.getString("emissary", "stateId"))
-
-		await this.saveGroup(group)
-	}
-
-	readonly #receiveActivity_UpdateMessage = async (activity: Activity) => {
+	readonly #receiveActivity_Update = async (activity: Activity) => {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
+
+		// Special case for updating Emissary "context" types (group definitions)
+		if (object.type() == vocab.ObjectTypeEmissaryContext) {
+			return await this.#receiveActivity_UpdateContext(activity, object)
+		}
 
 		// RULE: only the original sender can update a message
 		if (object.attributedToId() != activity.actorId()) {
@@ -1774,13 +1755,74 @@ export class Controller {
 		message.updateDate = Date.now()
 
 		// Save the message to the database
-		await this.#database.saveMessage(message)
+		return this.#database.saveMessage(message)
 	}
 
+	// receiveActivity_UpdateContext processes an incoming "Update" activity that contains a group definition update.
+	readonly #receiveActivity_UpdateContext = async (activity: Activity, document: Document) => {
+
+		// RULE: only accept this message from myself. Other people cannot change my group definitions
+		if (activity.actorId() != this.#actorId) {
+			throw new Error("Decrypted activity actor must match document's attributedTo")
+		}
+
+		// Load the group from the database
+		const group = await this.#database.loadGroup(document.id())
+
+		if (group == undefined) {
+			return
+		}
+
+		// Update the group metadata from the Object
+		group.name = document.name()
+		group.summary = document.summary()
+		group.tags = document.getArray("as", "tag")
+		group.unread = document.getBoolean("emissary", "unread")
+		group.lastMessage = document.getString("emissary", "lastMessage")
+		group.lastMessageId = document.getString("emissary", "lastMessageId")
+		this.setGroupState(group, document.getString("emissary", "stateId"))
+
+		// Save changes
+		return this.saveGroup(group)
+	}
+
+	// #receiveActivity_Unknown processes unrecognized activities, attempting to treat them as an implicit "Create"
+	readonly #receiveActivity_Unknown = async (activity: Activity) => {
+
+		// RULE: Only allow implicit Create for "Document" values
+		if (activity.notDocument()) {
+			return
+		}
+
+		// Populate a Document from this, since that's what it is
+		let document = new Document(activity.toObject())
+
+		console.log("Implicit Create")
+		console.log(document.toObject())
+
+		// Process this like an implicit "Create" activity.
+		return this.#receiveActivity_Create(new Activity({
+			type: vocab.ActivityTypeCreate,
+			context: document.context(),
+			actor: document.attributedToId(),
+			to: await document.to(),
+			object: document.toObject(),
+		}))
+	}
 
 	//////////////////////////////////////////
-	// Other Helpers
+	// CODECs
 	//////////////////////////////////////////
+
+	// getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
+	readonly #getCodecForActivity = (activity: Activity): ICodec => {
+		return this.#getCodec(activity.isMlsActivity())
+	}
+
+	// getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
+	readonly #getCodecForGroup = (group: Group): ICodec => {
+		return this.#getCodec(groupIsEncrypted(group))
+	}
 
 	// getCodec returns the appropriate codec (Plaintext or MLS) based on the "encrypted" parameter.
 	readonly #getCodec = (encrypted: boolean): ICodec => {
@@ -1798,15 +1840,10 @@ export class Controller {
 		return this.#codecPlaintext
 	}
 
-	// getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
-	readonly #getCodecForGroup = (group: Group): ICodec => {
-		return this.#getCodec(groupIsEncrypted(group))
-	}
 
-	// getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
-	readonly #getCodecForActivity = (object: Document): ICodec => {
-		return this.#getCodec(object.isMLSMessage())
-	}
+	//////////////////////////////////////////
+	// Other Helpers
+	//////////////////////////////////////////
 
 	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
 	// internal state and member list.

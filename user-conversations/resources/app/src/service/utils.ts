@@ -1,4 +1,3 @@
-
 import DOMPurify from "dompurify"
 
 // htmlToText converts an HTML string into plain text using the browser's own
@@ -147,7 +146,7 @@ async function linkifyMentions(text: string, resolveMention?: MentionResolver): 
 		const prefix = match[1]!
 		const user = match[2]!
 		const href = hrefs[index]!
-		const start = match.index!
+		const start = match.index
 
 		result += text.slice(lastIndex, start)
 

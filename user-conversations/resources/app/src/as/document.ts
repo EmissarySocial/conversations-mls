@@ -90,8 +90,8 @@ export class Document extends ASObject {
 		return this.getString("mls", "encoding")
 	}
 
-	// isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
-	isMLSMessage = () => {
+	// isMlsDocument returns TRUE if this document matches the requirements for being an MLS message
+	isMlsDocument = () => {
 
 		if (this.mediaType() != vocab.MediaTypeMLSMessage) {
 			return false

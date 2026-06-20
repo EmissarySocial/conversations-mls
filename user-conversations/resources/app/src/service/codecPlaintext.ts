@@ -1,13 +1,12 @@
 import { Activity } from "../as/activity"
-import { Document } from "../as/document"
 import * as vocab from "../as/vocab"
 
 import { type Group, NewGroup } from "../model/group"
 import { type Message } from "../model/message"
 import { newId, uniqueStrings } from "../model/utils"
-import type { IDatabase, IDelivery } from "./interfaces"
+import type { ICodec, IDatabase, IDelivery } from "./interfaces"
 
-export class CodecPlaintext {
+export class CodecPlaintext implements ICodec {
 
 	readonly #database: IDatabase
 	readonly #delivery: IDelivery
@@ -124,39 +123,113 @@ export class CodecPlaintext {
 		return await this.#delivery.sendActivity(activity)
 	}
 
+	// addMentions formats an Activity to include a "Mention" tag for each group member.
+	#addMentions(activity: Activity, members: string[]): void {
+
+		// Only add mentions to "Create" and "Update" activities
+		const allowedActivities = [vocab.ActivityTypeCreate, vocab.ActivityTypeUpdate]
+
+		if (!allowedActivities.includes(activity.type())) {
+			return
+		}
+
+		// Get the "object" of the activity 
+		let object = activity.objectAsMap()
+
+		if (object[vocab.PropertyType] != vocab.ObjectTypeNote) {
+			return
+		}
+
+		// Add Mentions for each of the group members
+		object[vocab.PropertyTag] = members.map(member => ({
+			type: "Mention",
+			href: member,
+		}))
+
+		// Put the "object" back into the activity for the caller to use
+		activity.set(vocab.PropertyObject, object)
+	}
+
 
 	//////////////////////////////////////////
 	// Receiving Messages
 	//////////////////////////////////////////
 
 	// receiveActivity processes an incoming activity and creates/finds the correct group for it.
-	async receiveActivity(activity: Activity, object: Document): Promise<Activity | undefined> {
+	async receiveActivity(activity: Activity): Promise<Activity | undefined> {
 
-		// SPECIAL CASE: if this is a "Leave" activity, then check to see if we have
-		// the referenced group locally. If not, then this is likely a reflected "Leave"
-		// for a group we just left — so just return so the controller can no-op.
-		if (activity.type() == vocab.ActivityTypeLeave) {
-			const group = await this.#database.loadGroup(activity.objectId())
-			if (group == undefined) {
-				return activity
+		switch (activity.type()) {
+
+			// These activities are ignored by this codec. Return NO-OP.
+			case vocab.ActivityTypeAcknowledge:
+			case vocab.ActivityTypeFailure:
+				return undefined
+
+			// These activities reference a message by id.
+			// verify we have this message defined already.
+			case vocab.ActivityTypeDelete:
+			case vocab.ActivityTypeLike:
+				return this.#receiveActivity_ValidateMessage(activity)
+
+			// These activities reference a group by id.
+			// verify we have this group defined already.
+			case vocab.ActivityTypeLeave:
+				return this.#receiveActivity_ValidateGroup(activity)
+
+			// These activities may create or update groups.
+			case vocab.ActivityTypeCreate:
+			case vocab.ActivityTypeUpdate: {
+				return this.#receiveActivity_CreateOrUpdateGroup(activity)
 			}
+
+			// All other activity types (including "implicit Create") pass through to be handled by the controller
+			case vocab.ActivityTypeUndo:
+			default:
+				return activity
+		}
+	}
+
+	// receiveActivity_ValidateMessage passes through the activity IF its referenced message exists in our database.
+	async #receiveActivity_ValidateMessage(activity: Activity): Promise<Activity | undefined> {
+
+		// Try to find the referenced message. If not defined, then NO-OP.
+		const messageId = activity.objectId()
+		const message = await this.#database.loadMessage(messageId)
+
+		// If not found, then NO-OP
+		if (message == undefined) {
+			return undefined
 		}
 
-		// SPECIAL CASE: If this activity references a message that we don't have locally
-		// (for instance, attempting to Like/Delete/Undo a message that we don't have)
-		// then just return the activity so the controller can no-op.
-		const referencesMessage = this.#referencesExistingMessage(activity, object)
-
-		if (referencesMessage) {
-			const messageId = this.#referencedMessageId(activity, object)
-			const message = await this.#database.loadMessage(messageId)
-			if (message == undefined) {
-				return activity
-			}
+		// If the group is undefined or invalid, then NO-OP
+		if (await this.#notGroupValid(message.groupId)) {
+			return undefined
 		}
 
-		const groupId = await this.#findGroupForActivity(activity, object)
+		// Pass through the activity
+		return activity
+	}
 
+	// receiveActivity_ValidateGroup passes through the activity IF its referenced group exists in our database.
+	async #receiveActivity_ValidateGroup(activity: Activity): Promise<Activity | undefined> {
+
+		// If this group is undefined or invalid, then NO-OP
+		if (await this.#notGroupValid(activity.objectId())) {
+			return undefined
+		}
+
+		// Pass through the activity.
+		return activity
+	}
+
+	// #receiveActivity_CreateOrUpdatGroup processes an activity, guaranteeing that:
+	// 1) the referenced group exists (creating it if necessary)
+	// 2) all receivers are members of the group (adding them if necessary)
+	async #receiveActivity_CreateOrUpdateGroup(activity: Activity): Promise<Activity | undefined> {
+
+		// Locate the group: a reply inherits the group of the message it replies to;
+		// otherwise fall back to the context (activity, then object).
+		const groupId = await this.#calcGroupId(activity)
 		let group = await this.#database.loadGroup(groupId)
 
 		// If the group was not found, then just create a new one.
@@ -177,11 +250,9 @@ export class CodecPlaintext {
 		// If we need to add new members to the group, then save the changes. Skip this
 		// for Like/Delete/Undo: those act on an existing message and must not change
 		// who belongs to the group (the liker/deleter is not necessarily a member).
-		if (!referencesMessage) {
-			const newMembers = this.#findNewGroupMembers(group, activity)
-			if (newMembers.length > 0) {
-				group.members = uniqueStrings([...group.members, ...newMembers])
-			}
+		const newMembers = this.#findNewGroupMembers(group, activity)
+		if (newMembers.length > 0) {
+			group.members = uniqueStrings([...group.members, ...newMembers])
 		}
 
 		// Save the group if any changes were made
@@ -190,92 +261,62 @@ export class CodecPlaintext {
 		// Guarantee that the Activity now uses the "correct" Group
 		activity.setContext(group.id)
 
-		console.log("Plaintext.receiveActivity:", group, activity)
-
 		// Done.
+		console.log("Plaintext.receiveActivity_CreateOrUpdateGroup:", group, activity)
 		return activity
 	}
 
-	async #findGroupForActivity(activity: Activity, object: Document): Promise<string> {
+	// #calcGroupId determines which group an incoming Create/Update belongs to.
+	// Unlike the shared Activity.calcGroupId(), a reply (object.inReplyTo) inherits the
+	// group of the message it replies to. This lookup is intentionally plaintext-only.
+	async #calcGroupId(activity: Activity): Promise<string> {
 
-		console.log("#findGroupForActivity", activity)
+		// A reply inherits the group of the message it replies to, IF we have that message locally.
+		const object = await activity.object()
+		const inReplyToId = object.inReplyToId()
 
-		switch (activity.type()) {
-
-			// "Leave" activities use the "object" of the activity as the group ID.
-			case vocab.ActivityTypeLeave: {
-				console.log("Leave activity")
-				return activity.objectId()
-			}
-
-			// "Like", "Delete", and "Undo" activities reference a message by id; the
-			// group is that message's group. receiveActivity has already verified the
-			// referenced message exists locally before reaching here.
-			case vocab.ActivityTypeLike:
-			case vocab.ActivityTypeDelete:
-			case vocab.ActivityTypeUndo: {
-				console.log("Like/Delete/Undo activity")
-				const message = await this.#database.loadMessage(this.#referencedMessageId(activity, object))
-				return message.groupId
-			}
-
-			// "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
-			case vocab.ActivityTypeCreate:
-			case vocab.ActivityTypeUpdate: {
-
-				console.log("Create/Update activity", object.inReplyToId(), object.context(), activity.context())
-				// If this is a "reply" then use the same group as the parent message
-				if (object.inReplyToId() != "") {
-					console.log("Found in reply")
-					let message = await this.#database.loadMessage(object.inReplyToId())
-					return message.groupId
-				}
-
-				// If the OBJECT defines a context, then use that
-				if (object.context() != "") {
-					console.log("Found object context")
-					return object.context()
-				}
-
-				// If the ACTIVITY defines a context, then use that
-				if (activity.context() != "") {
-					console.log("Found activity context")
-					return activity.context()
-				}
-
-				// If none is found, then create a new group for this message.
-				console.log("Not found, creating new group")
-				return newId()
+		if (inReplyToId != "") {
+			const parent = await this.#database.loadMessage(inReplyToId)
+			if (parent != undefined) {
+				return parent.groupId
 			}
 		}
 
-		throw new Error("Unrecognized activity type " + activity.type())
+		// Otherwise, fall back to the context (activity, then object).
+		const groupId = await activity.calcGroupId()
+
+		if (groupId != "") {
+			return groupId
+		}
+
+		// If no group could be determined, then start a new group.
+		return newId()
 	}
 
-	// referencesExistingMessage reports whether this activity acts on a message that
-	// must already exist (Like/Delete/Undo) — as opposed to Create/Update, which may
-	// establish a new message and group. Used to decide whether a missing referenced
-	// message means "no-op" rather than "create a group".
-	#referencesExistingMessage(activity: Activity, _object: Document): boolean {
-		switch (activity.type()) {
-			case vocab.ActivityTypeLike:
-			case vocab.ActivityTypeDelete:
-			case vocab.ActivityTypeUndo:
-				return true
-			default:
-				return false
+	// #isGroupValid returns TRUE if the given groupId references a valid PLAINTEXT group in our database.
+	async #isGroupValid(groupId: string): Promise<boolean> {
+
+		// Locate the group in the database
+		const group = await this.#database.loadGroup(groupId)
+
+		// If not found, then NO-OP
+		if (group == undefined) {
+			return false
 		}
+
+		// Confirm that the group is a PLAINTEXT group.
+		if (group.codec != "PLAINTEXT") {
+			console.error("Modification attempted on group that is not a PLAINTEXT group.", group)
+			return false
+		}
+
+		// Otherwise, group is valid
+		return true
 	}
 
-	// referencedMessageId returns the id of the message a Like/Delete/Undo acts on.
-	// For Like/Delete the activity's "object" is the message id directly; for Undo
-	// the activity's "object" is the inner activity (e.g. a Like) whose own "object"
-	// is the message id.
-	#referencedMessageId(activity: Activity, object: Document): string {
-		if (activity.type() == vocab.ActivityTypeUndo) {
-			return object.getString("as", vocab.PropertyObject)
-		}
-		return activity.objectId()
+	// #notGroupValid returns TRUE if the group is undefined, or is not a PLAINTEXT group
+	async #notGroupValid(groupId: string): Promise<boolean> {
+		return !(await this.#isGroupValid(groupId))
 	}
 
 	// findNewGroupMembers returns the actors involved in this activity who are not
@@ -304,31 +345,5 @@ export class CodecPlaintext {
 
 		// Success
 		return plaintextGroup
-	}
-
-	#addMentions(activity: Activity, members: string[]): void {
-
-		// Only add mentions to "Create" and "Update" activities
-		const allowedActivities = [vocab.ActivityTypeCreate, vocab.ActivityTypeUpdate]
-
-		if (!allowedActivities.includes(activity.type())) {
-			return
-		}
-
-		// Get the "object" of the activity 
-		let object = activity.objectAsMap()
-
-		if (object[vocab.PropertyType] != vocab.ObjectTypeNote) {
-			return
-		}
-
-		// Add Mentions for each of the group members
-		object[vocab.PropertyTag] = members.map(member => ({
-			type: "Mention",
-			href: member,
-		}))
-
-		// Put the "object" back into the activity for the caller to use
-		activity.set(vocab.PropertyObject, object)
 	}
 }
