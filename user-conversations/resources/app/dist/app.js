@@ -19454,16 +19454,26 @@
   var ActivityTypeFailure = "Failure";
   var ActivityTypeUndo = "Undo";
   var ActivityTypeUpdate = "Update";
+  var ActorTypeApplication = "Application";
+  var ActorTypeGroup = "Group";
+  var ActorTypeOrganization = "Organization";
+  var ActorTypePerson = "Person";
+  var ActorTypeService = "Service";
   var ContextActivityStreams = "https://www.w3.org/ns/activitystreams";
   var ContextMLS = "https://purl.archive.org/socialweb/mls";
   var CoreTypeOrderedCollection = "OrderedCollection";
   var EncodingTypeBase64 = "base64";
   var MediaTypeMLSMessage = "message/mls";
+  var ObjectTypeArticle = "Article";
+  var ObjectTypeAudio = "Audio";
+  var ObjectTypeHashtag = "Hashtag";
+  var ObjectTypeImage = "Image";
   var ObjectTypeNote = "Note";
   var ObjectTypeEmissaryContext = "emissary:Context";
+  var ObjectTypeMlsGroupInfo = "GroupInfo";
   var ObjectTypeMlsKeyPackage = "KeyPackage";
   var ObjectTypeMlsPrivateMessage = "PrivateMessage";
-  var ObjectTypeMlsGroupInfo = "GroupInfo";
+  var ObjectTypeMlsPublicMessage = "PublicMessage";
   var ObjectTypeMlsWelcome = "Welcome";
   var PropertyActor = "actor";
   var PropertyAttachment = "attachment";
@@ -19654,6 +19664,7 @@
     }
     ///////////////////////////////////
     // Conversion methods
+    ///////////////////////////////////
     // withProxy sets a proxyUrl for fetching remote objects.
     withProxy(proxyUrl) {
       this.#proxyUrl = proxyUrl;
@@ -19737,12 +19748,14 @@
     }
     ///////////////////////////////////
     // Setters
+    ///////////////////////////////////
     // set sets a property on the JSONLD struct with the given name and value
     set(name, value) {
       this.#value[name] = value;
     }
     ///////////////////////////////////
     // Property conversion methods
+    ///////////////////////////////////
     get(namespace, property) {
       let result = this.#value[property];
       if (result != void 0) {
@@ -19792,6 +19805,7 @@
     }
     ///////////////////////////////////
     // Properties
+    ///////////////////////////////////
     type() {
       return this.getString("as", "type");
     }
@@ -19801,26 +19815,72 @@
     id() {
       return this.getString("as", "id");
     }
-    /*
-    	///////////////////////////////////
-    	// Additional ActivityStreams objects
-    
-    	async newActor(value: any): Promise<Actor> {
-    		return new Actor().withProxy(this.#proxyUrl).fromValue(value)
-    	}
-    
-    	async newActivity(value: any): Promise<Activity> {
-    		return new Activity().withProxy(this.#proxyUrl).fromValue(value)
-    	}
-    
-    	async newCollection(value: any): Promise<Collection> {
-    		return new Collection().withProxy(this.#proxyUrl).fromValue(value)
-    	}
-    
-    	async newDocument(value: any): Promise<Document> {
-    		return new Document().withProxy(this.#proxyUrl).fromValue(value)
-    	}
-    	*/
+    ///////////////////////////////////
+    // Meta-Data
+    ///////////////////////////////////
+    // isActivity returns TRUE if this object is a known ActivityStreams Activity type
+    isActivity() {
+      switch (this.type()) {
+        // Default Activity Vocabulary types
+        case ActivityTypeCreate:
+        case ActivityTypeDelete:
+        case ActivityTypeLeave:
+        case ActivityTypeLike:
+        case ActivityTypeUndo:
+        case ActivityTypeUpdate:
+        // Extended MLS types
+        case ActivityTypeAcknowledge:
+        case ActivityTypeFailure:
+          return true;
+      }
+      return false;
+    }
+    // isDocument returns TRUE if this object is a known ActivityStreams Document type
+    isDocument() {
+      switch (this.type()) {
+        // Default Activity Vocabulary types
+        case ObjectTypeArticle:
+        case ObjectTypeAudio:
+        case ObjectTypeHashtag:
+        case ObjectTypeImage:
+        case ObjectTypeNote:
+        // Extended MLS types
+        case ObjectTypeMlsGroupInfo:
+        case ObjectTypeMlsKeyPackage:
+        case ObjectTypeMlsWelcome:
+        case ObjectTypeMlsPrivateMessage:
+        case ObjectTypeMlsPublicMessage:
+        // Extended Emissary types
+        case ObjectTypeEmissaryContext:
+          return true;
+      }
+      return false;
+    }
+    // isActor returns TRUE if this object is a known ActivityStreams Actor type
+    isActor() {
+      switch (this.type()) {
+        // Default Activity Vocabulary types
+        case ActorTypeApplication:
+        case ActorTypeGroup:
+        case ActorTypeOrganization:
+        case ActorTypePerson:
+        case ActorTypeService:
+          return true;
+      }
+      return false;
+    }
+    // notActivity returns TRUE if this object is NOT a known ActivityStreams Activity type
+    notActivity() {
+      return !this.isActivity();
+    }
+    // notDocument returns TRUE if this object is NOT a known ActivityStreams Document type
+    notDocument() {
+      return !this.isDocument();
+    }
+    // notActor returns TRUE if this object is NOT a known ActivityStreams Actor type
+    notActor() {
+      return !this.isActor();
+    }
   };
 
   // src/as/document.ts
@@ -19891,8 +19951,8 @@
     encoding = () => {
       return this.getString("mls", "encoding");
     };
-    // isMLSMessage returns TRUE if this document matches the requirements for being an MLS message
-    isMLSMessage = () => {
+    // isMlsDocument returns TRUE if this document matches the requirements for being an MLS message
+    isMlsDocument = () => {
       if (this.mediaType() != MediaTypeMLSMessage) {
         return false;
       }
@@ -20109,56 +20169,75 @@
     // Property getters
     ///////////////////////////////////
     // actorId returns the string value of the "actor" property (which may be a URL or an embedded object)
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-actor
     actorId = () => {
       return this.getString("as", PropertyActor);
     };
     // actor returns the value of the "actor" property
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-actor
     actor = async () => {
       const actor = this.get("as", PropertyActor);
       return loadActor(actor);
     };
     // content returns the string value of the "content" property.
-    // Rarely used, except for "Like" activities with emoji content.
+    // Rarely used in activities, except for "Like" activities with emoji content.
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-content
     content = () => {
       return this.getString("as", "content");
     };
     // context returns the message context (not @context) property for this activity
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-context
     context = () => {
       return this.getString("as", PropertyContext);
     };
+    // instrument returns the string value of the "instrument" property
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-instrument
     instrument = () => {
       return this.getString("as", PropertyInstrument);
     };
     // objectId returns the string value of the "object" property (which may be a URL or an embedded object)
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     objectId = () => {
       return this.getString("as", PropertyObject);
     };
     // object returns the value of the "object" property, which may be either a string URL or an embedded object
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     object = async () => {
       const object = this.get("as", PropertyObject);
       return loadDocument(object, this.getProxyUrl());
     };
     // objectAsActivity returns the value of the "object" property as an Activity-typed object.
     // this is useful for "Undo" activities, whose "object" is itself an activity that should be undone.
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     objectAsActivity = async () => {
       const object = this.get("as", PropertyObject);
       return loadActivity(object, this.getProxyUrl());
     };
+    // objectAsDocument returns the value of the "object" property as a Document.
+    // It DOES NOT trigger a network fetch if the object is only a string ID, so it is useful in synchronous code.
+    objectAsDocument = () => {
+      return new Document(this.objectAsMap());
+    };
     // objectAsMap returns the value of the "object" property as a map.
     // It does NOT load objectIds from the network, so is it useful in synchronous code.
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     objectAsMap = () => {
       return this.getMap("as", PropertyObject);
     };
-    // target returns the value of the "target" property
+    // target loads the document provided in the "target" property
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-target
     target = async () => {
       const target = this.get("as", PropertyTarget);
       return loadDocument(target, this.getProxyUrl());
     };
-    // to returns the value of the "to" property
+    // to returns an array of Actors identified in the "to" property
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-to
     to = async () => {
       const result = this.getArray("as", PropertyTo);
       return Promise.all(result.map(async (actor) => await loadActor(actor, this.getProxyUrl())));
     };
+    // recipients returns an array of Actors identified in the "to" and "cc" properties, excluding public recipients
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-recipients
     recipients = () => {
       const toRecipients = this.getArray("as", PropertyTo);
       const ccRecipients = this.getArray("as", PropertyCc);
@@ -20168,17 +20247,45 @@
     };
     ///////////////////////////////////
     // Property setters
+    ///////////////////////////////////
     // setContext sets the context property (NOT @context) of this Activity
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-context
     setContext = (context) => {
       this.set(PropertyContext, context);
     };
     // setObject sets the object property of this Activity
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     setObject = (object) => {
       this.set(PropertyObject, object.toObject());
     };
     // setObjectId sets the object property of this Activity as a string ID (instead of an embedded object)
+    // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object
     setObjectId = (id) => {
       this.set(PropertyObject, id);
+    };
+    ///////////////////////////////////
+    // Special calculations
+    ///////////////////////////////////
+    isMlsActivity = () => {
+      if (this.type() != ActivityTypeCreate) {
+        return false;
+      }
+      const object = this.objectAsDocument();
+      return object.isMlsDocument();
+    };
+    // calcGroupId looks for the groupId FIRST in the activity's `context` property,
+    // then falls through to inspecting the object's `context` property.
+    calcGroupId = async () => {
+      let groupId = this.context();
+      if (groupId != "") {
+        return groupId;
+      }
+      if (this.type() == ActivityTypeUndo) {
+        const undoneActivity = await this.objectAsActivity();
+        return undoneActivity.calcGroupId();
+      }
+      const object = await this.object();
+      return object.context();
     };
   };
 
@@ -24972,18 +25079,16 @@
     #database;
     #delivery;
     #directory;
-    #authService;
     #cipherSuite;
     #generatorId;
     #publicKeyPackage;
     #privateKeyPackage;
     #actor;
-    constructor(controller2, database, delivery, directory, authService, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
+    constructor(controller2, database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
       this.#controller = controller2;
       this.#database = database;
       this.#delivery = delivery;
       this.#directory = directory;
-      this.#authService = authService;
       this.#cipherSuite = cipherSuite;
       this.#actor = actor;
       this.#generatorId = generatorId;
@@ -25014,7 +25119,7 @@
       return encryptedGroup;
     }
     // getGroup locates the group for the specified ID
-    // Groups must already exist for the the MLS codec to function.
+    // Groups must already exist for the MLS codec to function.
     async getGroup(groupId) {
       const result = await this.#database.loadGroup(groupId);
       if (result == void 0) {
@@ -25074,6 +25179,7 @@
       await this.#database.saveGroup(group);
       if (commitResult.welcome != void 0) {
         this.#sendMlsMessage(
+          group,
           ObjectTypeMlsWelcome,
           newMembers,
           commitResult.welcome
@@ -25081,7 +25187,8 @@
       }
       if (currentMembers.length > 0) {
         this.#sendMlsMessage(
-          ObjectTypeMlsGroupInfo,
+          group,
+          ObjectTypeMlsPrivateMessage,
           currentMembers,
           commitResult.commit
         );
@@ -25103,6 +25210,7 @@
         }
       });
       this.#sendMlsMessage(
+        group,
         ObjectTypeMlsGroupInfo,
         group.members,
         proposal.message
@@ -25168,6 +25276,7 @@
       group.clientState = applicationMessage.newState;
       await this.#database.saveGroup(group);
       await this.#sendMlsMessage(
+        group,
         ObjectTypeMlsPrivateMessage,
         activity.getArrayOfString("as", PropertyTo),
         applicationMessage.message
@@ -25175,7 +25284,7 @@
       return "";
     }
     // #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
-    async #sendMlsMessage(type, recipients, message) {
+    async #sendMlsMessage(group, type, recipients, message) {
       console.log("#sendMlsMessage", type, recipients);
       if (recipients.length === 0) {
         return;
@@ -25188,11 +25297,13 @@
         actor: this.#actor.id(),
         to: recipients,
         instrument: this.#generatorId,
+        context: group.id,
         object: {
           type,
           attributedTo: this.#actor.id(),
           to: recipients,
           content: contentBase64,
+          context: group.id,
           mediaType: MediaTypeMLSMessage,
           encoding: EncodingTypeBase64
         }
@@ -25205,9 +25316,10 @@
     //////////////////////////////////////////
     // receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
     // If no further action is required (such as processing a GroupInfo or Welcome message) then
-    // null is returned.
-    async receiveActivity(activity, object) {
+    // undefined is returned.
+    async receiveActivity(activity) {
       console.log("CodecMls.receiveActivity called with activity:", activity.toObject());
+      const object = activity.objectAsDocument();
       const message = object.content();
       const uintArray = base64ToUint8Array(message);
       const mlsMessage = decode(mlsMessageDecoder, uintArray);
@@ -25266,7 +25378,29 @@
       await this.#cycleKeyPackages();
     }
     // decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-    async #receiveActivity_GroupInfo(_document, _message) {
+    async #receiveActivity_GroupInfo(document2, message) {
+      console.group("===== GroupInfo message received =====");
+      console.log("document (ActivityPub):", document2.toObject());
+      console.log("document attributedTo:", document2.attributedToId());
+      console.log("mlsMessage.wireformat:", message.wireformat);
+      console.log("mlsMessage.version:", message.version);
+      console.log("groupInfo (deep dump):", JSON.stringify(dumpValue(message), null, 2));
+      try {
+        console.log("groupId (decoded text):", decodeText(message.groupInfo.groupContext.groupId));
+      } catch (err) {
+        console.warn("Could not decode groupId as text:", err);
+      }
+      const ctx = message.groupInfo.groupContext;
+      console.log("groupContext.epoch:", ctx.epoch);
+      console.log("groupContext.cipherSuite:", ctx.cipherSuite);
+      console.log("groupContext.protocolVersion:", ctx.version ?? ctx.protocolVersion);
+      console.log("groupContext.treeHash (hex):", toHex(ctx.treeHash));
+      console.log("groupContext.confirmedTranscriptHash (hex):", toHex(ctx.confirmedTranscriptHash));
+      console.log("groupContext.extensions:", dumpValue(ctx.extensions));
+      console.log("groupInfo.extensions:", dumpValue(message.groupInfo.extensions));
+      console.log("groupInfo.signer (leaf index):", message.groupInfo.signer);
+      console.log("groupInfo.signature (hex):", toHex(message.groupInfo.signature));
+      console.groupEnd();
       return void 0;
     }
     // decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
@@ -25345,7 +25479,11 @@
         return void 0;
       }
       const plaintext = decodeText(decodedMessage.message);
+      console.log(plaintext);
       const result = new Activity().fromJSON(plaintext);
+      result.setContext(group.id);
+      console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type());
+      console.log(result.toObject());
       this.#maybeSendAcknowledgement(group, result);
       return result;
     }
@@ -25406,6 +25544,7 @@
       commitResult.consumed.forEach(zeroOutUint8Array);
       group.clientState = commitResult.newState;
       this.#sendMlsMessage(
+        group,
         ObjectTypeMlsGroupInfo,
         group.members,
         commitResult.commit
@@ -25450,6 +25589,34 @@
     }
     return [...best.values()];
   }
+  function toHex(bytes) {
+    if (bytes == void 0) {
+      return void 0;
+    }
+    return Array.from(bytes, (b2) => b2.toString(16).padStart(2, "0")).join("");
+  }
+  function dumpValue(value) {
+    if (value == void 0) {
+      return value;
+    }
+    if (value instanceof Uint8Array) {
+      return { __type: "Uint8Array", length: value.length, hex: toHex(value) };
+    }
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    if (Array.isArray(value)) {
+      return value.map(dumpValue);
+    }
+    if (typeof value === "object") {
+      const result = {};
+      for (const key of Object.keys(value)) {
+        result[key] = dumpValue(value[key]);
+      }
+      return result;
+    }
+    return value;
+  }
   function encodeText(text2) {
     return new TextEncoder().encode(text2);
   }
@@ -25462,29 +25629,6 @@
       clientState
     };
   }
-
-  // src/service/authService.ts
-  var ActivityPubAuthenticationService = class {
-    #directory;
-    constructor(directory) {
-      this.#directory = directory;
-    }
-    async validateCredential(credential, signaturePublicKey) {
-      if (credential.credentialType !== defaultCredentialTypes.basic) {
-        console.log(`AuthenticationService: FALSE: Invalid credential type: ${credential.credentialType}`);
-        return false;
-      }
-      const actorId = new TextDecoder().decode(credential.identity);
-      if (!actorId) {
-        console.log(`AuthenticationService: FALSE: Invalid actor ID: ${actorId}`);
-        return false;
-      }
-      const keyPackages = await this.#directory.getKeyPackages([actorId]);
-      const result = keyPackages.some((kp) => uint8ArrayEqual(kp.leafNode.signaturePublicKey, signaturePublicKey));
-      console.log(`AuthenticationService: Validated credential for actor ${actorId}. Result: ${result}`, keyPackages);
-      return result;
-    }
-  };
 
   // src/service/codecPlaintext.ts
   var CodecPlaintext = class {
@@ -25571,26 +25715,76 @@
       }
       return await this.#delivery.sendActivity(activity);
     }
+    // addMentions formats an Activity to include a "Mention" tag for each group member.
+    #addMentions(activity, members) {
+      const allowedActivities = [ActivityTypeCreate, ActivityTypeUpdate];
+      if (!allowedActivities.includes(activity.type())) {
+        return;
+      }
+      let object = activity.objectAsMap();
+      if (object[PropertyType] != ObjectTypeNote) {
+        return;
+      }
+      object[PropertyTag] = members.map((member) => ({
+        type: "Mention",
+        href: member
+      }));
+      activity.set(PropertyObject, object);
+    }
     //////////////////////////////////////////
     // Receiving Messages
     //////////////////////////////////////////
     // receiveActivity processes an incoming activity and creates/finds the correct group for it.
-    async receiveActivity(activity, object) {
-      if (activity.type() == ActivityTypeLeave) {
-        const group2 = await this.#database.loadGroup(activity.objectId());
-        if (group2 == void 0) {
-          return activity;
+    async receiveActivity(activity) {
+      switch (activity.type()) {
+        // These activities are ignored by this codec. Return NO-OP.
+        case ActivityTypeAcknowledge:
+        case ActivityTypeFailure:
+          return void 0;
+        // These activities reference a message by id.
+        // verify we have this message defined already.
+        case ActivityTypeDelete:
+        case ActivityTypeLike:
+          return this.#receiveActivity_ValidateMessage(activity);
+        // These activities reference a group by id.
+        // verify we have this group defined already.
+        case ActivityTypeLeave:
+          return this.#receiveActivity_ValidateGroup(activity);
+        // These activities may create or update groups.
+        case ActivityTypeCreate:
+        case ActivityTypeUpdate: {
+          return this.#receiveActivity_CreateOrUpdateGroup(activity);
         }
-      }
-      const referencesMessage = this.#referencesExistingMessage(activity, object);
-      if (referencesMessage) {
-        const messageId = this.#referencedMessageId(activity, object);
-        const message = await this.#database.loadMessage(messageId);
-        if (message == void 0) {
+        // All other activity types (including "implicit Create") pass through to be handled by the controller
+        case ActivityTypeUndo:
+        default:
           return activity;
-        }
       }
-      const groupId = await this.#findGroupForActivity(activity, object);
+    }
+    // receiveActivity_ValidateMessage passes through the activity IF its referenced message exists in our database.
+    async #receiveActivity_ValidateMessage(activity) {
+      const messageId = activity.objectId();
+      const message = await this.#database.loadMessage(messageId);
+      if (message == void 0) {
+        return void 0;
+      }
+      if (await this.#notGroupValid(message.groupId)) {
+        return void 0;
+      }
+      return activity;
+    }
+    // receiveActivity_ValidateGroup passes through the activity IF its referenced group exists in our database.
+    async #receiveActivity_ValidateGroup(activity) {
+      if (await this.#notGroupValid(activity.objectId())) {
+        return void 0;
+      }
+      return activity;
+    }
+    // #receiveActivity_CreateOrUpdateGroup processes an activity, guaranteeing that:
+    // 1) the referenced group exists (creating it if necessary)
+    // 2) all receivers are members of the group (adding them if necessary)
+    async #receiveActivity_CreateOrUpdateGroup(activity) {
+      const groupId = await this.#calcGroupId(activity);
       let group = await this.#database.loadGroup(groupId);
       if (group == void 0) {
         group = await this.#createGroup(groupId, []);
@@ -25601,81 +25795,48 @@
       if (group.createdById == "") {
         group.createdById = activity.actorId();
       }
-      if (!referencesMessage) {
-        const newMembers = this.#findNewGroupMembers(group, activity);
-        if (newMembers.length > 0) {
-          group.members = uniqueStrings([...group.members, ...newMembers]);
-        }
+      const newMembers = this.#findNewGroupMembers(group, activity);
+      if (newMembers.length > 0) {
+        group.members = uniqueStrings([...group.members, ...newMembers]);
       }
       await this.#database.saveGroup(group);
       activity.setContext(group.id);
-      console.log("Plaintext.receiveActivity:", group, activity);
+      console.log("Plaintext.receiveActivity_CreateOrUpdateGroup:", group, activity);
       return activity;
     }
-    async #findGroupForActivity(activity, object) {
-      console.log("#findGroupForActivity", activity);
-      switch (activity.type()) {
-        // "Leave" activities use the "object" of the activity as the group ID.
-        case ActivityTypeLeave: {
-          console.log("Leave activity");
-          return activity.objectId();
-        }
-        // "Like", "Delete", and "Undo" activities reference a message by id; the
-        // group is that message's group. receiveActivity has already verified the
-        // referenced message exists locally before reaching here.
-        case ActivityTypeLike:
-        case ActivityTypeDelete:
-        case ActivityTypeUndo: {
-          console.log("Like/Delete/Undo activity");
-          const message = await this.#database.loadMessage(this.#referencedMessageId(activity, object));
-          return message.groupId;
-        }
-        // "Create" and "Update" activities use the group from message being replied to, or the activity context directly.
-        case ActivityTypeCreate:
-        case ActivityTypeUpdate: {
-          console.log("Create/Update activity", object.inReplyToId(), object.context(), activity.context());
-          if (object.inReplyToId() != "") {
-            console.log("Found in reply");
-            let message = await this.#database.loadMessage(object.inReplyToId());
-            return message.groupId;
-          }
-          if (object.context() != "") {
-            console.log("Found object context");
-            return object.context();
-          }
-          if (activity.context() != "") {
-            console.log("Found activity context");
-            return activity.context();
-          }
-          console.log("Not found, creating new group");
-          return newId();
+    // #calcGroupId determines which group an incoming Create/Update belongs to.
+    // Unlike the shared Activity.calcGroupId(), a reply (object.inReplyTo) inherits the
+    // group of the message it replies to. This lookup is intentionally plaintext-only.
+    async #calcGroupId(activity) {
+      const object = await activity.object();
+      const inReplyToId = object.inReplyToId();
+      if (inReplyToId != "") {
+        const parent2 = await this.#database.loadMessage(inReplyToId);
+        if (parent2 != void 0) {
+          return parent2.groupId;
         }
       }
-      throw new Error("Unrecognized activity type " + activity.type());
+      const groupId = await activity.calcGroupId();
+      if (groupId != "") {
+        return groupId;
+      }
+      return newId();
     }
-    // referencesExistingMessage reports whether this activity acts on a message that
-    // must already exist (Like/Delete/Undo) — as opposed to Create/Update, which may
-    // establish a new message and group. Used to decide whether a missing referenced
-    // message means "no-op" rather than "create a group".
-    #referencesExistingMessage(activity, _object) {
-      switch (activity.type()) {
-        case ActivityTypeLike:
-        case ActivityTypeDelete:
-        case ActivityTypeUndo:
-          return true;
-        default:
-          return false;
+    // #isGroupValid returns TRUE if the given groupId references a valid PLAINTEXT group in our database.
+    async #isGroupValid(groupId) {
+      const group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        return false;
       }
+      if (group.codec != "PLAINTEXT") {
+        console.error("Modification attempted on group that is not a PLAINTEXT group.", group);
+        return false;
+      }
+      return true;
     }
-    // referencedMessageId returns the id of the message a Like/Delete/Undo acts on.
-    // For Like/Delete the activity's "object" is the message id directly; for Undo
-    // the activity's "object" is the inner activity (e.g. a Like) whose own "object"
-    // is the message id.
-    #referencedMessageId(activity, object) {
-      if (activity.type() == ActivityTypeUndo) {
-        return object.getString("as", PropertyObject);
-      }
-      return activity.objectId();
+    // #notGroupValid returns TRUE if the group is undefined, or is not a PLAINTEXT group
+    async #notGroupValid(groupId) {
+      return !await this.#isGroupValid(groupId);
     }
     // findNewGroupMembers returns the actors involved in this activity who are not
     // already members of the group. The result is de-duplicated, because the
@@ -25692,21 +25853,6 @@
       plaintextGroup.members = newMembers;
       await this.#database.saveGroup(plaintextGroup);
       return plaintextGroup;
-    }
-    #addMentions(activity, members) {
-      const allowedActivities = [ActivityTypeCreate, ActivityTypeUpdate];
-      if (!allowedActivities.includes(activity.type())) {
-        return;
-      }
-      let object = activity.objectAsMap();
-      if (object[PropertyType] != ObjectTypeNote) {
-        return;
-      }
-      object[PropertyTag] = members.map((member) => ({
-        type: "Mention",
-        href: member
-      }));
-      activity.set(PropertyObject, object);
     }
   };
 
@@ -26233,13 +26379,11 @@
           await this.#validateKeyPackages();
           const cipherSuite = await cipherSuiteImplementation();
           const keyPackage = await this.loadOrCreateKeyPackage();
-          const authenticationService = new ActivityPubAuthenticationService(this.#directory);
           this.#codecMls = new CodecMls(
             this,
             this.#database,
             this.#delivery,
             this.#directory,
-            authenticationService,
             cipherSuite,
             keyPackage.publicKeyPackage,
             keyPackage.privateKeyPackage,
@@ -27029,17 +27173,16 @@
     //////////////////////////////////////////
     receiveActivity = async (activity, retryCount = 0) => {
       console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount);
-      const object = await this.#resolveActivityObject(activity);
-      const codec = this.#getCodecForActivity(object);
+      const codec = this.#getCodecForActivity(activity);
       try {
-        const decodedValue = await codec.receiveActivity(activity, object);
-        if (decodedValue == null) {
+        const decodedActivity = await codec.receiveActivity(activity);
+        if (decodedActivity == void 0) {
           return;
         }
-        activity = decodedValue;
+        activity = decodedActivity;
       } catch (error) {
         if (retryCount < 120) {
-          console.log("Retrying error processing activity with codec:", error);
+          console.log("Retrying decoding error: ", error);
           setTimeout(() => {
             this.receiveActivity(activity, retryCount + 1);
           }, 1e3);
@@ -27048,17 +27191,18 @@
         console.error("Failed to process activity after multiple attempts:", error);
         return;
       }
+      return this.#receiveActivity_Internal(activity);
+    };
+    // #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
+    #receiveActivity_Internal = async (activity, retryCount = 0) => {
       try {
         switch (activity.type()) {
           case ActivityTypeAcknowledge:
             return await this.#receiveActivity_Acknowledge(activity);
           case ActivityTypeCreate:
-            if (object.type() == ObjectTypeMlsKeyPackage) {
-              return;
-            }
-            return await this.#receiveActivity_CreateMessage(codec, activity);
+            return await this.#receiveActivity_Create(activity);
           case ActivityTypeDelete:
-            return await this.#receiveActivity_DeleteMessage(activity);
+            return await this.#receiveActivity_Delete(activity);
           case ActivityTypeFailure:
             return await this.#receiveActivity_Failure(activity);
           case ActivityTypeLeave:
@@ -27068,53 +27212,44 @@
           case ActivityTypeUndo:
             return await this.#receiveActivity_Undo(activity);
           case ActivityTypeUpdate:
-            if (object.type() == ObjectTypeEmissaryContext) {
-              return await this.#receiveActivity_UpdateContext(activity);
-            }
-            return await this.#receiveActivity_UpdateMessage(activity);
+            return await this.#receiveActivity_Update(activity);
+          // If no *recognized* activity is present, then process this as an "implicit Create"
           default:
-            return;
+            return await this.#receiveActivity_Unknown(activity);
         }
       } catch (error) {
-        console.error("Error receiving activity:", error);
+        console.error("Error processing activity:", error);
       }
     };
-    // resolveActivityObject returns the activity's "object" as a Document. Leave and
-    // Delete reference their object by bare URL and never read the resolved Document
-    // (they use objectId()), so we skip resolving it — and avoid a doomed fetch of a
-    // URL the server may reject. For other types, resolve it (usually embedded, so no
-    // network), tolerating a failed fetch with an empty Document.
-    #resolveActivityObject = async (activity) => {
-      switch (activity.type()) {
-        case ActivityTypeLeave:
-        case ActivityTypeDelete:
-          return new Document({});
-      }
-      try {
-        return await activity.object();
-      } catch (error) {
-        console.warn("controller.receiveActivity: could not resolve activity object, continuing with empty object:", error);
-        return new Document({});
-      }
-    };
+    // #receiveActivity_Acknowledge processes "Acknowledge" activities
     #receiveActivity_Acknowledge = async (activity) => {
-      const message = await this.#database.loadMessage(activity.objectId());
+      let message = await this.#database.loadMessage(activity.objectId());
       if (message == void 0) {
         return;
       }
-      if (!message.received.includes(activity.actorId())) {
-        message.received.push(activity.actorId());
-        await this.#database.saveMessage(message);
-        this.loadMessages();
+      if (message.received.includes(activity.actorId())) {
+        return;
       }
+      message.received.push(activity.actorId());
+      await this.#database.saveMessage(message);
+      this.loadMessages();
     };
-    #receiveActivity_CreateMessage = async (codec, activity) => {
+    // #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
+    #receiveActivity_Create = async (activity) => {
       const object = await activity.object();
       if (object.attributedToId() != activity.actorId()) {
-        throw new Error("Decrypted activity actor must match object's attributedTo");
+        console.error("Decrypted activity actor must match object's attributedTo");
+        console.error(activity.toObject());
+        return;
       }
-      const groupId = activity.context();
-      const group = await codec.getGroup(groupId);
+      if (object.type() == ObjectTypeMlsKeyPackage) {
+        return this.#receiveActivity_Create_KeyPackage(activity);
+      }
+      const groupId = await activity.calcGroupId();
+      const group = await this.#database.loadGroup(groupId);
+      if (group == void 0) {
+        throw new Error("Group not found for incoming message: " + activity.toJSON());
+      }
       const sentByMe = object.attributedToId() == this.actorId();
       const message = NewMessage({
         id: object.id(),
@@ -27150,11 +27285,18 @@
         }
       }
       console.log("Saving new message to group...", group, message);
-      await this.saveGroup(group);
+      return this.saveGroup(group);
+    };
+    // #receiveActivity_Create_KeyPackage will alert the user that a new KeyPackage has been created on one of their other devices.
+    #receiveActivity_Create_KeyPackage = async (activity) => {
+      if (activity.actorId() != this.actorId()) {
+        return;
+      }
+      console.log("Received KeyPackage activity:", activity.toObject());
     };
     #receiveActivity_Failure = async (activity) => {
     };
-    #receiveActivity_DeleteMessage = async (activity) => {
+    #receiveActivity_Delete = async (activity) => {
       const message = await this.#database.loadMessage(activity.objectId());
       if (message == void 0) {
         return;
@@ -27203,23 +27345,11 @@
         this.loadMessages();
       }
     };
-    #receiveActivity_UpdateContext = async (activity) => {
+    #receiveActivity_Update = async (activity) => {
       const object = await activity.object();
-      const group = await this.#database.loadGroup(object.id());
-      if (group == void 0) {
-        return;
+      if (object.type() == ObjectTypeEmissaryContext) {
+        return await this.#receiveActivity_UpdateContext(activity, object);
       }
-      group.name = object.name();
-      group.summary = object.summary();
-      group.tags = object.getArray("as", "tag");
-      group.unread = object.getBoolean("emissary", "unread");
-      group.lastMessage = object.getString("emissary", "lastMessage");
-      group.lastMessageId = object.getString("emissary", "lastMessageId");
-      this.setGroupState(group, object.getString("emissary", "stateId"));
-      await this.saveGroup(group);
-    };
-    #receiveActivity_UpdateMessage = async (activity) => {
-      const object = await activity.object();
       if (object.attributedToId() != activity.actorId()) {
         throw new Error("Decrypted activity actor must match object's attributedTo");
       }
@@ -27236,11 +27366,53 @@
       message.history.push(message.content);
       message.content = sanitizeHTML(object.content());
       message.updateDate = Date.now();
-      await this.#database.saveMessage(message);
+      return this.#database.saveMessage(message);
+    };
+    // receiveActivity_UpdateContext processes an incoming "Update" activity that contains a group definition update.
+    #receiveActivity_UpdateContext = async (activity, document2) => {
+      if (activity.actorId() != this.#actorId) {
+        throw new Error("Decrypted activity actor must match document's attributedTo");
+      }
+      const group = await this.#database.loadGroup(document2.id());
+      if (group == void 0) {
+        return;
+      }
+      group.name = document2.name();
+      group.summary = document2.summary();
+      group.tags = document2.getArray("as", "tag");
+      group.unread = document2.getBoolean("emissary", "unread");
+      group.lastMessage = document2.getString("emissary", "lastMessage");
+      group.lastMessageId = document2.getString("emissary", "lastMessageId");
+      this.setGroupState(group, document2.getString("emissary", "stateId"));
+      return this.saveGroup(group);
+    };
+    // #receiveActivity_Unknown processes unrecognized activities, attempting to treat them as an implicit "Create"
+    #receiveActivity_Unknown = async (activity) => {
+      if (activity.notDocument()) {
+        return;
+      }
+      let document2 = new Document(activity.toObject());
+      console.log("Implicit Create");
+      console.log(document2.toObject());
+      return this.#receiveActivity_Create(new Activity({
+        type: ActivityTypeCreate,
+        context: document2.context(),
+        actor: document2.attributedToId(),
+        to: document2.getArray("as", PropertyTo),
+        object: document2.toObject()
+      }));
     };
     //////////////////////////////////////////
-    // Other Helpers
+    // CODECs
     //////////////////////////////////////////
+    // getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
+    #getCodecForActivity = (activity) => {
+      return this.#getCodec(activity.isMlsActivity());
+    };
+    // getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
+    #getCodecForGroup = (group) => {
+      return this.#getCodec(groupIsEncrypted(group));
+    };
     // getCodec returns the appropriate codec (Plaintext or MLS) based on the "encrypted" parameter.
     #getCodec = (encrypted) => {
       if (encrypted) {
@@ -27254,14 +27426,9 @@
       }
       return this.#codecPlaintext;
     };
-    // getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
-    #getCodecForGroup = (group) => {
-      return this.#getCodec(groupIsEncrypted(group));
-    };
-    // getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
-    #getCodecForActivity = (object) => {
-      return this.#getCodec(object.isMLSMessage());
-    };
+    //////////////////////////////////////////
+    // Other Helpers
+    //////////////////////////////////////////
     // calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
     // internal state and member list.
     #calcGroupDefaultName = async (group) => {
