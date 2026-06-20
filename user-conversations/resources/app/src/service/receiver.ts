@@ -2,12 +2,12 @@ import { type Actor } from "../as/actor"
 import { Activity } from "../as/activity"
 import { Collection } from "../as/collection"
 import { HttpError } from "../as/object"
-import { type IActivityHandler, type ILastMessageGetterSetter } from "./interfaces"
+import { type IActivityHandler, type ILastMessageGetterSetter, type IReceiver } from "./interfaces"
 import { loadCollectionAfter } from "../as/loaders"
 
 // Receiver service receives messages from an ActivityPub actor and forwards them
 // to the MLS client
-export class Receiver {
+export class Receiver implements IReceiver {
 
 	#messagesUrl: string = "" // endpoint for the actor's emissary:messages or plain messages collection: uwuwu owo
 	#eventSource?: EventSource // EventSource for listening to server-sent events (SSE)

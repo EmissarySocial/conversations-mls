@@ -1,9 +1,10 @@
 import { Activity } from "../as/activity"
 import type { Actor } from "../as/actor"
 import { HttpError } from "../as/object"
+import type { IDelivery } from "./interfaces"
 
 // Delivery service sends messages via ActivityPub
-export class Delivery {
+export class Delivery implements IDelivery {
 
 	// The URL of the current user's outbox
 	#outboxUrl = ""

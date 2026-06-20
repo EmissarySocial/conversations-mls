@@ -10,7 +10,7 @@ import { type DBKeyPackage } from "../model/db-keypackage"
 
 // Model Objects
 import { diffArrays, newId } from "./utils"
-import { type IHost } from "./interfaces"
+import { type IDatabase, type IHost } from "./interfaces"
 
 // Schema defines the layout of records stored in IndexedDB
 interface Schema extends DBSchema {
@@ -81,7 +81,7 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 	})
 }
 
-export class Database {
+export class Database implements IDatabase {
 	readonly #db: IDBPDatabase<Schema>
 	readonly #host: IHost
 	#onchange: callbackFunction

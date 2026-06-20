@@ -2,8 +2,9 @@ import { Activity } from "../as/activity"
 import { Actor } from "../as/actor"
 import { Collection } from "../as/collection"
 import { Document } from "../as/document"
+import type { IProxy } from "./interfaces"
 
-export class Proxy {
+export class Proxy implements IProxy {
 
 	#proxyUrl: string
 

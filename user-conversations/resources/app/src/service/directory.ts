@@ -13,9 +13,9 @@ import { NewAPKeyPackage } from "../model/ap-keypackage"
 import { Actor } from "../as/actor"
 import { newId } from "./utils"
 import { decodeKeyPackage, keyPackageIsExpired, keyPackageIsSupported } from "./cryptography"
-import type { IDelivery, IProxy } from "./interfaces"
+import type { IDelivery, IDirectory, IProxy } from "./interfaces"
 
-export class Directory {
+export class Directory implements IDirectory {
 
 	readonly #delivery: IDelivery
 	readonly #proxy: IProxy
