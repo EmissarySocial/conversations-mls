@@ -74,7 +74,7 @@ export class Activity extends ASObject {
 		return loadActivity(object, this.getProxyUrl())
 	}
 
-	// objectAsDocument returns the value ofthe "object" property as a Document.
+	// objectAsDocument returns the value of the "object" property as a Document.
 	// It DOES NOT trigger a network fetch if the object is only a string ID, so it is useful in synchronous code.
 	objectAsDocument = () => {
 		return new Document(this.objectAsMap())

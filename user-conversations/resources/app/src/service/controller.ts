@@ -1223,7 +1223,7 @@ export class Controller {
 			// The server locates the existing object to update by its "id", so the Update's
 			// object MUST carry the message's (server-assigned) id. (Create lets the server
 			// assign the id; Update must reference the one it already gave us.)
-			(object as Record<string, unknown>)["id"] = message.id
+			; (object as Record<string, unknown>)["id"] = message.id
 
 		// Create an "Update" activity
 		const activity = new Activity({
@@ -1800,12 +1800,13 @@ export class Controller {
 		console.log("Implicit Create")
 		console.log(document.toObject())
 
-		// Process this like an implicit "Create" activity.
+		// Process this like an implicit "Create" activity. Use the RAW recipient ids
+		// (not resolved Actors) so we don't trigger a network fetch per recipient.
 		return this.#receiveActivity_Create(new Activity({
 			type: vocab.ActivityTypeCreate,
 			context: document.context(),
 			actor: document.attributedToId(),
-			to: await document.to(),
+			to: document.getArray("as", vocab.PropertyTo),
 			object: document.toObject(),
 		}))
 	}

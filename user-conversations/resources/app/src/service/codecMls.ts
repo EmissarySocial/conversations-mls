@@ -100,7 +100,7 @@ export class CodecMls implements ICodec {
 	}
 
 	// getGroup locates the group for the specified ID
-	// Groups must already exist for the the MLS codec to function.
+	// Groups must already exist for the MLS codec to function.
 	async getGroup(groupId: string): Promise<Group> {
 		const result = await this.#database.loadGroup(groupId)
 
@@ -296,7 +296,7 @@ export class CodecMls implements ICodec {
 
 		}).filter((proposal) => proposal != null)
 
-		// Commit the proposals to remove the specifid member
+		// Commit the proposals to remove the specified member
 		// This MUST have an `await` so that the group is fully updated before exiting, or else leaveGroup() fails.
 		await this.#commitProposals(group, proposals)
 	}
@@ -399,7 +399,7 @@ export class CodecMls implements ICodec {
 
 	// receiveActivity decodes an incoming MLS message and returns the decrypted ActivityStream.
 	// If no further action is required (such as processing a GroupInfo or Welcome message) then
-	// null is returned.
+	// undefined is returned.
 	async receiveActivity(activity: Activity): Promise<Activity | undefined> {
 
 		console.log("CodecMls.receiveActivity called with activity:", activity.toObject())
@@ -727,7 +727,7 @@ export class CodecMls implements ICodec {
 			return
 		}
 
-		// Guarantee tha the group is encrypted
+		// Guarantee that the group is encrypted
 		if (!groupIsEncrypted(group)) {
 			console.error("mls.#processMessageCallback_RemoveProposal: Received remove proposal for unencrypted group", groupId)
 			return

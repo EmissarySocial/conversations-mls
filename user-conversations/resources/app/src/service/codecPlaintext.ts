@@ -222,7 +222,7 @@ export class CodecPlaintext implements ICodec {
 		return activity
 	}
 
-	// #receiveActivity_CreateOrUpdatGroup processes an activity, guaranteeing that:
+	// #receiveActivity_CreateOrUpdateGroup processes an activity, guaranteeing that:
 	// 1) the referenced group exists (creating it if necessary)
 	// 2) all receivers are members of the group (adding them if necessary)
 	async #receiveActivity_CreateOrUpdateGroup(activity: Activity): Promise<Activity | undefined> {
