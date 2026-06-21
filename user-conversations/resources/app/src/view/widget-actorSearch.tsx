@@ -44,7 +44,7 @@ export class ActorSearch {
 
 		return (
 			<div class="autocomplete">
-				<div class="input">
+				<div class="input flex-row flex-wrap">
 					{vnode.attrs.value.map((actor, index) => {
 						const isSecure = (vnode.state.keyPackages[actor.id()] != undefined)
 						return (
@@ -60,7 +60,7 @@ export class ActorSearch {
 					<input
 						id={vnode.attrs.id}
 						name={vnode.attrs.name}
-						class="padding-none"
+						class="padding-none flex-grow"
 						style="min-width:200px;"
 						value={vnode.state.search}
 						tabindex="0"

@@ -58,6 +58,24 @@ export function groupIsEncrypted(group: Group | EncryptedGroup): group is Encryp
 	return (group.codec === "MLS")
 }
 
+// groupColor returns the canonical accent color for a group: gray for a pending
+// (WELCOME) invitation, blue for an encrypted group, and gold for a plaintext
+// group. Returns a CSS color value (a var() reference or a literal), suitable for
+// both `background-color` (avatars) and the `--group-highlight-color` custom
+// property (focus outlines, accents). Single source of truth for group coloring.
+export function groupColor(group: Group | EncryptedGroup): string {
+
+	if (group.stateId == "WELCOME") {
+		return "var(--gray50)"
+	}
+
+	if (groupIsEncrypted(group)) {
+		return "var(--blue50)"
+	}
+
+	return "#F2C94C"
+}
+
 // filterAndSortGroups returns the groups that include EVERY one of the given tags
 // and match one of the given stateIds, sorted with IMPORTANT groups first and then
 // by updateDate descending within each tier. Empty `tags` / `stateIds` mean "do not

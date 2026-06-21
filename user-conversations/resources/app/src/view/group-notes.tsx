@@ -1,6 +1,6 @@
 import m, { type Vnode } from "mithril"
 
-import { type Group } from "../model/group"
+import { type Group, groupColor } from "../model/group"
 import { ViewController } from "./controller"
 import { haltEvent, synthClick } from "./utils"
 
@@ -29,7 +29,7 @@ export class GroupNotes {
 		const group = vnode.state.group
 
 		return (
-			<div id="conversation-details">
+			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
 						<div role="tab" tabIndex="0" onclick={() => controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>

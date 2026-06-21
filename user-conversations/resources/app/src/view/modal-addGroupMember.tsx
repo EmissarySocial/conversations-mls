@@ -4,7 +4,7 @@ import { ViewController } from "./controller"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"
-import { groupIsEncrypted } from "../model/group"
+import { groupIsEncrypted, groupColor } from "../model/group"
 
 type AddGroupMemberVnode = Vnode<AddGroupMemberAttrs, AddGroupMemberState>
 
@@ -32,7 +32,7 @@ export class AddGroupMember {
 
 		return (
 			<Modal close={vnode.attrs.close}>
-				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)}>
+				<form onsubmit={(event: SubmitEvent) => this.onsubmit(event, vnode)} style={{ "--focus-color": groupColor(group) }}>
 					<div class="layout layout-vertical">
 						<div class="layout-title">
 							<i class="bi bi-plus"></i> Add People
@@ -78,7 +78,7 @@ export class AddGroupMember {
 
 			return (
 				<div class="margin-top">
-					<button type="submit" class="primary" tabIndex="0" disabled={disabled}>
+					<button type="submit" class="primary" tabIndex="0" disabled={disabled} style={{ "background-color": "var(--focus-color)", "border-color": "var(--focus-color)" }}>
 						<i class="bi bi-lock-fill"></i>
 						<span>Add People (Encrypted)</span>
 					</button>

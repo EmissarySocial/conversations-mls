@@ -2,7 +2,7 @@ import m, { type Vnode } from "mithril"
 import { type Contact } from "../model/contact"
 
 import { ViewController } from "./controller"
-import { groupIsEncrypted, type Group } from "../model/group"
+import { groupColor, type Group } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupMembersVnode = Vnode<GroupMembersArgs, GroupMembersState>
@@ -26,8 +26,6 @@ export class GroupMembers {
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
 		const contactStreams = controller.groupContactStream()
-		const isEncrypted = groupIsEncrypted(group)
-		const buttonStyle = isEncrypted ? "background-color:var(--blue60)" : "background-color:#F2C94C; color:black"
 
 		const contacts = contactStreams
 			.map(contactStream => contactStream())
@@ -35,7 +33,7 @@ export class GroupMembers {
 			.filter(contact => contact.id != controller.actorId())
 
 		return (
-			<div id="conversation-details">
+			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
 				<div id="conversation-header">
 					<div role="tablist" class="margin-none padding-none underlined">
 						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>
@@ -48,7 +46,7 @@ export class GroupMembers {
 						{(group.stateId === "CLOSED") ? null :
 							<div role="link" tabIndex="0" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()} onkeypress={synthClick}>
 								<div>
-									<span class="circle width-48 flex-center text-white text-xl margin-none" style={buttonStyle}><i class="bi bi-plus"></i></span>
+									<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--focus-color)"><i class="bi bi-plus"></i></span>
 								</div>
 								<div class="flex-grow padding-left-sm">
 									<div class="bold">Add People</div>

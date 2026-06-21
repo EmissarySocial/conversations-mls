@@ -1,6 +1,6 @@
 import m from "mithril"
 import { ViewController } from "./controller"
-import { groupIsEncrypted, type Group } from "../model/group"
+import { groupIsEncrypted, groupColor, type Group } from "../model/group"
 import { synthClick } from "./utils"
 import { FilterMenu } from "./widget-filterMenu"
 
@@ -39,7 +39,7 @@ export class Groups {
 
 						return (
 							<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
-								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
+								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${groupColor(group)}`}>
 									{this.groupIcon(group)}
 								</div>
 								<div class="flex-row flex-grow nowrap pos-relative group-list-item-body">
@@ -61,19 +61,6 @@ export class Groups {
 				</div>
 			</div>
 		)
-	}
-
-	groupColor(group: Group): string {
-
-		if (group.stateId == "WELCOME") {
-			return "var(--gray50)"
-		}
-
-		if (groupIsEncrypted(group)) {
-			return "var(--blue50)"
-		}
-
-		return "#F2C94C"
 	}
 
 	groupIcon(group: Group): JSX.Element {
