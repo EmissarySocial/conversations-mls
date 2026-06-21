@@ -51,6 +51,8 @@ export class Attachments {
 
 		return (
 			<Modal close={vnode.attrs.close}>
+				{/* NOSONAR S6848: this is a keyboard/touch gesture-delegation layer for the
+				    lightbox; the actual controls are the native <button> arrows within it. */}
 				<div
 					id="attachment-viewer"
 					onkeydown={(event: KeyboardEvent) => this.onkeydown(vnode, event)}
@@ -73,7 +75,7 @@ export class Attachments {
 							onclick={() => this.previous(vnode)}><i class="bi bi-chevron-left"></i></button>
 					}
 
-					<div class="attachment-stage flex-grow flex-row flex-align-center flex-justify">
+					<div class="attachment-stage">
 						{this.drawAttachment(current)}
 					</div>
 
@@ -108,7 +110,7 @@ export class Attachments {
 
 			case "audio":
 				return (
-					<div class="attachment-audio flex-column flex-align-center flex-justify">
+					<div class="attachment-audio">
 						<i class={"bi " + attachmentIcon(attachment)}></i>
 						<div class="margin-bottom">{attachment.name || "Audio"}</div>
 						<audio src={attachment.url} controls autoplay></audio>
@@ -120,7 +122,7 @@ export class Attachments {
 					<a
 						href={attachment.url}
 						download={attachment.name || true}
-						class="attachment-download flex-column flex-align-center flex-justify"
+						class="attachment-download"
 						target="_blank"
 						rel="noopener noreferrer">
 						<i class={"bi " + attachmentIcon(attachment)}></i>

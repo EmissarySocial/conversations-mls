@@ -17,7 +17,7 @@ import { type Contact } from "../model/contact"
 import { type DBKeyPackage } from "../model/db-keypackage"
 import { type Emoji } from "../model/emoji"
 import { type EncryptedGroup, type Group, type GroupState, NewGroup, groupIsEncrypted } from "../model/group"
-import { type Attachment, Message, NewMessage, summarizeAttachments } from "../model/message"
+import { type Attachment, Message, NewMessage } from "../model/message"
 
 // Services
 import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver, type IWebFinger } from "./interfaces"
@@ -1166,8 +1166,12 @@ export class Controller {
 		await this.loadMessages()
 
 		// Update the group with the message metadata (lastMessage is text, not HTML).
-		// Attachment-only messages have no text, so summarize them by count instead.
-		group.lastMessage = htmlToText(content) || summarizeAttachments(attachments)
+		// RULE: Only refresh lastMessage when there is text; an attachment-only message
+		// must not blank out the previous message preview.
+		const lastMessageText = htmlToText(content)
+		if (lastMessageText != "") {
+			group.lastMessage = lastMessageText
+		}
 		group.lastMessageId = message.id
 		group.updateDate = Temporal.Now.instant().epochMilliseconds
 
@@ -1534,8 +1538,13 @@ export class Controller {
 		// Track the most recent message in the group
 		group.lastMessageId = message.id
 
-		// Mark the group with the lastMessage content (text, not HTML)
-		group.lastMessage = htmlToText(object.content())
+		// Mark the group with the lastMessage content (text, not HTML).
+		// RULE: Only refresh lastMessage when there is text; an attachment-only message
+		// must not blank out the previous message preview.
+		const lastMessageText = htmlToText(object.content())
+		if (lastMessageText != "") {
+			group.lastMessage = lastMessageText
+		}
 
 		// RULE: A new message in an ARCHIVED group revives it to the ACTIVE state.
 		if (group.stateId == "ARCHIVED") {

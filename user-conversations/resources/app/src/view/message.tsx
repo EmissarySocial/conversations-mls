@@ -175,7 +175,8 @@ export class ViewMessage {
 	}
 
 	// drawAttachments renders the message's attachments as a grid of thumbnails.
-	// Clicking any thumbnail opens the attachment lightbox at that attachment.
+	// Displayable attachments (image/video/audio) open the lightbox; a file that can
+	// only be downloaded is a direct download link instead, skipping the lightbox.
 	drawAttachments(controller: ViewController, message: Message): JSX.Element | null {
 
 		if (message.attachments.length == 0) {
@@ -184,18 +185,41 @@ export class ViewMessage {
 
 		return (
 			<div class="message-attachments flex-row flex-wrap">
-				{message.attachments.map((attachment, index) => (
-					<button
-						key={attachment.url}
-						type="button"
-						class="message-attachment"
-						aria-label={"View attachment " + (attachment.name || (index + 1))}
-						tabIndex="0"
-						onclick={() => controller.modal_attachments(message, index)}>
-						{this.drawThumbnail(attachment)}
-					</button>
-				))}
+				{message.attachments.map((attachment, index) => this.drawAttachment(controller, message, attachment, index))}
 			</div>
+		)
+	}
+
+	// drawAttachment renders a single attachment thumbnail. Downloadable-only files
+	// render as a download anchor so clicking them downloads directly; everything
+	// else opens the lightbox carousel (from which the file is still reachable).
+	drawAttachment(controller: ViewController, message: Message, attachment: Attachment, index: number): JSX.Element {
+
+		if (attachmentKind(attachment) == "file") {
+			return (
+				<a
+					key={attachment.url}
+					href={attachment.url}
+					download={attachment.name || true}
+					class="message-attachment"
+					aria-label={"Download " + (attachment.name || "file")}
+					target="_blank"
+					rel="noopener noreferrer">
+					{this.drawThumbnail(attachment)}
+				</a>
+			)
+		}
+
+		return (
+			<button
+				key={attachment.url}
+				type="button"
+				class="message-attachment"
+				aria-label={"View attachment " + (attachment.name || (index + 1))}
+				tabIndex="0"
+				onclick={() => controller.modal_attachments(message, index)}>
+				{this.drawThumbnail(attachment)}
+			</button>
 		)
 	}
 
@@ -213,7 +237,7 @@ export class ViewMessage {
 
 			default:
 				return (
-					<span class="message-attachment-file flex-column flex-align-center flex-justify">
+					<span class="message-attachment-file">
 						<i class={"bi " + attachmentIcon(attachment)}></i>
 						<span class="message-attachment-name text-sm">{attachment.name || "File"}</span>
 						{(attachment.size > 0) && <span class="text-sm text-gray">{formatFileSize(attachment.size)}</span>}

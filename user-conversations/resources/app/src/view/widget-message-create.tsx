@@ -88,38 +88,55 @@ export class WidgetMessageCreate {
 			<div class="flex-row flex-justify" style={backgroundStyle}>
 				<div class="flex-grow">
 					{this.drawReply(vnode)}
-					{this.drawPending(vnode)}
-					<div role="textbox" class={"flex-grow flex-row flex-align-center" + (isEncrypted ? "" : " unencrypted-textbox")}>
+					<div role="textbox" class={"flex-grow flex-column" + (isEncrypted ? "" : " unencrypted-textbox")}>
 
-						<textarea
-							id={MESSAGE_INPUT_ID}
-							value={vnode.state.message}
-							style="border:none; min-height:1em; field-sizing:content; resize:none;"
-							oninput={(e: Event) => this.oninput(vnode, e)}
-							onkeydown={(e: KeyboardEvent) => this.onkeydown(vnode, e)}
-							onkeyup={(e: KeyboardEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
-							onclick={(e: MouseEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
-							onblur={() => this.closeMention(vnode)}></textarea>
+						{this.drawPending(vnode)}
 
-						{this.drawMentionPopup(vnode)}
+						<div class="flex-grow flex-row flex-align-center">
 
-						{vnode.state.showEmojiPicker &&
-							<PickEmoji
-								onselect={(emoji: Emoji) => this.insertEmoji(vnode, emoji.emoji)}
-								close={() => this.closeEmojiPicker(vnode)} />
-						}
+							<textarea
+								id={MESSAGE_INPUT_ID}
+								value={vnode.state.message}
+								style="border:none; min-height:1em; field-sizing:content; resize:none;"
+								oninput={(e: Event) => this.oninput(vnode, e)}
+								onkeydown={(e: KeyboardEvent) => this.onkeydown(vnode, e)}
+								onkeyup={(e: KeyboardEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
+								onclick={(e: MouseEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
+								onblur={() => this.closeMention(vnode)}></textarea>
 
-						<button
-							tabIndex="0"
-							onclick={() => this.openEmojiPicker(vnode)}
-							style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
+							{this.drawMentionPopup(vnode)}
 
-						{/* NOSONAR: typescript:S6853 */} <label
-							for="fileInput"
-							class="button"
-							aria-label="Attach a File"
-							style="font-size:16px;"><i class="bi bi-image"></i></label>
+							{vnode.state.showEmojiPicker &&
+								<PickEmoji
+									onselect={(emoji: Emoji) => this.insertEmoji(vnode, emoji.emoji)}
+									close={() => this.closeEmojiPicker(vnode)} />
+							}
 
+							{this.hasContent(vnode) &&
+								<button
+									type="button"
+									class={isEncrypted ? "primary" : "success"}
+									tabIndex="0"
+									aria-label="Send Message"
+									title="Send"
+									onclick={() => this.sendMessage(vnode)}
+									style="font-size:16px;"><i class="bi bi-arrow-up"></i></button>
+							}
+
+							<button
+								tabIndex="0"
+								title="Insert Emoji"
+								onclick={() => this.openEmojiPicker(vnode)}
+								style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
+
+							{/* NOSONAR: typescript:S6853 */} <label
+								for="fileInput"
+								class="button"
+								aria-label="Attach a File"
+								title="Attach a File"
+								style="font-size:16px;"><i class="bi bi-image"></i></label>
+
+						</div>
 					</div>
 				</div>
 
@@ -128,7 +145,8 @@ export class WidgetMessageCreate {
 					id="fileInput"
 					multiple
 					style="display:none;"
-					onchange={(e: Event) => this.addFiles(vnode, e)}>
+					onchange={(e: Event) => this.addFiles(vnode, e)}
+					oncancel={() => this.focusInput()}>
 				</input>
 			</div>
 		</>
@@ -291,12 +309,19 @@ export class WidgetMessageCreate {
 
 	// closeEmojiPicker dismisses the emoji picker, mirroring the modal-router's
 	// fade-out: drop the #modal "ready" class, then unmount after the transition.
+	// Focus returns to the message box so the user can keep typing.
 	closeEmojiPicker(vnode: WidgetMessageCreateVnode) {
 		document.getElementById("modal")?.classList.remove("ready")
 		globalThis.setTimeout(() => {
 			vnode.state.showEmojiPicker = false
 			m.redraw()
+			this.focusInput()
 		}, 240)
+	}
+
+	// focusInput returns keyboard focus to the message composer textarea.
+	focusInput() {
+		(document.getElementById(MESSAGE_INPUT_ID) as HTMLTextAreaElement | null)?.focus()
 	}
 
 	// insertEmoji inserts an emoji at the caret position captured when the picker was
@@ -329,13 +354,16 @@ export class WidgetMessageCreate {
 		m.redraw()
 	}
 
+	// hasContent reports whether the composer has anything to send: non-empty text
+	// or at least one pending attachment.
+	hasContent(vnode: WidgetMessageCreateVnode): boolean {
+		return vnode.state.message.trim() !== "" || vnode.state.pending.length > 0
+	}
+
 	sendMessage(vnode: WidgetMessageCreateVnode) {
 
-		const hasText = vnode.state.message.trim() !== ""
-		const hasAttachments = vnode.state.pending.length > 0
-
 		// RULE: Do not send messages that have neither text nor attachments
-		if (!hasText && !hasAttachments) {
+		if (!this.hasContent(vnode)) {
 			return
 		}
 
@@ -379,7 +407,7 @@ export class WidgetMessageCreate {
 			return <img src={attachment.url} class="pending-attachment-thumb" alt="" /> // NOSONAR: typescript:S6853
 		}
 
-		return <div class="pending-attachment-thumb flex-row flex-align-center flex-justify"><i class={"bi " + attachmentIcon(attachment)}></i></div>
+		return <div class="pending-attachment-thumb"><i class={"bi " + attachmentIcon(attachment)}></i></div>
 	}
 
 	// removePending removes the attachment at `index` from the pending tray.
@@ -427,5 +455,8 @@ export class WidgetMessageCreate {
 
 		// Reset the input so selecting the same file again still fires "change"
 		target.value = ""
+
+		// Return focus to the message box so the user can keep typing
+		this.focusInput()
 	}
 }

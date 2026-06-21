@@ -17903,15 +17903,6 @@
     }
     return Math.max(0, Math.floor(payload.length * 3 / 4) - padding);
   }
-  function summarizeAttachments(attachments) {
-    if (attachments.length == 0) {
-      return "";
-    }
-    if (attachments.length == 1) {
-      return attachments[0].name || "Attachment";
-    }
-    return `${attachments.length} attachments`;
-  }
   function attachmentToDocument(attachment) {
     let type = "Document";
     switch (attachmentKind(attachment)) {
@@ -27156,7 +27147,10 @@
       await this.#database.saveMessage(message);
       this.removeReply();
       await this.loadMessages();
-      group.lastMessage = htmlToText(content) || summarizeAttachments(attachments);
+      const lastMessageText = htmlToText(content);
+      if (lastMessageText != "") {
+        group.lastMessage = lastMessageText;
+      }
       group.lastMessageId = message.id;
       group.updateDate = Temporal.Now.instant().epochMilliseconds;
       await this.saveGroup(group);
@@ -27379,7 +27373,10 @@
       message.attachments = object.attachments();
       await this.#database.saveMessage(message);
       group.lastMessageId = message.id;
-      group.lastMessage = htmlToText(object.content());
+      const lastMessageText = htmlToText(object.content());
+      if (lastMessageText != "") {
+        group.lastMessage = lastMessageText;
+      }
       if (group.stateId == "ARCHIVED") {
         this.setGroupState(group, "ACTIVE");
       }
@@ -28798,7 +28795,7 @@
       if (!isEncrypted) {
         backgroundStyle = `background: repeating-linear-gradient(135deg,rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.1) 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);`;
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)(import_mithril13.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs text-gray" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-lock-fill" }), " PRIVATE MESSAGE (encrypted)") : /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " DIRECT MESSAGE (not encrypted)"), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, this.drawReply(vnode), this.drawPending(vnode), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" + (isEncrypted ? "" : " unencrypted-textbox") }, /* @__PURE__ */ (0, import_mithril13.default)(
+      return /* @__PURE__ */ (0, import_mithril13.default)(import_mithril13.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs text-gray" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-lock-fill" }), " PRIVATE MESSAGE (encrypted)") : /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " DIRECT MESSAGE (not encrypted)"), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "textbox", class: "flex-grow flex-column" + (isEncrypted ? "" : " unencrypted-textbox") }, this.drawPending(vnode), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)(
         "textarea",
         {
           id: MESSAGE_INPUT_ID,
@@ -28816,10 +28813,23 @@
           onselect: (emoji) => this.insertEmoji(vnode, emoji.emoji),
           close: () => this.closeEmojiPicker(vnode)
         }
+      ), this.hasContent(vnode) && /* @__PURE__ */ (0, import_mithril13.default)(
+        "button",
+        {
+          type: "button",
+          class: isEncrypted ? "primary" : "success",
+          tabIndex: "0",
+          "aria-label": "Send Message",
+          title: "Send",
+          onclick: () => this.sendMessage(vnode),
+          style: "font-size:16px;"
+        },
+        /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-arrow-up" })
       ), /* @__PURE__ */ (0, import_mithril13.default)(
         "button",
         {
           tabIndex: "0",
+          title: "Insert Emoji",
           onclick: () => this.openEmojiPicker(vnode),
           style: "font-size:16px;"
         },
@@ -28830,17 +28840,19 @@
           for: "fileInput",
           class: "button",
           "aria-label": "Attach a File",
+          title: "Attach a File",
           style: "font-size:16px;"
         },
         /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-image" })
-      ))), /* @__PURE__ */ (0, import_mithril13.default)(
+      )))), /* @__PURE__ */ (0, import_mithril13.default)(
         "input",
         {
           type: "file",
           id: "fileInput",
           multiple: true,
           style: "display:none;",
-          onchange: (e2) => this.addFiles(vnode, e2)
+          onchange: (e2) => this.addFiles(vnode, e2),
+          oncancel: () => this.focusInput()
         }
       )));
     }
@@ -28960,12 +28972,18 @@
     }
     // closeEmojiPicker dismisses the emoji picker, mirroring the modal-router's
     // fade-out: drop the #modal "ready" class, then unmount after the transition.
+    // Focus returns to the message box so the user can keep typing.
     closeEmojiPicker(vnode) {
       document.getElementById("modal")?.classList.remove("ready");
       globalThis.setTimeout(() => {
         vnode.state.showEmojiPicker = false;
         import_mithril13.default.redraw();
+        this.focusInput();
       }, 240);
+    }
+    // focusInput returns keyboard focus to the message composer textarea.
+    focusInput() {
+      document.getElementById(MESSAGE_INPUT_ID)?.focus();
     }
     // insertEmoji inserts an emoji at the caret position captured when the picker was
     // opened (defaulting to the end of the text), then restores the caret just past
@@ -28990,10 +29008,13 @@
       });
       import_mithril13.default.redraw();
     }
+    // hasContent reports whether the composer has anything to send: non-empty text
+    // or at least one pending attachment.
+    hasContent(vnode) {
+      return vnode.state.message.trim() !== "" || vnode.state.pending.length > 0;
+    }
     sendMessage(vnode) {
-      const hasText = vnode.state.message.trim() !== "";
-      const hasAttachments = vnode.state.pending.length > 0;
-      if (!hasText && !hasAttachments) {
+      if (!this.hasContent(vnode)) {
         return;
       }
       vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending);
@@ -29025,7 +29046,7 @@
       if (attachmentKind(attachment) == "image") {
         return /* @__PURE__ */ (0, import_mithril13.default)("img", { src: attachment.url, class: "pending-attachment-thumb", alt: "" });
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "pending-attachment-thumb flex-row flex-align-center flex-justify" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi " + attachmentIcon(attachment) }));
+      return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "pending-attachment-thumb" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi " + attachmentIcon(attachment) }));
     }
     // removePending removes the attachment at `index` from the pending tray.
     removePending(vnode, index) {
@@ -29059,6 +29080,7 @@
         reader.readAsDataURL(file);
       }
       target.value = "";
+      this.focusInput();
     }
   };
 
@@ -29108,12 +29130,34 @@
       return /* @__PURE__ */ (0, import_mithril14.default)(import_mithril14.default.Fragment, null, this.drawAttachments(controller2, message), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "padding-xs message-content", onclick: (event) => this.onContentClick(controller2, event), onkeydown: (event) => this.onContentKeydown(controller2, event) }, import_mithril14.default.trust(message.content)));
     }
     // drawAttachments renders the message's attachments as a grid of thumbnails.
-    // Clicking any thumbnail opens the attachment lightbox at that attachment.
+    // Displayable attachments (image/video/audio) open the lightbox; a file that can
+    // only be downloaded is a direct download link instead, skipping the lightbox.
     drawAttachments(controller2, message) {
       if (message.attachments.length == 0) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => /* @__PURE__ */ (0, import_mithril14.default)(
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => this.drawAttachment(controller2, message, attachment, index)));
+    }
+    // drawAttachment renders a single attachment thumbnail. Downloadable-only files
+    // render as a download anchor so clicking them downloads directly; everything
+    // else opens the lightbox carousel (from which the file is still reachable).
+    drawAttachment(controller2, message, attachment, index) {
+      if (attachmentKind(attachment) == "file") {
+        return /* @__PURE__ */ (0, import_mithril14.default)(
+          "a",
+          {
+            key: attachment.url,
+            href: attachment.url,
+            download: attachment.name || true,
+            class: "message-attachment",
+            "aria-label": "Download " + (attachment.name || "file"),
+            target: "_blank",
+            rel: "noopener noreferrer"
+          },
+          this.drawThumbnail(attachment)
+        );
+      }
+      return /* @__PURE__ */ (0, import_mithril14.default)(
         "button",
         {
           key: attachment.url,
@@ -29124,7 +29168,7 @@
           onclick: () => controller2.modal_attachments(message, index)
         },
         this.drawThumbnail(attachment)
-      )));
+      );
     }
     // drawThumbnail renders the preview for a single attachment: the image/video
     // frame itself when one is available, otherwise a type icon with the file name.
@@ -29136,7 +29180,7 @@
         case "video":
           return /* @__PURE__ */ (0, import_mithril14.default)("video", { src: attachment.url, class: "message-attachment-thumb", preload: "metadata", muted: true });
         default:
-          return /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-file flex-column flex-align-center flex-justify" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-name text-sm" }, attachment.name || "File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "text-sm text-gray" }, formatFileSize(attachment.size)));
+          return /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-file" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-name text-sm" }, attachment.name || "File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "text-sm text-gray" }, formatFileSize(attachment.size)));
       }
     }
     // mentionActorId returns the profile URL of the mention link containing the given
@@ -29625,7 +29669,7 @@
           },
           /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-chevron-left" })
         ),
-        /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-stage flex-grow flex-row flex-align-center flex-justify" }, this.drawAttachment(current)),
+        /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-stage" }, this.drawAttachment(current)),
         hasMultiple && /* @__PURE__ */ (0, import_mithril26.default)(
           "button",
           {
@@ -29650,14 +29694,14 @@
         case "video":
           return /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true, autoplay: true });
         case "audio":
-          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio flex-column flex-align-center flex-justify" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true, autoplay: true }));
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true, autoplay: true }));
         default:
           return /* @__PURE__ */ (0, import_mithril26.default)(
             "a",
             {
               href: attachment.url,
               download: attachment.name || true,
-              class: "attachment-download flex-column flex-align-center flex-justify",
+              class: "attachment-download",
               target: "_blank",
               rel: "noopener noreferrer"
             },

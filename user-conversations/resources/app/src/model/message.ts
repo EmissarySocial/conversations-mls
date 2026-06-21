@@ -185,22 +185,6 @@ function base64ByteLength(dataUri: string): number {
 	return Math.max(0, Math.floor(payload.length * 3 / 4) - padding)
 }
 
-// summarizeAttachments returns a short, human-readable label for a set of
-// attachments, used as the conversation's "last message" text when a message
-// carries attachments but no body text.
-export function summarizeAttachments(attachments: Attachment[]): string {
-
-	if (attachments.length == 0) {
-		return ""
-	}
-
-	if (attachments.length == 1) {
-		return attachments[0]!.name || "Attachment"
-	}
-
-	return `${attachments.length} attachments`
-}
-
 // attachmentToDocument converts an Attachment into an ActivityStreams object for
 // transmission. The "type" is chosen to match the attachment's kind (Image,
 // Video, Audio, or the generic Document), and width/height are included only when
