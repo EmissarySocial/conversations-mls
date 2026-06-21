@@ -38,12 +38,6 @@ interface DragState {
 	pointerId: number
 	startX: number
 	startY: number
-	// onMedia is true when the gesture began on a media control or link; such
-	// gestures are left to the native control (scrubbing) and never swipe.
-	onMedia: boolean
-	// stageWidth is the clip-window width captured at drag start, used to convert
-	// the pixel delta into the track's percentage transform.
-	stageWidth: number
 	// axis is locked to "x" or "y" once the gesture clears DRAG_SLOP.
 	axis: DragAxis
 }
@@ -236,12 +230,6 @@ export class Attachments {
 		vnode.state.index = next
 	}
 
-	// stage returns the clip-window element (fixed width), used to size the track
-	// and convert pixel drags into percentage transforms.
-	stage(): HTMLElement | null {
-		return document.querySelector("#attachment-viewer .attachment-stage")
-	}
-
 	// track returns the sliding element that holds all the slides.
 	track(): HTMLElement | null {
 		return document.querySelector("#attachment-viewer .attachment-track")
@@ -318,8 +306,6 @@ export class Attachments {
 			pointerId: event.pointerId,
 			startX: event.clientX,
 			startY: event.clientY,
-			onMedia: false,
-			stageWidth: this.stage()?.clientWidth ?? 0,
 			axis: "",
 		}
 	}

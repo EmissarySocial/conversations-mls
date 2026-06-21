@@ -29755,11 +29755,6 @@
       this.pauseAllMedia();
       vnode.state.index = next;
     }
-    // stage returns the clip-window element (fixed width), used to size the track
-    // and convert pixel drags into percentage transforms.
-    stage() {
-      return document.querySelector("#attachment-viewer .attachment-stage");
-    }
     // track returns the sliding element that holds all the slides.
     track() {
       return document.querySelector("#attachment-viewer .attachment-track");
@@ -29820,8 +29815,6 @@
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
-        onMedia: false,
-        stageWidth: this.stage()?.clientWidth ?? 0,
         axis: ""
       };
     }
