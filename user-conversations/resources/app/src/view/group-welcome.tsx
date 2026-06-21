@@ -3,6 +3,7 @@ import m, { type Vnode } from "mithril"
 import { ViewController } from "./controller"
 import { groupIsEncrypted } from "../model/group"
 import { synthClick } from "./utils"
+import { htmlToText } from "../service/utils"
 
 type GroupWelcomeVnode = Vnode<GroupWelcomeArgs, GroupWelcomeState>
 
@@ -21,7 +22,7 @@ export class GroupWelcome {
 		vnode.state.firstMessage = ""
 		const group = vnode.attrs.controller.groupStream()
 		vnode.attrs.controller.getFirstMessageInGroup(group.id).then(content => {
-			vnode.state.firstMessage = content
+			vnode.state.firstMessage = htmlToText(content)
 			m.redraw()
 		})
 	}

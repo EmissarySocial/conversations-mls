@@ -30125,7 +30125,7 @@
       vnode.state.firstMessage = "";
       const group = vnode.attrs.controller.groupStream();
       vnode.attrs.controller.getFirstMessageInGroup(group.id).then((content) => {
-        vnode.state.firstMessage = content;
+        vnode.state.firstMessage = htmlToText(content);
         import_mithril27.default.redraw();
       });
     }
