@@ -92,6 +92,8 @@ export const PropertyAttachment = "attachment"
 
 export const PropertyAttributedTo = "attributedTo"
 
+export const PropertyBlurhash = "blurhash"
+
 export const PropertyCc = "cc"
 
 export const PropertyContent = "content"

@@ -5,6 +5,7 @@ import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
 import { formatFileSize, isEmoji, synthClick } from "./utils"
+import { blurhashBackgroundStyle } from "../service/blurhash"
 
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
@@ -230,7 +231,7 @@ export class ViewMessage {
 		switch (attachmentKind(attachment)) {
 
 			case "image":
-				return <img src={attachment.url} class="message-attachment-thumb" alt="" /> // NOSONAR: typescript:S6853
+				return <img src={attachment.url} class="message-attachment-thumb" style={blurhashBackgroundStyle(attachment.blurhash)} alt="" /> // NOSONAR: typescript:S6853
 
 			case "video":
 				return <video src={attachment.url} class="message-attachment-thumb" preload="metadata" muted></video>

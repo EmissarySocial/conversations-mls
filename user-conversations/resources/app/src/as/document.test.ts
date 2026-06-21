@@ -93,6 +93,12 @@ describe("Document scalar accessors", () => {
 		expect(doc.attachments()[0]).toEqual({ ...original, size: 0 })
 	})
 
+	test("attachments carries the blurhash through encode/decode", () => {
+		const original = { url: "https://x.test/a.png", mediaType: "image/png", name: "a.png", size: 0, blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj" }
+		const doc = new Document({ type: "Note", attachment: attachmentToDocument(original) })
+		expect(doc.attachments()[0]!.blurhash).toBe("LEHV6nWB2yk8pyo0adR*.7kCMdnj")
+	})
+
 	test("resolves the namespaced ActivityStreams key as a fallback", () => {
 		const doc = new Document({ "https://www.w3.org/ns/activitystreams#content": "fallback" })
 		expect(doc.content()).toBe("fallback")

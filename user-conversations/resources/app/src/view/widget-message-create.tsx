@@ -4,6 +4,7 @@ import { type Attachment, type Message, attachmentIcon, attachmentKind, dataUriT
 import type { Emoji } from "../model/emoji"
 import { groupIsEncrypted } from "../model/group"
 import { formatFileSize, synthClick } from "./utils"
+import { encodeBlurhash } from "../service/blurhash"
 
 // MAX_ATTACHMENT_BYTES is the largest file (in bytes) that may be embedded in a
 // message. Attachments are embedded as base64 "data:" URIs, so this limits the
@@ -444,6 +445,17 @@ export class WidgetMessageCreate {
 				const attachment = dataUriToAttachment(reader.result as string, file.name, file.size)
 				vnode.state.pending.push(attachment)
 				m.redraw()
+
+				// For images, compute a BlurHash placeholder in the background and attach
+				// it once ready (the attachment is already shown; this just enriches it).
+				if (attachmentKind(attachment) == "image") {
+					encodeBlurhash(attachment.url).then(blurhash => {
+						if (blurhash != "") {
+							attachment.blurhash = blurhash
+							m.redraw()
+						}
+					})
+				}
 			}
 
 			reader.onerror = () => {

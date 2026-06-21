@@ -157,6 +157,12 @@ function parseAttachment(value: any): Attachment | undefined {
 			attachment.height = value[vocab.PropertyHeight]
 		}
 
+		// blurhash is the Mastodon-compatible blurry placeholder for an image
+		const blurhash = toString(value[vocab.PropertyBlurhash])
+		if (blurhash != "") {
+			attachment.blurhash = blurhash
+		}
+
 		return attachment
 	}
 

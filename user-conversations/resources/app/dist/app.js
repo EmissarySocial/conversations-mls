@@ -6,11 +6,11 @@
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __getProtoOf = Object.getPrototypeOf;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __require = /* @__PURE__ */ ((x2) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x2, {
+  var __require = /* @__PURE__ */ ((x3) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x3, {
     get: (a2, b2) => (typeof require !== "undefined" ? require : a2)[b2]
-  }) : x2)(function(x2) {
+  }) : x3)(function(x3) {
     if (typeof require !== "undefined") return require.apply(this, arguments);
-    throw Error('Dynamic require of "' + x2 + '" is not supported');
+    throw Error('Dynamic require of "' + x3 + '" is not supported');
   });
   var __esm = (fn2, res) => function __init() {
     return fn2 && (res = (0, fn2[__getOwnPropNames(fn2)[0]])(fn2 = 0)), res;
@@ -628,9 +628,9 @@
           for (var i2 = 0; i2 < il; i2++) lisTemp[i2] = a2[i2];
           for (var i2 = 0; i2 < il; ++i2) {
             if (a2[i2] === -1) continue;
-            var j2 = result[result.length - 1];
-            if (a2[j2] < a2[i2]) {
-              lisTemp[i2] = j2;
+            var j3 = result[result.length - 1];
+            if (a2[j3] < a2[i2]) {
+              lisTemp[i2] = j3;
               result.push(i2);
               continue;
             }
@@ -1281,17 +1281,17 @@
           var levels = key.split(/\]\[?|\[/);
           var cursor = data;
           if (key.indexOf("[") > -1) levels.pop();
-          for (var j2 = 0; j2 < levels.length; j2++) {
-            var level2 = levels[j2], nextLevel = levels[j2 + 1];
+          for (var j3 = 0; j3 < levels.length; j3++) {
+            var level2 = levels[j3], nextLevel = levels[j3 + 1];
             var isNumber = nextLevel == "" || !isNaN(parseInt(nextLevel, 10));
             if (level2 === "") {
-              var key = levels.slice(0, j2).join();
+              var key = levels.slice(0, j3).join();
               if (counters[key] == null) {
                 counters[key] = Array.isArray(cursor) ? cursor.length : 0;
               }
               level2 = counters[key]++;
             } else if (level2 === "__proto__") break;
-            if (j2 === levels.length - 1) cursor[level2] = value;
+            if (j3 === levels.length - 1) cursor[level2] = value;
             else {
               var desc = Object.getOwnPropertyDescriptor(cursor, level2);
               if (desc != null) desc = desc.value;
@@ -1405,7 +1405,7 @@
       var compileTemplate = require_compileTemplate();
       var censor = require_censor();
       module.exports = function($window, mountRedraw) {
-        var p2 = Promise.resolve();
+        var p3 = Promise.resolve();
         var scheduled = false;
         var ready = false;
         var hasBeenResolved = false;
@@ -1463,7 +1463,7 @@
                   payload = {};
                   update(localComp);
                 } else if (payload.onmatch) {
-                  p2.then(function() {
+                  p3.then(function() {
                     return payload.onmatch(data.params, path, matchedRoute);
                   }).then(update, path === fallbackRoute ? null : reject);
                 } else update(
@@ -1806,9 +1806,9 @@
         if (counter >= MAX_COUNTER)
           throw new Error("arx: counter overflow");
         const take = Math.min(BLOCK_LEN, len - pos);
-        for (let j2 = 0, posj; j2 < take; j2++) {
-          posj = pos + j2;
-          output[posj] = data[posj] ^ block[j2];
+        for (let j3 = 0, posj; j3 < take; j3++) {
+          posj = pos + j3;
+          output[posj] = data[posj] ^ block[j3];
         }
         pos += take;
       }
@@ -1823,16 +1823,16 @@
         const pos32 = pos / 4;
         if (pos % 4 !== 0)
           throw new Error("arx: invalid block position");
-        for (let j2 = 0, posj; j2 < BLOCK_LEN32; j2++) {
-          posj = pos32 + j2;
-          o32[posj] = d32[posj] ^ b32[j2];
+        for (let j3 = 0, posj; j3 < BLOCK_LEN32; j3++) {
+          posj = pos32 + j3;
+          o32[posj] = d32[posj] ^ b32[j3];
         }
         pos += BLOCK_LEN;
         continue;
       }
-      for (let j2 = 0, posj; j2 < take; j2++) {
-        posj = pos + j2;
-        output[posj] = data[posj] ^ block[j2];
+      for (let j3 = 0, posj; j3 < take; j3++) {
+        posj = pos + j3;
+        output[posj] = data[posj] ^ block[j3];
       }
       pos += take;
     }
@@ -2058,7 +2058,7 @@
         }
         process(data, offset, isLast = false) {
           const hibit = isLast ? 0 : 1 << 11;
-          const { h: h2, r: r2 } = this;
+          const { h: h3, r: r2 } = this;
           const r0 = r2[0];
           const r1 = r2[1];
           const r22 = r2[2];
@@ -2077,72 +2077,72 @@
           const t5 = u8to16(data, offset + 10);
           const t6 = u8to16(data, offset + 12);
           const t7 = u8to16(data, offset + 14);
-          let h0 = h2[0] + (t0 & 8191);
-          let h1 = h2[1] + ((t0 >>> 13 | t1 << 3) & 8191);
-          let h22 = h2[2] + ((t1 >>> 10 | t2 << 6) & 8191);
-          let h3 = h2[3] + ((t2 >>> 7 | t3 << 9) & 8191);
-          let h4 = h2[4] + ((t3 >>> 4 | t4 << 12) & 8191);
-          let h5 = h2[5] + (t4 >>> 1 & 8191);
-          let h6 = h2[6] + ((t4 >>> 14 | t5 << 2) & 8191);
-          let h7 = h2[7] + ((t5 >>> 11 | t6 << 5) & 8191);
-          let h8 = h2[8] + ((t6 >>> 8 | t7 << 8) & 8191);
-          let h9 = h2[9] + (t7 >>> 5 | hibit);
+          let h0 = h3[0] + (t0 & 8191);
+          let h1 = h3[1] + ((t0 >>> 13 | t1 << 3) & 8191);
+          let h22 = h3[2] + ((t1 >>> 10 | t2 << 6) & 8191);
+          let h32 = h3[3] + ((t2 >>> 7 | t3 << 9) & 8191);
+          let h4 = h3[4] + ((t3 >>> 4 | t4 << 12) & 8191);
+          let h5 = h3[5] + (t4 >>> 1 & 8191);
+          let h6 = h3[6] + ((t4 >>> 14 | t5 << 2) & 8191);
+          let h7 = h3[7] + ((t5 >>> 11 | t6 << 5) & 8191);
+          let h8 = h3[8] + ((t6 >>> 8 | t7 << 8) & 8191);
+          let h9 = h3[9] + (t7 >>> 5 | hibit);
           let c2 = 0;
-          let d0 = c2 + h0 * r0 + h1 * (5 * r9) + h22 * (5 * r8) + h3 * (5 * r7) + h4 * (5 * r6);
+          let d0 = c2 + h0 * r0 + h1 * (5 * r9) + h22 * (5 * r8) + h32 * (5 * r7) + h4 * (5 * r6);
           c2 = d0 >>> 13;
           d0 &= 8191;
           d0 += h5 * (5 * r5) + h6 * (5 * r4) + h7 * (5 * r3) + h8 * (5 * r22) + h9 * (5 * r1);
           c2 += d0 >>> 13;
           d0 &= 8191;
-          let d1 = c2 + h0 * r1 + h1 * r0 + h22 * (5 * r9) + h3 * (5 * r8) + h4 * (5 * r7);
+          let d1 = c2 + h0 * r1 + h1 * r0 + h22 * (5 * r9) + h32 * (5 * r8) + h4 * (5 * r7);
           c2 = d1 >>> 13;
           d1 &= 8191;
           d1 += h5 * (5 * r6) + h6 * (5 * r5) + h7 * (5 * r4) + h8 * (5 * r3) + h9 * (5 * r22);
           c2 += d1 >>> 13;
           d1 &= 8191;
-          let d2 = c2 + h0 * r22 + h1 * r1 + h22 * r0 + h3 * (5 * r9) + h4 * (5 * r8);
-          c2 = d2 >>> 13;
-          d2 &= 8191;
-          d2 += h5 * (5 * r7) + h6 * (5 * r6) + h7 * (5 * r5) + h8 * (5 * r4) + h9 * (5 * r3);
-          c2 += d2 >>> 13;
-          d2 &= 8191;
-          let d3 = c2 + h0 * r3 + h1 * r22 + h22 * r1 + h3 * r0 + h4 * (5 * r9);
+          let d22 = c2 + h0 * r22 + h1 * r1 + h22 * r0 + h32 * (5 * r9) + h4 * (5 * r8);
+          c2 = d22 >>> 13;
+          d22 &= 8191;
+          d22 += h5 * (5 * r7) + h6 * (5 * r6) + h7 * (5 * r5) + h8 * (5 * r4) + h9 * (5 * r3);
+          c2 += d22 >>> 13;
+          d22 &= 8191;
+          let d3 = c2 + h0 * r3 + h1 * r22 + h22 * r1 + h32 * r0 + h4 * (5 * r9);
           c2 = d3 >>> 13;
           d3 &= 8191;
           d3 += h5 * (5 * r8) + h6 * (5 * r7) + h7 * (5 * r6) + h8 * (5 * r5) + h9 * (5 * r4);
           c2 += d3 >>> 13;
           d3 &= 8191;
-          let d4 = c2 + h0 * r4 + h1 * r3 + h22 * r22 + h3 * r1 + h4 * r0;
+          let d4 = c2 + h0 * r4 + h1 * r3 + h22 * r22 + h32 * r1 + h4 * r0;
           c2 = d4 >>> 13;
           d4 &= 8191;
           d4 += h5 * (5 * r9) + h6 * (5 * r8) + h7 * (5 * r7) + h8 * (5 * r6) + h9 * (5 * r5);
           c2 += d4 >>> 13;
           d4 &= 8191;
-          let d5 = c2 + h0 * r5 + h1 * r4 + h22 * r3 + h3 * r22 + h4 * r1;
+          let d5 = c2 + h0 * r5 + h1 * r4 + h22 * r3 + h32 * r22 + h4 * r1;
           c2 = d5 >>> 13;
           d5 &= 8191;
           d5 += h5 * r0 + h6 * (5 * r9) + h7 * (5 * r8) + h8 * (5 * r7) + h9 * (5 * r6);
           c2 += d5 >>> 13;
           d5 &= 8191;
-          let d6 = c2 + h0 * r6 + h1 * r5 + h22 * r4 + h3 * r3 + h4 * r22;
+          let d6 = c2 + h0 * r6 + h1 * r5 + h22 * r4 + h32 * r3 + h4 * r22;
           c2 = d6 >>> 13;
           d6 &= 8191;
           d6 += h5 * r1 + h6 * r0 + h7 * (5 * r9) + h8 * (5 * r8) + h9 * (5 * r7);
           c2 += d6 >>> 13;
           d6 &= 8191;
-          let d7 = c2 + h0 * r7 + h1 * r6 + h22 * r5 + h3 * r4 + h4 * r3;
+          let d7 = c2 + h0 * r7 + h1 * r6 + h22 * r5 + h32 * r4 + h4 * r3;
           c2 = d7 >>> 13;
           d7 &= 8191;
           d7 += h5 * r22 + h6 * r1 + h7 * r0 + h8 * (5 * r9) + h9 * (5 * r8);
           c2 += d7 >>> 13;
           d7 &= 8191;
-          let d8 = c2 + h0 * r8 + h1 * r7 + h22 * r6 + h3 * r5 + h4 * r4;
+          let d8 = c2 + h0 * r8 + h1 * r7 + h22 * r6 + h32 * r5 + h4 * r4;
           c2 = d8 >>> 13;
           d8 &= 8191;
           d8 += h5 * r3 + h6 * r22 + h7 * r1 + h8 * r0 + h9 * (5 * r9);
           c2 += d8 >>> 13;
           d8 &= 8191;
-          let d9 = c2 + h0 * r9 + h1 * r8 + h22 * r7 + h3 * r6 + h4 * r5;
+          let d9 = c2 + h0 * r9 + h1 * r8 + h22 * r7 + h32 * r6 + h4 * r5;
           c2 = d9 >>> 13;
           d9 &= 8191;
           d9 += h5 * r4 + h6 * r3 + h7 * r22 + h8 * r1 + h9 * r0;
@@ -2153,39 +2153,39 @@
           d0 = c2 & 8191;
           c2 = c2 >>> 13;
           d1 += c2;
-          h2[0] = d0;
-          h2[1] = d1;
-          h2[2] = d2;
-          h2[3] = d3;
-          h2[4] = d4;
-          h2[5] = d5;
-          h2[6] = d6;
-          h2[7] = d7;
-          h2[8] = d8;
-          h2[9] = d9;
+          h3[0] = d0;
+          h3[1] = d1;
+          h3[2] = d22;
+          h3[3] = d3;
+          h3[4] = d4;
+          h3[5] = d5;
+          h3[6] = d6;
+          h3[7] = d7;
+          h3[8] = d8;
+          h3[9] = d9;
         }
         finalize() {
-          const { h: h2, pad } = this;
+          const { h: h3, pad } = this;
           const g2 = new Uint16Array(10);
-          let c2 = h2[1] >>> 13;
-          h2[1] &= 8191;
+          let c2 = h3[1] >>> 13;
+          h3[1] &= 8191;
           for (let i2 = 2; i2 < 10; i2++) {
-            h2[i2] += c2;
-            c2 = h2[i2] >>> 13;
-            h2[i2] &= 8191;
+            h3[i2] += c2;
+            c2 = h3[i2] >>> 13;
+            h3[i2] &= 8191;
           }
-          h2[0] += c2 * 5;
-          c2 = h2[0] >>> 13;
-          h2[0] &= 8191;
-          h2[1] += c2;
-          c2 = h2[1] >>> 13;
-          h2[1] &= 8191;
-          h2[2] += c2;
-          g2[0] = h2[0] + 5;
+          h3[0] += c2 * 5;
+          c2 = h3[0] >>> 13;
+          h3[0] &= 8191;
+          h3[1] += c2;
+          c2 = h3[1] >>> 13;
+          h3[1] &= 8191;
+          h3[2] += c2;
+          g2[0] = h3[0] + 5;
           c2 = g2[0] >>> 13;
           g2[0] &= 8191;
           for (let i2 = 1; i2 < 10; i2++) {
-            g2[i2] = h2[i2] + c2;
+            g2[i2] = h3[i2] + c2;
             c2 = g2[i2] >>> 13;
             g2[i2] &= 8191;
           }
@@ -2195,20 +2195,20 @@
             g2[i2] &= mask;
           mask = ~mask;
           for (let i2 = 0; i2 < 10; i2++)
-            h2[i2] = h2[i2] & mask | g2[i2];
-          h2[0] = (h2[0] | h2[1] << 13) & 65535;
-          h2[1] = (h2[1] >>> 3 | h2[2] << 10) & 65535;
-          h2[2] = (h2[2] >>> 6 | h2[3] << 7) & 65535;
-          h2[3] = (h2[3] >>> 9 | h2[4] << 4) & 65535;
-          h2[4] = (h2[4] >>> 12 | h2[5] << 1 | h2[6] << 14) & 65535;
-          h2[5] = (h2[6] >>> 2 | h2[7] << 11) & 65535;
-          h2[6] = (h2[7] >>> 5 | h2[8] << 8) & 65535;
-          h2[7] = (h2[8] >>> 8 | h2[9] << 5) & 65535;
-          let f2 = h2[0] + pad[0];
-          h2[0] = f2 & 65535;
+            h3[i2] = h3[i2] & mask | g2[i2];
+          h3[0] = (h3[0] | h3[1] << 13) & 65535;
+          h3[1] = (h3[1] >>> 3 | h3[2] << 10) & 65535;
+          h3[2] = (h3[2] >>> 6 | h3[3] << 7) & 65535;
+          h3[3] = (h3[3] >>> 9 | h3[4] << 4) & 65535;
+          h3[4] = (h3[4] >>> 12 | h3[5] << 1 | h3[6] << 14) & 65535;
+          h3[5] = (h3[6] >>> 2 | h3[7] << 11) & 65535;
+          h3[6] = (h3[7] >>> 5 | h3[8] << 8) & 65535;
+          h3[7] = (h3[8] >>> 8 | h3[9] << 5) & 65535;
+          let f3 = h3[0] + pad[0];
+          h3[0] = f3 & 65535;
           for (let i2 = 1; i2 < 8; i2++) {
-            f2 = (h2[i2] + pad[i2] | 0) + (f2 >>> 16) | 0;
-            h2[i2] = f2 & 65535;
+            f3 = (h3[i2] + pad[i2] | 0) + (f3 >>> 16) | 0;
+            h3[i2] = f3 & 65535;
           }
           clean2(g2);
         }
@@ -2243,7 +2243,7 @@
           aexists2(this);
           aoutput2(out, this);
           this.finished = true;
-          const { buffer, h: h2 } = this;
+          const { buffer, h: h3 } = this;
           let { pos } = this;
           if (pos) {
             buffer[pos++] = 1;
@@ -2254,8 +2254,8 @@
           this.finalize();
           let opos = 0;
           for (let i2 = 0; i2 < 8; i2++) {
-            out[opos++] = h2[i2] >>> 0;
-            out[opos++] = h2[i2] >>> 8;
+            out[opos++] = h3[i2] >>> 0;
+            out[opos++] = h3[i2] >>> 8;
           }
         }
         digest() {
@@ -2286,26 +2286,26 @@
     xchacha20: () => xchacha20,
     xchacha20poly1305: () => xchacha20poly1305
   });
-  function chachaQR(x2, a2, b2, c2, d2) {
-    x2[a2] = x2[a2] + x2[b2] | 0;
-    x2[d2] = rotl(x2[d2] ^ x2[a2], 16);
-    x2[c2] = x2[c2] + x2[d2] | 0;
-    x2[b2] = rotl(x2[b2] ^ x2[c2], 12);
-    x2[a2] = x2[a2] + x2[b2] | 0;
-    x2[d2] = rotl(x2[d2] ^ x2[a2], 8);
-    x2[c2] = x2[c2] + x2[d2] | 0;
-    x2[b2] = rotl(x2[b2] ^ x2[c2], 7);
+  function chachaQR(x3, a2, b2, c2, d3) {
+    x3[a2] = x3[a2] + x3[b2] | 0;
+    x3[d3] = rotl(x3[d3] ^ x3[a2], 16);
+    x3[c2] = x3[c2] + x3[d3] | 0;
+    x3[b2] = rotl(x3[b2] ^ x3[c2], 12);
+    x3[a2] = x3[a2] + x3[b2] | 0;
+    x3[d3] = rotl(x3[d3] ^ x3[a2], 8);
+    x3[c2] = x3[c2] + x3[d3] | 0;
+    x3[b2] = rotl(x3[b2] ^ x3[c2], 7);
   }
-  function chachaRound(x2, rounds = 20) {
+  function chachaRound(x3, rounds = 20) {
     for (let r2 = 0; r2 < rounds; r2 += 2) {
-      chachaQR(x2, 0, 4, 8, 12);
-      chachaQR(x2, 1, 5, 9, 13);
-      chachaQR(x2, 2, 6, 10, 14);
-      chachaQR(x2, 3, 7, 11, 15);
-      chachaQR(x2, 0, 5, 10, 15);
-      chachaQR(x2, 1, 6, 11, 12);
-      chachaQR(x2, 2, 7, 8, 13);
-      chachaQR(x2, 3, 4, 9, 14);
+      chachaQR(x3, 0, 4, 8, 12);
+      chachaQR(x3, 1, 5, 9, 13);
+      chachaQR(x3, 2, 6, 10, 14);
+      chachaQR(x3, 3, 7, 11, 15);
+      chachaQR(x3, 0, 5, 10, 15);
+      chachaQR(x3, 1, 6, 11, 12);
+      chachaQR(x3, 2, 7, 8, 13);
+      chachaQR(x3, 3, 4, 9, 14);
     }
   }
   function chacha(s2, k2, i2, out, isHChacha = true, rounds = 20) {
@@ -2331,16 +2331,16 @@
       i2[3]
       // Counter  Counter Nonce   Nonce
     ]);
-    const x2 = ctmp;
-    x2.set(y2);
-    chachaRound(x2, rounds);
+    const x3 = ctmp;
+    x3.set(y2);
+    chachaRound(x3, rounds);
     if (isHChacha) {
       const xindexes = [0, 1, 2, 3, 12, 13, 14, 15];
       for (let i3 = 0; i3 < 8; i3++)
-        out[i3] = x2[xindexes[i3]];
+        out[i3] = x3[xindexes[i3]];
     } else {
       for (let i3 = 0; i3 < 16; i3++)
-        out[i3] = y2[i3] + x2[i3] | 0;
+        out[i3] = y2[i3] + x3[i3] | 0;
     }
   }
   function chachaCore(s2, k2, n2, out, cnt, rounds = 20) {
@@ -2514,12 +2514,12 @@
       abytes2(AAD, void 0, "AAD");
     const authKey = fn2(key, nonce, ZEROS32);
     const lengths = u64Lengths(ciphertext.length, AAD ? AAD.length : 0, true);
-    const h2 = poly1305.create(authKey);
+    const h3 = poly1305.create(authKey);
     if (AAD)
-      updatePadded(h2, AAD);
-    updatePadded(h2, ciphertext);
-    h2.update(lengths);
-    const res = h2.digest();
+      updatePadded(h3, AAD);
+    updatePadded(h3, ciphertext);
+    h3.update(lengths);
+    const res = h3.digest();
     clean2(authKey, lengths);
     return res;
   }
@@ -2562,11 +2562,11 @@
       });
       __TESTS = /* @__PURE__ */ Object.freeze({ chachaCore_small, chachaCore });
       ZEROS16 = /* @__PURE__ */ new Uint8Array(16);
-      updatePadded = (h2, msg) => {
-        h2.update(msg);
+      updatePadded = (h3, msg) => {
+        h3.update(msg);
         const leftover = msg.length % 16;
         if (leftover)
-          h2.update(ZEROS16.subarray(leftover));
+          h3.update(ZEROS16.subarray(leftover));
       };
       ZEROS32 = /* @__PURE__ */ new Uint8Array(32);
       _poly1305_aead = (xorStream) => (key, nonce, AAD) => {
@@ -2641,14 +2641,14 @@
     }
     return value;
   }
-  function ahash2(h2) {
-    if (typeof h2 !== "function" || typeof h2.create !== "function")
+  function ahash2(h3) {
+    if (typeof h3 !== "function" || typeof h3.create !== "function")
       throw new TypeError("Hash must wrapped by utils.createHasher");
-    anumber3(h2.outputLen);
-    anumber3(h2.blockLen);
-    if (h2.outputLen < 1)
+    anumber3(h3.outputLen);
+    anumber3(h3.blockLen);
+    if (h3.outputLen < 1)
       throw new Error('"outputLen" must be >= 1');
-    if (h2.blockLen < 1)
+    if (h3.blockLen < 1)
       throw new Error('"blockLen" must be >= 1');
   }
   function aexists3(instance, checkFinished = true) {
@@ -2959,8 +2959,8 @@
     let Ah = new Uint32Array(len);
     let Al = new Uint32Array(len);
     for (let i2 = 0; i2 < len; i2++) {
-      const { h: h2, l: l2 } = fromBig2(lst[i2], le2);
-      [Ah[i2], Al[i2]] = [h2, l2];
+      const { h: h3, l: l2 } = fromBig2(lst[i2], le2);
+      [Ah[i2], Al[i2]] = [h3, l2];
     }
     return [Ah, Al];
   }
@@ -2973,16 +2973,16 @@
     "node_modules/@noble/hashes/_u64.js"() {
       U32_MASK642 = /* @__PURE__ */ BigInt(2 ** 32 - 1);
       _32n2 = /* @__PURE__ */ BigInt(32);
-      shrSH2 = (h2, _l, s2) => h2 >>> s2;
-      shrSL2 = (h2, l2, s2) => h2 << 32 - s2 | l2 >>> s2;
-      rotrSH2 = (h2, l2, s2) => h2 >>> s2 | l2 << 32 - s2;
-      rotrSL2 = (h2, l2, s2) => h2 << 32 - s2 | l2 >>> s2;
-      rotrBH2 = (h2, l2, s2) => h2 << 64 - s2 | l2 >>> s2 - 32;
-      rotrBL2 = (h2, l2, s2) => h2 >>> s2 - 32 | l2 << 64 - s2;
-      rotlSH2 = (h2, l2, s2) => h2 << s2 | l2 >>> 32 - s2;
-      rotlSL2 = (h2, l2, s2) => l2 << s2 | h2 >>> 32 - s2;
-      rotlBH2 = (h2, l2, s2) => l2 << s2 - 32 | h2 >>> 64 - s2;
-      rotlBL2 = (h2, l2, s2) => h2 << s2 - 32 | l2 >>> 64 - s2;
+      shrSH2 = (h3, _l, s2) => h3 >>> s2;
+      shrSL2 = (h3, l2, s2) => h3 << 32 - s2 | l2 >>> s2;
+      rotrSH2 = (h3, l2, s2) => h3 >>> s2 | l2 << 32 - s2;
+      rotrSL2 = (h3, l2, s2) => h3 << 32 - s2 | l2 >>> s2;
+      rotrBH2 = (h3, l2, s2) => h3 << 64 - s2 | l2 >>> s2 - 32;
+      rotrBL2 = (h3, l2, s2) => h3 >>> s2 - 32 | l2 << 64 - s2;
+      rotlSH2 = (h3, l2, s2) => h3 << s2 | l2 >>> 32 - s2;
+      rotlSL2 = (h3, l2, s2) => l2 << s2 | h3 >>> 32 - s2;
+      rotlBH2 = (h3, l2, s2) => l2 << s2 - 32 | h3 >>> 64 - s2;
+      rotlBL2 = (h3, l2, s2) => h3 << s2 - 32 | l2 >>> 64 - s2;
       add3L2 = (Al, Bl, Cl) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0);
       add3H2 = (low, Ah, Bh, Ch) => Ah + Bh + Ch + (low / 2 ** 32 | 0) | 0;
       add4L2 = (Al, Bl, Cl, Dl) => (Al >>> 0) + (Bl >>> 0) + (Cl >>> 0) + (Dl >>> 0);
@@ -3071,19 +3071,19 @@
           super(64, outputLen, 8, false);
         }
         get() {
-          const { A: A2, B: B2, C: C2, D: D2, E: E2, F: F2, G: G2, H: H2 } = this;
-          return [A2, B2, C2, D2, E2, F2, G2, H2];
+          const { A: A3, B: B2, C: C3, D: D3, E: E2, F: F3, G: G2, H: H3 } = this;
+          return [A3, B2, C3, D3, E2, F3, G2, H3];
         }
         // prettier-ignore
-        set(A2, B2, C2, D2, E2, F2, G2, H2) {
-          this.A = A2 | 0;
+        set(A3, B2, C3, D3, E2, F3, G2, H3) {
+          this.A = A3 | 0;
           this.B = B2 | 0;
-          this.C = C2 | 0;
-          this.D = D2 | 0;
+          this.C = C3 | 0;
+          this.D = D3 | 0;
           this.E = E2 | 0;
-          this.F = F2 | 0;
+          this.F = F3 | 0;
           this.G = G2 | 0;
-          this.H = H2 | 0;
+          this.H = H3 | 0;
         }
         process(view, offset) {
           for (let i2 = 0; i2 < 16; i2++, offset += 4)
@@ -3095,30 +3095,30 @@
             const s1 = rotr2(W2, 17) ^ rotr2(W2, 19) ^ W2 >>> 10;
             SHA256_W[i2] = s1 + SHA256_W[i2 - 7] + s0 + SHA256_W[i2 - 16] | 0;
           }
-          let { A: A2, B: B2, C: C2, D: D2, E: E2, F: F2, G: G2, H: H2 } = this;
+          let { A: A3, B: B2, C: C3, D: D3, E: E2, F: F3, G: G2, H: H3 } = this;
           for (let i2 = 0; i2 < 64; i2++) {
             const sigma1 = rotr2(E2, 6) ^ rotr2(E2, 11) ^ rotr2(E2, 25);
-            const T1 = H2 + sigma1 + Chi2(E2, F2, G2) + SHA256_K[i2] + SHA256_W[i2] | 0;
-            const sigma0 = rotr2(A2, 2) ^ rotr2(A2, 13) ^ rotr2(A2, 22);
-            const T2 = sigma0 + Maj2(A2, B2, C2) | 0;
-            H2 = G2;
-            G2 = F2;
-            F2 = E2;
-            E2 = D2 + T1 | 0;
-            D2 = C2;
-            C2 = B2;
-            B2 = A2;
-            A2 = T1 + T2 | 0;
+            const T1 = H3 + sigma1 + Chi2(E2, F3, G2) + SHA256_K[i2] + SHA256_W[i2] | 0;
+            const sigma0 = rotr2(A3, 2) ^ rotr2(A3, 13) ^ rotr2(A3, 22);
+            const T2 = sigma0 + Maj2(A3, B2, C3) | 0;
+            H3 = G2;
+            G2 = F3;
+            F3 = E2;
+            E2 = D3 + T1 | 0;
+            D3 = C3;
+            C3 = B2;
+            B2 = A3;
+            A3 = T1 + T2 | 0;
           }
-          A2 = A2 + this.A | 0;
+          A3 = A3 + this.A | 0;
           B2 = B2 + this.B | 0;
-          C2 = C2 + this.C | 0;
-          D2 = D2 + this.D | 0;
+          C3 = C3 + this.C | 0;
+          D3 = D3 + this.D | 0;
           E2 = E2 + this.E | 0;
-          F2 = F2 + this.F | 0;
+          F3 = F3 + this.F | 0;
           G2 = G2 + this.G | 0;
-          H2 = H2 + this.H | 0;
-          this.set(A2, B2, C2, D2, E2, F2, G2, H2);
+          H3 = H3 + this.H | 0;
+          this.set(A3, B2, C3, D3, E2, F3, G2, H3);
         }
         roundClean() {
           clean3(SHA256_W);
@@ -3494,14 +3494,14 @@
       k2.fill(0);
       i2 = 0;
     };
-    const h2 = (...msgs) => hmacFn(k2, concatBytes3(v2, ...msgs));
+    const h3 = (...msgs) => hmacFn(k2, concatBytes3(v2, ...msgs));
     const reseed = (seed = NULL) => {
-      k2 = h2(byte0, seed);
-      v2 = h2();
+      k2 = h3(byte0, seed);
+      v2 = h3();
       if (seed.length === 0)
         return;
-      k2 = h2(byte1, seed);
-      v2 = h2();
+      k2 = h3(byte1, seed);
+      v2 = h3();
     };
     const gen = () => {
       if (i2++ >= _maxDrbgIters)
@@ -3509,7 +3509,7 @@
       let len = 0;
       const out = [];
       while (len < qByteLen) {
-        v2 = h2();
+        v2 = h3();
         const sl = v2.slice();
         out.push(sl);
         len += v2.length;
@@ -3540,7 +3540,7 @@
       if (current !== expectedType || val === null)
         throw new TypeError(`param "${fieldName}" is invalid: expected ${expectedType}, got ${current}`);
     }
-    const iter = (f2, isOpt) => Object.entries(f2).forEach(([k2, v2]) => checkField(k2, v2, isOpt));
+    const iter = (f3, isOpt) => Object.entries(f3).forEach(([k2, v2]) => checkField(k2, v2, isOpt));
     iter(fields, false);
     iter(optFields, true);
   }
@@ -3572,10 +3572,10 @@
     const result = a2 % b2;
     return result >= _0n3 ? result : b2 + result;
   }
-  function pow22(x2, power, modulo) {
+  function pow22(x3, power, modulo) {
     if (power < _0n3)
       throw new Error("pow2: expected non-negative exponent, got " + power);
-    let res = x2;
+    let res = x3;
     while (power-- > _0n3) {
       res *= res;
       res %= modulo;
@@ -3589,40 +3589,40 @@
       throw new Error("invert: expected positive modulus, got " + modulo);
     let a2 = mod3(number, modulo);
     let b2 = modulo;
-    let x2 = _0n3, y2 = _1n3, u2 = _1n3, v2 = _0n3;
+    let x3 = _0n3, y2 = _1n3, u2 = _1n3, v2 = _0n3;
     while (a2 !== _0n3) {
-      const q2 = b2 / a2;
-      const r2 = b2 - a2 * q2;
-      const m39 = x2 - u2 * q2;
-      const n2 = y2 - v2 * q2;
-      b2 = a2, a2 = r2, x2 = u2, y2 = v2, u2 = m39, v2 = n2;
+      const q3 = b2 / a2;
+      const r2 = b2 - a2 * q3;
+      const m39 = x3 - u2 * q3;
+      const n2 = y2 - v2 * q3;
+      b2 = a2, a2 = r2, x3 = u2, y2 = v2, u2 = m39, v2 = n2;
     }
     const gcd = b2;
     if (gcd !== _1n3)
       throw new Error("invert: does not exist");
-    return mod3(x2, modulo);
+    return mod3(x3, modulo);
   }
   function assertIsSquare(Fp3, root2, n2) {
-    const F2 = Fp3;
-    if (!F2.eql(F2.sqr(root2), n2))
+    const F3 = Fp3;
+    if (!F3.eql(F3.sqr(root2), n2))
       throw new Error("Cannot find square root");
   }
   function sqrt3mod4(Fp3, n2) {
-    const F2 = Fp3;
-    const p1div4 = (F2.ORDER + _1n3) / _4n;
-    const root2 = F2.pow(n2, p1div4);
-    assertIsSquare(F2, root2, n2);
+    const F3 = Fp3;
+    const p1div4 = (F3.ORDER + _1n3) / _4n;
+    const root2 = F3.pow(n2, p1div4);
+    assertIsSquare(F3, root2, n2);
     return root2;
   }
   function sqrt5mod8(Fp3, n2) {
-    const F2 = Fp3;
-    const p5div8 = (F2.ORDER - _5n) / _8n;
-    const n22 = F2.mul(n2, _2n2);
-    const v2 = F2.pow(n22, p5div8);
-    const nv = F2.mul(n2, v2);
-    const i2 = F2.mul(F2.mul(nv, _2n2), v2);
-    const root2 = F2.mul(nv, F2.sub(i2, F2.ONE));
-    assertIsSquare(F2, root2, n2);
+    const F3 = Fp3;
+    const p5div8 = (F3.ORDER - _5n) / _8n;
+    const n22 = F3.mul(n2, _2n2);
+    const v2 = F3.pow(n22, p5div8);
+    const nv = F3.mul(n2, v2);
+    const i2 = F3.mul(F3.mul(nv, _2n2), v2);
+    const root2 = F3.mul(nv, F3.sub(i2, F3.ONE));
+    assertIsSquare(F3, root2, n2);
     return root2;
   }
   function sqrt9mod16(P2) {
@@ -3633,18 +3633,18 @@
     const c3 = tn2(Fp_, Fp_.neg(c1));
     const c4 = (P2 + _7n2) / _16n;
     return ((Fp3, n2) => {
-      const F2 = Fp3;
-      let tv1 = F2.pow(n2, c4);
-      let tv2 = F2.mul(tv1, c1);
-      const tv3 = F2.mul(tv1, c2);
-      const tv4 = F2.mul(tv1, c3);
-      const e1 = F2.eql(F2.sqr(tv2), n2);
-      const e2 = F2.eql(F2.sqr(tv3), n2);
-      tv1 = F2.cmov(tv1, tv2, e1);
-      tv2 = F2.cmov(tv4, tv3, e2);
-      const e3 = F2.eql(F2.sqr(tv2), n2);
-      const root2 = F2.cmov(tv1, tv2, e3);
-      assertIsSquare(F2, root2, n2);
+      const F3 = Fp3;
+      let tv1 = F3.pow(n2, c4);
+      let tv2 = F3.mul(tv1, c1);
+      const tv3 = F3.mul(tv1, c2);
+      const tv4 = F3.mul(tv1, c3);
+      const e1 = F3.eql(F3.sqr(tv2), n2);
+      const e2 = F3.eql(F3.sqr(tv3), n2);
+      tv1 = F3.cmov(tv1, tv2, e1);
+      tv2 = F3.cmov(tv4, tv3, e2);
+      const e3 = F3.eql(F3.sqr(tv2), n2);
+      const root2 = F3.cmov(tv1, tv2, e3);
+      assertIsSquare(F3, root2, n2);
       return root2;
     });
   }
@@ -3652,10 +3652,10 @@
     if (P2 < _3n)
       throw new Error("sqrt is not defined for small field");
     let Q2 = P2 - _1n3;
-    let S2 = 0;
+    let S3 = 0;
     while (Q2 % _2n2 === _0n3) {
       Q2 /= _2n2;
-      S2++;
+      S3++;
     }
     let Z2 = _2n2;
     const _Fp = Field(P2);
@@ -3663,37 +3663,37 @@
       if (Z2++ > 1e3)
         throw new Error("Cannot find square root: probably non-prime P");
     }
-    if (S2 === 1)
+    if (S3 === 1)
       return sqrt3mod4;
     let cc = _Fp.pow(Z2, Q2);
     const Q1div2 = (Q2 + _1n3) / _2n2;
     return function tonelliSlow(Fp3, n2) {
-      const F2 = Fp3;
-      if (F2.is0(n2))
+      const F3 = Fp3;
+      if (F3.is0(n2))
         return n2;
-      if (FpLegendre(F2, n2) !== 1)
+      if (FpLegendre(F3, n2) !== 1)
         throw new Error("Cannot find square root");
-      let M2 = S2;
-      let c2 = F2.mul(F2.ONE, cc);
-      let t2 = F2.pow(n2, Q2);
-      let R2 = F2.pow(n2, Q1div2);
-      while (!F2.eql(t2, F2.ONE)) {
-        if (F2.is0(t2))
-          return F2.ZERO;
+      let M3 = S3;
+      let c2 = F3.mul(F3.ONE, cc);
+      let t2 = F3.pow(n2, Q2);
+      let R2 = F3.pow(n2, Q1div2);
+      while (!F3.eql(t2, F3.ONE)) {
+        if (F3.is0(t2))
+          return F3.ZERO;
         let i2 = 1;
-        let t_tmp = F2.sqr(t2);
-        while (!F2.eql(t_tmp, F2.ONE)) {
+        let t_tmp = F3.sqr(t2);
+        while (!F3.eql(t_tmp, F3.ONE)) {
           i2++;
-          t_tmp = F2.sqr(t_tmp);
-          if (i2 === M2)
+          t_tmp = F3.sqr(t_tmp);
+          if (i2 === M3)
             throw new Error("Cannot find square root");
         }
-        const exponent = _1n3 << BigInt(M2 - i2 - 1);
-        const b2 = F2.pow(c2, exponent);
-        M2 = i2;
-        c2 = F2.sqr(b2);
-        t2 = F2.mul(t2, c2);
-        R2 = F2.mul(R2, b2);
+        const exponent = _1n3 << BigInt(M3 - i2 - 1);
+        const b2 = F3.pow(c2, exponent);
+        M3 = i2;
+        c2 = F3.sqr(b2);
+        t2 = F3.mul(t2, c2);
+        R2 = F3.mul(R2, b2);
       }
       return R2;
     };
@@ -3727,48 +3727,48 @@
     return field;
   }
   function FpPow(Fp3, num, power) {
-    const F2 = Fp3;
+    const F3 = Fp3;
     if (power < _0n3)
       throw new Error("invalid exponent, negatives unsupported");
     if (power === _0n3)
-      return F2.ONE;
+      return F3.ONE;
     if (power === _1n3)
       return num;
-    let p2 = F2.ONE;
-    let d2 = num;
+    let p3 = F3.ONE;
+    let d3 = num;
     while (power > _0n3) {
       if (power & _1n3)
-        p2 = F2.mul(p2, d2);
-      d2 = F2.sqr(d2);
+        p3 = F3.mul(p3, d3);
+      d3 = F3.sqr(d3);
       power >>= _1n3;
     }
-    return p2;
+    return p3;
   }
   function FpInvertBatch(Fp3, nums, passZero = false) {
-    const F2 = Fp3;
-    const inverted = new Array(nums.length).fill(passZero ? F2.ZERO : void 0);
+    const F3 = Fp3;
+    const inverted = new Array(nums.length).fill(passZero ? F3.ZERO : void 0);
     const multipliedAcc = nums.reduce((acc, num, i2) => {
-      if (F2.is0(num))
+      if (F3.is0(num))
         return acc;
       inverted[i2] = acc;
-      return F2.mul(acc, num);
-    }, F2.ONE);
-    const invertedAcc = F2.inv(multipliedAcc);
+      return F3.mul(acc, num);
+    }, F3.ONE);
+    const invertedAcc = F3.inv(multipliedAcc);
     nums.reduceRight((acc, num, i2) => {
-      if (F2.is0(num))
+      if (F3.is0(num))
         return acc;
-      inverted[i2] = F2.mul(acc, inverted[i2]);
-      return F2.mul(acc, num);
+      inverted[i2] = F3.mul(acc, inverted[i2]);
+      return F3.mul(acc, num);
     }, invertedAcc);
     return inverted;
   }
   function FpLegendre(Fp3, n2) {
-    const F2 = Fp3;
-    const p1mod2 = (F2.ORDER - _1n3) / _2n2;
-    const powered = F2.pow(n2, p1mod2);
-    const yes = F2.eql(powered, F2.ONE);
-    const zero = F2.eql(powered, F2.ZERO);
-    const no2 = F2.eql(powered, F2.neg(F2.ONE));
+    const F3 = Fp3;
+    const p1mod2 = (F3.ORDER - _1n3) / _2n2;
+    const powered = F3.pow(n2, p1mod2);
+    const yes = F3.eql(powered, F3.ONE);
+    const zero = F3.eql(powered, F3.ZERO);
+    const no2 = F3.eql(powered, F3.neg(F3.ONE));
     if (!yes && !zero && !no2)
       throw new Error("invalid Legendre symbol result");
     return yes ? 1 : zero ? 0 : -1;
@@ -3795,11 +3795,11 @@
     return new _Field(ORDER, opts);
   }
   function FpSqrtEven(Fp3, elm) {
-    const F2 = Fp3;
-    if (!F2.isOdd)
+    const F3 = Fp3;
+    if (!F3.isOdd)
       throw new Error("Field doesn't have isOdd");
-    const root2 = F2.sqrt(elm);
-    return F2.isOdd(root2) ? F2.neg(root2) : root2;
+    const root2 = F3.sqrt(elm);
+    return F3.isOdd(root2) ? F3.neg(root2) : root2;
   }
   function getFieldBytesLength(fieldOrder) {
     if (typeof fieldOrder !== "bigint")
@@ -4023,8 +4023,8 @@
     return condition ? neg : item;
   }
   function normalizeZ(c2, points) {
-    const invertedZs = FpInvertBatch(c2.Fp, points.map((p2) => p2.Z));
-    return points.map((p2, i2) => c2.fromAffine(p2.toAffine(invertedZs[i2])));
+    const invertedZs = FpInvertBatch(c2.Fp, points.map((p3) => p3.Z));
+    return points.map((p3, i2) => c2.fromAffine(p3.toAffine(invertedZs[i2])));
   }
   function validateW(W2, bits) {
     if (!Number.isSafeInteger(W2) || W2 <= 0 || W2 > bits)
@@ -4058,8 +4058,8 @@
   function validateMSMPoints(points, c2) {
     if (!Array.isArray(points))
       throw new Error("array expected");
-    points.forEach((p2, i2) => {
-      if (!(p2 instanceof c2))
+    points.forEach((p3, i2) => {
+      if (!(p3 instanceof c2))
         throw new Error("invalid point at index " + i2);
     });
   }
@@ -4081,17 +4081,17 @@
   function mulEndoUnsafe(Point, point, k1, k2) {
     let acc = point;
     let p1 = Point.ZERO;
-    let p2 = Point.ZERO;
+    let p22 = Point.ZERO;
     while (k1 > _0n4 || k2 > _0n4) {
       if (k1 & _1n4)
         p1 = p1.add(acc);
       if (k2 & _1n4)
-        p2 = p2.add(acc);
+        p22 = p22.add(acc);
       acc = acc.double();
       k1 >>= _1n4;
       k2 >>= _1n4;
     }
-    return { p1, p2 };
+    return { p1, p2: p22 };
   }
   function pippenger(c2, points, scalars) {
     const fieldN = c2.Fn;
@@ -4116,19 +4116,19 @@
     let sum = zero;
     for (let i2 = lastBits; i2 >= 0; i2 -= windowSize) {
       buckets.fill(zero);
-      for (let j2 = 0; j2 < slength; j2++) {
-        const scalar = scalars[j2];
+      for (let j3 = 0; j3 < slength; j3++) {
+        const scalar = scalars[j3];
         const wbits2 = Number(scalar >> BigInt(i2) & MASK);
-        buckets[wbits2] = buckets[wbits2].add(points[j2]);
+        buckets[wbits2] = buckets[wbits2].add(points[j3]);
       }
       let resI = zero;
-      for (let j2 = buckets.length - 1, sumI = zero; j2 > 0; j2--) {
-        sumI = sumI.add(buckets[j2]);
+      for (let j3 = buckets.length - 1, sumI = zero; j3 > 0; j3--) {
+        sumI = sumI.add(buckets[j3]);
         resI = resI.add(sumI);
       }
       sum = sum.add(resI);
       if (i2 !== 0)
-        for (let j2 = 0; j2 < windowSize; j2++)
+        for (let j3 = 0; j3 < windowSize; j3++)
           sum = sum.double();
     }
     return sum;
@@ -4148,18 +4148,18 @@
       FpFnLE = type === "edwards";
     if (!CURVE || typeof CURVE !== "object")
       throw new Error(`expected valid ${type} CURVE object`);
-    for (const p2 of ["p", "n", "h"]) {
-      const val = CURVE[p2];
+    for (const p3 of ["p", "n", "h"]) {
+      const val = CURVE[p3];
       if (!(typeof val === "bigint" && val > _0n4))
-        throw new Error(`CURVE.${p2} must be positive bigint`);
+        throw new Error(`CURVE.${p3} must be positive bigint`);
     }
     const Fp3 = createField(CURVE.p, curveOpts.Fp, FpFnLE);
     const Fn4 = createField(CURVE.n, curveOpts.Fn, FpFnLE);
     const _b = type === "weierstrass" ? "b" : "d";
     const params = ["Gx", "Gy", "a", _b];
-    for (const p2 of params) {
-      if (!Fp3.isValid(CURVE[p2]))
-        throw new Error(`CURVE.${p2} must be valid field element of CURVE.Fp`);
+    for (const p3 of params) {
+      if (!Fp3.isValid(CURVE[p3]))
+        throw new Error(`CURVE.${p3} must be valid field element of CURVE.Fp`);
     }
     CURVE = Object.freeze(Object.assign({}, CURVE));
     return { CURVE, Fp: Fp3, Fn: Fn4 };
@@ -4192,15 +4192,15 @@
           this.bits = bits;
         }
         // non-const time multiplication ladder
-        _unsafeLadder(elm, n2, p2 = this.ZERO) {
-          let d2 = elm;
+        _unsafeLadder(elm, n2, p3 = this.ZERO) {
+          let d3 = elm;
           while (n2 > _0n4) {
             if (n2 & _1n4)
-              p2 = p2.add(d2);
-            d2 = d2.double();
+              p3 = p3.add(d3);
+            d3 = d3.double();
             n2 >>= _1n4;
           }
-          return p2;
+          return p3;
         }
         /**
          * Creates a wNAF precomputation window. Used for caching.
@@ -4217,16 +4217,16 @@
         precomputeWindow(point, W2) {
           const { windows, windowSize } = calcWOpts(W2, this.bits);
           const points = [];
-          let p2 = point;
-          let base = p2;
+          let p3 = point;
+          let base = p3;
           for (let window2 = 0; window2 < windows; window2++) {
-            base = p2;
+            base = p3;
             points.push(base);
             for (let i2 = 1; i2 < windowSize; i2++) {
-              base = base.add(p2);
+              base = base.add(p3);
               points.push(base);
             }
-            p2 = base.double();
+            p3 = base.double();
           }
           return points;
         }
@@ -4239,20 +4239,20 @@
         wNAF(W2, precomputes, n2) {
           if (!this.Fn.isValid(n2))
             throw new Error("invalid scalar");
-          let p2 = this.ZERO;
-          let f2 = this.BASE;
+          let p3 = this.ZERO;
+          let f3 = this.BASE;
           const wo2 = calcWOpts(W2, this.bits);
           for (let window2 = 0; window2 < wo2.windows; window2++) {
             const { nextN, offset, isZero, isNeg, isNegF, offsetF } = calcOffsets(n2, window2, wo2);
             n2 = nextN;
             if (isZero) {
-              f2 = f2.add(negateCt(isNegF, precomputes[offsetF]));
+              f3 = f3.add(negateCt(isNegF, precomputes[offsetF]));
             } else {
-              p2 = p2.add(negateCt(isNeg, precomputes[offset]));
+              p3 = p3.add(negateCt(isNeg, precomputes[offset]));
             }
           }
           assert0(n2);
-          return { p: p2, f: f2 };
+          return { p: p3, f: f3 };
         }
         /**
          * Implements unsafe EC multiplication using precomputed tables
@@ -4315,8 +4315,8 @@
   });
 
   // node_modules/@noble/curves/abstract/edwards.js
-  function isEdValidXY(Fp3, CURVE, x2, y2) {
-    const x22 = Fp3.sqr(x2);
+  function isEdValidXY(Fp3, CURVE, x3, y2) {
+    const x22 = Fp3.sqr(x3);
     const y22 = Fp3.sqr(y2);
     const left2 = Fp3.add(Fp3.mul(CURVE.a, x22), y22);
     const right2 = Fp3.add(Fp3.ONE, Fp3.mul(CURVE.d, Fp3.mul(x22, y22)));
@@ -4378,18 +4378,18 @@
        * Does NOT validate that the point is on-curve or torsion-free.
        * Use `.assertValidity()` on adversarial inputs.
        */
-      static fromAffine(p2) {
-        if (p2 instanceof Point)
+      static fromAffine(p3) {
+        if (p3 instanceof Point)
           throw new Error("extended point not allowed");
-        const { x: x2, y: y2 } = p2 || {};
-        acoord("x", x2);
+        const { x: x3, y: y2 } = p3 || {};
+        acoord("x", x3);
         acoord("y", y2);
-        return new Point(x2, y2, _1n5, modP(x2 * y2));
+        return new Point(x3, y2, _1n5, modP(x3 * y2));
       }
       // Uses algo from RFC8032 5.1.3.
       static fromBytes(bytes, zip215 = false) {
         const len = Fp3.BYTES;
-        const { a: a2, d: d2 } = CURVE;
+        const { a: a2, d: d3 } = CURVE;
         bytes = copyBytes3(abytes4(bytes, len, "point"));
         abool2(zip215, "zip215");
         const normed = copyBytes3(bytes);
@@ -4400,17 +4400,17 @@
         aInRange2("point.y", y2, _0n5, max);
         const y22 = modP(y2 * y2);
         const u2 = modP(y22 - _1n5);
-        const v2 = modP(d2 * y22 - a2);
-        let { isValid, value: x2 } = uvRatio3(u2, v2);
+        const v2 = modP(d3 * y22 - a2);
+        let { isValid, value: x3 } = uvRatio3(u2, v2);
         if (!isValid)
           throw new Error("bad point: invalid y coordinate");
-        const isXOdd = (x2 & _1n5) === _1n5;
+        const isXOdd = (x3 & _1n5) === _1n5;
         const isLastByteOdd = (lastByte & 128) !== 0;
-        if (!zip215 && x2 === _0n5 && isLastByteOdd)
+        if (!zip215 && x3 === _0n5 && isLastByteOdd)
           throw new Error("bad point: x=0 and x_0=1");
         if (isLastByteOdd !== isXOdd)
-          x2 = modP(-x2);
-        return Point.fromAffine({ x: x2, y: y2 });
+          x3 = modP(-x3);
+        return Point.fromAffine({ x: x3, y: y2 });
       }
       static fromHex(hex, zip215 = false) {
         return Point.fromBytes(hexToBytes3(hex), zip215);
@@ -4429,18 +4429,18 @@
       }
       // Useful in fromAffine() - not for fromBytes(), which always created valid points.
       assertValidity() {
-        const p2 = this;
-        const { a: a2, d: d2 } = CURVE;
-        if (p2.is0())
+        const p3 = this;
+        const { a: a2, d: d3 } = CURVE;
+        if (p3.is0())
           throw new Error("bad point: ZERO");
-        const { X: X2, Y: Y2, Z: Z2, T: T2 } = p2;
+        const { X: X2, Y: Y2, Z: Z2, T: T2 } = p3;
         const X22 = modP(X2 * X2);
         const Y22 = modP(Y2 * Y2);
         const Z22 = modP(Z2 * Z2);
         const Z4 = modP(Z22 * Z22);
         const aX2 = modP(X22 * a2);
         const left2 = modP(Z22 * modP(aX2 + Y22));
-        const right2 = modP(Z4 + modP(d2 * modP(X22 * Y22)));
+        const right2 = modP(Z4 + modP(d3 * modP(X22 * Y22)));
         if (left2 !== right2)
           throw new Error("bad point: equation left != right (1)");
         const XY = modP(X2 * Y2);
@@ -4471,19 +4471,19 @@
       double() {
         const { a: a2 } = CURVE;
         const { X: X1, Y: Y1, Z: Z1 } = this;
-        const A2 = modP(X1 * X1);
+        const A3 = modP(X1 * X1);
         const B2 = modP(Y1 * Y1);
-        const C2 = modP(_2n3 * modP(Z1 * Z1));
-        const D2 = modP(a2 * A2);
+        const C3 = modP(_2n3 * modP(Z1 * Z1));
+        const D3 = modP(a2 * A3);
         const x1y1 = X1 + Y1;
-        const E2 = modP(modP(x1y1 * x1y1) - A2 - B2);
-        const G2 = D2 + B2;
-        const F2 = G2 - C2;
-        const H2 = D2 - B2;
-        const X3 = modP(E2 * F2);
-        const Y3 = modP(G2 * H2);
-        const T3 = modP(E2 * H2);
-        const Z3 = modP(F2 * G2);
+        const E2 = modP(modP(x1y1 * x1y1) - A3 - B2);
+        const G2 = D3 + B2;
+        const F3 = G2 - C3;
+        const H3 = D3 - B2;
+        const X3 = modP(E2 * F3);
+        const Y3 = modP(G2 * H3);
+        const T3 = modP(E2 * H3);
+        const Z3 = modP(F3 * G2);
         return new Point(X3, Y3, Z3, T3);
       }
       // Fast algo for adding 2 Extended Points.
@@ -4491,21 +4491,21 @@
       // Cost: 9M + 1*a + 1*d + 7add.
       add(other) {
         aedpoint(other);
-        const { a: a2, d: d2 } = CURVE;
+        const { a: a2, d: d3 } = CURVE;
         const { X: X1, Y: Y1, Z: Z1, T: T1 } = this;
         const { X: X2, Y: Y2, Z: Z2, T: T2 } = other;
-        const A2 = modP(X1 * X2);
+        const A3 = modP(X1 * X2);
         const B2 = modP(Y1 * Y2);
-        const C2 = modP(T1 * d2 * T2);
-        const D2 = modP(Z1 * Z2);
-        const E2 = modP((X1 + Y1) * (X2 + Y2) - A2 - B2);
-        const F2 = D2 - C2;
-        const G2 = D2 + C2;
-        const H2 = modP(B2 - a2 * A2);
-        const X3 = modP(E2 * F2);
-        const Y3 = modP(G2 * H2);
-        const T3 = modP(E2 * H2);
-        const Z3 = modP(F2 * G2);
+        const C3 = modP(T1 * d3 * T2);
+        const D3 = modP(Z1 * Z2);
+        const E2 = modP((X1 + Y1) * (X2 + Y2) - A3 - B2);
+        const F3 = D3 - C3;
+        const G2 = D3 + C3;
+        const H3 = modP(B2 - a2 * A3);
+        const X3 = modP(E2 * F3);
+        const Y3 = modP(G2 * H3);
+        const T3 = modP(E2 * H3);
+        const Z3 = modP(F3 * G2);
         return new Point(X3, Y3, Z3, T3);
       }
       subtract(other) {
@@ -4516,8 +4516,8 @@
       multiply(scalar) {
         if (!Fn4.isValidNot0(scalar))
           throw new RangeError("invalid scalar: expected 1 <= sc < curve.n");
-        const { p: p2, f: f2 } = wnaf.cached(this, scalar, (p3) => normalizeZ(Point, p3));
-        return normalizeZ(Point, [p2, f2])[0];
+        const { p: p3, f: f3 } = wnaf.cached(this, scalar, (p4) => normalizeZ(Point, p4));
+        return normalizeZ(Point, [p3, f3])[0];
       }
       // Non-constant-time multiplication. Uses double-and-add algorithm.
       // It's faster, but should only be used when you don't care about
@@ -4531,7 +4531,7 @@
           return Point.ZERO;
         if (this.is0() || scalar === _1n5)
           return this;
-        return wnaf.unsafe(this, scalar, (p2) => normalizeZ(Point, p2));
+        return wnaf.unsafe(this, scalar, (p3) => normalizeZ(Point, p3));
       }
       // Checks if point is of small order.
       // If you add something to small order point, you will have "dirty"
@@ -4548,20 +4548,20 @@
       // Converts Extended point to default (x, y) coordinates.
       // Can accept precomputed Z^-1 - for example, from invertBatch.
       toAffine(invertedZ) {
-        const p2 = this;
+        const p3 = this;
         let iz = invertedZ;
-        const { X: X2, Y: Y2, Z: Z2 } = p2;
-        const is0 = p2.is0();
+        const { X: X2, Y: Y2, Z: Z2 } = p3;
+        const is0 = p3.is0();
         if (iz == null)
           iz = is0 ? _8n2 : Fp3.inv(Z2);
-        const x2 = modP(X2 * iz);
+        const x3 = modP(X2 * iz);
         const y2 = modP(Y2 * iz);
         const zz = Fp3.mul(Z2, iz);
         if (is0)
           return { x: _0n5, y: _1n5 };
         if (zz !== _1n5)
           throw new Error("invZ was invalid");
-        return { x: x2, y: y2 };
+        return { x: x3, y: y2 };
       }
       clearCofactor() {
         if (cofactor === _1n5)
@@ -4569,9 +4569,9 @@
         return this.multiplyUnsafe(cofactor);
       }
       toBytes() {
-        const { x: x2, y: y2 } = this.toAffine();
+        const { x: x3, y: y2 } = this.toAffine();
         const bytes = Fp3.toBytes(y2);
-        bytes[bytes.length - 1] |= x2 & _1n5 ? 128 : 0;
+        bytes[bytes.length - 1] |= x3 & _1n5 ? 128 : 0;
         return bytes;
       }
       toHex() {
@@ -4674,18 +4674,18 @@
       const mid = len / 2;
       const r2 = sig.subarray(0, mid);
       const s2 = bytesToNumberLE2(sig.subarray(mid, len));
-      let A2, R2, SB;
+      let A3, R2, SB;
       try {
-        A2 = Point.fromBytes(publicKey, zip215);
+        A3 = Point.fromBytes(publicKey, zip215);
         R2 = Point.fromBytes(r2, zip215);
         SB = BASE.multiplyUnsafe(s2);
       } catch (error) {
         return false;
       }
-      if (!zip215 && A2.isSmallOrder())
+      if (!zip215 && A3.isSmallOrder())
         return false;
       const k2 = hashDomainToScalar(context, r2, publicKey, msg);
-      const RkA = R2.add(A2.multiplyUnsafe(k2));
+      const RkA = R2.add(A3.multiplyUnsafe(k2));
       return RkA.subtract(SB).clearCofactor().is0();
     }
     const _size = Fp3.BYTES;
@@ -4862,14 +4862,14 @@
     return 31 - Math.clz32(n2);
   }
   function poly(field, roots, create2, fft, length) {
-    const F2 = field;
-    const _create = create2 || ((len, elm) => new Array(len).fill(elm ?? F2.ZERO));
-    const isPoly = (x2) => {
-      if (Array.isArray(x2))
+    const F3 = field;
+    const _create = create2 || ((len, elm) => new Array(len).fill(elm ?? F3.ZERO));
+    const isPoly = (x3) => {
+      if (Array.isArray(x3))
         return true;
-      if (!ArrayBuffer.isView(x2))
+      if (!ArrayBuffer.isView(x3))
         return false;
-      const v2 = x2;
+      const v2 = x3;
       return typeof v2.length === "number" && typeof v2.slice === "function" && typeof v2[Symbol.iterator] === "function";
     };
     const checkLength = (...lst) => {
@@ -4878,19 +4878,19 @@
       for (const i2 of lst)
         if (!isPoly(i2))
           throw new Error("poly: not polynomial: " + i2);
-      const L2 = lst[0].length;
+      const L3 = lst[0].length;
       for (let i2 = 1; i2 < lst.length; i2++)
-        if (lst[i2].length !== L2)
-          throw new Error(`poly: mismatched lengths ${L2} vs ${lst[i2].length}`);
-      if (length !== void 0 && L2 !== length)
-        throw new Error(`poly: expected fixed length ${length}, got ${L2}`);
-      return L2;
+        if (lst[i2].length !== L3)
+          throw new Error(`poly: mismatched lengths ${L3} vs ${lst[i2].length}`);
+      if (length !== void 0 && L3 !== length)
+        throw new Error(`poly: expected fixed length ${length}, got ${L3}`);
+      return L3;
     };
-    function findOmegaIndex(x2, n2, brp = false) {
+    function findOmegaIndex(x3, n2, brp = false) {
       const bits = log22(n2);
       const omega = brp ? roots.brp(bits) : roots.roots(bits);
       for (let i2 = 0; i2 < n2; i2++)
-        if (F2.eql(x2, omega[i2]))
+        if (F3.eql(x3, omega[i2]))
           return i2;
       return -1;
     }
@@ -4900,7 +4900,7 @@
       length,
       extend: (a2, len) => {
         checkLength(a2);
-        const out = _create(len, F2.ZERO);
+        const out = _create(len, F3.ZERO);
         for (let i2 = 0; i2 < Math.min(a2.length, len); i2++)
           out[i2] = a2[i2];
         return out;
@@ -4908,7 +4908,7 @@
       degree: (a2) => {
         checkLength(a2);
         for (let i2 = a2.length - 1; i2 >= 0; i2--)
-          if (!F2.is0(a2[i2]))
+          if (!F3.is0(a2[i2]))
             return i2;
         return -1;
       },
@@ -4916,38 +4916,38 @@
         const len = checkLength(a2, b2);
         const out = _create(len);
         for (let i2 = 0; i2 < len; i2++)
-          out[i2] = F2.add(a2[i2], b2[i2]);
+          out[i2] = F3.add(a2[i2], b2[i2]);
         return out;
       },
       sub: (a2, b2) => {
         const len = checkLength(a2, b2);
         const out = _create(len);
         for (let i2 = 0; i2 < len; i2++)
-          out[i2] = F2.sub(a2[i2], b2[i2]);
+          out[i2] = F3.sub(a2[i2], b2[i2]);
         return out;
       },
       dot: (a2, b2) => {
         const len = checkLength(a2, b2);
         const out = _create(len);
         for (let i2 = 0; i2 < len; i2++)
-          out[i2] = F2.mul(a2[i2], b2[i2]);
+          out[i2] = F3.mul(a2[i2], b2[i2]);
         return out;
       },
       mul: (a2, b2) => {
         if (isPoly(b2)) {
           const len = checkLength(a2, b2);
           if (fft) {
-            const A2 = fft.direct(a2, false, true);
+            const A3 = fft.direct(a2, false, true);
             const B2 = fft.direct(b2, false, true);
-            for (let i2 = 0; i2 < A2.length; i2++)
-              A2[i2] = F2.mul(A2[i2], B2[i2]);
-            return fft.inverse(A2, true, false);
+            for (let i2 = 0; i2 < A3.length; i2++)
+              A3[i2] = F3.mul(A3[i2], B2[i2]);
+            return fft.inverse(A3, true, false);
           } else {
             const res = _create(len);
             for (let i2 = 0; i2 < len; i2++) {
-              for (let j2 = 0; j2 < len; j2++) {
-                const k2 = (i2 + j2) % len;
-                res[k2] = F2.add(res[k2], F2.mul(a2[i2], b2[j2]));
+              for (let j3 = 0; j3 < len; j3++) {
+                const k2 = (i2 + j3) % len;
+                res[k2] = F3.add(res[k2], F3.mul(a2[i2], b2[j3]));
               }
             }
             return res;
@@ -4955,7 +4955,7 @@
         } else {
           const out = _create(checkLength(a2));
           for (let i2 = 0; i2 < out.length; i2++)
-            out[i2] = F2.mul(a2[i2], b2);
+            out[i2] = F3.mul(a2[i2], b2);
           return out;
         }
       },
@@ -4963,12 +4963,12 @@
         const len = nextPowerOfTwo(a2.length + b2.length - 1);
         return this.mul(this.extend(a2, len), this.extend(b2, len));
       },
-      shift(p2, factor) {
-        const out = _create(checkLength(p2));
-        out[0] = p2[0];
-        for (let i2 = 1, power = F2.ONE; i2 < p2.length; i2++) {
-          power = F2.mul(power, factor);
-          out[i2] = F2.mul(p2[i2], power);
+      shift(p3, factor) {
+        const out = _create(checkLength(p3));
+        out[0] = p3[0];
+        for (let i2 = 1, power = F3.ONE; i2 < p3.length; i2++) {
+          power = F3.mul(power, factor);
+          out[i2] = F3.mul(p3[i2], power);
         }
         return out;
       },
@@ -4981,71 +4981,71 @@
       },
       eval: (a2, basis) => {
         checkLength(a2, basis);
-        let acc = F2.ZERO;
+        let acc = F3.ZERO;
         for (let i2 = 0; i2 < a2.length; i2++)
-          acc = F2.add(acc, F2.mul(a2[i2], basis[i2]));
+          acc = F3.add(acc, F3.mul(a2[i2], basis[i2]));
         return acc;
       },
       monomial: {
-        basis: (x2, n2) => {
+        basis: (x3, n2) => {
           const out = _create(n2);
-          let pow = F2.ONE;
+          let pow = F3.ONE;
           for (let i2 = 0; i2 < n2; i2++) {
             out[i2] = pow;
-            pow = F2.mul(pow, x2);
+            pow = F3.mul(pow, x3);
           }
           return out;
         },
-        eval: (a2, x2) => {
+        eval: (a2, x3) => {
           checkLength(a2);
-          let acc = F2.ZERO;
+          let acc = F3.ZERO;
           for (let i2 = a2.length - 1; i2 >= 0; i2--)
-            acc = F2.add(F2.mul(acc, x2), a2[i2]);
+            acc = F3.add(F3.mul(acc, x3), a2[i2]);
           return acc;
         }
       },
       lagrange: {
-        basis: (x2, n2, brp = false, weights) => {
+        basis: (x3, n2, brp = false, weights) => {
           const bits = log22(n2);
           const cache = weights || (brp ? roots.brp(bits) : roots.roots(bits));
           const out = _create(n2);
-          const idx = findOmegaIndex(x2, n2, brp);
+          const idx = findOmegaIndex(x3, n2, brp);
           if (idx !== -1) {
-            out[idx] = F2.ONE;
+            out[idx] = F3.ONE;
             return out;
           }
-          const tm = F2.pow(x2, BigInt(n2));
-          const c2 = F2.mul(F2.sub(tm, F2.ONE), F2.inv(BigInt(n2)));
+          const tm = F3.pow(x3, BigInt(n2));
+          const c2 = F3.mul(F3.sub(tm, F3.ONE), F3.inv(BigInt(n2)));
           const denom = _create(n2);
           for (let i2 = 0; i2 < n2; i2++)
-            denom[i2] = F2.sub(x2, cache[i2]);
-          const inv = F2.invertBatch(denom);
+            denom[i2] = F3.sub(x3, cache[i2]);
+          const inv = F3.invertBatch(denom);
           for (let i2 = 0; i2 < n2; i2++)
-            out[i2] = F2.mul(c2, F2.mul(cache[i2], inv[i2]));
+            out[i2] = F3.mul(c2, F3.mul(cache[i2], inv[i2]));
           return out;
         },
-        eval(a2, x2, brp = false) {
+        eval(a2, x3, brp = false) {
           checkLength(a2);
-          const idx = findOmegaIndex(x2, a2.length, brp);
+          const idx = findOmegaIndex(x3, a2.length, brp);
           if (idx !== -1)
             return a2[idx];
-          const L2 = this.basis(x2, a2.length, brp);
-          let acc = F2.ZERO;
+          const L3 = this.basis(x3, a2.length, brp);
+          let acc = F3.ZERO;
           for (let i2 = 0; i2 < a2.length; i2++)
-            if (!F2.is0(a2[i2]))
-              acc = F2.add(acc, F2.mul(a2[i2], L2[i2]));
+            if (!F3.is0(a2[i2]))
+              acc = F3.add(acc, F3.mul(a2[i2], L3[i2]));
           return acc;
         }
       },
       vanishing(roots2) {
         checkLength(roots2);
-        const out = _create(roots2.length + 1, F2.ZERO);
-        out[0] = F2.ONE;
+        const out = _create(roots2.length + 1, F3.ZERO);
+        out[0] = F3.ONE;
         for (const r2 of roots2) {
-          const neg = F2.neg(r2);
-          for (let j2 = out.length - 1; j2 > 0; j2--)
-            out[j2] = F2.add(F2.mul(out[j2], neg), out[j2 - 1]);
-          out[0] = F2.mul(out[0], neg);
+          const neg = F3.neg(r2);
+          for (let j3 = out.length - 1; j3 > 0; j3--)
+            out[j3] = F3.add(F3.mul(out[j3], neg), out[j3 - 1]);
+          out[0] = F3.mul(out[0], neg);
         }
         return out;
       }
@@ -5086,13 +5086,13 @@
       throw new Error("DST must be non-empty");
     return dst;
   }
-  function expand_message_xmd(msg, DST, lenInBytes, H2) {
+  function expand_message_xmd(msg, DST, lenInBytes, H3) {
     abytes4(msg);
     asafenumber(lenInBytes);
     DST = normDST(DST);
     if (DST.length > 255)
-      DST = H2(concatBytes3(asciiToBytes("H2C-OVERSIZE-DST-"), DST));
-    const { outputLen: b_in_bytes, blockLen: r_in_bytes } = H2;
+      DST = H3(concatBytes3(asciiToBytes("H2C-OVERSIZE-DST-"), DST));
+    const { outputLen: b_in_bytes, blockLen: r_in_bytes } = H3;
     const ell = Math.ceil(lenInBytes / b_in_bytes);
     if (lenInBytes > 65535 || ell > 255)
       throw new Error("expand_message_xmd: invalid lenInBytes");
@@ -5100,26 +5100,26 @@
     const Z_pad = new Uint8Array(r_in_bytes);
     const l_i_b_str = i2osp(lenInBytes, 2);
     const b2 = new Array(ell);
-    const b_0 = H2(concatBytes3(Z_pad, msg, l_i_b_str, i2osp(0, 1), DST_prime));
-    b2[0] = H2(concatBytes3(b_0, i2osp(1, 1), DST_prime));
+    const b_0 = H3(concatBytes3(Z_pad, msg, l_i_b_str, i2osp(0, 1), DST_prime));
+    b2[0] = H3(concatBytes3(b_0, i2osp(1, 1), DST_prime));
     for (let i2 = 1; i2 < ell; i2++) {
       const args = [strxor(b_0, b2[i2 - 1]), i2osp(i2 + 1, 1), DST_prime];
-      b2[i2] = H2(concatBytes3(...args));
+      b2[i2] = H3(concatBytes3(...args));
     }
     const pseudo_random_bytes = concatBytes3(...b2);
     return pseudo_random_bytes.slice(0, lenInBytes);
   }
-  function expand_message_xof(msg, DST, lenInBytes, k2, H2) {
+  function expand_message_xof(msg, DST, lenInBytes, k2, H3) {
     abytes4(msg);
     asafenumber(lenInBytes);
     DST = normDST(DST);
     if (DST.length > 255) {
       const dkLen = Math.ceil(2 * k2 / 8);
-      DST = H2.create({ dkLen }).update(asciiToBytes("H2C-OVERSIZE-DST-")).update(DST).digest();
+      DST = H3.create({ dkLen }).update(asciiToBytes("H2C-OVERSIZE-DST-")).update(DST).digest();
     }
     if (lenInBytes > 65535 || DST.length > 255)
       throw new Error("expand_message_xof: invalid lenInBytes");
-    return H2.create({ dkLen: lenInBytes }).update(msg).update(i2osp(lenInBytes, 2)).update(DST).update(i2osp(DST.length, 1)).digest();
+    return H3.create({ dkLen: lenInBytes }).update(msg).update(i2osp(lenInBytes, 2)).update(DST).update(i2osp(DST.length, 1)).digest();
   }
   function hash_to_field(msg, count, options) {
     validateObject2(options, {
@@ -5128,7 +5128,7 @@
       k: "number",
       hash: "function"
     });
-    const { p: p2, k: k2, m: m39, hash, expand, DST } = options;
+    const { p: p3, k: k2, m: m39, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes4(msg);
     asafenumber(count);
@@ -5136,9 +5136,9 @@
       throw new Error("hash_to_field: expected count >= 1");
     if (m39 < 1)
       throw new Error("hash_to_field: expected m >= 1");
-    const log2p = p2.toString(2).length;
-    const L2 = Math.ceil((log2p + k2) / 8);
-    const len_in_bytes = count * m39 * L2;
+    const log2p = p3.toString(2).length;
+    const L3 = Math.ceil((log2p + k2) / 8);
+    const len_in_bytes = count * m39 * L3;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -5152,10 +5152,10 @@
     const u2 = new Array(count);
     for (let i2 = 0; i2 < count; i2++) {
       const e2 = new Array(m39);
-      for (let j2 = 0; j2 < m39; j2++) {
-        const elm_offset = L2 * (j2 + i2 * m39);
-        const tv = prb.subarray(elm_offset, elm_offset + L2);
-        e2[j2] = mod3(os2ip(tv), p2);
+      for (let j3 = 0; j3 < m39; j3++) {
+        const elm_offset = L3 * (j3 + i2 * m39);
+        const tv = prb.subarray(elm_offset, elm_offset + L3);
+        e2[j3] = mod3(os2ip(tv), p3);
       }
       u2[i2] = e2;
     }
@@ -5217,8 +5217,8 @@
       // RFC 9380, draft-irtf-cfrg-bbs-signatures-08. Default scalar DST is the shared generic
       // `HashToScalar-` prefix above unless the caller overrides it per invocation.
       hashToScalar(msg, options) {
-        const N2 = Point.Fn.ORDER;
-        const opts = Object.assign({}, safeDefaults, { p: N2, m: 1, DST: _DST_scalar }, options);
+        const N3 = Point.Fn.ORDER;
+        const opts = Object.assign({}, safeDefaults, { p: N3, m: 1, DST: _DST_scalar }, options);
         return hash_to_field(msg, 1, opts)[0][0];
       }
     });
@@ -5267,7 +5267,7 @@
     const HDKGPrefix = utf8ToBytes(opts.HDKG !== void 0 ? opts.HDKG : opts.name + "dkg");
     const HIDPrefix = utf8ToBytes(opts.HID !== void 0 ? opts.HID : opts.name + "id");
     const H1 = (msg) => hashToScalar(msg, { DST: H1Prefix });
-    const H2 = (msg) => hashToScalar(msg, { DST: H2Prefix });
+    const H22 = (msg) => hashToScalar(msg, { DST: H2Prefix });
     const H3 = (msg) => hashToScalar(msg, { DST: H3Prefix });
     const H4 = (msg) => hashBytes(concatBytes3(H4Prefix, msg));
     const H5 = (msg) => hashBytes(concatBytes3(H5Prefix, msg));
@@ -5277,12 +5277,12 @@
       const t2 = mapHashToField(rng(getMinHashLength(Fn4.ORDER)), Fn4.ORDER, Fn4.isLE);
       return Fn4.isLE ? bytesToNumberLE2(t2) : bytesToNumberBE(t2);
     };
-    const serializePoint = (p2) => p2.toBytes();
+    const serializePoint = (p3) => p3.toBytes();
     const parsePoint = (bytes) => {
-      const p2 = Point.fromBytes(bytes);
+      const p3 = Point.fromBytes(bytes);
       if (opts.validatePoint)
-        opts.validatePoint(p2);
-      return p2;
+        opts.validatePoint(p3);
+      return p3;
     };
     const nonceCommitments = (identifier, nonces) => ({
       identifier,
@@ -5305,8 +5305,8 @@
     const Signature = {
       // RFC 9591 Appendix A encodes signatures canonically as
       // SerializeElement(R) || SerializeScalar(z).
-      encode: (R2, z2) => {
-        let res = concatBytes3(serializePoint(R2), Fn4.toBytes(z2));
+      encode: (R2, z3) => {
+        let res = concatBytes3(serializePoint(R2), Fn4.toBytes(z3));
         if (opts.adjustTx)
           res = opts.adjustTx.encode(res);
         return res;
@@ -5315,16 +5315,16 @@
         if (opts.adjustTx)
           sig = opts.adjustTx.decode(sig);
         const R2 = parsePoint(sig.subarray(0, -Fn4.BYTES));
-        const z2 = Fn4.fromBytes(sig.subarray(-Fn4.BYTES));
-        return { R: R2, z: z2 };
+        const z3 = Fn4.fromBytes(sig.subarray(-Fn4.BYTES));
+        return { R: R2, z: z3 };
       }
     };
     const genPointScalarPair = (rng = randomBytes3) => {
       let n2 = randomScalar(rng);
       if (opts.adjustScalar)
         n2 = opts.adjustScalar(n2);
-      let p2 = Point.BASE.multiply(n2);
-      return { scalar: n2, point: p2 };
+      let p3 = Point.BASE.multiply(n2);
+      return { scalar: n2, point: p3 };
     };
     const nrErr = "roots are unavailable in FROST polynomial mode";
     const noRoots = {
@@ -5346,27 +5346,27 @@
     };
     const Poly = poly(Fn4, noRoots);
     const msm = (points, scalars) => pippenger(Point, points, scalars);
-    const polynomialEvaluate = (x2, coeffs) => {
+    const polynomialEvaluate = (x3, coeffs) => {
       if (!coeffs.length)
         throw new Error("empty coefficients");
-      return Poly.monomial.eval(coeffs, x2);
+      return Poly.monomial.eval(coeffs, x3);
     };
-    const deriveInterpolatingValue = (L2, xi2) => {
+    const deriveInterpolatingValue = (L3, xi2) => {
       const err = "invalid parameters";
-      if (!L2.some((x2) => Fn4.eql(x2, xi2)))
+      if (!L3.some((x3) => Fn4.eql(x3, xi2)))
         throw new Error(err);
-      const Lset = new Set(L2);
-      if (Lset.size !== L2.length)
+      const Lset = new Set(L3);
+      if (Lset.size !== L3.length)
         throw new Error(err);
       if (!Lset.has(xi2))
         throw new Error(err);
       let num = Fn4.ONE;
       let den = Fn4.ONE;
-      for (const x2 of L2) {
-        if (Fn4.eql(x2, xi2))
+      for (const x3 of L3) {
+        if (Fn4.eql(x3, xi2))
           continue;
-        num = Fn4.mul(num, x2);
-        den = Fn4.mul(den, Fn4.sub(x2, xi2));
+        num = Fn4.mul(num, x3);
+        den = Fn4.mul(den, Fn4.sub(x3, xi2));
       }
       return Fn4.div(num, den);
     };
@@ -5402,10 +5402,10 @@
       validate(id, commitment, proof) {
         if (commitment.length < 1)
           throw new Error("commitment should have at least one element");
-        const { R: R2, z: z2 } = Signature.decode(proof);
+        const { R: R2, z: z3 } = Signature.decode(proof);
         const phi = parsePoint(commitment[0]);
         const c2 = this.challenge(id, phi, R2);
-        if (!R2.equals(Point.BASE.multiply(z2).subtract(phi.multiply(c2))))
+        if (!R2.equals(Point.BASE.multiply(z3).subtract(phi.multiply(c2))))
           throw new Error("invalid proof of knowledge");
       }
     };
@@ -5413,22 +5413,22 @@
       challenge: (R2, PK, msg) => {
         if (opts.challenge)
           return opts.challenge(R2, PK, msg);
-        return H2(concatBytes3(serializePoint(R2), serializePoint(PK), msg));
+        return H22(concatBytes3(serializePoint(R2), serializePoint(PK), msg));
       },
       sign(msg, sk, rng = randomBytes3) {
         const { point: R2, scalar: r2 } = genPointScalarPair(rng);
         const PK = Point.BASE.multiply(sk);
         const c2 = this.challenge(R2, PK, msg);
-        const z2 = Fn4.add(r2, Fn4.mul(c2, sk));
-        return [R2, z2];
+        const z3 = Fn4.add(r2, Fn4.mul(c2, sk));
+        return [R2, z3];
       },
-      verify(msg, R2, z2, PK) {
+      verify(msg, R2, z3, PK) {
         if (opts.adjustPoint)
           PK = opts.adjustPoint(PK);
         if (opts.adjustPoint)
           R2 = opts.adjustPoint(R2);
         const c2 = this.challenge(R2, PK, msg);
-        const zB = Point.BASE.multiply(z2);
+        const zB = Point.BASE.multiply(z3);
         const cA = PK.multiply(c2);
         let check = zB.subtract(cA).subtract(R2);
         if (check.clearCofactor)
@@ -5527,19 +5527,19 @@
           if (!secret.coefficients || secret.step === 3)
             throw new Error("round3 package used in round2");
           const res = {};
-          for (const p2 of others) {
-            if (p2.commitment.length !== secret.signers.min)
+          for (const p3 of others) {
+            if (p3.commitment.length !== secret.signers.min)
               throw new Error("wrong number of commitments");
-            const id = parseIdentifier(p2.identifier);
+            const id = parseIdentifier(p3.identifier);
             if (id === secret.identifier)
               throw new Error("duplicate id=" + serializeIdentifier(id));
-            ProofOfKnowledge.validate(id, p2.commitment, p2.proofOfKnowledge);
-            for (const c2 of p2.commitment)
+            ProofOfKnowledge.validate(id, p3.commitment, p3.proofOfKnowledge);
+            for (const c2 of p3.commitment)
               parsePoint(c2);
-            if (res[p2.identifier])
+            if (res[p3.identifier])
               throw new Error("Duplicate id=" + id);
             const signingShare = Fn4.toBytes(polynomialEvaluate(id, secret.coefficients));
-            res[p2.identifier] = {
+            res[p3.identifier] = {
               identifier: serializeIdentifier(secret.identifier),
               signingShare
             };
@@ -5719,9 +5719,9 @@
           pub = opts.adjustPublic(pub);
         const SK = Fn4.fromBytes(secret.signingShare);
         const { lambda, challenge, bindingFactor, groupCommitment } = prepareShare(pub.commitments[0], commitmentList, msg, secret.identifier);
-        const N2 = opts.adjustNonces ? opts.adjustNonces(groupCommitment, nonces) : nonces;
-        const hidingNonce = opts.adjustNonces ? Fn4.fromBytes(N2.hiding) : hidingNonce0;
-        const bindingNonce = opts.adjustNonces ? Fn4.fromBytes(N2.binding) : bindingNonce0;
+        const N3 = opts.adjustNonces ? opts.adjustNonces(groupCommitment, nonces) : nonces;
+        const hidingNonce = opts.adjustNonces ? Fn4.fromBytes(N3.hiding) : hidingNonce0;
+        const bindingNonce = opts.adjustNonces ? Fn4.fromBytes(N3.binding) : bindingNonce0;
         const t2 = Fn4.mul(Fn4.mul(lambda, SK), challenge);
         const t22 = Fn4.mul(bindingNonce, bindingFactor);
         const r2 = Fn4.toBytes(Fn4.add(Fn4.add(hidingNonce, t22), t2));
@@ -5765,10 +5765,10 @@
         }
         const GPK = parsePoint(pub.commitments[0]);
         const { groupCommitment } = getGroupCommitment(GPK, commitmentList, msg);
-        let z2 = Fn4.ZERO;
+        let z3 = Fn4.ZERO;
         for (const id of ids)
-          z2 = Fn4.add(z2, Fn4.fromBytes(sigShares[id]));
-        if (!Basic.verify(msg, groupCommitment, z2, GPK)) {
+          z3 = Fn4.add(z3, Fn4.fromBytes(sigShares[id]));
+        if (!Basic.verify(msg, groupCommitment, z3, GPK)) {
           const cheaters = [];
           for (const id of ids) {
             if (!this.verifyShare(pub, commitmentList, msg, id, sigShares[id]))
@@ -5776,20 +5776,20 @@
           }
           throw new AggErr("aggregation failed", cheaters);
         }
-        return Signature.encode(groupCommitment, z2);
+        return Signature.encode(groupCommitment, z3);
       },
       // Basic sign/verify using single key
       sign(msg, secretKey) {
         let sk = Fn4.fromBytes(secretKey);
         if (opts.adjustScalar)
           sk = opts.adjustScalar(sk);
-        const [R2, z2] = Basic.sign(msg, sk);
-        return Signature.encode(R2, z2);
+        const [R2, z3] = Basic.sign(msg, sk);
+        return Signature.encode(R2, z3);
       },
       verify(sig, msg, publicKey) {
         const PK = opts.parsePublicKey ? opts.parsePublicKey(publicKey) : parsePoint(publicKey);
-        const { R: R2, z: z2 } = Signature.decode(sig);
-        return Basic.verify(msg, R2, z2, PK);
+        const { R: R2, z: z3 } = Signature.decode(sig);
+        return Basic.verify(msg, R2, z3, PK);
       },
       // Combine multiple secret shares to restore secret
       combineSecret(shares, signers) {
@@ -5806,10 +5806,10 @@
           seen[id] = true;
           points.push([idNum, Fn4.fromBytes(s2.signingShare)]);
         }
-        const xCoords = points.map(([x2]) => x2);
+        const xCoords = points.map(([x3]) => x3);
         let res = Fn4.ZERO;
-        for (const [x2, y2] of points)
-          res = Fn4.add(res, Fn4.mul(y2, deriveInterpolatingValue(xCoords, x2)));
+        for (const [x3, y2] of points)
+          res = Fn4.add(res, Fn4.mul(y2, deriveInterpolatingValue(xCoords, x3)));
         return Fn4.toBytes(res);
       },
       // Utils
@@ -5929,15 +5929,15 @@
         ({ x_2, x_3 } = cswap(swap, x_2, x_3));
         ({ x_2: z_2, x_3: z_3 } = cswap(swap, z_2, z_3));
         swap = k_t;
-        const A2 = x_2 + z_2;
-        const AA = modP(A2 * A2);
+        const A3 = x_2 + z_2;
+        const AA = modP(A3 * A3);
         const B2 = x_2 - z_2;
         const BB = modP(B2 * B2);
         const E2 = AA - BB;
-        const C2 = x_3 + z_3;
-        const D2 = x_3 - z_3;
-        const DA = modP(D2 * A2);
-        const CB = modP(C2 * B2);
+        const C3 = x_3 + z_3;
+        const D3 = x_3 - z_3;
+        const DA = modP(D3 * A3);
+        const CB = modP(C3 * B2);
         const dacb = DA + CB;
         const da_cb = DA - CB;
         x_3 = modP(dacb * dacb);
@@ -5947,8 +5947,8 @@
       }
       ({ x_2, x_3 } = cswap(swap, x_2, x_3));
       ({ x_2: z_2, x_3: z_3 } = cswap(swap, z_2, z_3));
-      const z2 = powPminus2(z_2);
-      return modP(x_2 * z2);
+      const z22 = powPminus2(z_2);
+      return modP(x_2 * z22);
     }
     const lengths = {
       secretKey: fieldLen,
@@ -6031,50 +6031,50 @@
       return bytes;
     };
     const hashInput = (...bytes) => hash(encode2(...bytes, "Finalize"));
-    function getTranscripts(B2, C2, D2, ctx) {
+    function getTranscripts(B2, C3, D3, ctx) {
       const Bm = B2.toBytes();
       const seed = hash(encode2(Bm, concatBytes3(asciiToBytes("Seed-"), ctx)));
       const res2 = [];
-      for (let i2 = 0; i2 < C2.length; i2++) {
-        const Ci2 = C2[i2].toBytes();
-        const Di2 = D2[i2].toBytes();
+      for (let i2 = 0; i2 < C3.length; i2++) {
+        const Ci2 = C3[i2].toBytes();
+        const Di2 = D3[i2].toBytes();
         const di2 = hashToScalarPrefixed(encode2(seed, i2, Ci2, Di2, "Composite"), ctx);
         res2.push(di2);
       }
       return res2;
     }
-    function computeComposites(B2, C2, D2, ctx) {
-      const T2 = getTranscripts(B2, C2, D2, ctx);
-      const M2 = msm(C2, T2);
-      const Z2 = msm(D2, T2);
-      return { M: M2, Z: Z2 };
+    function computeComposites(B2, C3, D3, ctx) {
+      const T2 = getTranscripts(B2, C3, D3, ctx);
+      const M3 = msm(C3, T2);
+      const Z2 = msm(D3, T2);
+      return { M: M3, Z: Z2 };
     }
-    function computeCompositesFast(k2, B2, C2, D2, ctx) {
-      const T2 = getTranscripts(B2, C2, D2, ctx);
-      const M2 = msm(C2, T2);
-      const Z2 = M2.multiply(k2);
-      return { M: M2, Z: Z2 };
+    function computeCompositesFast(k2, B2, C3, D3, ctx) {
+      const T2 = getTranscripts(B2, C3, D3, ctx);
+      const M3 = msm(C3, T2);
+      const Z2 = M3.multiply(k2);
+      return { M: M3, Z: Z2 };
     }
-    function challengeTranscript(B2, M2, Z2, t2, t3, ctx) {
-      const [Bm, a0, a1, a2, a3] = [B2, M2, Z2, t2, t3].map((i2) => i2.toBytes());
+    function challengeTranscript(B2, M3, Z2, t2, t3, ctx) {
+      const [Bm, a0, a1, a2, a3] = [B2, M3, Z2, t2, t3].map((i2) => i2.toBytes());
       return hashToScalarPrefixed(encode2(Bm, a0, a1, a2, a3, "Challenge"), ctx);
     }
-    function generateProof(ctx, k2, B2, C2, D2, rng) {
-      const { M: M2, Z: Z2 } = computeCompositesFast(k2, B2, C2, D2, ctx);
+    function generateProof(ctx, k2, B2, C3, D3, rng) {
+      const { M: M3, Z: Z2 } = computeCompositesFast(k2, B2, C3, D3, ctx);
       const r2 = randomScalar(rng);
       const t2 = Point.BASE.multiply(r2);
-      const t3 = M2.multiply(r2);
-      const c2 = challengeTranscript(B2, M2, Z2, t2, t3, ctx);
+      const t3 = M3.multiply(r2);
+      const c2 = challengeTranscript(B2, M3, Z2, t2, t3, ctx);
       const s2 = Fn4.sub(r2, Fn4.mul(c2, k2));
       return concatBytes3(...[c2, s2].map((i2) => Fn4.toBytes(i2)));
     }
-    function verifyProof(ctx, B2, C2, D2, proof) {
+    function verifyProof(ctx, B2, C3, D3, proof) {
       abytes4(proof, 2 * Fn4.BYTES);
-      const { M: M2, Z: Z2 } = computeComposites(B2, C2, D2, ctx);
-      const [c2, s2] = [proof.subarray(0, Fn4.BYTES), proof.subarray(Fn4.BYTES)].map((f2) => Fn4.fromBytes(f2));
+      const { M: M3, Z: Z2 } = computeComposites(B2, C3, D3, ctx);
+      const [c2, s2] = [proof.subarray(0, Fn4.BYTES), proof.subarray(Fn4.BYTES)].map((f3) => Fn4.fromBytes(f3));
       const t2 = Point.BASE.multiply(s2).add(B2.multiply(c2));
-      const t3 = M2.multiply(s2).add(Z2.multiply(c2));
-      const expectedC = challengeTranscript(B2, M2, Z2, t2, t3, ctx);
+      const t3 = M3.multiply(s2).add(Z2.multiply(c2));
+      const expectedC = challengeTranscript(B2, M3, Z2, t2, t3, ctx);
       if (!Fn4.eql(c2, expectedC))
         throw new Error("proof verification failed");
     }
@@ -6220,10 +6220,10 @@
           const inputs = items.map((i2) => inputBytes("input", i2.input));
           const evalPoints = items.map((i2) => wirePoint("evaluated", i2.evaluated));
           verifyProof(ctxPOPRF, wirePoint("tweakedKey", tweakedKey), evalPoints, items.map((i2) => wirePoint("blinded", i2.blinded)), proof);
-          return items.map((i2, j2) => {
+          return items.map((i2, j3) => {
             const blind2 = Fn4.fromBytes(i2.blind);
-            const point = evalPoints[j2].multiply(Fn4.inv(blind2)).toBytes();
-            return hashInput(inputs[j2], info, point);
+            const point = evalPoints[j3].multiply(Fn4.inv(blind2)).toBytes();
+            return hashInput(inputs[j3], info, point);
           });
         },
         finalize(input, blind2, evaluated, blinded, proof, tweakedKey) {
@@ -6272,13 +6272,13 @@
     ristretto255_oprf: () => ristretto255_oprf,
     x25519: () => x25519
   });
-  function ed25519_pow_2_252_3(x2) {
+  function ed25519_pow_2_252_3(x3) {
     const _10n = BigInt(10), _20n = BigInt(20), _40n = BigInt(40), _80n = BigInt(80);
     const P2 = ed25519_CURVE_p;
-    const x22 = x2 * x2 % P2;
-    const b2 = x22 * x2 % P2;
+    const x22 = x3 * x3 % P2;
+    const b2 = x22 * x3 % P2;
     const b4 = pow22(b2, _2n5, P2) * b2 % P2;
-    const b5 = pow22(b4, _1n7, P2) * x2 % P2;
+    const b5 = pow22(b4, _1n7, P2) * x3 % P2;
     const b10 = pow22(b5, _5n2, P2) * b5 % P2;
     const b20 = pow22(b10, _10n, P2) * b10 % P2;
     const b40 = pow22(b20, _20n, P2) * b20 % P2;
@@ -6286,7 +6286,7 @@
     const b160 = pow22(b80, _80n, P2) * b80 % P2;
     const b240 = pow22(b160, _80n, P2) * b80 % P2;
     const b250 = pow22(b240, _10n, P2) * b10 % P2;
-    const pow_p_5_8 = pow22(b250, _2n5, P2) * x2 % P2;
+    const pow_p_5_8 = pow22(b250, _2n5, P2) * x3 % P2;
     return { pow_p_5_8, b2 };
   }
   function adjustScalarBytes(bytes) {
@@ -6300,20 +6300,20 @@
     const v3 = mod3(v2 * v2 * v2, P2);
     const v7 = mod3(v3 * v3 * v2, P2);
     const pow = ed25519_pow_2_252_3(u2 * v7).pow_p_5_8;
-    let x2 = mod3(u2 * v3 * pow, P2);
-    const vx2 = mod3(v2 * x2 * x2, P2);
-    const root1 = x2;
-    const root2 = mod3(x2 * ED25519_SQRT_M1, P2);
+    let x3 = mod3(u2 * v3 * pow, P2);
+    const vx2 = mod3(v2 * x3 * x3, P2);
+    const root1 = x3;
+    const root2 = mod3(x3 * ED25519_SQRT_M1, P2);
     const useRoot1 = vx2 === u2;
     const useRoot2 = vx2 === mod3(-u2, P2);
     const noRoot = vx2 === mod3(-u2 * ED25519_SQRT_M1, P2);
     if (useRoot1)
-      x2 = root1;
+      x3 = root1;
     if (useRoot2 || noRoot)
-      x2 = root2;
-    if (isNegativeLE(x2, P2))
-      x2 = mod3(-x2, P2);
-    return { isValid: useRoot1 || useRoot2, value: x2 };
+      x3 = root2;
+    if (isNegativeLE(x3, P2))
+      x3 = mod3(-x3, P2);
+    return { isValid: useRoot1 || useRoot2, value: x3 };
   }
   function ed25519_domain(data, ctx, phflag) {
     if (ctx.length > 255)
@@ -6383,14 +6383,14 @@
     return { x: Fp.mul(xn2, xd_inv), y: Fp.mul(yn2, yd_inv) };
   }
   function calcElligatorRistrettoMap(r0) {
-    const { d: d2 } = ed25519_CURVE;
+    const { d: d3 } = ed25519_CURVE;
     const P2 = ed25519_CURVE_p;
     const mod4 = (n2) => Fp.create(n2);
     const r2 = mod4(SQRT_M1 * r0 * r0);
     const Ns = mod4((r2 + _1n7) * ONE_MINUS_D_SQ);
     let c2 = BigInt(-1);
-    const D2 = mod4((c2 - d2 * r2) * mod4(r2 + d2));
-    let { isValid: Ns_D_is_sq, value: s2 } = uvRatio(Ns, D2);
+    const D3 = mod4((c2 - d3 * r2) * mod4(r2 + d3));
+    let { isValid: Ns_D_is_sq, value: s2 } = uvRatio(Ns, D3);
     let s_ = mod4(s2 * r0);
     if (!isNegativeLE(s_, P2))
       s_ = mod4(-s_);
@@ -6398,9 +6398,9 @@
       s2 = s_;
     if (!Ns_D_is_sq)
       c2 = r2;
-    const Nt2 = mod4(c2 * (r2 - _1n7) * D_MINUS_ONE_SQ - D2);
+    const Nt2 = mod4(c2 * (r2 - _1n7) * D_MINUS_ONE_SQ - D3);
     const s22 = s2 * s2;
-    const W0 = mod4((s2 + s2) * D2);
+    const W0 = mod4((s2 + s2) * D3);
     const W1 = mod4(Nt2 * SQRT_AD_MINUS_ONE);
     const W2 = mod4(_1n7 - s22);
     const W3 = mod4(_1n7 + s22);
@@ -6444,9 +6444,9 @@
       ed25519_FROST = /* @__PURE__ */ (() => createFROST({
         name: "FROST-ED25519-SHA512-v1",
         Point: ed25519_Point,
-        validatePoint: (p2) => {
-          p2.assertValidity();
-          if (!p2.isTorsionFree())
+        validatePoint: (p3) => {
+          p3.assertValidity();
+          if (!p3.isTorsionFree())
             throw new Error("bad point: not torsion-free");
         },
         hash: sha5122,
@@ -6460,8 +6460,8 @@
         return montgomery2({
           P: P2,
           type: "x25519",
-          powPminus2: (x2) => {
-            const { pow_p_5_8, b2 } = ed25519_pow_2_252_3(x2);
+          powPminus2: (x3) => {
+            const { pow_p_5_8, b2 } = ed25519_pow_2_252_3(x3);
             return mod3(pow22(pow_p_5_8, _3n2, P2) * b2, P2);
           },
           adjustScalarBytes
@@ -6520,7 +6520,7 @@
         }
         static fromBytes(bytes) {
           abytes3(bytes, 32);
-          const { a: a2, d: d2 } = ed25519_CURVE;
+          const { a: a2, d: d3 } = ed25519_CURVE;
           const P2 = ed25519_CURVE_p;
           const mod4 = (n2) => Fp.create(n2);
           const s2 = bytes255ToNumberLE(bytes);
@@ -6531,18 +6531,18 @@
           const u2 = mod4(_1n7 - a2 * s22);
           const u1_2 = mod4(u1 * u1);
           const u2_2 = mod4(u2 * u2);
-          const v2 = mod4(a2 * d2 * u1_2 - u2_2);
+          const v2 = mod4(a2 * d3 * u1_2 - u2_2);
           const { isValid, value: I2 } = invertSqrt(mod4(v2 * u2_2));
           const Dx = mod4(I2 * u2);
           const Dy = mod4(I2 * Dx * v2);
-          let x2 = mod4((s2 + s2) * Dx);
-          if (isNegativeLE(x2, P2))
-            x2 = mod4(-x2);
+          let x3 = mod4((s2 + s2) * Dx);
+          if (isNegativeLE(x3, P2))
+            x3 = mod4(-x3);
           const y2 = mod4(u1 * Dy);
-          const t2 = mod4(x2 * y2);
+          const t2 = mod4(x3 * y2);
           if (!isValid || isNegativeLE(t2, P2) || y2 === _0n7)
             throw new Error("invalid ristretto255 encoding 2");
-          return new __RistrettoPoint(new ed25519_Point(x2, y2, _1n7, t2));
+          return new __RistrettoPoint(new ed25519_Point(x3, y2, _1n7, t2));
         }
         /**
          * Converts ristretto-encoded string to ristretto point.
@@ -6565,8 +6565,8 @@
           const u2sq = mod4(u2 * u2);
           const { value: invsqrt } = invertSqrt(mod4(u1 * u2sq));
           const D1 = mod4(invsqrt * u1);
-          const D2 = mod4(invsqrt * u2);
-          const zInv = mod4(D1 * D2 * T2);
+          const D22 = mod4(invsqrt * u2);
+          const zInv = mod4(D1 * D22 * T2);
           let D3;
           if (isNegativeLE(T2 * zInv, P2)) {
             let _x = mod4(Y2 * SQRT_M1);
@@ -6575,7 +6575,7 @@
             Y2 = _y;
             D3 = mod4(D1 * INVSQRT_A_MINUS_D);
           } else {
-            D3 = D2;
+            D3 = D22;
           }
           if (isNegativeLE(X2 * zInv, P2))
             Y2 = mod4(-Y2);
@@ -6659,8 +6659,8 @@
       ristretto255_FROST = /* @__PURE__ */ (() => createFROST({
         name: "FROST-RISTRETTO255-SHA512-v1",
         Point: _RistrettoPoint,
-        validatePoint: (p2) => {
-          p2.assertValidity();
+        validatePoint: (p3) => {
+          p3.assertValidity();
         },
         hash: sha5122
       }))();
@@ -6684,18 +6684,18 @@
       throw new Error('"rounds" expected integer 1..24');
     const B2 = new Uint32Array(5 * 2);
     for (let round = 24 - rounds; round < 24; round++) {
-      for (let x2 = 0; x2 < 10; x2++)
-        B2[x2] = s2[x2] ^ s2[x2 + 10] ^ s2[x2 + 20] ^ s2[x2 + 30] ^ s2[x2 + 40];
-      for (let x2 = 0; x2 < 10; x2 += 2) {
-        const idx1 = (x2 + 8) % 10;
-        const idx0 = (x2 + 2) % 10;
+      for (let x3 = 0; x3 < 10; x3++)
+        B2[x3] = s2[x3] ^ s2[x3 + 10] ^ s2[x3 + 20] ^ s2[x3 + 30] ^ s2[x3 + 40];
+      for (let x3 = 0; x3 < 10; x3 += 2) {
+        const idx1 = (x3 + 8) % 10;
+        const idx0 = (x3 + 2) % 10;
         const B0 = B2[idx0];
         const B1 = B2[idx0 + 1];
         const Th = rotlH(B0, B1, 1) ^ B2[idx1];
         const Tl = rotlL(B0, B1, 1) ^ B2[idx1 + 1];
         for (let y2 = 0; y2 < 50; y2 += 10) {
-          s2[x2 + y2] ^= Th;
-          s2[x2 + y2 + 1] ^= Tl;
+          s2[x3 + y2] ^= Th;
+          s2[x3 + y2 + 1] ^= Tl;
         }
       }
       let curH = s2[2];
@@ -6742,23 +6742,23 @@
       SHA3_PI2 = [];
       SHA3_ROTL2 = [];
       _SHA3_IOTA2 = [];
-      for (let round = 0, R2 = _1n8, x2 = 1, y2 = 0; round < 24; round++) {
-        [x2, y2] = [y2, (2 * x2 + 3 * y2) % 5];
-        SHA3_PI2.push(2 * (5 * y2 + x2));
+      for (let round = 0, R2 = _1n8, x3 = 1, y2 = 0; round < 24; round++) {
+        [x3, y2] = [y2, (2 * x3 + 3 * y2) % 5];
+        SHA3_PI2.push(2 * (5 * y2 + x3));
         SHA3_ROTL2.push((round + 1) * (round + 2) / 2 % 64);
         let t2 = _0n8;
-        for (let j2 = 0; j2 < 7; j2++) {
+        for (let j3 = 0; j3 < 7; j3++) {
           R2 = (R2 << _1n8 ^ (R2 >> _7n3) * _0x71n2) % _256n2;
           if (R2 & _2n6)
-            t2 ^= _1n8 << (_1n8 << BigInt(j2)) - _1n8;
+            t2 ^= _1n8 << (_1n8 << BigInt(j3)) - _1n8;
         }
         _SHA3_IOTA2.push(t2);
       }
       IOTAS2 = split2(_SHA3_IOTA2, true);
       SHA3_IOTA_H2 = IOTAS2[0];
       SHA3_IOTA_L2 = IOTAS2[1];
-      rotlH = (h2, l2, s2) => s2 > 32 ? rotlBH2(h2, l2, s2) : rotlSH2(h2, l2, s2);
-      rotlL = (h2, l2, s2) => s2 > 32 ? rotlBL2(h2, l2, s2) : rotlSL2(h2, l2, s2);
+      rotlH = (h3, l2, s2) => s2 > 32 ? rotlBH2(h3, l2, s2) : rotlSH2(h3, l2, s2);
+      rotlL = (h3, l2, s2) => s2 > 32 ? rotlBL2(h3, l2, s2) : rotlSL2(h3, l2, s2);
       Keccak = class _Keccak {
         state;
         pos = 0;
@@ -6898,10 +6898,10 @@
     ed448ph: () => ed448ph,
     x448: () => x448
   });
-  function ed448_pow_Pminus3div4(x2) {
+  function ed448_pow_Pminus3div4(x3) {
     const P2 = ed448_CURVE_p;
-    const b2 = x2 * x2 * x2 % P2;
-    const b3 = b2 * b2 * x2 % P2;
+    const b2 = x3 * x3 * x3 % P2;
+    const b3 = b2 * b2 * x3 % P2;
     const b6 = pow22(b3, _3n3, P2) * b3 % P2;
     const b9 = pow22(b6, _3n3, P2) * b3 % P2;
     const b11 = pow22(b9, _2n7, P2) * b2 % P2;
@@ -6911,7 +6911,7 @@
     const b176 = pow22(b88, _88n, P2) * b88 % P2;
     const b220 = pow22(b176, _44n, P2) * b44 % P2;
     const b222 = pow22(b220, _2n7, P2) * b2 % P2;
-    const b223 = pow22(b222, _1n9, P2) * x2 % P2;
+    const b223 = pow22(b222, _1n9, P2) * x3 % P2;
     return pow22(b223, _223n, P2) * b222 % P2;
   }
   function adjustScalarBytes2(bytes) {
@@ -6926,9 +6926,9 @@
     const u3v = mod3(u2v * u2, P2);
     const u5v3 = mod3(u3v * u2v * v2, P2);
     const root2 = ed448_pow_Pminus3div4(u5v3);
-    const x2 = mod3(u3v * root2, P2);
-    const x22 = mod3(x2 * x2, P2);
-    return { isValid: mod3(x22 * v2, P2) === u2, value: x2 };
+    const x3 = mod3(u3v * root2, P2);
+    const x22 = mod3(x3 * x3, P2);
+    return { isValid: mod3(x22 * v2, P2) === u2, value: x3 };
   }
   function dom4(data, ctx, phflag) {
     if (ctx.length > 255)
@@ -7009,10 +7009,10 @@
     return { x: Fp2.mul(xEn, inv[0]), y: Fp2.mul(yEn, inv[1]) };
   }
   function calcElligatorDecafMap(r0) {
-    const { d: d2, p: P2 } = ed448_CURVE;
+    const { d: d3, p: P2 } = ed448_CURVE;
     const mod4 = (n2) => Fp448.create(n2);
     const r2 = mod4(-(r0 * r0));
-    const u0 = mod4(d2 * (r2 - _1n9));
+    const u0 = mod4(d3 * (r2 - _1n9));
     const u1 = mod4((u0 + _1n9) * (u0 - r2));
     const { isValid: was_square, value: v2 } = sqrtRatioM1(ONE_MINUS_TWO_D, mod4((r2 + _1n9) * u1));
     let v_prime = v2;
@@ -7083,10 +7083,10 @@
         return montgomery2({
           P: P2,
           type: "x448",
-          powPminus2: (x2) => {
-            const Pminus3div4 = ed448_pow_Pminus3div4(x2);
+          powPminus2: (x3) => {
+            const Pminus3div4 = ed448_pow_Pminus3div4(x3);
             const Pminus3 = pow22(Pminus3div4, _2n7, P2);
-            return mod3(Pminus3 * x2, P2);
+            return mod3(Pminus3 * x3, P2);
           },
           adjustScalarBytes: adjustScalarBytes2
         });
@@ -7105,9 +7105,9 @@
       ed448_FROST = /* @__PURE__ */ (() => createFROST({
         name: "FROST-ED448-SHAKE256-v1",
         Point: ed448_Point,
-        validatePoint: (p2) => {
-          p2.assertValidity();
-          if (!p2.isTorsionFree())
+        validatePoint: (p3) => {
+          p3.assertValidity();
+          if (!p3.isTorsionFree())
             throw new Error("bad point: not torsion-free");
         },
         // Group:  edwards448 [RFC8032], where Ne = 57 and Ns = 57.
@@ -7160,7 +7160,7 @@
         }
         static fromBytes(bytes) {
           abytes4(bytes, 56);
-          const { d: d2, p: P2 } = ed448_CURVE;
+          const { d: d3, p: P2 } = ed448_CURVE;
           const mod4 = (n2) => Fp448.create(n2);
           const s2 = Fp448.fromBytes(bytes);
           if (!equalBytes2(Fn448.toBytes(s2), bytes) || isNegativeLE(s2, P2))
@@ -7168,17 +7168,17 @@
           const s22 = mod4(s2 * s2);
           const u1 = mod4(_1n9 + s22);
           const u1sq = mod4(u1 * u1);
-          const u2 = mod4(u1sq - _4n2 * d2 * s22);
+          const u2 = mod4(u1sq - _4n2 * d3 * s22);
           const { isValid, value: invsqrt } = invertSqrt2(mod4(u2 * u1sq));
           let u3 = mod4((s2 + s2) * invsqrt * u1 * SQRT_MINUS_D);
           if (isNegativeLE(u3, P2))
             u3 = mod4(-u3);
-          const x2 = mod4(u3 * invsqrt * u2 * INVSQRT_MINUS_D);
+          const x3 = mod4(u3 * invsqrt * u2 * INVSQRT_MINUS_D);
           const y2 = mod4((_1n9 - s22) * invsqrt * u1);
-          const t2 = mod4(x2 * y2);
+          const t2 = mod4(x3 * y2);
           if (!isValid)
             throw new Error("invalid decaf448 encoding 2");
-          return new __DecafPoint(new ed448_Point(x2, y2, _1n9, t2));
+          return new __DecafPoint(new ed448_Point(x3, y2, _1n9, t2));
         }
         /**
          * Converts decaf-encoded string to decaf point.
@@ -7197,8 +7197,8 @@
           const P2 = ed448_CURVE.p;
           const mod4 = (n2) => Fp448.create(n2);
           const u1 = mod4(mod4(X2 + T2) * mod4(X2 - T2));
-          const x2 = mod4(X2 * X2);
-          const { value: invsqrt } = invertSqrt2(mod4(u1 * ONE_MINUS_D * x2));
+          const x22 = mod4(X2 * X2);
+          const { value: invsqrt } = invertSqrt2(mod4(u1 * ONE_MINUS_D * x22));
           let ratio = mod4(invsqrt * u1 * SQRT_MINUS_D);
           if (isNegativeLE(ratio, P2))
             ratio = mod4(-ratio);
@@ -7424,8 +7424,8 @@
     function pointToBytes(_c, point, isCompressed) {
       if (allowInfinityPoint && point.is0())
         return Uint8Array.of(0);
-      const { x: x2, y: y2 } = point.toAffine();
-      const bx = Fp3.toBytes(x2);
+      const { x: x3, y: y2 } = point.toAffine();
+      const bx = Fp3.toBytes(x3);
       abool2(isCompressed, "isCompressed");
       if (isCompressed) {
         assertCompressionIsSupported();
@@ -7444,10 +7444,10 @@
       if (allowInfinityPoint && length === 1 && head === 0)
         return { x: Fp3.ZERO, y: Fp3.ZERO };
       if (length === comp && (head === 2 || head === 3)) {
-        const x2 = Fp3.fromBytes(tail);
-        if (!Fp3.isValid(x2))
+        const x3 = Fp3.fromBytes(tail);
+        if (!Fp3.isValid(x3))
           throw new Error("bad point: is not on curve, wrong x");
-        const y2 = weierstrassEquation(x2);
+        const y2 = weierstrassEquation(x3);
         let y3;
         try {
           y3 = Fp3.sqrt(y2);
@@ -7460,28 +7460,28 @@
         const evenH = (head & 1) === 1;
         if (evenH !== evenY)
           y3 = Fp3.neg(y3);
-        return { x: x2, y: y3 };
+        return { x: x3, y: y3 };
       } else if (length === uncomp && head === 4) {
-        const L2 = Fp3.BYTES;
-        const x2 = Fp3.fromBytes(tail.subarray(0, L2));
-        const y2 = Fp3.fromBytes(tail.subarray(L2, L2 * 2));
-        if (!isValidXY(x2, y2))
+        const L3 = Fp3.BYTES;
+        const x3 = Fp3.fromBytes(tail.subarray(0, L3));
+        const y2 = Fp3.fromBytes(tail.subarray(L3, L3 * 2));
+        if (!isValidXY(x3, y2))
           throw new Error("bad point: is not on curve");
-        return { x: x2, y: y2 };
+        return { x: x3, y: y2 };
       } else {
         throw new Error(`bad point: got length ${length}, expected compressed=${comp} or uncompressed=${uncomp}`);
       }
     }
     const encodePoint = extraOpts.toBytes === void 0 ? pointToBytes : extraOpts.toBytes;
     const decodePoint = extraOpts.fromBytes === void 0 ? pointFromBytes : extraOpts.fromBytes;
-    function weierstrassEquation(x2) {
-      const x22 = Fp3.sqr(x2);
-      const x3 = Fp3.mul(x22, x2);
-      return Fp3.add(Fp3.add(x3, Fp3.mul(x2, CURVE.a)), CURVE.b);
+    function weierstrassEquation(x3) {
+      const x22 = Fp3.sqr(x3);
+      const x32 = Fp3.mul(x22, x3);
+      return Fp3.add(Fp3.add(x32, Fp3.mul(x3, CURVE.a)), CURVE.b);
     }
-    function isValidXY(x2, y2) {
+    function isValidXY(x3, y2) {
       const left2 = Fp3.sqr(y2);
-      const right2 = weierstrassEquation(x2);
+      const right2 = weierstrassEquation(x3);
       return Fp3.eql(left2, right2);
     }
     if (!isValidXY(CURVE.Gx, CURVE.Gy))
@@ -7534,15 +7534,15 @@
         return CURVE;
       }
       /** Does NOT validate if the point is valid. Use `.assertValidity()`. */
-      static fromAffine(p2) {
-        const { x: x2, y: y2 } = p2 || {};
-        if (!p2 || !Fp3.isValid(x2) || !Fp3.isValid(y2))
+      static fromAffine(p3) {
+        const { x: x3, y: y2 } = p3 || {};
+        if (!p3 || !Fp3.isValid(x3) || !Fp3.isValid(y2))
           throw new Error("invalid affine point");
-        if (p2 instanceof Point)
+        if (p3 instanceof Point)
           throw new Error("projective point not allowed");
-        if (Fp3.is0(x2) && Fp3.is0(y2))
+        if (Fp3.is0(x3) && Fp3.is0(y2))
           return Point.ZERO;
-        return new Point(x2, y2, Fp3.ONE);
+        return new Point(x3, y2, Fp3.ONE);
       }
       static fromBytes(bytes) {
         const P2 = Point.fromAffine(decodePoint(abytes4(bytes, void 0, "point")));
@@ -7573,18 +7573,18 @@
       // TODO: return `this`
       /** A point on curve is valid if it conforms to equation. */
       assertValidity() {
-        const p2 = this;
-        if (p2.is0()) {
-          if (extraOpts.allowInfinityPoint && Fp3.is0(p2.X) && Fp3.eql(p2.Y, Fp3.ONE) && Fp3.is0(p2.Z))
+        const p3 = this;
+        if (p3.is0()) {
+          if (extraOpts.allowInfinityPoint && Fp3.is0(p3.X) && Fp3.eql(p3.Y, Fp3.ONE) && Fp3.is0(p3.Z))
             return;
           throw new Error("bad point: ZERO");
         }
-        const { x: x2, y: y2 } = p2.toAffine();
-        if (!Fp3.isValid(x2) || !Fp3.isValid(y2))
+        const { x: x3, y: y2 } = p3.toAffine();
+        if (!Fp3.isValid(x3) || !Fp3.isValid(y2))
           throw new Error("bad point: x or y not field elements");
-        if (!isValidXY(x2, y2))
+        if (!isValidXY(x3, y2))
           throw new Error("bad point: equation left != right");
-        if (!p2.isTorsionFree())
+        if (!p3.isTorsionFree())
           throw new Error("bad point: not in prime-order subgroup");
       }
       hasEvenY() {
@@ -7599,8 +7599,8 @@
         const { X: X1, Y: Y1, Z: Z1 } = this;
         const { X: X2, Y: Y2, Z: Z2 } = other;
         const U1 = Fp3.eql(Fp3.mul(X1, Z2), Fp3.mul(X2, Z1));
-        const U2 = Fp3.eql(Fp3.mul(Y1, Z2), Fp3.mul(Y2, Z1));
-        return U1 && U2;
+        const U22 = Fp3.eql(Fp3.mul(Y1, Z2), Fp3.mul(Y2, Z1));
+        return U1 && U22;
       }
       /** Flips point to one corresponding to (x, -y) in Affine coordinates. */
       negate() {
@@ -7722,7 +7722,7 @@
         if (!Fn4.isValidNot0(scalar))
           throw new RangeError("invalid scalar: out of range");
         let point, fake;
-        const mul = (n2) => wnaf.cached(this, n2, (p2) => normalizeZ(Point, p2));
+        const mul = (n2) => wnaf.cached(this, n2, (p3) => normalizeZ(Point, p3));
         if (endo2) {
           const { k1neg, k1, k2neg, k2 } = splitEndoScalarN(scalar);
           const { p: k1p, f: k1f } = mul(k1);
@@ -7730,9 +7730,9 @@
           fake = k1f.add(k2f);
           point = finishEndo(endo2.beta, k1p, k2p, k1neg, k2neg);
         } else {
-          const { p: p2, f: f2 } = mul(scalar);
-          point = p2;
-          fake = f2;
+          const { p: p3, f: f3 } = mul(scalar);
+          point = p3;
+          fake = f3;
         }
         return normalizeZ(Point, [point, fake])[0];
       }
@@ -7743,22 +7743,22 @@
        */
       multiplyUnsafe(scalar) {
         const { endo: endo2 } = extraOpts;
-        const p2 = this;
+        const p3 = this;
         const sc = scalar;
         if (!Fn4.isValid(sc))
           throw new RangeError("invalid scalar: out of range");
-        if (sc === _0n9 || p2.is0())
+        if (sc === _0n9 || p3.is0())
           return Point.ZERO;
         if (sc === _1n10)
-          return p2;
+          return p3;
         if (wnaf.hasCache(this))
           return this.multiply(sc);
         if (endo2) {
           const { k1neg, k1, k2neg, k2 } = splitEndoScalarN(sc);
-          const { p1, p2: p22 } = mulEndoUnsafe(Point, p2, k1, k2);
+          const { p1, p2: p22 } = mulEndoUnsafe(Point, p3, k1, k2);
           return finishEndo(endo2.beta, p1, p22, k1neg, k2neg);
         } else {
-          return wnaf.unsafe(p2, sc);
+          return wnaf.unsafe(p3, sc);
         }
       }
       /**
@@ -7767,22 +7767,22 @@
        * @param invertedZ - Z^-1 (inverted zero) - optional, precomputation is useful for invertBatch
        */
       toAffine(invertedZ) {
-        const p2 = this;
+        const p3 = this;
         let iz = invertedZ;
-        const { X: X2, Y: Y2, Z: Z2 } = p2;
+        const { X: X2, Y: Y2, Z: Z2 } = p3;
         if (Fp3.eql(Z2, Fp3.ONE))
           return { x: X2, y: Y2 };
-        const is0 = p2.is0();
+        const is0 = p3.is0();
         if (iz == null)
           iz = is0 ? Fp3.ONE : Fp3.inv(Z2);
-        const x2 = Fp3.mul(X2, iz);
+        const x3 = Fp3.mul(X2, iz);
         const y2 = Fp3.mul(Y2, iz);
         const zz = Fp3.mul(Z2, iz);
         if (is0)
           return { x: Fp3.ZERO, y: Fp3.ZERO };
         if (!Fp3.eql(zz, Fp3.ONE))
           throw new Error("invZ was invalid");
-        return { x: x2, y: y2 };
+        return { x: x3, y: y2 };
       }
       /**
        * Checks whether Point is free of torsion elements (is in prime subgroup).
@@ -7833,111 +7833,111 @@
     return Uint8Array.of(hasEvenY ? 2 : 3);
   }
   function SWUFpSqrtRatio(Fp3, Z2) {
-    const F2 = validateField(Fp3);
-    const q2 = F2.ORDER;
+    const F3 = validateField(Fp3);
+    const q3 = F3.ORDER;
     let l2 = _0n9;
-    for (let o2 = q2 - _1n10; o2 % _2n8 === _0n9; o2 /= _2n8)
+    for (let o2 = q3 - _1n10; o2 % _2n8 === _0n9; o2 /= _2n8)
       l2 += _1n10;
     const c1 = l2;
     const _2n_pow_c1_1 = _2n8 << c1 - _1n10 - _1n10;
     const _2n_pow_c1 = _2n_pow_c1_1 * _2n8;
-    const c2 = (q2 - _1n10) / _2n_pow_c1;
+    const c2 = (q3 - _1n10) / _2n_pow_c1;
     const c3 = (c2 - _1n10) / _2n8;
     const c4 = _2n_pow_c1 - _1n10;
     const c5 = _2n_pow_c1_1;
-    const c6 = F2.pow(Z2, c2);
-    const c7 = F2.pow(Z2, (c2 + _1n10) / _2n8);
+    const c6 = F3.pow(Z2, c2);
+    const c7 = F3.pow(Z2, (c2 + _1n10) / _2n8);
     let sqrtRatio = (u2, v2) => {
       let tv1 = c6;
-      let tv2 = F2.pow(v2, c4);
-      let tv3 = F2.sqr(tv2);
-      tv3 = F2.mul(tv3, v2);
-      let tv5 = F2.mul(u2, tv3);
-      tv5 = F2.pow(tv5, c3);
-      tv5 = F2.mul(tv5, tv2);
-      tv2 = F2.mul(tv5, v2);
-      tv3 = F2.mul(tv5, u2);
-      let tv4 = F2.mul(tv3, tv2);
-      tv5 = F2.pow(tv4, c5);
-      let isQR = F2.eql(tv5, F2.ONE);
-      tv2 = F2.mul(tv3, c7);
-      tv5 = F2.mul(tv4, tv1);
-      tv3 = F2.cmov(tv2, tv3, isQR);
-      tv4 = F2.cmov(tv5, tv4, isQR);
+      let tv2 = F3.pow(v2, c4);
+      let tv3 = F3.sqr(tv2);
+      tv3 = F3.mul(tv3, v2);
+      let tv5 = F3.mul(u2, tv3);
+      tv5 = F3.pow(tv5, c3);
+      tv5 = F3.mul(tv5, tv2);
+      tv2 = F3.mul(tv5, v2);
+      tv3 = F3.mul(tv5, u2);
+      let tv4 = F3.mul(tv3, tv2);
+      tv5 = F3.pow(tv4, c5);
+      let isQR = F3.eql(tv5, F3.ONE);
+      tv2 = F3.mul(tv3, c7);
+      tv5 = F3.mul(tv4, tv1);
+      tv3 = F3.cmov(tv2, tv3, isQR);
+      tv4 = F3.cmov(tv5, tv4, isQR);
       for (let i2 = c1; i2 > _1n10; i2--) {
         let tv52 = i2 - _2n8;
         tv52 = _2n8 << tv52 - _1n10;
-        let tvv5 = F2.pow(tv4, tv52);
-        const e1 = F2.eql(tvv5, F2.ONE);
-        tv2 = F2.mul(tv3, tv1);
-        tv1 = F2.mul(tv1, tv1);
-        tvv5 = F2.mul(tv4, tv1);
-        tv3 = F2.cmov(tv2, tv3, e1);
-        tv4 = F2.cmov(tvv5, tv4, e1);
+        let tvv5 = F3.pow(tv4, tv52);
+        const e1 = F3.eql(tvv5, F3.ONE);
+        tv2 = F3.mul(tv3, tv1);
+        tv1 = F3.mul(tv1, tv1);
+        tvv5 = F3.mul(tv4, tv1);
+        tv3 = F3.cmov(tv2, tv3, e1);
+        tv4 = F3.cmov(tvv5, tv4, e1);
       }
-      return { isValid: !F2.is0(v2) && (isQR || F2.is0(u2)), value: tv3 };
+      return { isValid: !F3.is0(v2) && (isQR || F3.is0(u2)), value: tv3 };
     };
-    if (F2.ORDER % _4n3 === _3n4) {
-      const c12 = (F2.ORDER - _3n4) / _4n3;
-      const c22 = F2.sqrt(F2.neg(Z2));
+    if (F3.ORDER % _4n3 === _3n4) {
+      const c12 = (F3.ORDER - _3n4) / _4n3;
+      const c22 = F3.sqrt(F3.neg(Z2));
       sqrtRatio = (u2, v2) => {
-        let tv1 = F2.sqr(v2);
-        const tv2 = F2.mul(u2, v2);
-        tv1 = F2.mul(tv1, tv2);
-        let y1 = F2.pow(tv1, c12);
-        y1 = F2.mul(y1, tv2);
-        const y2 = F2.mul(y1, c22);
-        const tv3 = F2.mul(F2.sqr(y1), v2);
-        const isQR = F2.eql(tv3, u2);
-        let y3 = F2.cmov(y2, y1, isQR);
-        return { isValid: !F2.is0(v2) && isQR, value: y3 };
+        let tv1 = F3.sqr(v2);
+        const tv2 = F3.mul(u2, v2);
+        tv1 = F3.mul(tv1, tv2);
+        let y1 = F3.pow(tv1, c12);
+        y1 = F3.mul(y1, tv2);
+        const y2 = F3.mul(y1, c22);
+        const tv3 = F3.mul(F3.sqr(y1), v2);
+        const isQR = F3.eql(tv3, u2);
+        let y3 = F3.cmov(y2, y1, isQR);
+        return { isValid: !F3.is0(v2) && isQR, value: y3 };
       };
     }
     return sqrtRatio;
   }
   function mapToCurveSimpleSWU(Fp3, opts) {
-    const F2 = validateField(Fp3);
-    const { A: A2, B: B2, Z: Z2 } = opts;
-    if (!F2.isValidNot0(A2) || !F2.isValidNot0(B2) || !F2.isValid(Z2))
+    const F3 = validateField(Fp3);
+    const { A: A3, B: B2, Z: Z2 } = opts;
+    if (!F3.isValidNot0(A3) || !F3.isValidNot0(B2) || !F3.isValid(Z2))
       throw new Error("mapToCurveSimpleSWU: invalid opts");
-    if (F2.eql(Z2, F2.neg(F2.ONE)) || FpIsSquare(F2, Z2))
+    if (F3.eql(Z2, F3.neg(F3.ONE)) || FpIsSquare(F3, Z2))
       throw new Error("mapToCurveSimpleSWU: invalid opts");
-    const x2 = F2.mul(B2, F2.inv(F2.mul(Z2, A2)));
-    const gx = F2.add(F2.add(F2.mul(F2.sqr(x2), x2), F2.mul(A2, x2)), B2);
-    if (!FpIsSquare(F2, gx))
+    const x3 = F3.mul(B2, F3.inv(F3.mul(Z2, A3)));
+    const gx = F3.add(F3.add(F3.mul(F3.sqr(x3), x3), F3.mul(A3, x3)), B2);
+    if (!FpIsSquare(F3, gx))
       throw new Error("mapToCurveSimpleSWU: invalid opts");
-    const sqrtRatio = SWUFpSqrtRatio(F2, Z2);
-    if (!F2.isOdd)
+    const sqrtRatio = SWUFpSqrtRatio(F3, Z2);
+    if (!F3.isOdd)
       throw new Error("Field does not have .isOdd()");
     return (u2) => {
-      let tv1, tv2, tv3, tv4, tv5, tv6, x3, y2;
-      tv1 = F2.sqr(u2);
-      tv1 = F2.mul(tv1, Z2);
-      tv2 = F2.sqr(tv1);
-      tv2 = F2.add(tv2, tv1);
-      tv3 = F2.add(tv2, F2.ONE);
-      tv3 = F2.mul(tv3, B2);
-      tv4 = F2.cmov(Z2, F2.neg(tv2), !F2.eql(tv2, F2.ZERO));
-      tv4 = F2.mul(tv4, A2);
-      tv2 = F2.sqr(tv3);
-      tv6 = F2.sqr(tv4);
-      tv5 = F2.mul(tv6, A2);
-      tv2 = F2.add(tv2, tv5);
-      tv2 = F2.mul(tv2, tv3);
-      tv6 = F2.mul(tv6, tv4);
-      tv5 = F2.mul(tv6, B2);
-      tv2 = F2.add(tv2, tv5);
-      x3 = F2.mul(tv1, tv3);
+      let tv1, tv2, tv3, tv4, tv5, tv6, x4, y2;
+      tv1 = F3.sqr(u2);
+      tv1 = F3.mul(tv1, Z2);
+      tv2 = F3.sqr(tv1);
+      tv2 = F3.add(tv2, tv1);
+      tv3 = F3.add(tv2, F3.ONE);
+      tv3 = F3.mul(tv3, B2);
+      tv4 = F3.cmov(Z2, F3.neg(tv2), !F3.eql(tv2, F3.ZERO));
+      tv4 = F3.mul(tv4, A3);
+      tv2 = F3.sqr(tv3);
+      tv6 = F3.sqr(tv4);
+      tv5 = F3.mul(tv6, A3);
+      tv2 = F3.add(tv2, tv5);
+      tv2 = F3.mul(tv2, tv3);
+      tv6 = F3.mul(tv6, tv4);
+      tv5 = F3.mul(tv6, B2);
+      tv2 = F3.add(tv2, tv5);
+      x4 = F3.mul(tv1, tv3);
       const { isValid, value } = sqrtRatio(tv2, tv6);
-      y2 = F2.mul(tv1, u2);
-      y2 = F2.mul(y2, value);
-      x3 = F2.cmov(x3, tv3, isValid);
-      y2 = F2.cmov(y2, value, isValid);
-      const e1 = F2.isOdd(u2) === F2.isOdd(y2);
-      y2 = F2.cmov(F2.neg(y2), y2, e1);
-      const tv4_inv = FpInvertBatch(F2, [tv4], true)[0];
-      x3 = F2.mul(x3, tv4_inv);
-      return { x: x3, y: y2 };
+      y2 = F3.mul(tv1, u2);
+      y2 = F3.mul(y2, value);
+      x4 = F3.cmov(x4, tv3, isValid);
+      y2 = F3.cmov(y2, value, isValid);
+      const e1 = F3.isOdd(u2) === F3.isOdd(y2);
+      y2 = F3.cmov(F3.neg(y2), y2, e1);
+      const tv4_inv = FpInvertBatch(F3, [tv4], true)[0];
+      x4 = F3.mul(x4, tv4_inv);
+      return { x: x4, y: y2 };
     };
   }
   function getWLengths(Fp3, Fn4) {
@@ -8085,9 +8085,9 @@
           format = "compact";
           bytes = bytes.subarray(1);
         }
-        const L2 = lengths.signature / 2;
-        const r2 = bytes.subarray(0, L2);
-        const s2 = bytes.subarray(L2, L2 * 2);
+        const L3 = lengths.signature / 2;
+        const r2 = bytes.subarray(0, L3);
+        const s2 = bytes.subarray(L3, L3 * 2);
         return new Signature(Fn4.fromBytes(r2), Fn4.fromBytes(s2), recid);
       }
       static fromHex(hex, format) {
@@ -8110,11 +8110,11 @@
         const radj = recovery === 2 || recovery === 3 ? r2 + CURVE_ORDER : r2;
         if (!Fp3.isValid(radj))
           throw new Error("invalid recovery id: sig.r+curve.n != R.x");
-        const x2 = Fp3.toBytes(radj);
-        const R2 = Point.fromBytes(concatBytes3(pprefix((recovery & 1) === 0), x2));
+        const x3 = Fp3.toBytes(radj);
+        const R2 = Point.fromBytes(concatBytes3(pprefix((recovery & 1) === 0), x3));
         const ir2 = Fn4.inv(radj);
-        const h2 = bits2int_modN(abytes4(messageHash, void 0, "msgHash"));
-        const u1 = Fn4.create(-h2 * ir2);
+        const h3 = bits2int_modN(abytes4(messageHash, void 0, "msgHash"));
+        const u1 = Fn4.create(-h3 * ir2);
         const u2 = Fn4.create(s2 * ir2);
         const Q2 = Point.BASE.multiplyUnsafe(u1).add(R2.multiplyUnsafe(u2));
         if (Q2.is0())
@@ -8168,10 +8168,10 @@
       const { lowS, prehash, extraEntropy } = validateSigOpts(opts, defaultSigOpts);
       message = validateMsgAndHash(message, prehash);
       const h1int = bits2int_modN(message);
-      const d2 = Fn4.fromBytes(secretKey);
-      if (!Fn4.isValidNot0(d2))
+      const d3 = Fn4.fromBytes(secretKey);
+      if (!Fn4.isValidNot0(d3))
         throw new Error("invalid private key");
-      const seedArgs = [int2octets(d2), int2octets(h1int)];
+      const seedArgs = [int2octets(d3), int2octets(h1int)];
       if (extraEntropy != null && extraEntropy !== false) {
         const e2 = extraEntropy === true ? randomBytes4(lengths.secretKey) : extraEntropy;
         seedArgs.push(abytes4(e2, void 0, "extraEntropy"));
@@ -8183,14 +8183,14 @@
         if (!Fn4.isValidNot0(k2))
           return;
         const ik = Fn4.inv(k2);
-        const q2 = Point.BASE.multiply(k2).toAffine();
-        const r2 = Fn4.create(q2.x);
+        const q3 = Point.BASE.multiply(k2).toAffine();
+        const r2 = Fn4.create(q3.x);
         if (r2 === _0n9)
           return;
-        const s2 = Fn4.create(ik * Fn4.create(m39 + r2 * d2));
+        const s2 = Fn4.create(ik * Fn4.create(m39 + r2 * d3));
         if (s2 === _0n9)
           return;
-        let recovery = (q2.x === r2 ? 0 : 2) | Number(q2.y & _1n10);
+        let recovery = (q3.x === r2 ? 0 : 2) | Number(q3.y & _1n10);
         let normS = s2;
         if (lowS && isBiggerThanHalfOrder(s2)) {
           normS = Fn4.neg(s2);
@@ -8221,9 +8221,9 @@
         if (lowS && sig.hasHighS())
           return false;
         const { r: r2, s: s2 } = sig;
-        const h2 = bits2int_modN(message);
+        const h3 = bits2int_modN(message);
         const is = Fn4.inv(s2);
-        const u1 = Fn4.create(h2 * is);
+        const u1 = Fn4.create(h3 * is);
         const u2 = Fn4.create(r2 * is);
         const R2 = Point.BASE.multiplyUnsafe(u1).add(P2.multiplyUnsafe(u2));
         if (R2.is0())
@@ -8580,8 +8580,8 @@
             end = Stream6();
             end.map(function(value2) {
               if (value2 === true) {
-                stream._parents.forEach(function(p2) {
-                  p2._unregisterChild(stream);
+                stream._parents.forEach(function(p3) {
+                  p3._unregisterChild(stream);
                 });
                 stream._state = "ended";
                 stream._parents.length = dependentStreams.length = dependentFns.length = 0;
@@ -8594,10 +8594,10 @@
             return value != null && typeof value.toJSON === "function" ? value.toJSON() : value;
           };
           stream["fantasy-land/map"] = stream.map;
-          stream["fantasy-land/ap"] = function(x2) {
+          stream["fantasy-land/ap"] = function(x3) {
             return combine(function(s1, s2) {
               return s1()(s2());
-            }, [x2, stream]);
+            }, [x3, stream]);
           };
           stream._unregisterChild = function(child) {
             var childIndex = dependentStreams.indexOf(child);
@@ -8735,7 +8735,7 @@
           return e3 && y2(n3, e3.prototype), n3;
         }
         function a2(i3, e3) {
-          for (var _3, n3 = 0; n3 < e3.length; n3++) _3 = e3[n3], _3.enumerable = _3.enumerable || false, _3.configurable = true, "value" in _3 && (_3.writable = true), Object.defineProperty(i3, D2(_3.key), _3);
+          for (var _3, n3 = 0; n3 < e3.length; n3++) _3 = e3[n3], _3.enumerable = _3.enumerable || false, _3.configurable = true, "value" in _3 && (_3.writable = true), Object.defineProperty(i3, D3(_3.key), _3);
         }
         function s2(i3, e3, _3) {
           return e3 && a2(i3.prototype, e3), _3 && a2(i3, _3), Object.defineProperty(i3, "prototype", { writable: false }), i3;
@@ -8755,19 +8755,19 @@
             }
             throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
           }
-          var s3, d3 = true, h3 = false;
+          var s3, d4 = true, h4 = false;
           return { s: function() {
             e3 = e3.call(i3);
           }, n: function() {
             var t3 = e3.next();
-            return d3 = t3.done, t3;
+            return d4 = t3.done, t3;
           }, e: function(e4) {
-            h3 = true, s3 = e4;
+            h4 = true, s3 = e4;
           }, f: function() {
             try {
-              d3 || null == e3.return || e3.return();
+              d4 || null == e3.return || e3.return();
             } finally {
-              if (h3) throw s3;
+              if (h4) throw s3;
             }
           } };
         }
@@ -8776,11 +8776,11 @@
             return e4.__proto__ || Object.getPrototypeOf(e4);
           }, r2(e3);
         }
-        function d2(i3, t3) {
+        function d3(i3, t3) {
           if ("function" != typeof t3 && null !== t3) throw new TypeError("Super expression must either be null or a function");
           i3.prototype = Object.create(t3 && t3.prototype, { constructor: { value: i3, writable: true, configurable: true } }), Object.defineProperty(i3, "prototype", { writable: false }), t3 && y2(i3, t3);
         }
-        function h2(e3) {
+        function h3(e3) {
           try {
             return -1 !== Function.toString.call(e3).indexOf("[native code]");
           } catch (t3) {
@@ -8800,19 +8800,19 @@
         function m39(_3, g3) {
           var l3 = null == _3 ? null : "undefined" != typeof Symbol && _3[Symbol.iterator] || _3["@@iterator"];
           if (null != l3) {
-            var s3, d3, r3, h3, b3 = [], a3 = true, m40 = false;
+            var s3, d4, r3, h4, b3 = [], a3 = true, m40 = false;
             try {
               if (r3 = (l3 = l3.call(_3)).next, 0 === g3) {
                 if (Object(l3) !== l3) return;
                 a3 = false;
               } else for (; !(a3 = (s3 = r3.call(l3)).done) && (b3.push(s3.value), b3.length !== g3); a3 = true) ;
             } catch (e3) {
-              m40 = true, d3 = e3;
+              m40 = true, d4 = e3;
             } finally {
               try {
-                if (!a3 && null != l3.return && (h3 = l3.return(), Object(h3) !== h3)) return;
+                if (!a3 && null != l3.return && (h4 = l3.return(), Object(h4) !== h4)) return;
               } finally {
-                if (m40) throw d3;
+                if (m40) throw d4;
               }
             }
             return b3;
@@ -8831,7 +8831,7 @@
             return i4.__proto__ = t4, i4;
           }, y2(i3, t3);
         }
-        function f2(t3, i3) {
+        function f3(t3, i3) {
           return _2(t3) || m39(t3, i3) || B2(t3, i3) || c2();
         }
         function k2(_3, t3) {
@@ -8844,17 +8844,17 @@
           }
           return ("string" === t3 ? String : Number)(_3);
         }
-        function D2(e3) {
+        function D3(e3) {
           var t3 = k2(e3, "string");
           return "symbol" == typeof t3 ? t3 : t3 + "";
         }
-        function p2(e3) {
+        function p3(e3) {
           "@babel/helpers - typeof";
-          return p2 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(e4) {
+          return p3 = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(e4) {
             return typeof e4;
           } : function(e4) {
             return e4 && "function" == typeof Symbol && e4.constructor === Symbol && e4 !== Symbol.prototype ? "symbol" : typeof e4;
-          }, p2(e3);
+          }, p3(e3);
         }
         function B2(e3, _3) {
           if (e3) {
@@ -8863,29 +8863,29 @@
             return "Object" === n3 && e3.constructor && (n3 = e3.constructor.name), "Map" === n3 || "Set" === n3 ? Array.from(e3) : "Arguments" === n3 || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n3) ? i2(e3, _3) : void 0;
           }
         }
-        function S2(e3) {
+        function S3(e3) {
           var i3 = "function" == typeof Map ? /* @__PURE__ */ new Map() : void 0;
-          return S2 = function(e4) {
+          return S3 = function(e4) {
             function t3() {
               return g2(e4, arguments, r2(this).constructor);
             }
-            if (null === e4 || !h2(e4)) return e4;
+            if (null === e4 || !h3(e4)) return e4;
             if ("function" != typeof e4) throw new TypeError("Super expression must either be null or a function");
             if (void 0 !== i3) {
               if (i3.has(e4)) return i3.get(e4);
               i3.set(e4, t3);
             }
             return t3.prototype = Object.create(e4.prototype, { constructor: { value: t3, enumerable: false, writable: true, configurable: true } }), y2(t3, e4);
-          }, S2(e3);
+          }, S3(e3);
         }
-        var C2 = (function(e3) {
+        var C3 = (function(e3) {
           var t3 = Math.abs, i3 = Math.max, _3 = Math.floor;
           function g3(e4, t4) {
             var i4;
             if (l2(this, g3), i4 = o2(this, g3, [e4]), i4.sign = t4, Object.setPrototypeOf(i4, g3.prototype), e4 > g3.__kMaxLength) throw new RangeError("Maximum BigInt size exceeded");
             return i4;
           }
-          return d2(g3, e3), s2(g3, [{ key: "toDebugString", value: function e4() {
+          return d3(g3, e3), s2(g3, [{ key: "toDebugString", value: function e4() {
             var t4, i4 = ["BigInt["], _4 = u2(this);
             try {
               for (_4.s(); !(t4 = _4.n()).done; ) {
@@ -8917,8 +8917,8 @@
           } }, { key: "__inplaceMultiplyAdd", value: function n3(e4, t4, _4) {
             _4 > this.length && (_4 = this.length);
             for (var o3 = 32767 & e4, l3 = e4 >>> 15, a3 = 0, s3 = t4, u3 = 0; u3 < _4; u3++) {
-              var r3 = this.__digit(u3), h3 = 32767 & r3, b3 = r3 >>> 15, m40 = g3.__imul(h3, o3), c3 = g3.__imul(h3, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f3 = s3 + m40 + a3;
-              a3 = f3 >>> 30, f3 &= 1073741823, f3 += ((32767 & c3) << 15) + ((32767 & v3) << 15), a3 += f3 >>> 30, s3 = y3 + (c3 >>> 15) + (v3 >>> 15), this.__setDigit(u3, 1073741823 & f3);
+              var r3 = this.__digit(u3), h4 = 32767 & r3, b3 = r3 >>> 15, m40 = g3.__imul(h4, o3), c3 = g3.__imul(h4, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f4 = s3 + m40 + a3;
+              a3 = f4 >>> 30, f4 &= 1073741823, f4 += ((32767 & c3) << 15) + ((32767 & v3) << 15), a3 += f4 >>> 30, s3 = y3 + (c3 >>> 15) + (v3 >>> 15), this.__setDigit(u3, 1073741823 & f4);
             }
             if (0 !== a3 || 0 !== s3) throw new Error("implementation bug");
           } }, { key: "__inplaceAdd", value: function n3(e4, t4, _4) {
@@ -8932,9 +8932,9 @@
                 var u3 = e4.__digit(s3), r3 = (g4 >>> 15) - (32767 & u3) - l3;
                 l3 = 1 & r3 >>> 15, this.__setDigit(t4 + s3, (32767 & r3) << 15 | 32767 & a3), g4 = this.__digit(t4 + s3 + 1), a3 = (32767 & g4) - (u3 >>> 15) - l3, l3 = 1 & a3 >>> 15;
               }
-              var d3 = e4.__digit(s3), h3 = (g4 >>> 15) - (32767 & d3) - l3;
-              l3 = 1 & h3 >>> 15, this.__setDigit(t4 + s3, (32767 & h3) << 15 | 32767 & a3);
-              var b3 = d3 >>> 15;
+              var d4 = e4.__digit(s3), h4 = (g4 >>> 15) - (32767 & d4) - l3;
+              l3 = 1 & h4 >>> 15, this.__setDigit(t4 + s3, (32767 & h4) << 15 | 32767 & a3);
+              var b3 = d4 >>> 15;
               if (t4 + s3 + 1 >= this.length) throw new RangeError("out of bounds");
               0 == (1 & _4) && (g4 = this.__digit(t4 + s3 + 1), a3 = (32767 & g4) - b3 - l3, l3 = 1 & a3 >>> 15, this.__setDigit(t4 + e4.length, 1073709056 & g4 | 32767 & a3));
             } else {
@@ -8942,13 +8942,13 @@
               for (var m40 = 0; m40 < e4.length - 1; m40++) {
                 var c3 = this.__digit(t4 + m40), v3 = e4.__digit(m40), y3 = (32767 & c3) - (32767 & v3) - l3;
                 l3 = 1 & y3 >>> 15;
-                var f3 = (c3 >>> 15) - (v3 >>> 15) - l3;
-                l3 = 1 & f3 >>> 15, this.__setDigit(t4 + m40, (32767 & f3) << 15 | 32767 & y3);
+                var f4 = (c3 >>> 15) - (v3 >>> 15) - l3;
+                l3 = 1 & f4 >>> 15, this.__setDigit(t4 + m40, (32767 & f4) << 15 | 32767 & y3);
               }
-              var k3 = this.__digit(t4 + m40), D3 = e4.__digit(m40), p3 = (32767 & k3) - (32767 & D3) - l3;
-              l3 = 1 & p3 >>> 15;
+              var k3 = this.__digit(t4 + m40), D4 = e4.__digit(m40), p4 = (32767 & k3) - (32767 & D4) - l3;
+              l3 = 1 & p4 >>> 15;
               var B3 = 0;
-              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D3 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m40, (32767 & B3) << 15 | 32767 & p3);
+              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D4 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m40, (32767 & B3) << 15 | 32767 & p4);
             }
             return l3;
           } }, { key: "__inplaceRightShift", value: function t4(e4) {
@@ -8986,7 +8986,7 @@
               return n3;
             }
             if ("boolean" == typeof e4) return true === e4 ? g3.__oneDigit(1, false) : g3.__zero();
-            if ("object" === p2(e4)) {
+            if ("object" === p3(e4)) {
               if (e4.constructor === g3) return e4;
               var o3 = g3.__toPrimitive(e4);
               return g3.BigInt(o3);
@@ -9001,14 +9001,14 @@
             }
             var n3 = e4.__digit(i4 - 1), o3 = g3.__clz30(n3), l3 = 30 * i4 - o3;
             if (1024 < l3) return e4.sign ? -Infinity : 1 / 0;
-            var a3 = l3 - 1, s3 = n3, u3 = i4 - 1, r3 = o3 + 3, d3 = 32 === r3 ? 0 : s3 << r3;
-            d3 >>>= 12;
-            var h3 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m40 = 20 + r3;
-            for (0 < h3 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d3 |= s3 >>> 30 - h3, b3 = s3 << h3 + 2, m40 = h3 + 2); 0 < m40 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m40 ? s3 << m40 - 30 : s3 >>> 30 - m40, m40 -= 30;
+            var a3 = l3 - 1, s3 = n3, u3 = i4 - 1, r3 = o3 + 3, d4 = 32 === r3 ? 0 : s3 << r3;
+            d4 >>>= 12;
+            var h4 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m40 = 20 + r3;
+            for (0 < h4 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d4 |= s3 >>> 30 - h4, b3 = s3 << h4 + 2, m40 = h4 + 2); 0 < m40 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m40 ? s3 << m40 - 30 : s3 >>> 30 - m40, m40 -= 30;
             var c3 = g3.__decideRounding(e4, m40, u3, s3);
-            if ((1 === c3 || 0 === c3 && 1 == (1 & b3)) && (b3 = b3 + 1 >>> 0, 0 === b3 && (d3++, 0 != d3 >>> 20 && (d3 = 0, a3++, 1023 < a3)))) return e4.sign ? -Infinity : 1 / 0;
+            if ((1 === c3 || 0 === c3 && 1 == (1 & b3)) && (b3 = b3 + 1 >>> 0, 0 === b3 && (d4++, 0 != d4 >>> 20 && (d4 = 0, a3++, 1023 < a3)))) return e4.sign ? -Infinity : 1 / 0;
             var v3 = e4.sign ? -2147483648 : 0;
-            return a3 = a3 + 1023 << 20, g3.__kBitConversionInts[g3.__kBitConversionIntHigh] = v3 | a3 | d3, g3.__kBitConversionInts[g3.__kBitConversionIntLow] = b3, g3.__kBitConversionDouble[0];
+            return a3 = a3 + 1023 << 20, g3.__kBitConversionInts[g3.__kBitConversionIntHigh] = v3 | a3 | d4, g3.__kBitConversionInts[g3.__kBitConversionIntLow] = b3, g3.__kBitConversionDouble[0];
           } }, { key: "unaryMinus", value: function t4(e4) {
             if (0 === e4.length) return e4;
             var i4 = e4.__copy();
@@ -9180,22 +9180,22 @@
               if (g3.__isBigInt(e4)) return g3.__isBigInt(t4) ? g3.equal(e4, t4) : g3.EQ(t4, e4);
               if ("number" == typeof e4) {
                 if (g3.__isBigInt(t4)) return g3.__equalToNumber(t4, e4);
-                if ("object" !== p2(t4)) return e4 == t4;
+                if ("object" !== p3(t4)) return e4 == t4;
                 t4 = g3.__toPrimitive(t4);
               } else if ("string" == typeof e4) {
                 if (g3.__isBigInt(t4)) return e4 = g3.__fromString(e4), null !== e4 && g3.equal(e4, t4);
-                if ("object" !== p2(t4)) return e4 == t4;
+                if ("object" !== p3(t4)) return e4 == t4;
                 t4 = g3.__toPrimitive(t4);
               } else if ("boolean" == typeof e4) {
                 if (g3.__isBigInt(t4)) return g3.__equalToNumber(t4, +e4);
-                if ("object" !== p2(t4)) return e4 == t4;
+                if ("object" !== p3(t4)) return e4 == t4;
                 t4 = g3.__toPrimitive(t4);
-              } else if ("symbol" === p2(e4)) {
+              } else if ("symbol" === p3(e4)) {
                 if (g3.__isBigInt(t4)) return false;
-                if ("object" !== p2(t4)) return e4 == t4;
+                if ("object" !== p3(t4)) return e4 == t4;
                 t4 = g3.__toPrimitive(t4);
-              } else if ("object" === p2(e4)) {
-                if ("object" === p2(t4) && t4.constructor !== g3) return e4 == t4;
+              } else if ("object" === p3(e4)) {
+                if ("object" === p3(t4) && t4.constructor !== g3) return e4 == t4;
                 e4 = g3.__toPrimitive(e4);
               } else return e4 == t4;
             }
@@ -9205,7 +9205,7 @@
             var _4 = !!(2 < arguments.length && void 0 !== arguments[2]) && arguments[2];
             return g3.asIntN(64, g3.DataViewGetBigUint64(e4, t4, _4));
           } }, { key: "DataViewGetBigUint64", value: function i4(e4, t4) {
-            var _4 = !!(2 < arguments.length && void 0 !== arguments[2]) && arguments[2], n3 = _4 ? [4, 0] : [0, 4], o3 = f2(n3, 2), a3 = o3[0], s3 = o3[1], l3 = e4.getUint32(t4 + a3, _4), u3 = e4.getUint32(t4 + s3, _4), r3 = new g3(3, false);
+            var _4 = !!(2 < arguments.length && void 0 !== arguments[2]) && arguments[2], n3 = _4 ? [4, 0] : [0, 4], o3 = f3(n3, 2), a3 = o3[0], s3 = o3[1], l3 = e4.getUint32(t4 + a3, _4), u3 = e4.getUint32(t4 + s3, _4), r3 = new g3(3, false);
             return r3.__setDigit(0, 1073741823 & u3), r3.__setDigit(1, (268435455 & l3) << 2 | u3 >>> 30), r3.__setDigit(2, l3 >>> 28), r3.__trim();
           } }, { key: "DataViewSetBigInt64", value: function _4(e4, t4, i4) {
             var n3 = !!(3 < arguments.length && void 0 !== arguments[3]) && arguments[3];
@@ -9218,8 +9218,8 @@
               var s3 = i4.__digit(1);
               a3 |= s3 << 30, o3 = s3 >>> 2, 2 < i4.length && (o3 |= i4.__digit(2) << 28);
             }
-            var u3 = n3 ? [4, 0] : [0, 4], r3 = f2(u3, 2), d3 = r3[0], h3 = r3[1];
-            e4.setUint32(t4 + d3, o3, n3), e4.setUint32(t4 + h3, a3, n3);
+            var u3 = n3 ? [4, 0] : [0, 4], r3 = f3(u3, 2), d4 = r3[0], h4 = r3[1];
+            e4.setUint32(t4 + d4, o3, n3), e4.setUint32(t4 + h4, a3, n3);
           } }, { key: "__zero", value: function e4() {
             return new g3(0, false);
           } }, { key: "__oneDigit", value: function i4(e4, t4) {
@@ -9241,13 +9241,13 @@
           } }, { key: "__fromDouble", value: function t4(e4) {
             var i4 = 0 > e4;
             g3.__kBitConversionDouble[0] = e4;
-            var _4, n3 = 2047 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] >>> 20, o3 = n3 - 1023, l3 = (0 | o3 / 30) + 1, a3 = new g3(l3, i4), s3 = 1048576, u3 = 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] | s3, r3 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], d3 = 20, h3 = o3 % 30, b3 = 0;
-            if (h3 < d3) {
-              var m40 = d3 - h3;
+            var _4, n3 = 2047 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] >>> 20, o3 = n3 - 1023, l3 = (0 | o3 / 30) + 1, a3 = new g3(l3, i4), s3 = 1048576, u3 = 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] | s3, r3 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], d4 = 20, h4 = o3 % 30, b3 = 0;
+            if (h4 < d4) {
+              var m40 = d4 - h4;
               b3 = m40 + 32, _4 = u3 >>> m40, u3 = u3 << 32 - m40 | r3 >>> m40, r3 <<= 32 - m40;
-            } else if (h3 === d3) b3 = 32, _4 = u3, u3 = r3, r3 = 0;
+            } else if (h4 === d4) b3 = 32, _4 = u3, u3 = r3, r3 = 0;
             else {
-              var c3 = h3 - d3;
+              var c3 = h4 - d4;
               b3 = 32 - c3, _4 = u3 << c3 | r3 >>> 32 - c3, u3 = r3 << c3, r3 = 0;
             }
             a3.__setDigit(l3 - 1, _4);
@@ -9297,50 +9297,50 @@
             }
             var a3 = n3 - o3, s3 = g3.__kMaxBitsPerChar[i4], u3 = g3.__kBitsPerCharTableMultiplier - 1;
             if (a3 > 1073741824 / s3) return null;
-            var r3 = s3 * a3 + u3 >>> g3.__kBitsPerCharTableShift, h3 = 0 | (r3 + 29) / 30, b3 = new g3(h3, false), c3 = 10 > i4 ? i4 : 10, v3 = 10 < i4 ? i4 - 10 : 0;
+            var r3 = s3 * a3 + u3 >>> g3.__kBitsPerCharTableShift, h4 = 0 | (r3 + 29) / 30, b3 = new g3(h4, false), c3 = 10 > i4 ? i4 : 10, v3 = 10 < i4 ? i4 - 10 : 0;
             if (0 == (i4 & i4 - 1)) {
               s3 >>= g3.__kBitsPerCharTableShift;
-              var y3 = [], f3 = [], k3 = false;
+              var y3 = [], f4 = [], k3 = false;
               do {
-                for (var D3, p3 = 0, B3 = 0; true; ) {
-                  if (D3 = void 0, l3 - 48 >>> 0 < c3) D3 = l3 - 48;
-                  else if ((32 | l3) - 97 >>> 0 < v3) D3 = (32 | l3) - 87;
+                for (var D4, p4 = 0, B3 = 0; true; ) {
+                  if (D4 = void 0, l3 - 48 >>> 0 < c3) D4 = l3 - 48;
+                  else if ((32 | l3) - 97 >>> 0 < v3) D4 = (32 | l3) - 87;
                   else {
                     k3 = true;
                     break;
                   }
-                  if (B3 += s3, p3 = p3 << s3 | D3, ++o3 === n3) {
+                  if (B3 += s3, p4 = p4 << s3 | D4, ++o3 === n3) {
                     k3 = true;
                     break;
                   }
                   if (l3 = e4.charCodeAt(o3), 30 < B3 + s3) break;
                 }
-                y3.push(p3), f3.push(B3);
+                y3.push(p4), f4.push(B3);
               } while (!k3);
-              g3.__fillFromParts(b3, y3, f3);
+              g3.__fillFromParts(b3, y3, f4);
             } else {
               b3.__initializeDigits();
-              var S3 = false, C3 = 0;
+              var S4 = false, C4 = 0;
               do {
-                for (var I2, A2 = 0, T2 = 1; true; ) {
+                for (var I2, A3 = 0, T2 = 1; true; ) {
                   if (I2 = void 0, l3 - 48 >>> 0 < c3) I2 = l3 - 48;
                   else if ((32 | l3) - 97 >>> 0 < v3) I2 = (32 | l3) - 87;
                   else {
-                    S3 = true;
+                    S4 = true;
                     break;
                   }
                   var P2 = T2 * i4;
                   if (1073741823 < P2) break;
-                  if (T2 = P2, A2 = A2 * i4 + I2, C3++, ++o3 === n3) {
-                    S3 = true;
+                  if (T2 = P2, A3 = A3 * i4 + I2, C4++, ++o3 === n3) {
+                    S4 = true;
                     break;
                   }
                   l3 = e4.charCodeAt(o3);
                 }
                 u3 = 30 * g3.__kBitsPerCharTableMultiplier - 1;
-                var O2 = 0 | (s3 * C3 + u3 >>> g3.__kBitsPerCharTableShift) / 30;
-                b3.__inplaceMultiplyAdd(T2, A2, O2);
-              } while (!S3);
+                var O3 = 0 | (s3 * C4 + u3 >>> g3.__kBitsPerCharTableShift) / 30;
+                b3.__inplaceMultiplyAdd(T2, A3, O3);
+              } while (!S4);
             }
             if (o3 !== n3) {
               if (!g3.__isWhitespace(l3)) return null;
@@ -9360,18 +9360,18 @@
           } }, { key: "__toStringBasePowerOfTwo", value: function _4(e4, t4) {
             var n3 = e4.length, o3 = t4 - 1;
             o3 = (85 & o3 >>> 1) + (85 & o3), o3 = (51 & o3 >>> 2) + (51 & o3), o3 = (15 & o3 >>> 4) + (15 & o3);
-            var l3 = o3, a3 = t4 - 1, s3 = e4.__digit(n3 - 1), u3 = g3.__clz30(s3), r3 = 30 * n3 - u3, d3 = 0 | (r3 + l3 - 1) / l3;
-            if (e4.sign && d3++, 268435456 < d3) throw new Error("string too long");
-            for (var h3 = Array(d3), b3 = d3 - 1, m40 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
-              var y3 = e4.__digit(v3), f3 = (m40 | y3 << c3) & a3;
-              h3[b3--] = g3.__kConversionChars[f3];
+            var l3 = o3, a3 = t4 - 1, s3 = e4.__digit(n3 - 1), u3 = g3.__clz30(s3), r3 = 30 * n3 - u3, d4 = 0 | (r3 + l3 - 1) / l3;
+            if (e4.sign && d4++, 268435456 < d4) throw new Error("string too long");
+            for (var h4 = Array(d4), b3 = d4 - 1, m40 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
+              var y3 = e4.__digit(v3), f4 = (m40 | y3 << c3) & a3;
+              h4[b3--] = g3.__kConversionChars[f4];
               var k3 = l3 - c3;
-              for (m40 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h3[b3--] = g3.__kConversionChars[m40 & a3], m40 >>>= l3, c3 -= l3;
+              for (m40 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h4[b3--] = g3.__kConversionChars[m40 & a3], m40 >>>= l3, c3 -= l3;
             }
-            var D3 = (m40 | s3 << c3) & a3;
-            for (h3[b3--] = g3.__kConversionChars[D3], m40 = s3 >>> l3 - c3; 0 !== m40; ) h3[b3--] = g3.__kConversionChars[m40 & a3], m40 >>>= l3;
-            if (e4.sign && (h3[b3--] = "-"), -1 !== b3) throw new Error("implementation bug");
-            return h3.join("");
+            var D4 = (m40 | s3 << c3) & a3;
+            for (h4[b3--] = g3.__kConversionChars[D4], m40 = s3 >>> l3 - c3; 0 !== m40; ) h4[b3--] = g3.__kConversionChars[m40 & a3], m40 >>>= l3;
+            if (e4.sign && (h4[b3--] = "-"), -1 !== b3) throw new Error("implementation bug");
+            return h4.join("");
           } }, { key: "__toStringGeneric", value: function n3(e4, t4, _4) {
             var o3 = e4.length;
             if (0 === o3) return "";
@@ -9381,20 +9381,20 @@
             }
             var a3 = 30 * o3 - g3.__clz30(e4.__digit(o3 - 1)), s3 = g3.__kMaxBitsPerChar[t4], u3 = s3 - 1, r3 = a3 * g3.__kBitsPerCharTableMultiplier;
             r3 += u3 - 1, r3 = 0 | r3 / u3;
-            var d3, h3, b3 = r3 + 1 >> 1, m40 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m40.__unsignedDigit(0);
+            var d4, h4, b3 = r3 + 1 >> 1, m40 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m40.__unsignedDigit(0);
             if (1 === m40.length && 32767 >= c3) {
-              d3 = new g3(e4.length, false), d3.__initializeDigits();
-              for (var v3, y3 = 0, f3 = 2 * e4.length - 1; 0 <= f3; f3--) v3 = y3 << 15 | e4.__halfDigit(f3), d3.__setHalfDigit(f3, 0 | v3 / c3), y3 = 0 | v3 % c3;
-              h3 = y3.toString(t4);
+              d4 = new g3(e4.length, false), d4.__initializeDigits();
+              for (var v3, y3 = 0, f4 = 2 * e4.length - 1; 0 <= f4; f4--) v3 = y3 << 15 | e4.__halfDigit(f4), d4.__setHalfDigit(f4, 0 | v3 / c3), y3 = 0 | v3 % c3;
+              h4 = y3.toString(t4);
             } else {
               var k3 = g3.__absoluteDivLarge(e4, m40, true, true);
-              d3 = k3.quotient;
-              var D3 = k3.remainder.__trim();
-              h3 = g3.__toStringGeneric(D3, t4, true);
+              d4 = k3.quotient;
+              var D4 = k3.remainder.__trim();
+              h4 = g3.__toStringGeneric(D4, t4, true);
             }
-            d3.__trim();
-            for (var p3 = g3.__toStringGeneric(d3, t4, true); h3.length < b3; ) h3 = "0" + h3;
-            return false === _4 && e4.sign && (p3 = "-" + p3), p3 + h3;
+            d4.__trim();
+            for (var p4 = g3.__toStringGeneric(d4, t4, true); h4.length < b3; ) h4 = "0" + h4;
+            return false === _4 && e4.sign && (p4 = "-" + p4), p4 + h4;
           } }, { key: "__unequalSign", value: function t4(e4) {
             return e4 ? -1 : 1;
           } }, { key: "__absoluteGreater", value: function t4(e4) {
@@ -9432,30 +9432,30 @@
             if (2047 == o3) throw new Error("implementation bug: handled elsewhere");
             var l3 = o3 - 1023;
             if (0 > l3) return g3.__absoluteGreater(_4);
-            var a3 = e4.length, s3 = e4.__digit(a3 - 1), u3 = g3.__clz30(s3), r3 = 30 * a3 - u3, d3 = l3 + 1;
-            if (r3 < d3) return g3.__absoluteLess(_4);
-            if (r3 > d3) return g3.__absoluteGreater(_4);
-            var h3 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m40 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
+            var a3 = e4.length, s3 = e4.__digit(a3 - 1), u3 = g3.__clz30(s3), r3 = 30 * a3 - u3, d4 = l3 + 1;
+            if (r3 < d4) return g3.__absoluteLess(_4);
+            if (r3 > d4) return g3.__absoluteGreater(_4);
+            var h4 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m40 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
             if (v3 !== (0 | (r3 - 1) % 30)) throw new Error("implementation bug");
-            var y3, f3 = 0;
+            var y3, f4 = 0;
             if (v3 < c3) {
               var k3 = c3 - v3;
-              f3 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m40 >>> k3, m40 <<= 32 - k3;
-            } else if (v3 === c3) f3 = 32, y3 = b3, b3 = m40, m40 = 0;
+              f4 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m40 >>> k3, m40 <<= 32 - k3;
+            } else if (v3 === c3) f4 = 32, y3 = b3, b3 = m40, m40 = 0;
             else {
-              var D3 = v3 - c3;
-              f3 = 32 - D3, y3 = b3 << D3 | m40 >>> 32 - D3, b3 = m40 << D3, m40 = 0;
+              var D4 = v3 - c3;
+              f4 = 32 - D4, y3 = b3 << D4 | m40 >>> 32 - D4, b3 = m40 << D4, m40 = 0;
             }
             if (s3 >>>= 0, y3 >>>= 0, s3 > y3) return g3.__absoluteGreater(_4);
             if (s3 < y3) return g3.__absoluteLess(_4);
-            for (var p3 = a3 - 2; 0 <= p3; p3--) {
-              0 < f3 ? (f3 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m40 >>> 2, m40 <<= 30) : y3 = 0;
-              var B3 = e4.__unsignedDigit(p3);
+            for (var p4 = a3 - 2; 0 <= p4; p4--) {
+              0 < f4 ? (f4 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m40 >>> 2, m40 <<= 30) : y3 = 0;
+              var B3 = e4.__unsignedDigit(p4);
               if (B3 > y3) return g3.__absoluteGreater(_4);
               if (B3 < y3) return g3.__absoluteLess(_4);
             }
             if (0 !== b3 || 0 !== m40) {
-              if (0 === f3) throw new Error("implementation bug");
+              if (0 === f4) throw new Error("implementation bug");
               return g3.__absoluteLess(_4);
             }
             return 0;
@@ -9493,8 +9493,8 @@
             (0 === e4.__clzmsd() || t4.length === e4.length && 0 === t4.__clzmsd()) && o3++;
             for (var l3, a3 = new g3(o3, _4), s3 = 0, u3 = 0; u3 < t4.length; u3++) l3 = e4.__digit(u3) + t4.__digit(u3) + s3, s3 = l3 >>> 30, a3.__setDigit(u3, 1073741823 & l3);
             for (; u3 < e4.length; u3++) {
-              var d3 = e4.__digit(u3) + s3;
-              s3 = d3 >>> 30, a3.__setDigit(u3, 1073741823 & d3);
+              var d4 = e4.__digit(u3) + s3;
+              s3 = d4 >>> 30, a3.__setDigit(u3, 1073741823 & d4);
             }
             return u3 < a3.length && a3.__setDigit(u3, s3), a3.__trim();
           } }, { key: "__absoluteSub", value: function n3(e4, t4, _4) {
@@ -9527,8 +9527,8 @@
             }
             var r3 = a3;
             null === n3 ? n3 = new g3(r3, false) : r3 = n3.length;
-            for (var d3 = 0; d3 < a3; d3++) n3.__setDigit(d3, e4.__digit(d3) & t4.__digit(d3));
-            for (; d3 < r3; d3++) n3.__setDigit(d3, 0);
+            for (var d4 = 0; d4 < a3; d4++) n3.__setDigit(d4, e4.__digit(d4) & t4.__digit(d4));
+            for (; d4 < r3; d4++) n3.__setDigit(d4, 0);
             return n3;
           } }, { key: "__absoluteAndNot", value: function _4(e4, t4) {
             var n3 = 2 < arguments.length && void 0 !== arguments[2] ? arguments[2] : null, o3 = e4.length, l3 = t4.length, a3 = l3;
@@ -9548,9 +9548,9 @@
             }
             var r3 = o3;
             null === n3 ? n3 = new g3(r3, false) : r3 = n3.length;
-            for (var d3 = 0; d3 < a3; d3++) n3.__setDigit(d3, e4.__digit(d3) | t4.__digit(d3));
-            for (; d3 < o3; d3++) n3.__setDigit(d3, e4.__digit(d3));
-            for (; d3 < r3; d3++) n3.__setDigit(d3, 0);
+            for (var d4 = 0; d4 < a3; d4++) n3.__setDigit(d4, e4.__digit(d4) | t4.__digit(d4));
+            for (; d4 < o3; d4++) n3.__setDigit(d4, e4.__digit(d4));
+            for (; d4 < r3; d4++) n3.__setDigit(d4, 0);
             return n3;
           } }, { key: "__absoluteXor", value: function _4(e4, t4) {
             var n3 = 2 < arguments.length && void 0 !== arguments[2] ? arguments[2] : null, o3 = e4.length, l3 = t4.length, a3 = l3;
@@ -9561,9 +9561,9 @@
             }
             var r3 = o3;
             null === n3 ? n3 = new g3(r3, false) : r3 = n3.length;
-            for (var d3 = 0; d3 < a3; d3++) n3.__setDigit(d3, e4.__digit(d3) ^ t4.__digit(d3));
-            for (; d3 < o3; d3++) n3.__setDigit(d3, e4.__digit(d3));
-            for (; d3 < r3; d3++) n3.__setDigit(d3, 0);
+            for (var d4 = 0; d4 < a3; d4++) n3.__setDigit(d4, e4.__digit(d4) ^ t4.__digit(d4));
+            for (; d4 < o3; d4++) n3.__setDigit(d4, e4.__digit(d4));
+            for (; d4 < r3; d4++) n3.__setDigit(d4, 0);
             return n3;
           } }, { key: "__absoluteCompare", value: function _4(e4, t4) {
             var n3 = e4.length - t4.length;
@@ -9573,8 +9573,8 @@
           } }, { key: "__multiplyAccumulate", value: function o3(e4, t4, _4, n3) {
             if (0 !== t4) {
               for (var l3 = 32767 & t4, a3 = t4 >>> 15, s3 = 0, u3 = 0, r3 = 0; r3 < e4.length; r3++, n3++) {
-                var d3 = _4.__digit(n3), h3 = e4.__digit(r3), b3 = 32767 & h3, m40 = h3 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m40, l3), f3 = g3.__imul(m40, a3);
-                d3 += u3 + c3 + s3, s3 = d3 >>> 30, d3 &= 1073741823, d3 += ((32767 & v3) << 15) + ((32767 & y3) << 15), s3 += d3 >>> 30, u3 = f3 + (v3 >>> 15) + (y3 >>> 15), _4.__setDigit(n3, 1073741823 & d3);
+                var d4 = _4.__digit(n3), h4 = e4.__digit(r3), b3 = 32767 & h4, m40 = h4 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m40, l3), f4 = g3.__imul(m40, a3);
+                d4 += u3 + c3 + s3, s3 = d4 >>> 30, d4 &= 1073741823, d4 += ((32767 & v3) << 15) + ((32767 & y3) << 15), s3 += d4 >>> 30, u3 = f4 + (v3 >>> 15) + (y3 >>> 15), _4.__setDigit(n3, 1073741823 & d4);
               }
               for (; 0 !== s3 || 0 !== u3; n3++) {
                 var k3 = _4.__digit(n3);
@@ -9582,9 +9582,9 @@
               }
             }
           } }, { key: "__internalMultiplyAdd", value: function a3(e4, t4, _4, o3, l3) {
-            for (var s3 = _4, u3 = 0, d3 = 0; d3 < o3; d3++) {
-              var h3 = e4.__digit(d3), b3 = g3.__imul(32767 & h3, t4), m40 = g3.__imul(h3 >>> 15, t4), c3 = b3 + ((32767 & m40) << 15) + u3 + s3;
-              s3 = c3 >>> 30, u3 = m40 >>> 15, l3.__setDigit(d3, 1073741823 & c3);
+            for (var s3 = _4, u3 = 0, d4 = 0; d4 < o3; d4++) {
+              var h4 = e4.__digit(d4), b3 = g3.__imul(32767 & h4, t4), m40 = g3.__imul(h4 >>> 15, t4), c3 = b3 + ((32767 & m40) << 15) + u3 + s3;
+              s3 = c3 >>> 30, u3 = m40 >>> 15, l3.__setDigit(d4, 1073741823 & c3);
             }
             if (l3.length > o3) for (l3.__setDigit(o3++, s3 + u3); o3 < l3.length; ) l3.__setDigit(o3++, 0);
             else if (0 !== s3 + u3) throw new Error("implementation bug");
@@ -9606,20 +9606,20 @@
             i4 && (s3 = new g3(a3 + 2 >>> 1, false), s3.__initializeDigits());
             var r3 = new g3(l3 + 2 >>> 1, false);
             r3.__initializeDigits();
-            var d3 = g3.__clz15(t4.__halfDigit(l3 - 1));
-            0 < d3 && (t4 = g3.__specialLeftShift(t4, d3, 0));
-            for (var h3 = g3.__specialLeftShift(e4, d3, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m40 = a3; 0 <= m40; m40--) {
-              var v3 = 32767, y3 = h3.__halfDigit(m40 + l3);
+            var d4 = g3.__clz15(t4.__halfDigit(l3 - 1));
+            0 < d4 && (t4 = g3.__specialLeftShift(t4, d4, 0));
+            for (var h4 = g3.__specialLeftShift(e4, d4, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m40 = a3; 0 <= m40; m40--) {
+              var v3 = 32767, y3 = h4.__halfDigit(m40 + l3);
               if (y3 !== u3) {
-                var f3 = (y3 << 15 | h3.__halfDigit(m40 + l3 - 1)) >>> 0;
-                v3 = 0 | f3 / u3;
-                for (var k3 = 0 | f3 % u3, D3 = t4.__halfDigit(l3 - 2), p3 = h3.__halfDigit(m40 + l3 - 2); g3.__imul(v3, D3) >>> 0 > (k3 << 16 | p3) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
+                var f4 = (y3 << 15 | h4.__halfDigit(m40 + l3 - 1)) >>> 0;
+                v3 = 0 | f4 / u3;
+                for (var k3 = 0 | f4 % u3, D4 = t4.__halfDigit(l3 - 2), p4 = h4.__halfDigit(m40 + l3 - 2); g3.__imul(v3, D4) >>> 0 > (k3 << 16 | p4) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
               }
               g3.__internalMultiplyAdd(t4, v3, 0, n3, r3);
-              var B3 = h3.__inplaceSub(r3, m40, l3 + 1);
-              0 !== B3 && (B3 = h3.__inplaceAdd(t4, m40, l3), h3.__setHalfDigit(m40 + l3, 32767 & h3.__halfDigit(m40 + l3) + B3), v3--), i4 && (1 & m40 ? b3 = v3 << 15 : s3.__setDigit(m40 >>> 1, b3 | v3));
+              var B3 = h4.__inplaceSub(r3, m40, l3 + 1);
+              0 !== B3 && (B3 = h4.__inplaceAdd(t4, m40, l3), h4.__setHalfDigit(m40 + l3, 32767 & h4.__halfDigit(m40 + l3) + B3), v3--), i4 && (1 & m40 ? b3 = v3 << 15 : s3.__setDigit(m40 >>> 1, b3 | v3));
             }
-            if (_4) return h3.__inplaceRightShift(d3), i4 ? { quotient: s3, remainder: h3 } : h3;
+            if (_4) return h4.__inplaceRightShift(d4), i4 ? { quotient: s3, remainder: h4 } : h4;
             if (i4) return s3;
             throw new Error("unreachable");
           } }, { key: "__clz15", value: function t4(e4) {
@@ -9630,15 +9630,15 @@
               for (var s3 = 0; s3 < l3; s3++) a3.__setDigit(s3, e4.__digit(s3));
               return 0 < _4 && a3.__setDigit(l3, 0), a3;
             }
-            for (var u3, r3 = 0, h3 = 0; h3 < l3; h3++) u3 = e4.__digit(h3), a3.__setDigit(h3, 1073741823 & u3 << t4 | r3), r3 = u3 >>> 30 - t4;
+            for (var u3, r3 = 0, h4 = 0; h4 < l3; h4++) u3 = e4.__digit(h4), a3.__setDigit(h4, 1073741823 & u3 << t4 | r3), r3 = u3 >>> 30 - t4;
             return 0 < _4 && a3.__setDigit(l3, r3), a3;
           } }, { key: "__leftShiftByAbsolute", value: function _4(e4, t4) {
             var n3 = g3.__toShiftAmount(t4);
             if (0 > n3) throw new RangeError("BigInt too big");
             var o3 = 0 | n3 / 30, l3 = n3 % 30, a3 = e4.length, s3 = 0 !== l3 && 0 != e4.__digit(a3 - 1) >>> 30 - l3, u3 = a3 + o3 + (s3 ? 1 : 0), r3 = new g3(u3, e4.sign);
             if (0 === l3) {
-              for (var h3 = 0; h3 < o3; h3++) r3.__setDigit(h3, 0);
-              for (; h3 < u3; h3++) r3.__setDigit(h3, e4.__digit(h3 - o3));
+              for (var h4 = 0; h4 < o3; h4++) r3.__setDigit(h4, 0);
+              for (; h4 < u3; h4++) r3.__setDigit(h4, e4.__digit(h4 - o3));
             } else {
               for (var b3 = 0, m40 = 0; m40 < o3; m40++) r3.__setDigit(m40, 0);
               for (var c3, v3 = 0; v3 < a3; v3++) c3 = e4.__digit(v3), r3.__setDigit(v3 + o3, 1073741823 & c3 << l3 | b3), b3 = c3 >>> 30 - l3;
@@ -9653,8 +9653,8 @@
             if (0 >= u3) return g3.__rightShiftByMaximum(o3);
             var r3 = false;
             if (o3) {
-              var h3 = (1 << s3) - 1;
-              if (0 != (e4.__digit(a3) & h3)) r3 = true;
+              var h4 = (1 << s3) - 1;
+              if (0 != (e4.__digit(a3) & h4)) r3 = true;
               else for (var b3 = 0; b3 < a3; b3++) if (0 !== e4.__digit(b3)) {
                 r3 = true;
                 break;
@@ -9669,8 +9669,8 @@
               v3.__setDigit(u3 - 1, 0);
               for (var y3 = a3; y3 < n3; y3++) v3.__setDigit(y3 - a3, e4.__digit(y3));
             } else {
-              for (var f3, k3 = e4.__digit(a3) >>> s3, D3 = n3 - a3 - 1, p3 = 0; p3 < D3; p3++) f3 = e4.__digit(p3 + a3 + 1), v3.__setDigit(p3, 1073741823 & f3 << 30 - s3 | k3), k3 = f3 >>> s3;
-              v3.__setDigit(D3, k3);
+              for (var f4, k3 = e4.__digit(a3) >>> s3, D4 = n3 - a3 - 1, p4 = 0; p4 < D4; p4++) f4 = e4.__digit(p4 + a3 + 1), v3.__setDigit(p4, 1073741823 & f4 << 30 - s3 | k3), k3 = f4 >>> s3;
+              v3.__setDigit(D4, k3);
             }
             return r3 && (v3 = g3.__absoluteAddOne(v3, true, v3)), v3.__trim();
           } }, { key: "__rightShiftByMaximum", value: function t4(e4) {
@@ -9681,28 +9681,28 @@
             return i4 > g3.__kMaxLengthBits ? -1 : i4;
           } }, { key: "__toPrimitive", value: function t4(e4) {
             var i4 = 1 < arguments.length && void 0 !== arguments[1] ? arguments[1] : "default";
-            if ("object" !== p2(e4)) return e4;
+            if ("object" !== p3(e4)) return e4;
             if (e4.constructor === g3) return e4;
-            if ("undefined" != typeof Symbol && "symbol" === p2(Symbol.toPrimitive) && e4[Symbol.toPrimitive]) {
+            if ("undefined" != typeof Symbol && "symbol" === p3(Symbol.toPrimitive) && e4[Symbol.toPrimitive]) {
               var _4 = e4[Symbol.toPrimitive](i4);
-              if ("object" !== p2(_4)) return _4;
+              if ("object" !== p3(_4)) return _4;
               throw new TypeError("Cannot convert object to primitive value");
             }
             var n3 = e4.valueOf;
             if (n3) {
               var o3 = n3.call(e4);
-              if ("object" !== p2(o3)) return o3;
+              if ("object" !== p3(o3)) return o3;
             }
             var l3 = e4.toString;
             if (l3) {
               var a3 = l3.call(e4);
-              if ("object" !== p2(a3)) return a3;
+              if ("object" !== p3(a3)) return a3;
             }
             throw new TypeError("Cannot convert object to primitive value");
           } }, { key: "__toNumeric", value: function t4(e4) {
             return g3.__isBigInt(e4) ? e4 : +e4;
           } }, { key: "__isBigInt", value: function t4(e4) {
-            return "object" === p2(e4) && null !== e4 && e4.constructor === g3;
+            return "object" === p3(e4) && null !== e4 && e4.constructor === g3;
           } }, { key: "__truncateToNBits", value: function _4(e4, t4) {
             for (var n3 = 0 | (e4 + 29) / 30, o3 = new g3(n3, t4.sign), l3 = n3 - 1, a3 = 0; a3 < l3; a3++) o3.__setDigit(a3, t4.__digit(a3));
             var s3 = t4.__digit(l3);
@@ -9712,17 +9712,17 @@
             }
             return o3.__setDigit(l3, s3), o3.__trim();
           } }, { key: "__truncateAndSubFromPowerOfTwo", value: function n3(e4, t4, _4) {
-            for (var o3 = Math.min, l3, a3 = 0 | (e4 + 29) / 30, s3 = new g3(a3, _4), u3 = 0, d3 = a3 - 1, h3 = 0, b3 = o3(d3, t4.length); u3 < b3; u3++) l3 = 0 - t4.__digit(u3) - h3, h3 = 1 & l3 >>> 30, s3.__setDigit(u3, 1073741823 & l3);
-            for (; u3 < d3; u3++) s3.__setDigit(u3, 0 | 1073741823 & -h3);
-            var m40, c3 = d3 < t4.length ? t4.__digit(d3) : 0, v3 = e4 % 30;
-            if (0 === v3) m40 = 0 - c3 - h3, m40 &= 1073741823;
+            for (var o3 = Math.min, l3, a3 = 0 | (e4 + 29) / 30, s3 = new g3(a3, _4), u3 = 0, d4 = a3 - 1, h4 = 0, b3 = o3(d4, t4.length); u3 < b3; u3++) l3 = 0 - t4.__digit(u3) - h4, h4 = 1 & l3 >>> 30, s3.__setDigit(u3, 1073741823 & l3);
+            for (; u3 < d4; u3++) s3.__setDigit(u3, 0 | 1073741823 & -h4);
+            var m40, c3 = d4 < t4.length ? t4.__digit(d4) : 0, v3 = e4 % 30;
+            if (0 === v3) m40 = 0 - c3 - h4, m40 &= 1073741823;
             else {
               var y3 = 32 - v3;
               c3 = c3 << y3 >>> y3;
-              var f3 = 1 << 32 - y3;
-              m40 = f3 - c3 - h3, m40 &= f3 - 1;
+              var f4 = 1 << 32 - y3;
+              m40 = f4 - c3 - h4, m40 &= f4 - 1;
             }
-            return s3.__setDigit(d3, m40), s3.__trim();
+            return s3.__setDigit(d4, m40), s3.__trim();
           } }, { key: "__digitPow", value: function i4(e4, t4) {
             for (var _4 = 1; 0 < t4; ) 1 & t4 && (_4 *= e4), t4 >>>= 1, e4 *= e4;
             return _4;
@@ -9731,15 +9731,15 @@
           } }, { key: "__isOneDigitInt", value: function t4(e4) {
             return (1073741823 & e4) === e4;
           } }]);
-        })(S2(Array));
-        return C2.__kMaxLength = 33554432, C2.__kMaxLengthBits = C2.__kMaxLength << 5, C2.__kMaxBitsPerChar = [0, 0, 32, 51, 64, 75, 83, 90, 96, 102, 107, 111, 115, 119, 122, 126, 128, 131, 134, 136, 139, 141, 143, 145, 147, 149, 151, 153, 154, 156, 158, 159, 160, 162, 163, 165, 166], C2.__kBitsPerCharTableShift = 5, C2.__kBitsPerCharTableMultiplier = 1 << C2.__kBitsPerCharTableShift, C2.__kConversionChars = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"], C2.__kBitConversionBuffer = new ArrayBuffer(8), C2.__kBitConversionDouble = new Float64Array(C2.__kBitConversionBuffer), C2.__kBitConversionInts = new Int32Array(C2.__kBitConversionBuffer), C2.__kBitConversionIntHigh = C2.__detectBigEndian() ? 0 : 1, C2.__kBitConversionIntLow = C2.__detectBigEndian() ? 1 : 0, C2.__clz30 = t2 ? function(e3) {
+        })(S3(Array));
+        return C3.__kMaxLength = 33554432, C3.__kMaxLengthBits = C3.__kMaxLength << 5, C3.__kMaxBitsPerChar = [0, 0, 32, 51, 64, 75, 83, 90, 96, 102, 107, 111, 115, 119, 122, 126, 128, 131, 134, 136, 139, 141, 143, 145, 147, 149, 151, 153, 154, 156, 158, 159, 160, 162, 163, 165, 166], C3.__kBitsPerCharTableShift = 5, C3.__kBitsPerCharTableMultiplier = 1 << C3.__kBitsPerCharTableShift, C3.__kConversionChars = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"], C3.__kBitConversionBuffer = new ArrayBuffer(8), C3.__kBitConversionDouble = new Float64Array(C3.__kBitConversionBuffer), C3.__kBitConversionInts = new Int32Array(C3.__kBitConversionBuffer), C3.__kBitConversionIntHigh = C3.__detectBigEndian() ? 0 : 1, C3.__kBitConversionIntLow = C3.__detectBigEndian() ? 1 : 0, C3.__clz30 = t2 ? function(e3) {
           return t2(e3) - 2;
         } : function(e3) {
           var t3 = Math.LN2, i3 = Math.log;
           return 0 === e3 ? 30 : 0 | 29 - (0 | i3(e3 >>> 0) / t3);
-        }, C2.__imul = e2 || function(e3, t3) {
+        }, C3.__imul = e2 || function(e3, t3) {
           return 0 | e3 * t3;
-        }, C2;
+        }, C3;
       });
     }
   });
@@ -9751,7 +9751,7 @@
         "object" == typeof exports && "undefined" != typeof module ? module.exports = e2() : "function" == typeof define && define.amd ? define(e2) : (t2 = "undefined" != typeof globalThis ? globalThis : t2 || self).dayjs = e2();
       })(exports, (function() {
         "use strict";
-        var t2 = 1e3, e2 = 6e4, n2 = 36e5, r2 = "millisecond", i2 = "second", s2 = "minute", u2 = "hour", a2 = "day", o2 = "week", c2 = "month", f2 = "quarter", h2 = "year", d2 = "date", l2 = "Invalid Date", $2 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y2 = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M2 = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t3) {
+        var t2 = 1e3, e2 = 6e4, n2 = 36e5, r2 = "millisecond", i2 = "second", s2 = "minute", u2 = "hour", a2 = "day", o2 = "week", c2 = "month", f3 = "quarter", h3 = "year", d3 = "date", l2 = "Invalid Date", $3 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y2 = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M3 = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t3) {
           var e3 = ["th", "st", "nd", "rd"], n3 = t3 % 100;
           return "[" + t3 + (e3[(n3 - 20) % 10] || e3[n3] || e3[0]) + "]";
         } }, m39 = function(t3, e3, n3) {
@@ -9767,39 +9767,39 @@
         }, a: function(t3) {
           return t3 < 0 ? Math.ceil(t3) || 0 : Math.floor(t3);
         }, p: function(t3) {
-          return { M: c2, y: h2, w: o2, d: a2, D: d2, h: u2, m: s2, s: i2, ms: r2, Q: f2 }[t3] || String(t3 || "").toLowerCase().replace(/s$/, "");
+          return { M: c2, y: h3, w: o2, d: a2, D: d3, h: u2, m: s2, s: i2, ms: r2, Q: f3 }[t3] || String(t3 || "").toLowerCase().replace(/s$/, "");
         }, u: function(t3) {
           return void 0 === t3;
-        } }, g2 = "en", D2 = {};
-        D2[g2] = M2;
-        var p2 = "$isDayjsObject", S2 = function(t3) {
-          return t3 instanceof _2 || !(!t3 || !t3[p2]);
+        } }, g2 = "en", D3 = {};
+        D3[g2] = M3;
+        var p3 = "$isDayjsObject", S3 = function(t3) {
+          return t3 instanceof _2 || !(!t3 || !t3[p3]);
         }, w2 = function t3(e3, n3, r3) {
           var i3;
           if (!e3) return g2;
           if ("string" == typeof e3) {
             var s3 = e3.toLowerCase();
-            D2[s3] && (i3 = s3), n3 && (D2[s3] = n3, i3 = s3);
+            D3[s3] && (i3 = s3), n3 && (D3[s3] = n3, i3 = s3);
             var u3 = e3.split("-");
             if (!i3 && u3.length > 1) return t3(u3[0]);
           } else {
             var a3 = e3.name;
-            D2[a3] = e3, i3 = a3;
+            D3[a3] = e3, i3 = a3;
           }
           return !r3 && i3 && (g2 = i3), i3 || !r3 && g2;
-        }, O2 = function(t3, e3) {
-          if (S2(t3)) return t3.clone();
+        }, O3 = function(t3, e3) {
+          if (S3(t3)) return t3.clone();
           var n3 = "object" == typeof e3 ? e3 : {};
           return n3.date = t3, n3.args = arguments, new _2(n3);
         }, b2 = v2;
-        b2.l = w2, b2.i = S2, b2.w = function(t3, e3) {
-          return O2(t3, { locale: e3.$L, utc: e3.$u, x: e3.$x, $offset: e3.$offset });
+        b2.l = w2, b2.i = S3, b2.w = function(t3, e3) {
+          return O3(t3, { locale: e3.$L, utc: e3.$u, x: e3.$x, $offset: e3.$offset });
         };
         var _2 = (function() {
-          function M3(t3) {
-            this.$L = w2(t3.locale, null, true), this.parse(t3), this.$x = this.$x || t3.x || {}, this[p2] = true;
+          function M4(t3) {
+            this.$L = w2(t3.locale, null, true), this.parse(t3), this.$x = this.$x || t3.x || {}, this[p3] = true;
           }
-          var m40 = M3.prototype;
+          var m40 = M4.prototype;
           return m40.parse = function(t3) {
             this.$d = (function(t4) {
               var e3 = t4.date, n3 = t4.utc;
@@ -9807,7 +9807,7 @@
               if (b2.u(e3)) return /* @__PURE__ */ new Date();
               if (e3 instanceof Date) return new Date(e3);
               if ("string" == typeof e3 && !/Z$/i.test(e3)) {
-                var r3 = e3.match($2);
+                var r3 = e3.match($3);
                 if (r3) {
                   var i3 = r3[2] - 1 || 0, s3 = (r3[7] || "0").substring(0, 3);
                   return n3 ? new Date(Date.UTC(r3[1], i3, r3[3] || 1, r3[4] || 0, r3[5] || 0, r3[6] || 0, s3)) : new Date(r3[1], i3, r3[3] || 1, r3[4] || 0, r3[5] || 0, r3[6] || 0, s3);
@@ -9823,12 +9823,12 @@
           }, m40.isValid = function() {
             return !(this.$d.toString() === l2);
           }, m40.isSame = function(t3, e3) {
-            var n3 = O2(t3);
+            var n3 = O3(t3);
             return this.startOf(e3) <= n3 && n3 <= this.endOf(e3);
           }, m40.isAfter = function(t3, e3) {
-            return O2(t3) < this.startOf(e3);
+            return O3(t3) < this.startOf(e3);
           }, m40.isBefore = function(t3, e3) {
-            return this.endOf(e3) < O2(t3);
+            return this.endOf(e3) < O3(t3);
           }, m40.$g = function(t3, e3, n3) {
             return b2.u(t3) ? this[e3] : this.set(n3, t3);
           }, m40.unix = function() {
@@ -9836,68 +9836,68 @@
           }, m40.valueOf = function() {
             return this.$d.getTime();
           }, m40.startOf = function(t3, e3) {
-            var n3 = this, r3 = !!b2.u(e3) || e3, f3 = b2.p(t3), l3 = function(t4, e4) {
+            var n3 = this, r3 = !!b2.u(e3) || e3, f4 = b2.p(t3), l3 = function(t4, e4) {
               var i3 = b2.w(n3.$u ? Date.UTC(n3.$y, e4, t4) : new Date(n3.$y, e4, t4), n3);
               return r3 ? i3 : i3.endOf(a2);
-            }, $3 = function(t4, e4) {
+            }, $4 = function(t4, e4) {
               return b2.w(n3.toDate()[t4].apply(n3.toDate("s"), (r3 ? [0, 0, 0, 0] : [23, 59, 59, 999]).slice(e4)), n3);
-            }, y3 = this.$W, M4 = this.$M, m41 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
-            switch (f3) {
-              case h2:
+            }, y3 = this.$W, M5 = this.$M, m41 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
+            switch (f4) {
+              case h3:
                 return r3 ? l3(1, 0) : l3(31, 11);
               case c2:
-                return r3 ? l3(1, M4) : l3(0, M4 + 1);
+                return r3 ? l3(1, M5) : l3(0, M5 + 1);
               case o2:
-                var g3 = this.$locale().weekStart || 0, D3 = (y3 < g3 ? y3 + 7 : y3) - g3;
-                return l3(r3 ? m41 - D3 : m41 + (6 - D3), M4);
+                var g3 = this.$locale().weekStart || 0, D4 = (y3 < g3 ? y3 + 7 : y3) - g3;
+                return l3(r3 ? m41 - D4 : m41 + (6 - D4), M5);
               case a2:
-              case d2:
-                return $3(v3 + "Hours", 0);
+              case d3:
+                return $4(v3 + "Hours", 0);
               case u2:
-                return $3(v3 + "Minutes", 1);
+                return $4(v3 + "Minutes", 1);
               case s2:
-                return $3(v3 + "Seconds", 2);
+                return $4(v3 + "Seconds", 2);
               case i2:
-                return $3(v3 + "Milliseconds", 3);
+                return $4(v3 + "Milliseconds", 3);
               default:
                 return this.clone();
             }
           }, m40.endOf = function(t3) {
             return this.startOf(t3, false);
           }, m40.$set = function(t3, e3) {
-            var n3, o3 = b2.p(t3), f3 = "set" + (this.$u ? "UTC" : ""), l3 = (n3 = {}, n3[a2] = f3 + "Date", n3[d2] = f3 + "Date", n3[c2] = f3 + "Month", n3[h2] = f3 + "FullYear", n3[u2] = f3 + "Hours", n3[s2] = f3 + "Minutes", n3[i2] = f3 + "Seconds", n3[r2] = f3 + "Milliseconds", n3)[o3], $3 = o3 === a2 ? this.$D + (e3 - this.$W) : e3;
-            if (o3 === c2 || o3 === h2) {
-              var y3 = this.clone().set(d2, 1);
-              y3.$d[l3]($3), y3.init(), this.$d = y3.set(d2, Math.min(this.$D, y3.daysInMonth())).$d;
-            } else l3 && this.$d[l3]($3);
+            var n3, o3 = b2.p(t3), f4 = "set" + (this.$u ? "UTC" : ""), l3 = (n3 = {}, n3[a2] = f4 + "Date", n3[d3] = f4 + "Date", n3[c2] = f4 + "Month", n3[h3] = f4 + "FullYear", n3[u2] = f4 + "Hours", n3[s2] = f4 + "Minutes", n3[i2] = f4 + "Seconds", n3[r2] = f4 + "Milliseconds", n3)[o3], $4 = o3 === a2 ? this.$D + (e3 - this.$W) : e3;
+            if (o3 === c2 || o3 === h3) {
+              var y3 = this.clone().set(d3, 1);
+              y3.$d[l3]($4), y3.init(), this.$d = y3.set(d3, Math.min(this.$D, y3.daysInMonth())).$d;
+            } else l3 && this.$d[l3]($4);
             return this.init(), this;
           }, m40.set = function(t3, e3) {
             return this.clone().$set(t3, e3);
           }, m40.get = function(t3) {
             return this[b2.p(t3)]();
-          }, m40.add = function(r3, f3) {
-            var d3, l3 = this;
+          }, m40.add = function(r3, f4) {
+            var d4, l3 = this;
             r3 = Number(r3);
-            var $3 = b2.p(f3), y3 = function(t3) {
-              var e3 = O2(l3);
+            var $4 = b2.p(f4), y3 = function(t3) {
+              var e3 = O3(l3);
               return b2.w(e3.date(e3.date() + Math.round(t3 * r3)), l3);
             };
-            if ($3 === c2) return this.set(c2, this.$M + r3);
-            if ($3 === h2) return this.set(h2, this.$y + r3);
-            if ($3 === a2) return y3(1);
-            if ($3 === o2) return y3(7);
-            var M4 = (d3 = {}, d3[s2] = e2, d3[u2] = n2, d3[i2] = t2, d3)[$3] || 1, m41 = this.$d.getTime() + r3 * M4;
+            if ($4 === c2) return this.set(c2, this.$M + r3);
+            if ($4 === h3) return this.set(h3, this.$y + r3);
+            if ($4 === a2) return y3(1);
+            if ($4 === o2) return y3(7);
+            var M5 = (d4 = {}, d4[s2] = e2, d4[u2] = n2, d4[i2] = t2, d4)[$4] || 1, m41 = this.$d.getTime() + r3 * M5;
             return b2.w(m41, this);
           }, m40.subtract = function(t3, e3) {
             return this.add(-1 * t3, e3);
           }, m40.format = function(t3) {
             var e3 = this, n3 = this.$locale();
             if (!this.isValid()) return n3.invalidDate || l2;
-            var r3 = t3 || "YYYY-MM-DDTHH:mm:ssZ", i3 = b2.z(this), s3 = this.$H, u3 = this.$m, a3 = this.$M, o3 = n3.weekdays, c3 = n3.months, f3 = n3.meridiem, h3 = function(t4, n4, i4, s4) {
+            var r3 = t3 || "YYYY-MM-DDTHH:mm:ssZ", i3 = b2.z(this), s3 = this.$H, u3 = this.$m, a3 = this.$M, o3 = n3.weekdays, c3 = n3.months, f4 = n3.meridiem, h4 = function(t4, n4, i4, s4) {
               return t4 && (t4[n4] || t4(e3, r3)) || i4[n4].slice(0, s4);
-            }, d3 = function(t4) {
+            }, d4 = function(t4) {
               return b2.s(s3 % 12 || 12, t4, "0");
-            }, $3 = f3 || function(t4, e4, n4) {
+            }, $4 = f4 || function(t4, e4, n4) {
               var r4 = t4 < 12 ? "AM" : "PM";
               return n4 ? r4.toLowerCase() : r4;
             };
@@ -9913,9 +9913,9 @@
                   case "MM":
                     return b2.s(a3 + 1, 2, "0");
                   case "MMM":
-                    return h3(n3.monthsShort, a3, c3, 3);
+                    return h4(n3.monthsShort, a3, c3, 3);
                   case "MMMM":
-                    return h3(c3, a3);
+                    return h4(c3, a3);
                   case "D":
                     return e3.$D;
                   case "DD":
@@ -9923,9 +9923,9 @@
                   case "d":
                     return String(e3.$W);
                   case "dd":
-                    return h3(n3.weekdaysMin, e3.$W, o3, 2);
+                    return h4(n3.weekdaysMin, e3.$W, o3, 2);
                   case "ddd":
-                    return h3(n3.weekdaysShort, e3.$W, o3, 3);
+                    return h4(n3.weekdaysShort, e3.$W, o3, 3);
                   case "dddd":
                     return o3[e3.$W];
                   case "H":
@@ -9933,13 +9933,13 @@
                   case "HH":
                     return b2.s(s3, 2, "0");
                   case "h":
-                    return d3(1);
+                    return d4(1);
                   case "hh":
-                    return d3(2);
+                    return d4(2);
                   case "a":
-                    return $3(s3, u3, true);
+                    return $4(s3, u3, true);
                   case "A":
-                    return $3(s3, u3, false);
+                    return $4(s3, u3, false);
                   case "m":
                     return String(u3);
                   case "mm":
@@ -9958,43 +9958,43 @@
             }));
           }, m40.utcOffset = function() {
             return 15 * -Math.round(this.$d.getTimezoneOffset() / 15);
-          }, m40.diff = function(r3, d3, l3) {
-            var $3, y3 = this, M4 = b2.p(d3), m41 = O2(r3), v3 = (m41.utcOffset() - this.utcOffset()) * e2, g3 = this - m41, D3 = function() {
+          }, m40.diff = function(r3, d4, l3) {
+            var $4, y3 = this, M5 = b2.p(d4), m41 = O3(r3), v3 = (m41.utcOffset() - this.utcOffset()) * e2, g3 = this - m41, D4 = function() {
               return b2.m(y3, m41);
             };
-            switch (M4) {
-              case h2:
-                $3 = D3() / 12;
+            switch (M5) {
+              case h3:
+                $4 = D4() / 12;
                 break;
               case c2:
-                $3 = D3();
+                $4 = D4();
                 break;
-              case f2:
-                $3 = D3() / 3;
+              case f3:
+                $4 = D4() / 3;
                 break;
               case o2:
-                $3 = (g3 - v3) / 6048e5;
+                $4 = (g3 - v3) / 6048e5;
                 break;
               case a2:
-                $3 = (g3 - v3) / 864e5;
+                $4 = (g3 - v3) / 864e5;
                 break;
               case u2:
-                $3 = g3 / n2;
+                $4 = g3 / n2;
                 break;
               case s2:
-                $3 = g3 / e2;
+                $4 = g3 / e2;
                 break;
               case i2:
-                $3 = g3 / t2;
+                $4 = g3 / t2;
                 break;
               default:
-                $3 = g3;
+                $4 = g3;
             }
-            return l3 ? $3 : b2.a($3);
+            return l3 ? $4 : b2.a($4);
           }, m40.daysInMonth = function() {
             return this.endOf(c2).$D;
           }, m40.$locale = function() {
-            return D2[this.$L];
+            return D3[this.$L];
           }, m40.locale = function(t3, e3) {
             if (!t3) return this.$L;
             var n3 = this.clone(), r3 = w2(t3, e3, true);
@@ -10009,17 +10009,17 @@
             return this.$d.toISOString();
           }, m40.toString = function() {
             return this.$d.toUTCString();
-          }, M3;
+          }, M4;
         })(), k2 = _2.prototype;
-        return O2.prototype = k2, [["$ms", r2], ["$s", i2], ["$m", s2], ["$H", u2], ["$W", a2], ["$M", c2], ["$y", h2], ["$D", d2]].forEach((function(t3) {
+        return O3.prototype = k2, [["$ms", r2], ["$s", i2], ["$m", s2], ["$H", u2], ["$W", a2], ["$M", c2], ["$y", h3], ["$D", d3]].forEach((function(t3) {
           k2[t3[1]] = function(e3) {
             return this.$g(e3, t3[0], t3[1]);
           };
-        })), O2.extend = function(t3, e3) {
-          return t3.$i || (t3(e3, _2, O2), t3.$i = true), O2;
-        }, O2.locale = w2, O2.isDayjs = S2, O2.unix = function(t3) {
-          return O2(1e3 * t3);
-        }, O2.en = D2[g2], O2.Ls = D2, O2.p = {}, O2;
+        })), O3.extend = function(t3, e3) {
+          return t3.$i || (t3(e3, _2, O3), t3.$i = true), O3;
+        }, O3.locale = w2, O3.isDayjs = S3, O3.unix = function(t3) {
+          return O3(1e3 * t3);
+        }, O3.en = D3[g2], O3.Ls = D3, O3.p = {}, O3;
       }));
     }
   });
@@ -10037,33 +10037,33 @@
           function i2(r3, e3, t3, o3) {
             return n2.fromToBase(r3, e3, t3, o3);
           }
-          t2.en.relativeTime = o2, n2.fromToBase = function(e3, n3, i3, d3, u2) {
-            for (var f2, a2, s2, l2 = i3.$locale().relativeTime || o2, h2 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m39 = h2.length, c2 = 0; c2 < m39; c2 += 1) {
-              var y2 = h2[c2];
-              y2.d && (f2 = d3 ? t2(e3).diff(i3, y2.d, true) : i3.diff(e3, y2.d, true));
-              var p2 = (r2.rounding || Math.round)(Math.abs(f2));
-              if (s2 = f2 > 0, p2 <= y2.r || !y2.r) {
-                p2 <= 1 && c2 > 0 && (y2 = h2[c2 - 1]);
+          t2.en.relativeTime = o2, n2.fromToBase = function(e3, n3, i3, d4, u2) {
+            for (var f3, a2, s2, l2 = i3.$locale().relativeTime || o2, h3 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m39 = h3.length, c2 = 0; c2 < m39; c2 += 1) {
+              var y2 = h3[c2];
+              y2.d && (f3 = d4 ? t2(e3).diff(i3, y2.d, true) : i3.diff(e3, y2.d, true));
+              var p3 = (r2.rounding || Math.round)(Math.abs(f3));
+              if (s2 = f3 > 0, p3 <= y2.r || !y2.r) {
+                p3 <= 1 && c2 > 0 && (y2 = h3[c2 - 1]);
                 var v2 = l2[y2.l];
-                u2 && (p2 = u2("" + p2)), a2 = "string" == typeof v2 ? v2.replace("%d", p2) : v2(p2, n3, y2.l, s2);
+                u2 && (p3 = u2("" + p3)), a2 = "string" == typeof v2 ? v2.replace("%d", p3) : v2(p3, n3, y2.l, s2);
                 break;
               }
             }
             if (n3) return a2;
-            var M2 = s2 ? l2.future : l2.past;
-            return "function" == typeof M2 ? M2(a2) : M2.replace("%s", a2);
+            var M3 = s2 ? l2.future : l2.past;
+            return "function" == typeof M3 ? M3(a2) : M3.replace("%s", a2);
           }, n2.to = function(r3, e3) {
             return i2(r3, e3, this, true);
           }, n2.from = function(r3, e3) {
             return i2(r3, e3, this);
           };
-          var d2 = function(r3) {
+          var d3 = function(r3) {
             return r3.$u ? t2.utc() : t2();
           };
           n2.toNow = function(r3) {
-            return this.to(d2(this), r3);
+            return this.to(d3(this), r3);
           }, n2.fromNow = function(r3) {
-            return this.from(d2(this), r3);
+            return this.from(d3(this), r3);
           };
         };
       }));
@@ -10364,8 +10364,8 @@
     }
     return _cachedView;
   }
-  function contramapBufferEncoder(enc, f2) {
-    return (u2) => enc(f2(u2));
+  function contramapBufferEncoder(enc, f3) {
+    return (u2) => enc(f3(u2));
   }
   function contramapBufferEncoders(encoders, toTuple) {
     return (value) => {
@@ -10501,18 +10501,18 @@
       throw new CodecError("Payload larger than max allowed size, increase maxInputSize if you want to decode this");
     return dec(t2, 0)?.[0];
   }
-  function mapDecoder(dec, f2) {
+  function mapDecoder(dec, f3) {
     return (b2, offset) => {
-      const x2 = dec(b2, offset);
-      if (x2 !== void 0) {
-        const [t2, l2] = x2;
-        return [f2(t2), l2];
+      const x3 = dec(b2, offset);
+      if (x3 !== void 0) {
+        const [t2, l2] = x3;
+        return [f3(t2), l2];
       }
     };
   }
-  function mapDecodersOption(rsDecoder, f2) {
+  function mapDecodersOption(rsDecoder, f3) {
     return (b2, offset) => {
-      const initial = mapDecoders(rsDecoder, f2)(b2, offset);
+      const initial = mapDecoders(rsDecoder, f3)(b2, offset);
       if (initial === void 0)
         return void 0;
       else {
@@ -10521,7 +10521,7 @@
       }
     };
   }
-  function mapDecoders(rsDecoder, f2) {
+  function mapDecoders(rsDecoder, f3) {
     const n2 = rsDecoder.length;
     return (b2, offset) => {
       const values = new Array(n2);
@@ -10533,21 +10533,21 @@
         values[i2] = decoded[0];
         cursor += decoded[1];
       }
-      return [f2(...values), cursor - offset];
+      return [f3(...values), cursor - offset];
     };
   }
-  function mapDecoderOption(dec, f2) {
+  function mapDecoderOption(dec, f3) {
     return (b2, offset) => {
-      const x2 = dec(b2, offset);
-      if (x2 !== void 0) {
-        const [t2, l2] = x2;
-        const u2 = f2(t2);
+      const x3 = dec(b2, offset);
+      if (x3 !== void 0) {
+        const [t2, l2] = x3;
+        const u2 = f3(t2);
         return u2 !== void 0 ? [u2, l2] : void 0;
       }
     };
   }
-  function flatMapDecoder(dec, f2) {
-    return flatMapDecoderAndMap(dec, f2, (_t2, u2) => u2);
+  function flatMapDecoder(dec, f3) {
+    return flatMapDecoderAndMap(dec, f3, (_t2, u2) => u2);
   }
   function orDecoder(decT, decU) {
     return (b2, offset) => {
@@ -10555,12 +10555,12 @@
       return t2 ? t2 : decU(b2, offset);
     };
   }
-  function flatMapDecoderAndMap(dec, f2, g2) {
+  function flatMapDecoderAndMap(dec, f3, g2) {
     return (b2, offset) => {
       const decodedT = dec(b2, offset);
       if (decodedT !== void 0) {
         const [t2, len] = decodedT;
-        const rUDecoder = f2(t2);
+        const rUDecoder = f3(t2);
         const decodedU = rUDecoder(b2, offset + len);
         if (decodedU !== void 0) {
           const [u2, len2] = decodedU;
@@ -10749,10 +10749,10 @@
   }
   function varLenTypeDecoder(dec) {
     return (b2, offset) => {
-      const d2 = varLenDataDecoder(b2, offset);
-      if (d2 === void 0)
+      const d3 = varLenDataDecoder(b2, offset);
+      if (d3 === void 0)
         return;
-      const [totalBytes, totalLength] = d2;
+      const [totalBytes, totalLength] = d3;
       let cursor = 0;
       const result = [];
       while (cursor < totalBytes.length) {
@@ -10953,8 +10953,8 @@
   // node_modules/ts-mls/dist/src/crypto/hash.js
   var _textEncoder = new TextEncoder();
   var _refHashEncoder = composeBufferEncoders([varLenDataEncoder, varLenDataEncoder]);
-  function refhash(label, value, h2) {
-    return h2.digest(encodeRefHash(label, value));
+  function refhash(label, value, h3) {
+    return h3.digest(encodeRefHash(label, value));
   }
   function encodeRefHash(label, value) {
     return encode(_refHashEncoder, [_textEncoder.encode(label), value]);
@@ -11428,8 +11428,8 @@
   async function verifyKeyPackage(kp, s2) {
     return verifyWithLabel(kp.leafNode.signaturePublicKey, "KeyPackageTBS", encode(keyPackageTBSEncoder, kp), kp.signature, s2);
   }
-  function makeKeyPackageRef(value, h2) {
-    return refhash("MLS 1.0 KeyPackage Reference", encode(keyPackageEncoder, value), h2);
+  function makeKeyPackageRef(value, h3) {
+    return refhash("MLS 1.0 KeyPackage Reference", encode(keyPackageEncoder, value), h3);
   }
   var privateKeyPackageEncoder = contramapBufferEncoders([varLenDataEncoder, varLenDataEncoder, varLenDataEncoder], (pkp) => [pkp.initPrivateKey, pkp.hpkePrivateKey, pkp.signaturePrivateKey]);
   var privateKeyPackageDecoder = mapDecoders([varLenDataDecoder, varLenDataDecoder, varLenDataDecoder], (initPrivateKey, hpkePrivateKey, signaturePrivateKey) => ({ initPrivateKey, hpkePrivateKey, signaturePrivateKey }));
@@ -11584,7 +11584,7 @@
   var updateDecoder = mapDecoder(leafNodeUpdateDecoder, (leafNode) => ({ leafNode }));
   var removeEncoder = contramapBufferEncoder(uint32Encoder, (r2) => r2.removed);
   var removeDecoder = mapDecoder(uint32Decoder, (removed) => ({ removed }));
-  var pskEncoder = contramapBufferEncoder(pskIdEncoder, (p2) => p2.preSharedKeyId);
+  var pskEncoder = contramapBufferEncoder(pskIdEncoder, (p3) => p3.preSharedKeyId);
   var pskDecoder = mapDecoder(pskIdDecoder, (preSharedKeyId) => ({ preSharedKeyId }));
   var reinitEncoder = contramapBufferEncoders([varLenDataEncoder, protocolVersionEncoder, uint16Encoder, varLenTypeEncoder(extensionEncoder)], (r2) => [r2.groupId, r2.version, r2.cipherSuite, r2.extensions]);
   var reinitDecoder = mapDecoders([varLenDataDecoder, protocolVersionDecoder, uint16Decoder, varLenTypeDecoder(groupContextExtensionDecoder)], (groupId, version, cipherSuite, extensions) => ({ groupId, version, cipherSuite, extensions }));
@@ -11592,35 +11592,35 @@
   var externalInitDecoder = mapDecoder(varLenDataDecoder, (kemOutput) => ({ kemOutput }));
   var groupContextExtensionsEncoder = contramapBufferEncoder(varLenTypeEncoder(extensionEncoder), (g2) => g2.extensions);
   var groupContextExtensionsDecoder = mapDecoder(varLenTypeDecoder(groupContextExtensionDecoder), (extensions) => ({ extensions }));
-  function isDefaultProposal(p2) {
-    return isDefaultProposalTypeValue(p2.proposalType);
+  function isDefaultProposal(p3) {
+    return isDefaultProposalTypeValue(p3.proposalType);
   }
-  var proposalAddEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, addEncoder], (p2) => [p2.proposalType, p2.add]);
-  var proposalUpdateEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, updateEncoder], (p2) => [p2.proposalType, p2.update]);
-  var proposalRemoveEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, removeEncoder], (p2) => [p2.proposalType, p2.remove]);
-  var proposalPSKEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, pskEncoder], (p2) => [p2.proposalType, p2.psk]);
-  var proposalReinitEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, reinitEncoder], (p2) => [p2.proposalType, p2.reinit]);
-  var proposalExternalInitEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, externalInitEncoder], (p2) => [p2.proposalType, p2.externalInit]);
-  var proposalGroupContextExtensionsEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, groupContextExtensionsEncoder], (p2) => [p2.proposalType, p2.groupContextExtensions]);
-  var proposalCustomEncoder = contramapBufferEncoders([uint16Encoder, varLenDataEncoder], (p2) => [p2.proposalType, p2.proposalData]);
-  var proposalEncoder = (p2) => {
-    if (!isDefaultProposal(p2))
-      return proposalCustomEncoder(p2);
-    switch (p2.proposalType) {
+  var proposalAddEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, addEncoder], (p3) => [p3.proposalType, p3.add]);
+  var proposalUpdateEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, updateEncoder], (p3) => [p3.proposalType, p3.update]);
+  var proposalRemoveEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, removeEncoder], (p3) => [p3.proposalType, p3.remove]);
+  var proposalPSKEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, pskEncoder], (p3) => [p3.proposalType, p3.psk]);
+  var proposalReinitEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, reinitEncoder], (p3) => [p3.proposalType, p3.reinit]);
+  var proposalExternalInitEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, externalInitEncoder], (p3) => [p3.proposalType, p3.externalInit]);
+  var proposalGroupContextExtensionsEncoder = contramapBufferEncoders([defaultProposalTypeValueEncoder, groupContextExtensionsEncoder], (p3) => [p3.proposalType, p3.groupContextExtensions]);
+  var proposalCustomEncoder = contramapBufferEncoders([uint16Encoder, varLenDataEncoder], (p3) => [p3.proposalType, p3.proposalData]);
+  var proposalEncoder = (p3) => {
+    if (!isDefaultProposal(p3))
+      return proposalCustomEncoder(p3);
+    switch (p3.proposalType) {
       case defaultProposalTypes.add:
-        return proposalAddEncoder(p2);
+        return proposalAddEncoder(p3);
       case defaultProposalTypes.update:
-        return proposalUpdateEncoder(p2);
+        return proposalUpdateEncoder(p3);
       case defaultProposalTypes.remove:
-        return proposalRemoveEncoder(p2);
+        return proposalRemoveEncoder(p3);
       case defaultProposalTypes.psk:
-        return proposalPSKEncoder(p2);
+        return proposalPSKEncoder(p3);
       case defaultProposalTypes.reinit:
-        return proposalReinitEncoder(p2);
+        return proposalReinitEncoder(p3);
       case defaultProposalTypes.external_init:
-        return proposalExternalInitEncoder(p2);
+        return proposalExternalInitEncoder(p3);
       case defaultProposalTypes.group_context_extensions:
-        return proposalGroupContextExtensionsEncoder(p2);
+        return proposalGroupContextExtensionsEncoder(p3);
     }
   };
   var proposalAddDecoder = mapDecoder(addDecoder, (add3) => ({
@@ -11716,7 +11716,7 @@
   };
   var proposalOrRefTypeEncoder = uint8Encoder;
   var proposalOrRefTypeDecoder = mapDecoderOption(uint8Decoder, numberToEnum(proposalOrRefTypes));
-  var proposalOrRefProposalEncoder = contramapBufferEncoders([proposalOrRefTypeEncoder, proposalEncoder], (p2) => [p2.proposalOrRefType, p2.proposal]);
+  var proposalOrRefProposalEncoder = contramapBufferEncoders([proposalOrRefTypeEncoder, proposalEncoder], (p3) => [p3.proposalOrRefType, p3.proposal]);
   var proposalOrRefProposalRefEncoder = contramapBufferEncoders([proposalOrRefTypeEncoder, varLenDataEncoder], (r2) => [r2.proposalOrRefType, r2.reference]);
   var proposalOrRefEncoder = (input) => {
     switch (input.proposalOrRefType) {
@@ -11813,11 +11813,11 @@
   function toLeafIndex(n2) {
     return n2;
   }
-  function log2(x2) {
-    if (x2 === 0)
+  function log2(x3) {
+    if (x3 === 0)
       return 0;
     let k2 = 0;
-    while (x2 >> k2 > 0) {
+    while (x3 >> k2 > 0) {
       k2++;
     }
     return k2 - 1;
@@ -11872,28 +11872,28 @@
     const b2 = nodeIndex >> k2 + 1 & 1;
     return toNodeIndex((nodeIndex | 1 << k2) ^ b2 << k2 + 1);
   }
-  function sibling(x2, leafWidth2) {
-    const p2 = parent(x2, leafWidth2);
-    return x2 < p2 ? right(p2) : left(p2);
+  function sibling(x3, leafWidth2) {
+    const p3 = parent(x3, leafWidth2);
+    return x3 < p3 ? right(p3) : left(p3);
   }
   function directPath(nodeIndex, leafWidth2) {
     const r2 = root(leafWidth2);
     if (nodeIndex === r2)
       return [];
-    const d2 = [];
+    const d3 = [];
     while (nodeIndex !== r2) {
       nodeIndex = parent(nodeIndex, leafWidth2);
-      d2.push(nodeIndex);
+      d3.push(nodeIndex);
     }
-    return d2;
+    return d3;
   }
   function copath(nodeIndex, leafWidth2) {
     if (nodeIndex === root(leafWidth2))
       return [];
-    const d2 = directPath(nodeIndex, leafWidth2);
-    d2.unshift(nodeIndex);
-    d2.pop();
-    return d2.map((y2) => sibling(y2, leafWidth2));
+    const d3 = directPath(nodeIndex, leafWidth2);
+    d3.unshift(nodeIndex);
+    d3.pop();
+    return d3.map((y2) => sibling(y2, leafWidth2));
   }
   function isAncestor(childNodeIndex, ancestor, nodeWidth2) {
     return directPath(childNodeIndex, leafWidth(nodeWidth2)).includes(ancestor);
@@ -12107,7 +12107,7 @@
     }
     return condenseRatchetTreeAfterRemove(copy);
   }
-  function traverseToRoot(tree, leafIndex, f2) {
+  function traverseToRoot(tree, leafIndex, f3) {
     const rootIndex = root(leafWidth(tree.length));
     let currentIndex = leafToNodeIndex(leafIndex);
     while (currentIndex != rootIndex) {
@@ -12117,7 +12117,7 @@
         if (currentNode.nodeType === nodeTypes.leaf) {
           throw new InternalError("Expected parent node");
         }
-        const result = f2(currentIndex, currentNode.parent);
+        const result = f3(currentIndex, currentNode.parent);
         if (result !== void 0) {
           return [result, currentIndex];
         }
@@ -12167,10 +12167,10 @@
         return parentNodeHashInputDecoder;
     }
   });
-  async function treeHashRoot(tree, h2, cache) {
-    return treeHash(tree, rootFromNodeWidth(tree.length), h2, cache);
+  async function treeHashRoot(tree, h3, cache) {
+    return treeHash(tree, rootFromNodeWidth(tree.length), h3, cache);
   }
-  async function treeHash(tree, subtreeIndex, h2, cache) {
+  async function treeHash(tree, subtreeIndex, h3, cache) {
     if (cache !== void 0) {
       const cached = cache[subtreeIndex];
       if (cached !== void 0)
@@ -12186,20 +12186,20 @@
         leafIndex: nodeToLeafIndex(subtreeIndex),
         leafNode: leafNode?.leaf
       });
-      result = await h2.digest(input);
+      result = await h3.digest(input);
     } else {
       const parentNode = tree[subtreeIndex];
       if (parentNode?.nodeType === nodeTypes.leaf)
         throw new InternalError("Somehow found leaf node in parent position");
-      const leftHash = await treeHash(tree, left(subtreeIndex), h2, cache);
-      const rightHash = await treeHash(tree, right(subtreeIndex), h2, cache);
+      const leftHash = await treeHash(tree, left(subtreeIndex), h3, cache);
+      const rightHash = await treeHash(tree, right(subtreeIndex), h3, cache);
       const input = {
         nodeType: nodeTypes.parent,
         parentNode: parentNode?.parent,
         leftHash,
         rightHash
       };
-      result = await h2.digest(encode(parentNodeHashInputEncoder, input));
+      result = await h3.digest(encode(parentNodeHashInputEncoder, input));
     }
     if (cache !== void 0)
       cache[subtreeIndex] = result;
@@ -12213,7 +12213,7 @@
     parentHash,
     originalSiblingTreeHash
   }));
-  async function verifyParentHashes(tree, h2) {
+  async function verifyParentHashes(tree, h3) {
     let hasParent = false;
     for (let i2 = 0; i2 < tree.length; i2++) {
       const cur = tree[i2];
@@ -12224,7 +12224,7 @@
     }
     if (!hasParent)
       return true;
-    const coverage = await parentHashCoverage(tree, h2);
+    const coverage = await parentHashCoverage(tree, h3);
     for (let i2 = 0; i2 < tree.length; i2++) {
       const cur = tree[i2];
       if (cur !== void 0 && cur.nodeType === nodeTypes.parent) {
@@ -12234,16 +12234,16 @@
     }
     return true;
   }
-  async function parentHashCoverage(tree, h2) {
+  async function parentHashCoverage(tree, h3) {
     const rootIndex = root(leafWidth(tree.length));
     const memo = /* @__PURE__ */ new Map();
     const memoedCalculate = (idx) => {
-      let p2 = memo.get(idx);
-      if (p2 === void 0) {
-        p2 = calculateParentHash(tree, idx, h2);
-        memo.set(idx, p2);
+      let p3 = memo.get(idx);
+      if (p3 === void 0) {
+        p3 = calculateParentHash(tree, idx, h3);
+        memo.set(idx, p3);
       }
-      return p2;
+      return p3;
     };
     const leafCovered = await Promise.all(tree.map(async (node, nodeIndex) => {
       const startIndex = toNodeIndex(nodeIndex);
@@ -12287,7 +12287,7 @@
     else if (node.leaf.leafNodeSource === leafNodeSources.commit)
       return node.leaf.parentHash;
   }
-  async function calculateParentHash(tree, nodeIndex, h2, cache) {
+  async function calculateParentHash(tree, nodeIndex, h3, cache) {
     const rootIndex = root(leafWidth(tree.length));
     if (nodeIndex === rootIndex) {
       return [new Uint8Array(), void 0];
@@ -12301,13 +12301,13 @@
     if (parentNode === void 0 || parentNode.nodeType === nodeTypes.leaf)
       throw new InternalError("Expected non-blank parent Node");
     const unmerged = parentNode.parent.unmergedLeaves;
-    const originalSiblingTreeHash = unmerged.length === 0 ? await treeHash(tree, siblingIndex, h2, cache) : await treeHash(removeLeaves(tree, unmerged), siblingIndex, h2);
+    const originalSiblingTreeHash = unmerged.length === 0 ? await treeHash(tree, siblingIndex, h3, cache) : await treeHash(removeLeaves(tree, unmerged), siblingIndex, h3);
     const input = {
       encryptionKey: parentNode.parent.hpkePublicKey,
       parentHash: parentNode.parent.parentHash,
       originalSiblingTreeHash
     };
-    return [await h2.digest(encode(parentHashInputEncoder, input)), parentNodeIndex];
+    return [await h3.digest(encode(parentHashInputEncoder, input)), parentNodeIndex];
   }
 
   // node_modules/ts-mls/dist/src/hpkeCiphertext.js
@@ -12370,15 +12370,15 @@
           const { ct: ct2, enc } = await encryptWithLabel(await cs.hpke.importPublicKey(getHpkePublicKey(originalTree[nodeIndex])), "UpdatePathNode", encodedContext, pathSecret.secret, cs.hpke);
           return { ciphertext: ct2, kemOutput: enc };
         }));
-        for (let j2 = 0; j2 < batch.length; j2++)
-          encryptedPathSecret[start + j2] = batch[j2];
+        for (let j3 = 0; j3 < batch.length; j3++)
+          encryptedPathSecret[start + j3] = batch[j3];
       }
       return { hpkePublicKey: key, encryptedPathSecret };
     };
   }
   async function insertParentHashes(fdp, mutableTree, cs, cache) {
-    for (let x2 = fdp.length - 1; x2 >= 0; x2--) {
-      const { nodeIndex } = fdp[x2];
+    for (let x3 = fdp.length - 1; x3 >= 0; x3--) {
+      const { nodeIndex } = fdp[x3];
       const parentHash = await calculateParentHash(mutableTree, nodeIndex, cs.hash, cache);
       const currentNode = mutableTree[nodeIndex];
       if (currentNode === void 0 || currentNode.nodeType === nodeTypes.leaf)
@@ -12410,7 +12410,7 @@
     }
     return pathSecrets;
   }
-  async function applyUpdatePath(mutableTree, senderLeafIndex, path, h2, cache, isExternal = false) {
+  async function applyUpdatePath(mutableTree, senderLeafIndex, path, h3, cache, isExternal = false) {
     if (!isExternal) {
       const leafToUpdate = mutableTree[leafToNodeIndex(senderLeafIndex)];
       if (leafToUpdate === void 0 || leafToUpdate.nodeType === nodeTypes.parent)
@@ -12435,13 +12435,13 @@
       throw new ValidationError("Invalid length of UpdatePath");
     }
     for (const [level2, nodeIndex] of reverseFilteredDirectPath.entries()) {
-      const parentHash = await calculateParentHash(mutableTree, nodeIndex, h2, cache);
+      const parentHash = await calculateParentHash(mutableTree, nodeIndex, h3, cache);
       mutableTree[nodeIndex] = {
         nodeType: nodeTypes.parent,
         parent: { hpkePublicKey: reverseUpdatePath[level2].hpkePublicKey, unmergedLeaves: [], parentHash: parentHash[0] }
       };
     }
-    const leafParentHash = await calculateParentHash(mutableTree, leafToNodeIndex(senderLeafIndex), h2, cache);
+    const leafParentHash = await calculateParentHash(mutableTree, leafToNodeIndex(senderLeafIndex), h3, cache);
     if (!constantTimeEqual(leafParentHash[0], path.leafNode.parentHash))
       throw new ValidationError("Parent hash did not match the UpdatePath");
   }
@@ -12570,9 +12570,9 @@
   }
 
   // node_modules/ts-mls/dist/src/framedContent.js
-  var framedContentApplicationDataEncoder = contramapBufferEncoders([contentTypeEncoder, varLenDataEncoder], (f2) => [f2.contentType, f2.applicationData]);
-  var framedContentProposalDataEncoder = contramapBufferEncoders([contentTypeEncoder, proposalEncoder], (f2) => [f2.contentType, f2.proposal]);
-  var framedContentCommitDataEncoder = contramapBufferEncoders([contentTypeEncoder, commitEncoder], (f2) => [f2.contentType, f2.commit]);
+  var framedContentApplicationDataEncoder = contramapBufferEncoders([contentTypeEncoder, varLenDataEncoder], (f3) => [f3.contentType, f3.applicationData]);
+  var framedContentProposalDataEncoder = contramapBufferEncoders([contentTypeEncoder, proposalEncoder], (f3) => [f3.contentType, f3.proposal]);
+  var framedContentCommitDataEncoder = contramapBufferEncoders([contentTypeEncoder, commitEncoder], (f3) => [f3.contentType, f3.commit]);
   var framedContentInfoEncoder = (fc) => {
     switch (fc.contentType) {
       case contentTypes.application:
@@ -12620,7 +12620,7 @@
         return encVoid;
     }
   };
-  var framedContentTBSEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, framedContentEncoder, senderInfoEncoder], (f2) => [f2.protocolVersion, f2.wireformat, f2.content, f2]);
+  var framedContentTBSEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, framedContentEncoder, senderInfoEncoder], (f3) => [f3.protocolVersion, f3.wireformat, f3.content, f3]);
   var encodeFramedContentAuthDataContent = (authData) => {
     switch (authData.contentType) {
       case contentTypes.commit:
@@ -12631,7 +12631,7 @@
     }
   };
   var encodeFramedContentAuthDataCommit = contramapBufferEncoder(varLenDataEncoder, (data) => data.confirmationTag);
-  var framedContentAuthDataEncoder = contramapBufferEncoders([varLenDataEncoder, encodeFramedContentAuthDataContent], (d2) => [d2.signature, d2]);
+  var framedContentAuthDataEncoder = contramapBufferEncoders([varLenDataEncoder, encodeFramedContentAuthDataContent], (d3) => [d3.signature, d3]);
   var framedContentAuthDataCommitDecoder = mapDecoder(varLenDataDecoder, (confirmationTag) => ({
     contentType: contentTypes.commit,
     confirmationTag
@@ -12664,11 +12664,11 @@
       signature
     };
   }
-  function createConfirmationTag(confirmationKey, confirmedTranscriptHash, h2) {
-    return h2.mac(confirmationKey, confirmedTranscriptHash);
+  function createConfirmationTag(confirmationKey, confirmedTranscriptHash, h3) {
+    return h3.mac(confirmationKey, confirmedTranscriptHash);
   }
-  function verifyConfirmationTag(confirmationKey, tag, confirmedTranscriptHash, h2) {
-    return h2.verifyMac(confirmationKey, tag, confirmedTranscriptHash);
+  function verifyConfirmationTag(confirmationKey, tag, confirmedTranscriptHash, h3) {
+    return h3.verifyMac(confirmationKey, tag, confirmedTranscriptHash);
   }
   async function createContentCommitSignature(groupContext, wireformat, c2, sender, authenticatedData, signKey, s2) {
     const tbs = {
@@ -12701,14 +12701,14 @@
     ...contentAuth
   }));
   var authenticatedContentTBMEncoder = contramapBufferEncoders([framedContentTBSEncoder, framedContentAuthDataEncoder], (t2) => [t2.contentTbs, t2.auth]);
-  function createMembershipTag(membershipKey, tbm, h2) {
-    return h2.mac(membershipKey, encode(authenticatedContentTBMEncoder, tbm));
+  function createMembershipTag(membershipKey, tbm, h3) {
+    return h3.mac(membershipKey, encode(authenticatedContentTBMEncoder, tbm));
   }
-  function verifyMembershipTag(membershipKey, tbm, tag, h2) {
-    return h2.verifyMac(membershipKey, tag, encode(authenticatedContentTBMEncoder, tbm));
+  function verifyMembershipTag(membershipKey, tbm, tag, h3) {
+    return h3.verifyMac(membershipKey, tag, encode(authenticatedContentTBMEncoder, tbm));
   }
-  function makeProposalRef(proposal, h2) {
-    return refhash("MLS 1.0 Proposal Reference", encode(authenticatedContentEncoder, proposal), h2);
+  function makeProposalRef(proposal, h3) {
+    return refhash("MLS 1.0 Proposal Reference", encode(authenticatedContentEncoder, proposal), h3);
   }
 
   // node_modules/ts-mls/dist/src/groupInfo.js
@@ -13383,39 +13383,39 @@
   function flattenExtensions(groupContextExtensions) {
     return groupContextExtensions[0]?.proposal.groupContextExtensions.extensions ?? [];
   }
-  async function validateProposals(p2, committerLeafIndex, groupContext, config, authService, tree) {
-    const containsUpdateByCommitter = p2[defaultProposalTypes.update].some((o2) => o2.senderLeafIndex !== void 0 && o2.senderLeafIndex === committerLeafIndex);
+  async function validateProposals(p3, committerLeafIndex, groupContext, config, authService, tree) {
+    const containsUpdateByCommitter = p3[defaultProposalTypes.update].some((o2) => o2.senderLeafIndex !== void 0 && o2.senderLeafIndex === committerLeafIndex);
     if (containsUpdateByCommitter)
       return new ValidationError("Commit cannot contain an update proposal sent by committer");
-    const containsRemoveOfCommitter = p2[defaultProposalTypes.remove].some((o2) => o2.proposal.remove.removed === committerLeafIndex);
+    const containsRemoveOfCommitter = p3[defaultProposalTypes.remove].some((o2) => o2.proposal.remove.removed === committerLeafIndex);
     if (containsRemoveOfCommitter)
       return new ValidationError("Commit cannot contain a remove proposal removing committer");
-    const multipleUpdateRemoveForSameLeaf = p2[defaultProposalTypes.update].some(({ senderLeafIndex: a2 }, indexA) => p2[defaultProposalTypes.update].some(({ senderLeafIndex: b2 }, indexB) => a2 === b2 && indexA !== indexB) || p2[defaultProposalTypes.remove].some((r2) => r2.proposal.remove.removed === a2)) || p2[defaultProposalTypes.remove].some((a2, indexA) => p2[defaultProposalTypes.remove].some((b2, indexB) => b2.proposal.remove.removed === a2.proposal.remove.removed && indexA !== indexB) || p2[defaultProposalTypes.update].some(({ senderLeafIndex }) => a2.proposal.remove.removed === senderLeafIndex));
+    const multipleUpdateRemoveForSameLeaf = p3[defaultProposalTypes.update].some(({ senderLeafIndex: a2 }, indexA) => p3[defaultProposalTypes.update].some(({ senderLeafIndex: b2 }, indexB) => a2 === b2 && indexA !== indexB) || p3[defaultProposalTypes.remove].some((r2) => r2.proposal.remove.removed === a2)) || p3[defaultProposalTypes.remove].some((a2, indexA) => p3[defaultProposalTypes.remove].some((b2, indexB) => b2.proposal.remove.removed === a2.proposal.remove.removed && indexA !== indexB) || p3[defaultProposalTypes.update].some(({ senderLeafIndex }) => a2.proposal.remove.removed === senderLeafIndex));
     if (multipleUpdateRemoveForSameLeaf)
       return new ValidationError("Commit cannot contain multiple update and/or remove proposals that apply to the same leaf");
-    const multipleAddsContainSameKeypackage = p2[defaultProposalTypes.add].some(({ proposal: a2 }, indexA) => p2[defaultProposalTypes.add].some(({ proposal: b2 }, indexB) => config.compareKeyPackages(a2.add.keyPackage, b2.add.keyPackage) && indexA !== indexB));
+    const multipleAddsContainSameKeypackage = p3[defaultProposalTypes.add].some(({ proposal: a2 }, indexA) => p3[defaultProposalTypes.add].some(({ proposal: b2 }, indexB) => config.compareKeyPackages(a2.add.keyPackage, b2.add.keyPackage) && indexA !== indexB));
     if (multipleAddsContainSameKeypackage)
       return new ValidationError("Commit cannot contain multiple Add proposals that contain KeyPackages that represent the same client");
-    const addsContainExistingKeypackage = p2[defaultProposalTypes.add].some(({ proposal }) => tree.some((node, nodeIndex) => node !== void 0 && node.nodeType === nodeTypes.leaf && config.compareKeyPackageToLeafNode(proposal.add.keyPackage, node.leaf) && p2[defaultProposalTypes.remove].every((r2) => r2.proposal.remove.removed !== nodeToLeafIndex(toNodeIndex(nodeIndex)))));
+    const addsContainExistingKeypackage = p3[defaultProposalTypes.add].some(({ proposal }) => tree.some((node, nodeIndex) => node !== void 0 && node.nodeType === nodeTypes.leaf && config.compareKeyPackageToLeafNode(proposal.add.keyPackage, node.leaf) && p3[defaultProposalTypes.remove].every((r2) => r2.proposal.remove.removed !== nodeToLeafIndex(toNodeIndex(nodeIndex)))));
     if (addsContainExistingKeypackage)
       return new ValidationError("Commit cannot contain an Add proposal for someone already in the group");
-    const everyLeafSupportsGroupExtensions = p2[defaultProposalTypes.add].every(({ proposal }) => extensionsSupportedByCapabilities(groupContext.extensions, proposal.add.keyPackage.leafNode.capabilities));
+    const everyLeafSupportsGroupExtensions = p3[defaultProposalTypes.add].every(({ proposal }) => extensionsSupportedByCapabilities(groupContext.extensions, proposal.add.keyPackage.leafNode.capabilities));
     if (!everyLeafSupportsGroupExtensions)
       return new ValidationError("Added leaf node that doesn't support extension in GroupContext");
-    const multiplePskWithSamePskId = p2[defaultProposalTypes.psk].some((a2, indexA) => p2[defaultProposalTypes.psk].some((b2, indexB) => constantTimeEqual(encode(pskIdEncoder, a2.proposal.psk.preSharedKeyId), encode(pskIdEncoder, b2.proposal.psk.preSharedKeyId)) && indexA !== indexB));
+    const multiplePskWithSamePskId = p3[defaultProposalTypes.psk].some((a2, indexA) => p3[defaultProposalTypes.psk].some((b2, indexB) => constantTimeEqual(encode(pskIdEncoder, a2.proposal.psk.preSharedKeyId), encode(pskIdEncoder, b2.proposal.psk.preSharedKeyId)) && indexA !== indexB));
     if (multiplePskWithSamePskId)
       return new ValidationError("Commit cannot contain PreSharedKey proposals that reference the same PreSharedKeyID");
-    const multipleGroupContextExtensions = p2[defaultProposalTypes.group_context_extensions].length > 1;
+    const multipleGroupContextExtensions = p3[defaultProposalTypes.group_context_extensions].length > 1;
     if (multipleGroupContextExtensions)
       return new ValidationError("Commit cannot contain multiple GroupContextExtensions proposals");
-    const allExtensions = flattenExtensions(p2[defaultProposalTypes.group_context_extensions]);
+    const allExtensions = flattenExtensions(p3[defaultProposalTypes.group_context_extensions]);
     const requiredCapabilities = allExtensions.find((e2) => e2.extensionType === defaultExtensionTypes.required_capabilities);
     if (requiredCapabilities !== void 0) {
       const caps = requiredCapabilities.extensionData;
       const everyLeafSupportsCapabilities = tree.filter((n2) => n2 !== void 0 && n2.nodeType === nodeTypes.leaf).every((l2) => capabiltiesAreSupported(caps, l2.leaf.capabilities));
       if (!everyLeafSupportsCapabilities)
         return new ValidationError("Not all members support required capabilities");
-      const allAdditionsSupportCapabilities = p2[defaultProposalTypes.add].every((a2) => capabiltiesAreSupported(caps, a2.proposal.add.keyPackage.leafNode.capabilities));
+      const allAdditionsSupportCapabilities = p3[defaultProposalTypes.add].every((a2) => capabiltiesAreSupported(caps, a2.proposal.add.keyPackage.leafNode.capabilities));
       if (!allAdditionsSupportCapabilities)
         return new ValidationError("Commit contains add proposals of member without required capabilities");
     }
@@ -13430,7 +13430,7 @@
     }
   }
   function capabiltiesAreSupported(caps, cs) {
-    return caps.credentialTypes.every((c2) => cs.credentials.includes(c2)) && caps.extensionTypes.every((e2) => cs.extensions.includes(e2)) && caps.proposalTypes.every((p2) => cs.proposals.includes(p2));
+    return caps.credentialTypes.every((c2) => cs.credentials.includes(c2)) && caps.extensionTypes.every((e2) => cs.extensions.includes(e2)) && caps.proposalTypes.every((p3) => cs.proposals.includes(p3));
   }
   async function validateRatchetTree(tree, groupContext, config, authService, treeHash2, cs, treeHashCache) {
     const hpkeKeys = /* @__PURE__ */ new Set();
@@ -13606,10 +13606,10 @@
     const allProposals = proposals.reduce((acc, cur) => {
       if (cur.proposalOrRefType === proposalOrRefTypes.proposal)
         return [...acc, { proposal: cur.proposal, senderLeafIndex: committerLeafIndex }];
-      const p2 = state.unappliedProposals[bytesToBase64(cur.reference)];
-      if (p2 === void 0)
+      const p3 = state.unappliedProposals[bytesToBase64(cur.reference)];
+      if (p3 === void 0)
         throw new ValidationError("Could not find proposal with supplied reference");
-      return [...acc, p2];
+      return [...acc, p3];
     }, []);
     const grouped = allProposals.reduce((acc, cur) => {
       if (isDefaultProposal(cur.proposal)) {
@@ -13643,7 +13643,7 @@
       throwIfDefined(await validateProposals(grouped, committerLeafIndex, state.groupContext, clientConfig.keyPackageEqualityConfig, authService, mutableTree));
       const newExtensions = flattenExtensions(grouped[defaultProposalTypes.group_context_extensions]);
       const addedLeafNodes = await applyTreeMutations(mutableTree, grouped, state.groupContext, sentByClient, authService, clientConfig.lifetimeConfig, cs.signature);
-      const [updatedPskSecret, pskIds] = await accumulatePskSecret(grouped[defaultProposalTypes.psk].map((p2) => p2.proposal.psk.preSharedKeyId), pskSearch, cs, zeroes);
+      const [updatedPskSecret, pskIds] = await accumulatePskSecret(grouped[defaultProposalTypes.psk].map((p3) => p3.proposal.psk.preSharedKeyId), pskSearch, cs, zeroes);
       const selfRemoved = mutableTree[leafToNodeIndex(toLeafIndex(state.privatePath.leafIndex))] === void 0;
       const needsUpdatePath = allProposals.length === 0 || allProposals.some(({ proposal }) => {
         const t2 = proposal.proposalType;
@@ -13674,7 +13674,7 @@
         removeLeafNodeMutable(mutableTree, toLeafIndex(proposal.remove.removed));
       });
       const zeroes2 = new Uint8Array(cs.kdf.size);
-      const [updatedPskSecret, pskIds] = await accumulatePskSecret(grouped[defaultProposalTypes.psk].map((p2) => p2.proposal.psk.preSharedKeyId), pskSearch, cs, zeroes2);
+      const [updatedPskSecret, pskIds] = await accumulatePskSecret(grouped[defaultProposalTypes.psk].map((p3) => p3.proposal.psk.preSharedKeyId), pskSearch, cs, zeroes2);
       const initProposal = grouped[defaultProposalTypes.external_init].at(0);
       const externalKeyPair = await cs.hpke.deriveKeyPair(state.keySchedule.externalSecret);
       const externalInitSecret = await importSecret(await cs.hpke.exportPrivateKey(externalKeyPair.privateKey), initProposal.proposal.externalInit.kemOutput, cs);
@@ -13710,9 +13710,9 @@
       }
     };
   }
-  async function nextEpochContext(groupContext, wireformat, content, signature, updatedTreeHash, confirmationTag, h2) {
-    const interimTranscriptHash = await createInterimHash(groupContext.confirmedTranscriptHash, confirmationTag, h2);
-    const newConfirmedHash = await createConfirmedHash(interimTranscriptHash, { wireformat: wireformats[wireformat], content, signature }, h2);
+  async function nextEpochContext(groupContext, wireformat, content, signature, updatedTreeHash, confirmationTag, h3) {
+    const interimTranscriptHash = await createInterimHash(groupContext.confirmedTranscriptHash, confirmationTag, h3);
+    const newConfirmedHash = await createConfirmedHash(interimTranscriptHash, { wireformat: wireformats[wireformat], content, signature }, h3);
     return {
       ...groupContext,
       epoch: groupContext.epoch + 1n,
@@ -13886,8 +13886,8 @@
     }
     return addedLNs;
   }
-  async function processProposal(state, content, proposal, h2) {
-    const ref = await makeProposalRef(content, h2);
+  async function processProposal(state, content, proposal, h3) {
+    const ref = await makeProposalRef(content, h3);
     return {
       ...state,
       unappliedProposals: addUnappliedProposal(ref, state.unappliedProposals, proposal, getSenderLeafNodeIndex(content.content.sender))
@@ -14052,13 +14052,13 @@
     const result = await protect(senderDataSecret, authenticatedData, groupContext, secretTree, content, leafIndex, paddingConfig, cs);
     return { newSecretTree: result.tree, privateMessage: result.privateMessage, consumed: result.consumed };
   }
-  async function protectProposal(signKey, senderDataSecret, p2, authenticatedData, groupContext, secretTree, leafIndex, paddingConfig, cs) {
+  async function protectProposal(signKey, senderDataSecret, p3, authenticatedData, groupContext, secretTree, leafIndex, paddingConfig, cs) {
     const tbs = {
       protocolVersion: groupContext.version,
       wireformat: wireformats.mls_private_message,
       content: {
         contentType: contentTypes.proposal,
-        proposal: p2,
+        proposal: p3,
         groupId: groupContext.groupId,
         epoch: groupContext.epoch,
         sender: {
@@ -14336,13 +14336,13 @@
     return createCommitInternal(params);
   }
   function bundleAllProposals(state, extraProposals) {
-    const refs = Object.keys(state.unappliedProposals).map((p2) => ({
+    const refs = Object.keys(state.unappliedProposals).map((p3) => ({
       proposalOrRefType: proposalOrRefTypes.reference,
-      reference: base64ToBytes(p2)
+      reference: base64ToBytes(p3)
     }));
-    const proposals = extraProposals.map((p2) => ({
+    const proposals = extraProposals.map((p3) => ({
       proposalOrRefType: proposalOrRefTypes.proposal,
-      proposal: p2
+      proposal: p3
     }));
     return [...refs, ...proposals];
   }
@@ -14754,25 +14754,25 @@
   }
 
   // node_modules/ts-mls/dist/src/crypto/implementation/default/makeHashImpl.js
-  function makeHashImpl(sc, h2) {
+  function makeHashImpl(sc, h3) {
     return {
       async digest(data) {
-        const result = await sc.digest(h2, toBufferSource(data));
+        const result = await sc.digest(h3, toBufferSource(data));
         return new Uint8Array(result);
       },
       async mac(key, data) {
-        const result = await sc.sign("HMAC", await importMacKey(key, h2), toBufferSource(data));
+        const result = await sc.sign("HMAC", await importMacKey(key, h3), toBufferSource(data));
         return new Uint8Array(result);
       },
       async verifyMac(key, mac, data) {
-        return sc.verify("HMAC", await importMacKey(key, h2), toBufferSource(mac), toBufferSource(data));
+        return sc.verify("HMAC", await importMacKey(key, h3), toBufferSource(mac), toBufferSource(data));
       }
     };
   }
-  function importMacKey(rawKey, h2) {
+  function importMacKey(rawKey, h3) {
     return crypto.subtle.importKey("raw", toBufferSource(rawKey), {
       name: "HMAC",
-      hash: { name: h2 }
+      hash: { name: h3 }
     }, false, ["sign", "verify"]);
   }
 
@@ -15191,7 +15191,7 @@
   };
 
   // node_modules/@hpke/common/esm/src/utils/misc.js
-  var isCryptoKeyPair = (x2) => typeof x2 === "object" && x2 !== null && typeof x2.privateKey === "object" && typeof x2.publicKey === "object";
+  var isCryptoKeyPair = (x3) => typeof x3 === "object" && x3 !== null && typeof x3.privateKey === "object" && typeof x3.publicKey === "object";
   function i2Osp(n2, w2) {
     if (w2 <= 0) {
       throw new Error("i2Osp: too small size");
@@ -15765,26 +15765,26 @@
     gy: 0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650n,
     coordinateSize: 66
   };
-  function mod(a2, p2) {
-    const r2 = a2 % p2;
-    return r2 >= 0n ? r2 : r2 + p2;
+  function mod(a2, p3) {
+    const r2 = a2 % p3;
+    return r2 >= 0n ? r2 : r2 + p3;
   }
-  function modPow(base, exponent, p2) {
+  function modPow(base, exponent, p3) {
     let result = 1n;
-    let b2 = mod(base, p2);
+    let b2 = mod(base, p3);
     let e2 = exponent;
     while (e2 > 0n) {
       if ((e2 & 1n) === 1n) {
-        result = mod(result * b2, p2);
+        result = mod(result * b2, p3);
       }
-      b2 = mod(b2 * b2, p2);
+      b2 = mod(b2 * b2, p3);
       e2 >>= 1n;
     }
     return result;
   }
-  function modSqrt(rhs, p2) {
-    const y2 = modPow(rhs, p2 + 1n >> 2n, p2);
-    if (mod(y2 * y2, p2) !== mod(rhs, p2)) {
+  function modSqrt(rhs, p3) {
+    const y2 = modPow(rhs, p3 + 1n >> 2n, p3);
+    if (mod(y2 * y2, p3) !== mod(rhs, p3)) {
       throw new Error("Invalid ECDH point");
     }
     return y2;
@@ -15808,10 +15808,10 @@
     }
     return out;
   }
-  function buildRawUncompressedPublicKey(x2, y2, coordinateSize) {
+  function buildRawUncompressedPublicKey(x3, y2, coordinateSize) {
     const out = new Uint8Array(1 + coordinateSize * 2);
     out[0] = 4;
-    out.set(bigIntToBytes(x2, coordinateSize), 1);
+    out.set(bigIntToBytes(x3, coordinateSize), 1);
     out.set(bigIntToBytes(y2, coordinateSize), 1 + coordinateSize);
     return out;
   }
@@ -16055,14 +16055,14 @@
         name: "ECDH",
         public: basePoint
       }, key, this._nDh * 8));
-      const p2 = this._curveParams.p;
-      const x2 = bytesToBigInt(xBytes);
-      const rhs = mod(modPow(x2, 3n, p2) - 3n * x2 + this._curveParams.b, p2);
-      let y2 = modSqrt(rhs, p2);
+      const p3 = this._curveParams.p;
+      const x3 = bytesToBigInt(xBytes);
+      const rhs = mod(modPow(x3, 3n, p3) - 3n * x3 + this._curveParams.b, p3);
+      let y2 = modSqrt(rhs, p3);
       if ((y2 & 1n) === 1n) {
-        y2 = p2 - y2;
+        y2 = p3 - y2;
       }
-      const pubRaw = buildRawUncompressedPublicKey(x2, y2, this._curveParams.coordinateSize);
+      const pubRaw = buildRawUncompressedPublicKey(x3, y2, this._curveParams.coordinateSize);
       return await this._api.importKey("raw", pubRaw.buffer, this._alg, true, []);
     }
   };
@@ -16109,12 +16109,12 @@
   var isLE = _endianTestBytes[0] === 68;
 
   // node_modules/@hpke/common/esm/src/hash/hash.js
-  function ahash(h2) {
-    if (typeof h2 !== "function" || typeof h2.create !== "function") {
+  function ahash(h3) {
+    if (typeof h3 !== "function" || typeof h3.create !== "function") {
       throw new Error("Hash must wrapped by utils.createHasher");
     }
-    anumber(h2.outputLen);
-    anumber(h2.blockLen);
+    anumber(h3.outputLen);
+    anumber(h3.blockLen);
   }
 
   // node_modules/@hpke/common/esm/src/hash/hmac.js
@@ -16236,8 +16236,8 @@
     const Ah = new Uint32Array(len);
     const Al = new Uint32Array(len);
     for (let i2 = 0; i2 < len; i2++) {
-      const { h: h2, l: l2 } = fromBig(lst[i2], le2);
-      [Ah[i2], Al[i2]] = [h2, l2];
+      const { h: h3, l: l2 } = fromBig(lst[i2], le2);
+      [Ah[i2], Al[i2]] = [h3, l2];
     }
     return [Ah, Al];
   }
@@ -16252,15 +16252,15 @@
   var SHA3_PI = [];
   var SHA3_ROTL = [];
   var _SHA3_IOTA = [];
-  for (let round = 0, R2 = _1n, x2 = 1, y2 = 0; round < 24; round++) {
-    [x2, y2] = [y2, (2 * x2 + 3 * y2) % 5];
-    SHA3_PI.push(2 * (5 * y2 + x2));
+  for (let round = 0, R2 = _1n, x3 = 1, y2 = 0; round < 24; round++) {
+    [x3, y2] = [y2, (2 * x3 + 3 * y2) % 5];
+    SHA3_PI.push(2 * (5 * y2 + x3));
     SHA3_ROTL.push((round + 1) * (round + 2) / 2 % 64);
     let t2 = _0n;
-    for (let j2 = 0; j2 < 7; j2++) {
+    for (let j3 = 0; j3 < 7; j3++) {
       R2 = (R2 << _1n ^ (R2 >> _7n) * _0x71n) % _256n;
       if (R2 & _2n)
-        t2 ^= _1n << (_1n << BigInt(j2)) - _1n;
+        t2 ^= _1n << (_1n << BigInt(j3)) - _1n;
     }
     _SHA3_IOTA.push(t2);
   }
@@ -16510,16 +16510,16 @@
   };
 
   // node_modules/@hpke/core/esm/src/mutex.js
-  var __classPrivateFieldGet = function(receiver, state, kind, f2) {
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f2 : kind === "a" ? f2.call(receiver) : f2 ? f2.value : state.get(receiver);
+  var __classPrivateFieldGet = function(receiver, state, kind, f3) {
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f3 : kind === "a" ? f3.call(receiver) : f3 ? f3.value : state.get(receiver);
   };
-  var __classPrivateFieldSet = function(receiver, state, value, kind, f2) {
+  var __classPrivateFieldSet = function(receiver, state, value, kind, f3) {
     if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return kind === "a" ? f2.call(receiver, value) : f2 ? f2.value = value : state.set(receiver, value), value;
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return kind === "a" ? f3.call(receiver, value) : f3 ? f3.value = value : state.set(receiver, value), value;
   };
   var _Mutex_locked;
   var Mutex = class {
@@ -16540,16 +16540,16 @@
   _Mutex_locked = /* @__PURE__ */ new WeakMap();
 
   // node_modules/@hpke/core/esm/src/recipientContext.js
-  var __classPrivateFieldGet2 = function(receiver, state, kind, f2) {
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f2 : kind === "a" ? f2.call(receiver) : f2 ? f2.value : state.get(receiver);
+  var __classPrivateFieldGet2 = function(receiver, state, kind, f3) {
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f3 : kind === "a" ? f3.call(receiver) : f3 ? f3.value : state.get(receiver);
   };
-  var __classPrivateFieldSet2 = function(receiver, state, value, kind, f2) {
+  var __classPrivateFieldSet2 = function(receiver, state, value, kind, f3) {
     if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return kind === "a" ? f2.call(receiver, value) : f2 ? f2.value = value : state.set(receiver, value), value;
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return kind === "a" ? f3.call(receiver, value) : f3 ? f3.value = value : state.set(receiver, value), value;
   };
   var _RecipientContextImpl_mutex;
   var RecipientContextImpl = class extends EncryptionContextImpl {
@@ -16575,16 +16575,16 @@
   _RecipientContextImpl_mutex = /* @__PURE__ */ new WeakMap();
 
   // node_modules/@hpke/core/esm/src/senderContext.js
-  var __classPrivateFieldGet3 = function(receiver, state, kind, f2) {
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f2 : kind === "a" ? f2.call(receiver) : f2 ? f2.value : state.get(receiver);
+  var __classPrivateFieldGet3 = function(receiver, state, kind, f3) {
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f3 : kind === "a" ? f3.call(receiver) : f3 ? f3.value : state.get(receiver);
   };
-  var __classPrivateFieldSet3 = function(receiver, state, value, kind, f2) {
+  var __classPrivateFieldSet3 = function(receiver, state, value, kind, f3) {
     if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f2) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f2 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return kind === "a" ? f2.call(receiver, value) : f2 ? f2.value = value : state.set(receiver, value), value;
+    if (kind === "a" && !f3) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f3 : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return kind === "a" ? f3.call(receiver, value) : f3 ? f3.value = value : state.set(receiver, value), value;
   };
   var _SenderContextImpl_mutex;
   var SenderContextImpl = class extends EncryptionContextImpl {
@@ -17039,9 +17039,9 @@
     32
   ]);
   var BASE_POINT_X25519 = /* @__PURE__ */ (() => {
-    const p2 = new Uint8Array(32);
-    p2[0] = 9;
-    return p2;
+    const p3 = new Uint8Array(32);
+    p3[0] = 9;
+    return p3;
   })();
   var X25519 = class extends NativeAlgorithm {
     constructor(hkdf) {
@@ -17928,6 +17928,9 @@
     if (attachment.height != void 0) {
       document2["height"] = attachment.height;
     }
+    if (attachment.blurhash != void 0) {
+      document2["blurhash"] = attachment.blurhash;
+    }
     return document2;
   }
   function dataUriToAttachment(dataUri, name, size) {
@@ -17948,15 +17951,15 @@
   function _iterableToArrayLimit(r2, l2) {
     var t2 = null == r2 ? null : "undefined" != typeof Symbol && r2[Symbol.iterator] || r2["@@iterator"];
     if (null != t2) {
-      var e2, n2, i2, u2, a2 = [], f2 = true, o2 = false;
+      var e2, n2, i2, u2, a2 = [], f3 = true, o2 = false;
       try {
         if (i2 = (t2 = t2.call(r2)).next, 0 === l2) ;
-        else for (; !(f2 = (e2 = i2.call(t2)).done) && (a2.push(e2.value), a2.length !== l2); f2 = true) ;
+        else for (; !(f3 = (e2 = i2.call(t2)).done) && (a2.push(e2.value), a2.length !== l2); f3 = true) ;
       } catch (r3) {
         o2 = true, n2 = r3;
       } finally {
         try {
-          if (!f2 && null != t2.return && (u2 = t2.return(), Object(u2) !== u2)) return;
+          if (!f3 && null != t2.return && (u2 = t2.return(), Object(u2) !== u2)) return;
         } finally {
           if (o2) throw n2;
         }
@@ -17989,13 +17992,13 @@
   var apply = _ref.apply;
   var construct = _ref.construct;
   if (!freeze) {
-    freeze = function freeze2(x2) {
-      return x2;
+    freeze = function freeze2(x3) {
+      return x3;
     };
   }
   if (!seal) {
-    seal = function seal2(x2) {
-      return x2;
+    seal = function seal2(x3) {
+      return x3;
     };
   }
   if (!apply) {
@@ -19564,6 +19567,7 @@
   var PropertyActor = "actor";
   var PropertyAttachment = "attachment";
   var PropertyAttributedTo = "attributedTo";
+  var PropertyBlurhash = "blurhash";
   var PropertyCc = "cc";
   var PropertyContent = "content";
   var PropertyContext = "context";
@@ -20083,6 +20087,10 @@
       }
       if (typeof value[PropertyHeight] == "number") {
         attachment.height = value[PropertyHeight];
+      }
+      const blurhash = toString(value[PropertyBlurhash]);
+      if (blurhash != "") {
+        attachment.blurhash = blurhash;
       }
       return attachment;
     }
@@ -20988,10 +20996,10 @@
       const r2 = m(n2), i2 = import_jsbi.default.BigInt(r2);
       let { quotient: a2, remainder: s2 } = g(this.totalNs, i2);
       const c2 = [];
-      let d2;
-      const h2 = (import_jsbi.default.lessThan(this.totalNs, t) ? -1 : 1) * Math.sign(import_jsbi.default.toNumber(r2));
-      for (; !import_jsbi.default.equal(s2, t) && c2.length < 50; ) s2 = import_jsbi.default.multiply(s2, o), { quotient: d2, remainder: s2 } = g(s2, i2), c2.push(Math.abs(import_jsbi.default.toNumber(d2)));
-      return h2 * Number(y(a2).toString() + "." + c2.join(""));
+      let d3;
+      const h3 = (import_jsbi.default.lessThan(this.totalNs, t) ? -1 : 1) * Math.sign(import_jsbi.default.toNumber(r2));
+      for (; !import_jsbi.default.equal(s2, t) && c2.length < 50; ) s2 = import_jsbi.default.multiply(s2, o), { quotient: d3, remainder: s2 } = g(s2, i2), c2.push(Math.abs(import_jsbi.default.toNumber(d3)));
+      return h3 * Number(y(a2).toString() + "." + c2.join(""));
     }
     isZero() {
       return import_jsbi.default.equal(this.totalNs, t);
@@ -20999,7 +21007,7 @@
     round(o2, i2) {
       const a2 = m(o2);
       if (import_jsbi.default.equal(a2, n)) return this;
-      const { quotient: s2, remainder: c2 } = g(this.totalNs, a2), d2 = import_jsbi.default.lessThan(this.totalNs, t) ? "negative" : "positive", h2 = import_jsbi.default.multiply(y(s2), a2), u2 = import_jsbi.default.add(h2, a2), l2 = p(y(import_jsbi.default.multiply(c2, r)), a2), w2 = ue(i2, d2), v2 = import_jsbi.default.equal(y(this.totalNs), h2) ? h2 : le(h2, u2, l2, f(s2), w2), b2 = "positive" === d2 ? v2 : import_jsbi.default.unaryMinus(v2);
+      const { quotient: s2, remainder: c2 } = g(this.totalNs, a2), d3 = import_jsbi.default.lessThan(this.totalNs, t) ? "negative" : "positive", h3 = import_jsbi.default.multiply(y(s2), a2), u2 = import_jsbi.default.add(h3, a2), l2 = p(y(import_jsbi.default.multiply(c2, r)), a2), w2 = ue(i2, d3), v2 = import_jsbi.default.equal(y(this.totalNs), h3) ? h3 : le(h3, u2, l2, f(s2), w2), b2 = "positive" === d3 ? v2 : import_jsbi.default.unaryMinus(v2);
       return _TimeDuration.validateNew(b2, "rounding");
     }
     sign() {
@@ -21169,14 +21177,14 @@
     const n2 = Tt(t2[16]);
     let r2 = t2[1];
     if ("-000000" === r2) throw new RangeError(`invalid RFC 9557 string: ${e2}`);
-    const o2 = +r2, i2 = +(t2[2] ?? t2[4] ?? 1), a2 = +(t2[3] ?? t2[5] ?? 1), s2 = void 0 !== t2[6], c2 = +(t2[6] ?? 0), d2 = +(t2[7] ?? t2[10] ?? 0);
-    let h2 = +(t2[8] ?? t2[11] ?? 0);
-    60 === h2 && (h2 = 59);
-    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m39 = +u2.slice(3, 6), f2 = +u2.slice(6, 9);
-    let y2, p2 = false;
-    t2[13] ? (y2 = void 0, p2 = true) : t2[14] && (y2 = t2[14]);
+    const o2 = +r2, i2 = +(t2[2] ?? t2[4] ?? 1), a2 = +(t2[3] ?? t2[5] ?? 1), s2 = void 0 !== t2[6], c2 = +(t2[6] ?? 0), d3 = +(t2[7] ?? t2[10] ?? 0);
+    let h3 = +(t2[8] ?? t2[11] ?? 0);
+    60 === h3 && (h3 = 59);
+    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m39 = +u2.slice(3, 6), f3 = +u2.slice(6, 9);
+    let y2, p3 = false;
+    t2[13] ? (y2 = void 0, p3 = true) : t2[14] && (y2 = t2[14]);
     const g2 = t2[15];
-    return Ur(o2, i2, a2, c2, d2, h2, l2, m39, f2), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d2, second: h2, millisecond: l2, microsecond: m39, nanosecond: f2 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p2, calendar: n2 };
+    return Ur(o2, i2, a2, c2, d3, h3, l2, m39, f3), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d3, second: h3, millisecond: l2, microsecond: m39, nanosecond: f3 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p3, calendar: n2 };
   }
   function Et(e2) {
     const t2 = Ee.exec(e2);
@@ -21186,9 +21194,9 @@
       const e3 = (t2[4] ?? t2[7] ?? "") + "000000000";
       if (i2 = +e3.slice(0, 3), a2 = +e3.slice(3, 6), s2 = +e3.slice(6, 9), t2[8]) throw new RangeError("Z designator not supported for PlainTime");
     } else {
-      let t3, d2;
-      if ({ time: t3, z: d2, calendar: c2 } = Mt(e2), "start-of-day" === t3) throw new RangeError(`time is missing in string: ${e2}`);
-      if (d2) throw new RangeError("Z designator not supported for PlainTime");
+      let t3, d3;
+      if ({ time: t3, z: d3, calendar: c2 } = Mt(e2), "start-of-day" === t3) throw new RangeError(`time is missing in string: ${e2}`);
+      if (d3) throw new RangeError("Z designator not supported for PlainTime");
       ({ hour: n2, minute: r2, second: o2, millisecond: i2, microsecond: a2, nanosecond: s2 } = t3);
     }
     if (Pr(n2, r2, o2, i2, a2, s2), /[tT ][0-9][0-9]/.test(e2)) return { hour: n2, minute: r2, second: o2, millisecond: i2, microsecond: a2, nanosecond: s2, calendar: c2 };
@@ -21251,15 +21259,15 @@
     return { year: o2, month: i2, day: a2 };
   }
   function jt(e2, t2, n2, r2, o2, i2, a2) {
-    let s2 = e2, c2 = t2, d2 = n2, h2 = r2, u2 = o2, l2 = i2;
+    let s2 = e2, c2 = t2, d3 = n2, h3 = r2, u2 = o2, l2 = i2;
     switch (a2) {
       case "reject":
-        Pr(s2, c2, d2, h2, u2, l2);
+        Pr(s2, c2, d3, h3, u2, l2);
         break;
       case "constrain":
-        s2 = jr(s2, 0, 23), c2 = jr(c2, 0, 59), d2 = jr(d2, 0, 59), h2 = jr(h2, 0, 999), u2 = jr(u2, 0, 999), l2 = jr(l2, 0, 999);
+        s2 = jr(s2, 0, 23), c2 = jr(c2, 0, 59), d3 = jr(d3, 0, 59), h3 = jr(h3, 0, 999), u2 = jr(u2, 0, 999), l2 = jr(l2, 0, 999);
     }
-    return { hour: s2, minute: c2, second: d2, millisecond: h2, microsecond: u2, nanosecond: l2 };
+    return { hour: s2, minute: c2, second: d3, millisecond: h3, microsecond: u2, nanosecond: l2 };
   }
   function kt(e2) {
     if (!Ae(e2)) throw new TypeError("invalid duration-like");
@@ -21382,10 +21390,10 @@
       const e3 = tn(o2, t2, ["year", "month", "monthCode", "day"], ["hour", "minute", "second", "millisecond", "microsecond", "nanosecond", "offset", "timeZone"], []);
       ({ isoDate: n2, time: r2 } = on(o2, e3, "constrain")), { offset: a2, timeZone: i2 } = e3, void 0 === a2 && (s2 = "wall");
     } else {
-      let e3, d2, h2, u2, l2;
-      if ({ year: h2, month: u2, day: l2, time: r2, calendar: o2, tzAnnotation: e3, offset: a2, z: d2 } = Mt(Ve(t2)), e3) i2 = Bn(e3), d2 ? s2 = "exact" : a2 || (s2 = "wall"), c2 = true;
-      else if (d2) throw new RangeError("Z designator not supported for PlainDate relativeTo; either remove the Z or add a bracketed time zone");
-      o2 || (o2 = "iso8601"), o2 = zo(o2), n2 = { year: h2, month: u2, day: l2 };
+      let e3, d3, h3, u2, l2;
+      if ({ year: h3, month: u2, day: l2, time: r2, calendar: o2, tzAnnotation: e3, offset: a2, z: d3 } = Mt(Ve(t2)), e3) i2 = Bn(e3), d3 ? s2 = "exact" : a2 || (s2 = "wall"), c2 = true;
+      else if (d3) throw new RangeError("Z designator not supported for PlainDate relativeTo; either remove the Z or add a bracketed time zone");
+      o2 || (o2 = "iso8601"), o2 = zo(o2), n2 = { year: h3, month: u2, day: l2 };
     }
     return void 0 === i2 ? { plainRelativeTo: pn(n2, o2) } : { zonedRelativeTo: $n(mn(n2, r2, s2, "option" === s2 ? sr(a2) : 0, i2, "compatible", "reject", c2), i2, o2) };
   }
@@ -21478,23 +21486,23 @@
     const t2 = ce("%Temporal.Duration%");
     if (lt(e2)) return new t2(re(e2, Y), re(e2, R), re(e2, S), re(e2, j), re(e2, k), re(e2, N), re(e2, x), re(e2, L), re(e2, P), re(e2, U));
     if (!Ae(e2)) return (function(e3) {
-      const { years: t3, months: n3, weeks: r3, days: o2, hours: i2, minutes: a2, seconds: s2, milliseconds: c2, microseconds: d2, nanoseconds: h2 } = (function(e4) {
+      const { years: t3, months: n3, weeks: r3, days: o2, hours: i2, minutes: a2, seconds: s2, milliseconds: c2, microseconds: d3, nanoseconds: h3 } = (function(e4) {
         const t4 = Ye.exec(e4);
         if (!t4) throw new RangeError(`invalid duration: ${e4}`);
         if (t4.every(((e5, t5) => t5 < 2 || void 0 === e5))) throw new RangeError(`invalid duration: ${e4}`);
-        const n4 = "-" === t4[1] ? -1 : 1, r4 = void 0 === t4[2] ? 0 : _e(t4[2]) * n4, o3 = void 0 === t4[3] ? 0 : _e(t4[3]) * n4, i3 = void 0 === t4[4] ? 0 : _e(t4[4]) * n4, a3 = void 0 === t4[5] ? 0 : _e(t4[5]) * n4, s3 = void 0 === t4[6] ? 0 : _e(t4[6]) * n4, c3 = t4[7], d3 = t4[8], h3 = t4[9], u2 = t4[10], l2 = t4[11];
-        let m39 = 0, f2 = 0, y2 = 0;
+        const n4 = "-" === t4[1] ? -1 : 1, r4 = void 0 === t4[2] ? 0 : _e(t4[2]) * n4, o3 = void 0 === t4[3] ? 0 : _e(t4[3]) * n4, i3 = void 0 === t4[4] ? 0 : _e(t4[4]) * n4, a3 = void 0 === t4[5] ? 0 : _e(t4[5]) * n4, s3 = void 0 === t4[6] ? 0 : _e(t4[6]) * n4, c3 = t4[7], d4 = t4[8], h4 = t4[9], u2 = t4[10], l2 = t4[11];
+        let m39 = 0, f3 = 0, y2 = 0;
         if (void 0 !== c3) {
-          if (d3 ?? h3 ?? u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
+          if (d4 ?? h4 ?? u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
           y2 = 3600 * _e((c3 + "000000000").slice(0, 9)) * n4;
-        } else if (m39 = void 0 === d3 ? 0 : _e(d3) * n4, void 0 !== h3) {
+        } else if (m39 = void 0 === d4 ? 0 : _e(d4) * n4, void 0 !== h4) {
           if (u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
-          y2 = 60 * _e((h3 + "000000000").slice(0, 9)) * n4;
-        } else f2 = void 0 === u2 ? 0 : _e(u2) * n4, void 0 !== l2 && (y2 = _e((l2 + "000000000").slice(0, 9)) * n4);
-        const p2 = y2 % 1e3, g2 = Math.trunc(y2 / 1e3) % 1e3, w2 = Math.trunc(y2 / 1e6) % 1e3;
-        return f2 += Math.trunc(y2 / 1e9) % 60, m39 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m39, f2, w2, g2, p2), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m39, seconds: f2, milliseconds: w2, microseconds: g2, nanoseconds: p2 };
+          y2 = 60 * _e((h4 + "000000000").slice(0, 9)) * n4;
+        } else f3 = void 0 === u2 ? 0 : _e(u2) * n4, void 0 !== l2 && (y2 = _e((l2 + "000000000").slice(0, 9)) * n4);
+        const p3 = y2 % 1e3, g2 = Math.trunc(y2 / 1e3) % 1e3, w2 = Math.trunc(y2 / 1e6) % 1e3;
+        return f3 += Math.trunc(y2 / 1e9) % 60, m39 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m39, f3, w2, g2, p3), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m39, seconds: f3, milliseconds: w2, microseconds: g2, nanoseconds: p3 };
       })(e3);
-      return new (ce("%Temporal.Duration%"))(t3, n3, r3, o2, i2, a2, s2, c2, d2, h2);
+      return new (ce("%Temporal.Duration%"))(t3, n3, r3, o2, i2, a2, s2, c2, d3, h3);
     })(Ve(e2));
     const n2 = { years: 0, months: 0, weeks: 0, days: 0, hours: 0, minutes: 0, seconds: 0, milliseconds: 0, microseconds: 0, nanoseconds: 0 };
     let r2 = kt(e2);
@@ -21514,8 +21522,8 @@
       const t3 = Mt(e3);
       if (!t3.z && !t3.offset) throw new RangeError("Temporal.Instant requires a time zone offset");
       return t3;
-    })(Ve(t2)), { hour: c2 = 0, minute: d2 = 0, second: h2 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m39 = 0 } = "start-of-day" === i2 ? {} : i2, f2 = $r(n2, r2, o2, c2, d2, h2, u2, l2, m39 - (s2 ? 0 : sr(a2)));
-    return Kr(f2.isoDate), Cn(pr(f2));
+    })(Ve(t2)), { hour: c2 = 0, minute: d3 = 0, second: h3 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m39 = 0 } = "start-of-day" === i2 ? {} : i2, f3 = $r(n2, r2, o2, c2, d3, h3, u2, l2, m39 - (s2 ? 0 : sr(a2)));
+    return Kr(f3.isoDate), Cn(pr(f3));
   }
   function dn(e2, t2) {
     if (Ae(e2)) {
@@ -21558,8 +21566,8 @@
   }
   function mn(t2, n2, r2, o2, i2, a2, s2, c2) {
     if ("start-of-day" === n2) return _n(i2, t2);
-    const d2 = xt(t2, n2);
-    if ("wall" === r2 || "ignore" === s2) return An(i2, d2, a2);
+    const d3 = xt(t2, n2);
+    if ("wall" === r2 || "ignore" === s2) return An(i2, d3, a2);
     if ("exact" === r2 || "use" === s2) {
       const e2 = $r(t2.year, t2.month, t2.day, n2.hour, n2.minute, n2.second, n2.millisecond, n2.microsecond, n2.nanosecond - o2);
       Kr(e2.isoDate);
@@ -21567,43 +21575,43 @@
       return Fr(r3), r3;
     }
     Kr(t2);
-    const h2 = pr(d2), u2 = Wn(i2, d2);
+    const h3 = pr(d3), u2 = Wn(i2, d3);
     for (let t3 = 0; t3 < u2.length; t3++) {
-      const n3 = u2[t3], r3 = import_jsbi.default.toNumber(import_jsbi.default.subtract(h2, n3)), i3 = Eo(r3, 6e10, "halfExpand");
+      const n3 = u2[t3], r3 = import_jsbi.default.toNumber(import_jsbi.default.subtract(h3, n3)), i3 = Eo(r3, 6e10, "halfExpand");
       if (r3 === o2 || c2 && i3 === o2) return n3;
     }
     if ("reject" === s2) {
-      const e2 = Hn(o2), t3 = nr(d2, "iso8601", "auto");
+      const e2 = Hn(o2), t3 = nr(d3, "iso8601", "auto");
       throw new RangeError(`Offset ${e2} is invalid for ${t3} in ${i2}`);
     }
-    return qn(u2, i2, d2, a2);
+    return qn(u2, i2, d3, a2);
   }
   function fn(e2, t2) {
-    let n2, r2, o2, i2, a2, s2, c2, d2 = false, h2 = "option";
+    let n2, r2, o2, i2, a2, s2, c2, d3 = false, h3 = "option";
     if (Ae(e2)) {
       if (wt(e2)) {
         const n3 = Zo(t2);
         return Pt(n3), Bt(n3, "reject"), Lt(n3), $n(re(e2, b), re(e2, $), re(e2, E));
       }
       a2 = Nn(e2);
-      const d3 = tn(a2, e2, ["year", "month", "monthCode", "day"], ["hour", "minute", "second", "millisecond", "microsecond", "nanosecond", "offset", "timeZone"], ["timeZone"]);
-      ({ offset: i2, timeZone: o2 } = d3), void 0 === i2 && (h2 = "wall");
+      const d4 = tn(a2, e2, ["year", "month", "monthCode", "day"], ["hour", "minute", "second", "millisecond", "microsecond", "nanosecond", "offset", "timeZone"], ["timeZone"]);
+      ({ offset: i2, timeZone: o2 } = d4), void 0 === i2 && (h3 = "wall");
       const u3 = Zo(t2);
       s2 = Pt(u3), c2 = Bt(u3, "reject");
       const l2 = Lt(u3);
-      ({ isoDate: n2, time: r2 } = on(a2, d3, l2));
+      ({ isoDate: n2, time: r2 } = on(a2, d4, l2));
     } else {
-      let u3, l2, m39, f2, y2;
-      ({ year: m39, month: f2, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
+      let u3, l2, m39, f3, y2;
+      ({ year: m39, month: f3, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
         const t3 = Mt(e3);
         if (!t3.tzAnnotation) throw new RangeError("Temporal.ZonedDateTime requires a time zone ID in brackets");
         return t3;
-      })(Ve(e2))), o2 = Bn(u3), l2 ? h2 = "exact" : i2 || (h2 = "wall"), a2 || (a2 = "iso8601"), a2 = zo(a2), d2 = true;
-      const p2 = Zo(t2);
-      s2 = Pt(p2), c2 = Bt(p2, "reject"), Lt(p2), n2 = { year: m39, month: f2, day: y2 };
+      })(Ve(e2))), o2 = Bn(u3), l2 ? h3 = "exact" : i2 || (h3 = "wall"), a2 || (a2 = "iso8601"), a2 = zo(a2), d3 = true;
+      const p3 = Zo(t2);
+      s2 = Pt(p3), c2 = Bt(p3, "reject"), Lt(p3), n2 = { year: m39, month: f3, day: y2 };
     }
     let u2 = 0;
-    return "option" === h2 && (u2 = sr(i2)), $n(mn(n2, r2, h2, u2, o2, s2, c2, d2), o2, a2);
+    return "option" === h3 && (u2 = sr(i2)), $n(mn(n2, r2, h3, u2, o2, s2, c2, d3), o2, a2);
   }
   function yn(e2, t2, n2) {
     Lr(t2), te(e2), oe(e2, D, t2), oe(e2, E, n2), oe(e2, I, true);
@@ -21764,8 +21772,8 @@
   }
   function zn(e2, t2) {
     const n2 = Fn3(e2, t2);
-    let { isoDate: { year: r2, month: o2, day: i2 }, time: { hour: a2, minute: s2, second: c2, millisecond: d2, microsecond: h2, nanosecond: u2 } } = gr(t2);
-    return $r(r2, o2, i2, a2, s2, c2, d2, h2, u2 + n2);
+    let { isoDate: { year: r2, month: o2, day: i2 }, time: { hour: a2, minute: s2, second: c2, millisecond: d3, microsecond: h3, nanosecond: u2 } } = gr(t2);
+    return $r(r2, o2, i2, a2, s2, c2, d3, h3, u2 + n2);
   }
   function An(e2, t2, n2) {
     return qn(Wn(e2, t2), e2, t2, n2);
@@ -21785,17 +21793,17 @@
     if ("reject" === o2) throw new RangeError("multiple instants found");
     const a2 = pr(r2), s2 = import_jsbi.default.subtract(a2, l);
     Fr(s2);
-    const c2 = Fn3(n2, s2), d2 = import_jsbi.default.add(a2, l);
-    Fr(d2);
-    const h2 = Fn3(n2, d2) - c2;
+    const c2 = Fn3(n2, s2), d3 = import_jsbi.default.add(a2, l);
+    Fr(d3);
+    const h3 = Fn3(n2, d3) - c2;
     switch (o2) {
       case "earlier": {
-        const e2 = TimeDuration.fromComponents(0, 0, 0, 0, 0, -h2), t3 = fo(r2.time, e2);
+        const e2 = TimeDuration.fromComponents(0, 0, 0, 0, 0, -h3), t3 = fo(r2.time, e2);
         return Wn(n2, xt(Or(r2.isoDate.year, r2.isoDate.month, r2.isoDate.day + t3.deltaDays), t3))[0];
       }
       case "compatible":
       case "later": {
-        const e2 = TimeDuration.fromComponents(0, 0, 0, 0, 0, h2), t3 = fo(r2.time, e2), o3 = Wn(n2, xt(Or(r2.isoDate.year, r2.isoDate.month, r2.isoDate.day + t3.deltaDays), t3));
+        const e2 = TimeDuration.fromComponents(0, 0, 0, 0, 0, h3), t3 = fo(r2.time, e2), o3 = Wn(n2, xt(Or(r2.isoDate.year, r2.isoDate.month, r2.isoDate.day + t3.deltaDays), t3));
         return o3[o3.length - 1];
       }
     }
@@ -21816,8 +21824,8 @@
       import_jsbi.default.greaterThan(i2, Ne) && (i2 = r3);
       const a2 = lr(t3, o2), s2 = lr(t3, i2), c2 = (a2 === s2 ? [a2] : [a2, s2]).map(((o3) => {
         const i3 = import_jsbi.default.subtract(r3, import_jsbi.default.BigInt(o3)), a3 = (function(e2, t4) {
-          const { epochMilliseconds: n4, time: { millisecond: r4, microsecond: o4, nanosecond: i4 } } = gr(t4), { year: a4, month: s3, day: c3, hour: d2, minute: h2, second: u2 } = br(e2, n4);
-          return $r(a4, s3, c3, d2, h2, u2, r4, o4, i4);
+          const { epochMilliseconds: n4, time: { millisecond: r4, microsecond: o4, nanosecond: i4 } } = gr(t4), { year: a4, month: s3, day: c3, hour: d3, minute: h3, second: u2 } = br(e2, n4);
+          return $r(a4, s3, c3, d3, h3, u2, r4, o4, i4);
         })(t3, i3);
         if (0 === jo(n3, a3)) return Fr(i3), i3;
       }));
@@ -21861,14 +21869,14 @@
   }
   function Qn(e2, t2) {
     const n2 = re(e2, Y), r2 = re(e2, R), o2 = re(e2, S), i2 = re(e2, j), a2 = re(e2, k), s2 = re(e2, N), c2 = Mr(e2);
-    let d2 = "";
-    0 !== n2 && (d2 += `${Math.abs(n2)}Y`), 0 !== r2 && (d2 += `${Math.abs(r2)}M`), 0 !== o2 && (d2 += `${Math.abs(o2)}W`), 0 !== i2 && (d2 += `${Math.abs(i2)}D`);
-    let h2 = "";
-    0 !== a2 && (h2 += `${Math.abs(a2)}H`), 0 !== s2 && (h2 += `${Math.abs(s2)}M`);
+    let d3 = "";
+    0 !== n2 && (d3 += `${Math.abs(n2)}Y`), 0 !== r2 && (d3 += `${Math.abs(r2)}M`), 0 !== o2 && (d3 += `${Math.abs(o2)}W`), 0 !== i2 && (d3 += `${Math.abs(i2)}D`);
+    let h3 = "";
+    0 !== a2 && (h3 += `${Math.abs(a2)}H`), 0 !== s2 && (h3 += `${Math.abs(s2)}M`);
     const u2 = TimeDuration.fromComponents(0, 0, re(e2, x), re(e2, L), re(e2, P), re(e2, U));
-    u2.isZero() && !["second", "millisecond", "microsecond", "nanosecond"].includes(Jt(e2)) && "auto" === t2 || (h2 += `${Math.abs(u2.sec)}${Kn(Math.abs(u2.subsec), t2)}S`);
-    let l2 = `${c2 < 0 ? "-" : ""}P${d2}`;
-    return h2 && (l2 = `${l2}T${h2}`), l2;
+    u2.isZero() && !["second", "millisecond", "microsecond", "nanosecond"].includes(Jt(e2)) && "auto" === t2 || (h3 += `${Math.abs(u2.sec)}${Kn(Math.abs(u2.subsec), t2)}S`);
+    let l2 = `${c2 < 0 ? "-" : ""}P${d3}`;
+    return h3 && (l2 = `${l2}T${h3}`), l2;
   }
   function er(e2, t2 = "auto") {
     const { year: n2, month: r2, day: o2 } = re(e2, D);
@@ -21878,8 +21886,8 @@
     return Vn(e2, t2, n2, 1e6 * r2 + 1e3 * o2 + i2, a2);
   }
   function nr(e2, t2, n2, r2 = "auto") {
-    const { isoDate: { year: o2, month: i2, day: a2 }, time: { hour: s2, minute: c2, second: d2, millisecond: h2, microsecond: u2, nanosecond: l2 } } = e2;
-    return `${Jn(o2)}-${Gn(i2)}-${Gn(a2)}T${Vn(s2, c2, d2, 1e6 * h2 + 1e3 * u2 + l2, n2)}${Dt(t2, r2)}`;
+    const { isoDate: { year: o2, month: i2, day: a2 }, time: { hour: s2, minute: c2, second: d3, millisecond: h3, microsecond: u2, nanosecond: l2 } } = e2;
+    return `${Jn(o2)}-${Gn(i2)}-${Gn(a2)}T${Vn(s2, c2, d3, 1e6 * h3 + 1e3 * u2 + l2, n2)}${Dt(t2, r2)}`;
   }
   function rr(e2, t2 = "auto") {
     const { year: n2, month: r2, day: o2 } = re(e2, D);
@@ -21904,8 +21912,8 @@
       a2 = Io(a2, t3, e3, n3);
     }
     const s2 = re(e2, $), c2 = Fn3(s2, a2);
-    let d2 = nr(zn(s2, a2), "iso8601", t2, "never");
-    return "never" !== o2 && (d2 += fr(c2)), "never" !== r2 && (d2 += `[${"critical" === r2 ? "!" : ""}${s2}]`), d2 += Dt(re(e2, E), n2), d2;
+    let d3 = nr(zn(s2, a2), "iso8601", t2, "never");
+    return "never" !== o2 && (d3 += fr(c2)), "never" !== r2 && (d3 += `[${"critical" === r2 ? "!" : ""}${s2}]`), d3 += Dt(re(e2, E), n2), d3;
   }
   function ar(e2) {
     return $t.test(e2);
@@ -21960,8 +21968,8 @@
     return mr(Eo(e2, je, "halfExpand") / 6e10);
   }
   function yr({ isoDate: { year: e2, month: t2, day: n2 }, time: { hour: r2, minute: o2, second: i2, millisecond: a2 } }) {
-    const s2 = e2 % 400, c2 = (e2 - s2) / 400, d2 = /* @__PURE__ */ new Date();
-    return d2.setUTCHours(r2, o2, i2, a2), d2.setUTCFullYear(s2, t2 - 1, n2), d2.getTime() + Ue * c2;
+    const s2 = e2 % 400, c2 = (e2 - s2) / 400, d3 = /* @__PURE__ */ new Date();
+    return d3.setUTCHours(r2, o2, i2, a2), d3.setUTCFullYear(s2, t2 - 1, n2), d3.getTime() + Ue * c2;
   }
   function pr(t2) {
     const n2 = yr(t2), r2 = 1e3 * t2.time.microsecond + t2.time.nanosecond;
@@ -21998,12 +22006,12 @@
     }
     let a2 = r2 - 1;
     if (a2 < Fe) return null;
-    let s2 = ur(t2, a2), c2 = a2, d2 = s2;
-    for (; s2 === d2 && a2 > Fe; ) {
+    let s2 = ur(t2, a2), c2 = a2, d3 = s2;
+    for (; s2 === d3 && a2 > Fe; ) {
       if (c2 = a2 - 2 * Re * 7, c2 < Fe) return null;
-      d2 = ur(t2, c2), s2 === d2 && (a2 = c2);
+      d3 = ur(t2, c2), s2 === d3 && (a2 = c2);
     }
-    return s2 === d2 ? null : xo(Jo(((e2) => ur(t2, e2)), c2, a2, d2, s2));
+    return s2 === d3 ? null : xo(Jo(((e2) => ur(t2, e2)), c2, a2, d3, s2));
   }
   function br(e2, t2) {
     return (function(e3) {
@@ -22067,14 +22075,14 @@
     return { year: r2, month: o2, day: i2 };
   }
   function $r(e2, t2, n2, r2, o2, i2, a2, s2, c2) {
-    const d2 = Yr(r2, o2, i2, a2, s2, c2);
-    return xt(Or(e2, t2, n2 + d2.deltaDays), d2);
+    const d3 = Yr(r2, o2, i2, a2, s2, c2);
+    return xt(Or(e2, t2, n2 + d3.deltaDays), d3);
   }
   function Yr(e2, t2, n2, r2, o2, i2) {
-    let a2, s2 = e2, c2 = t2, d2 = n2, h2 = r2, u2 = o2, l2 = i2;
-    ({ div: a2, mod: l2 } = de(l2, 3)), u2 += a2, l2 < 0 && (u2 -= 1, l2 += 1e3), { div: a2, mod: u2 } = de(u2, 3), h2 += a2, u2 < 0 && (h2 -= 1, u2 += 1e3), d2 += Math.trunc(h2 / 1e3), h2 %= 1e3, h2 < 0 && (d2 -= 1, h2 += 1e3), c2 += Math.trunc(d2 / 60), d2 %= 60, d2 < 0 && (c2 -= 1, d2 += 60), s2 += Math.trunc(c2 / 60), c2 %= 60, c2 < 0 && (s2 -= 1, c2 += 60);
+    let a2, s2 = e2, c2 = t2, d3 = n2, h3 = r2, u2 = o2, l2 = i2;
+    ({ div: a2, mod: l2 } = de(l2, 3)), u2 += a2, l2 < 0 && (u2 -= 1, l2 += 1e3), { div: a2, mod: u2 } = de(u2, 3), h3 += a2, u2 < 0 && (h3 -= 1, u2 += 1e3), d3 += Math.trunc(h3 / 1e3), h3 %= 1e3, h3 < 0 && (d3 -= 1, h3 += 1e3), c2 += Math.trunc(d3 / 60), d3 %= 60, d3 < 0 && (c2 -= 1, d3 += 60), s2 += Math.trunc(c2 / 60), c2 %= 60, c2 < 0 && (s2 -= 1, c2 += 60);
     let m39 = Math.trunc(s2 / 24);
-    return s2 %= 24, s2 < 0 && (m39 -= 1, s2 += 24), m39 += 0, s2 += 0, c2 += 0, d2 += 0, h2 += 0, u2 += 0, l2 += 0, { deltaDays: m39, hour: s2, minute: c2, second: d2, millisecond: h2, microsecond: u2, nanosecond: l2 };
+    return s2 %= 24, s2 < 0 && (m39 -= 1, s2 += 24), m39 += 0, s2 += 0, c2 += 0, d3 += 0, h3 += 0, u2 += 0, l2 += 0, { deltaDays: m39, hour: s2, minute: c2, second: d3, millisecond: h3, microsecond: u2, nanosecond: l2 };
   }
   function Rr(e2, t2) {
     const n2 = Nt(e2, 0);
@@ -22120,21 +22128,21 @@
   function Hr({ year: e2, month: t2 }) {
     Nr(e2, Be, Ze), e2 === Be ? Nr(t2, 4, 12) : e2 === Ze && Nr(t2, 1, 9);
   }
-  function zr(e2, t2, n2, r2, o2, i2, a2, s2, c2, d2) {
-    let h2 = 0;
-    const u2 = [e2, t2, n2, r2, o2, i2, a2, s2, c2, d2];
+  function zr(e2, t2, n2, r2, o2, i2, a2, s2, c2, d3) {
+    let h3 = 0;
+    const u2 = [e2, t2, n2, r2, o2, i2, a2, s2, c2, d3];
     for (let e3 = 0; e3 < u2.length; e3++) {
       const t3 = u2[e3];
       if (t3 === 1 / 0 || t3 === -1 / 0) throw new RangeError("infinite values not allowed as duration fields");
       if (0 !== t3) {
         const e4 = t3 < 0 ? -1 : 1;
-        if (0 !== h2 && e4 !== h2) throw new RangeError("mixed-sign values not allowed as duration fields");
-        h2 = e4;
+        if (0 !== h3 && e4 !== h3) throw new RangeError("mixed-sign values not allowed as duration fields");
+        h3 = e4;
       }
     }
     if (Math.abs(e2) >= 2 ** 32 || Math.abs(t2) >= 2 ** 32 || Math.abs(n2) >= 2 ** 32) throw new RangeError("years, months, and weeks must be < 2\xB3\xB2");
-    const l2 = de(s2, 3), m39 = de(c2, 6), f2 = de(d2, 9), y2 = de(1e6 * l2.mod + 1e3 * m39.mod + f2.mod, 9).div, p2 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m39.div + f2.div + y2;
-    if (!Number.isSafeInteger(p2)) throw new RangeError("total of duration time units cannot exceed 9007199254740991.999999999 s");
+    const l2 = de(s2, 3), m39 = de(c2, 6), f3 = de(d3, 9), y2 = de(1e6 * l2.mod + 1e3 * m39.mod + f3.mod, 9).div, p3 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m39.div + f3.div + y2;
+    if (!Number.isSafeInteger(p3)) throw new RangeError("total of duration time units cannot exceed 9007199254740991.999999999 s");
   }
   function Ar(e2) {
     return { date: { years: re(e2, Y), months: re(e2, R), weeks: re(e2, S), days: re(e2, j) }, time: TimeDuration.fromComponents(re(e2, k), re(e2, N), re(e2, x), re(e2, L), re(e2, P), re(e2, U)) };
@@ -22149,13 +22157,13 @@
   }
   function _r(e2, t2) {
     const n2 = e2.time.sign();
-    let r2 = e2.time.abs().subsec, o2 = 0, i2 = 0, a2 = e2.time.abs().sec, s2 = 0, c2 = 0, d2 = 0;
+    let r2 = e2.time.abs().subsec, o2 = 0, i2 = 0, a2 = e2.time.abs().sec, s2 = 0, c2 = 0, d3 = 0;
     switch (t2) {
       case "year":
       case "month":
       case "week":
       case "day":
-        o2 = Math.trunc(r2 / 1e3), r2 %= 1e3, i2 = Math.trunc(o2 / 1e3), o2 %= 1e3, a2 += Math.trunc(i2 / 1e3), i2 %= 1e3, s2 = Math.trunc(a2 / 60), a2 %= 60, c2 = Math.trunc(s2 / 60), s2 %= 60, d2 = Math.trunc(c2 / 24), c2 %= 24;
+        o2 = Math.trunc(r2 / 1e3), r2 %= 1e3, i2 = Math.trunc(o2 / 1e3), o2 %= 1e3, a2 += Math.trunc(i2 / 1e3), i2 %= 1e3, s2 = Math.trunc(a2 / 60), a2 %= 60, c2 = Math.trunc(s2 / 60), s2 %= 60, d3 = Math.trunc(c2 / 24), c2 %= 24;
         break;
       case "hour":
         o2 = Math.trunc(r2 / 1e3), r2 %= 1e3, i2 = Math.trunc(o2 / 1e3), o2 %= 1e3, a2 += Math.trunc(i2 / 1e3), i2 %= 1e3, s2 = Math.trunc(a2 / 60), a2 %= 60, c2 = Math.trunc(s2 / 60), s2 %= 60;
@@ -22175,7 +22183,7 @@
       case "nanosecond":
         r2 = he(a2, 9, r2), a2 = 0;
     }
-    return new (ce("%Temporal.Duration%"))(e2.date.years, e2.date.months, e2.date.weeks, e2.date.days + n2 * d2, n2 * c2, n2 * s2, n2 * a2, n2 * i2, n2 * o2, n2 * r2);
+    return new (ce("%Temporal.Duration%"))(e2.date.years, e2.date.months, e2.date.weeks, e2.date.days + n2 * d3, n2 * c2, n2 * s2, n2 * a2, n2 * i2, n2 * o2, n2 * r2);
   }
   function Jr(e2, t2) {
     return Er(e2), t2.sign(), { date: e2, time: t2 };
@@ -22200,101 +22208,101 @@
     const i2 = o2.sign(), a2 = Ro(e2.isoDate, t2.isoDate);
     let s2 = t2.isoDate;
     a2 === i2 && (s2 = Or(s2.year, s2.month, s2.day + i2), o2 = o2.add24HourDays(-i2));
-    const c2 = Gt("day", r2), d2 = jn(n2, e2.isoDate, s2, c2);
-    return r2 !== c2 && (o2 = o2.add24HourDays(d2.days), d2.days = 0), Jr(d2, o2);
+    const c2 = Gt("day", r2), d3 = jn(n2, e2.isoDate, s2, c2);
+    return r2 !== c2 && (o2 = o2.add24HourDays(d3.days), d3.days = 0), Jr(d3, o2);
   }
   function eo(n2, r2, o2, i2, a2) {
     const s2 = import_jsbi.default.subtract(r2, n2);
     if (import_jsbi.default.equal(s2, t)) return { date: { years: 0, months: 0, weeks: 0, days: 0 }, time: TimeDuration.ZERO };
-    const c2 = import_jsbi.default.lessThan(s2, t) ? -1 : 1, d2 = zn(o2, n2), h2 = zn(o2, r2);
-    let u2, l2 = 0, m39 = 1 === c2 ? 2 : 1, f2 = Vr(d2.time, h2.time);
-    for (f2.sign() === -c2 && l2++; l2 <= m39; l2++) {
-      u2 = xt(Or(h2.isoDate.year, h2.isoDate.month, h2.isoDate.day - l2 * c2), d2.time);
+    const c2 = import_jsbi.default.lessThan(s2, t) ? -1 : 1, d3 = zn(o2, n2), h3 = zn(o2, r2);
+    let u2, l2 = 0, m39 = 1 === c2 ? 2 : 1, f3 = Vr(d3.time, h3.time);
+    for (f3.sign() === -c2 && l2++; l2 <= m39; l2++) {
+      u2 = xt(Or(h3.isoDate.year, h3.isoDate.month, h3.isoDate.day - l2 * c2), d3.time);
       const e2 = An(o2, u2, "compatible");
-      if (f2 = TimeDuration.fromEpochNsDiff(r2, e2), f2.sign() !== -c2) break;
+      if (f3 = TimeDuration.fromEpochNsDiff(r2, e2), f3.sign() !== -c2) break;
     }
     const y2 = Gt("day", a2);
-    return Jr(jn(i2, d2.isoDate, u2.isoDate, y2), f2);
+    return Jr(jn(i2, d3.isoDate, u2.isoDate, y2), f3);
   }
-  function to(t2, n2, r2, o2, i2, a2, s2, c2, d2) {
-    let h2, u2, l2, m39, f2 = n2;
+  function to(t2, n2, r2, o2, i2, a2, s2, c2, d3) {
+    let h3, u2, l2, m39, f3 = n2;
     switch (c2) {
       case "year": {
-        const e2 = Eo(f2.date.years, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = { years: h2, months: 0, weeks: 0, days: 0 }, m39 = { ...l2, years: u2 };
+        const e2 = Eo(f3.date.years, s2, "trunc");
+        h3 = e2, u2 = e2 + s2 * t2, l2 = { years: h3, months: 0, weeks: 0, days: 0 }, m39 = { ...l2, years: u2 };
         break;
       }
       case "month": {
-        const e2 = Eo(f2.date.months, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, 0, 0, h2), m39 = Nt(f2.date, 0, 0, u2);
+        const e2 = Eo(f3.date.months, s2, "trunc");
+        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, 0, 0, h3), m39 = Nt(f3.date, 0, 0, u2);
         break;
       }
       case "week": {
-        const e2 = Nt(f2.date, 0, 0), n3 = Sn(a2, o2.isoDate, e2, "constrain"), r3 = jn(a2, n3, Or(n3.year, n3.month, n3.day + f2.date.days), "week"), i3 = Eo(f2.date.weeks + r3.weeks, s2, "trunc");
-        h2 = i3, u2 = i3 + s2 * t2, l2 = Nt(f2.date, 0, h2), m39 = Nt(f2.date, 0, u2);
+        const e2 = Nt(f3.date, 0, 0), n3 = Sn(a2, o2.isoDate, e2, "constrain"), r3 = jn(a2, n3, Or(n3.year, n3.month, n3.day + f3.date.days), "week"), i3 = Eo(f3.date.weeks + r3.weeks, s2, "trunc");
+        h3 = i3, u2 = i3 + s2 * t2, l2 = Nt(f3.date, 0, h3), m39 = Nt(f3.date, 0, u2);
         break;
       }
       case "day": {
-        const e2 = Eo(f2.date.days, s2, "trunc");
-        h2 = e2, u2 = e2 + s2 * t2, l2 = Nt(f2.date, h2), m39 = Nt(f2.date, u2);
+        const e2 = Eo(f3.date.days, s2, "trunc");
+        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, h3), m39 = Nt(f3.date, u2);
         break;
       }
     }
-    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p2 = Sn(a2, o2.isoDate, m39, "constrain");
+    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p3 = Sn(a2, o2.isoDate, m39, "constrain");
     let g2, w2;
-    const v2 = xt(y2, o2.time), b2 = xt(p2, o2.time);
+    const v2 = xt(y2, o2.time), b2 = xt(p3, o2.time);
     i2 ? (g2 = An(i2, v2, "compatible"), w2 = An(i2, b2, "compatible")) : (g2 = pr(v2), w2 = pr(b2));
-    const D2 = TimeDuration.fromEpochNsDiff(r2, g2), T2 = TimeDuration.fromEpochNsDiff(w2, g2), M2 = ue(d2, t2 < 0 ? "negative" : "positive"), E2 = D2.add(D2).abs().subtract(T2.abs()).sign(), I2 = Math.abs(h2) / s2 % 2 == 0, C2 = D2.isZero() ? Math.abs(h2) : D2.cmp(T2) ? le(Math.abs(h2), Math.abs(u2), E2, I2, M2) : Math.abs(u2), O2 = new TimeDuration(import_jsbi.default.add(import_jsbi.default.multiply(T2.totalNs, import_jsbi.default.BigInt(h2)), import_jsbi.default.multiply(D2.totalNs, import_jsbi.default.BigInt(s2 * t2)))).fdiv(T2.totalNs), $2 = C2 === Math.abs(u2);
-    return f2 = { date: $2 ? m39 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f2, nudgedEpochNs: $2 ? w2 : g2, didExpandCalendarUnit: $2 }, total: O2 };
+    const D3 = TimeDuration.fromEpochNsDiff(r2, g2), T2 = TimeDuration.fromEpochNsDiff(w2, g2), M3 = ue(d3, t2 < 0 ? "negative" : "positive"), E2 = D3.add(D3).abs().subtract(T2.abs()).sign(), I2 = Math.abs(h3) / s2 % 2 == 0, C3 = D3.isZero() ? Math.abs(h3) : D3.cmp(T2) ? le(Math.abs(h3), Math.abs(u2), E2, I2, M3) : Math.abs(u2), O3 = new TimeDuration(import_jsbi.default.add(import_jsbi.default.multiply(T2.totalNs, import_jsbi.default.BigInt(h3)), import_jsbi.default.multiply(D3.totalNs, import_jsbi.default.BigInt(s2 * t2)))).fdiv(T2.totalNs), $3 = C3 === Math.abs(u2);
+    return f3 = { date: $3 ? m39 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f3, nudgedEpochNs: $3 ? w2 : g2, didExpandCalendarUnit: $3 }, total: O3 };
   }
-  function no(t2, n2, r2, o2, i2, a2, s2, c2, d2) {
-    let h2 = t2;
-    const u2 = Kt(c2) || o2 && "day" === c2, l2 = Ir(h2) < 0 ? -1 : 1;
+  function no(t2, n2, r2, o2, i2, a2, s2, c2, d3) {
+    let h3 = t2;
+    const u2 = Kt(c2) || o2 && "day" === c2, l2 = Ir(h3) < 0 ? -1 : 1;
     let m39;
-    return u2 ? { nudgeResult: m39 } = to(l2, h2, n2, r2, o2, i2, s2, c2, d2) : m39 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
-      let d3 = n3;
-      const h3 = Sn(i3, r3.isoDate, d3.date, "constrain"), u3 = xt(h3, r3.time), l3 = xt(Or(h3.year, h3.month, h3.day + t3), r3.time), m40 = An(o3, u3, "compatible"), f2 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f2, m40);
+    return u2 ? { nudgeResult: m39 } = to(l2, h3, n2, r2, o2, i2, s2, c2, d3) : m39 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
+      let d4 = n3;
+      const h4 = Sn(i3, r3.isoDate, d4.date, "constrain"), u3 = xt(h4, r3.time), l3 = xt(Or(h4.year, h4.month, h4.day + t3), r3.time), m40 = An(o3, u3, "compatible"), f3 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f3, m40);
       if (y2.sign() !== t3) throw new RangeError("time zone returned inconsistent Instants");
-      const p2 = import_jsbi.default.BigInt(at[s3] * a3);
-      let g2 = d3.time.round(p2, c3);
+      const p3 = import_jsbi.default.BigInt(at[s3] * a3);
+      let g2 = d4.time.round(p3, c3);
       const w2 = g2.subtract(y2), v2 = w2.sign() !== -t3;
-      let b2, D2;
-      return v2 ? (b2 = t3, g2 = w2.round(p2, c3), D2 = g2.addToEpochNs(f2)) : (b2 = 0, D2 = g2.addToEpochNs(m40)), { duration: Jr(Nt(d3.date, d3.date.days + b2), g2), nudgedEpochNs: D2, didExpandCalendarUnit: v2 };
-    })(l2, h2, r2, o2, i2, s2, c2, d2) : (function(t3, n3, r3, o3, i3, a3) {
+      let b2, D3;
+      return v2 ? (b2 = t3, g2 = w2.round(p3, c3), D3 = g2.addToEpochNs(f3)) : (b2 = 0, D3 = g2.addToEpochNs(m40)), { duration: Jr(Nt(d4.date, d4.date.days + b2), g2), nudgedEpochNs: D3, didExpandCalendarUnit: v2 };
+    })(l2, h3, r2, o2, i2, s2, c2, d3) : (function(t3, n3, r3, o3, i3, a3) {
       let s3 = t3;
-      const c3 = s3.time.add24HourDays(s3.date.days), d3 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h3 = d3.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d3.divmod(Se), m40 = Math.sign(l3 - u3) === c3.sign(), f2 = h3.addToEpochNs(n3);
-      let y2 = 0, p2 = d3;
-      return "date" === Vt(r3) && (y2 = l3, p2 = d3.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p2 }, nudgedEpochNs: f2, didExpandCalendarUnit: m40 };
-    })(h2, n2, a2, s2, c2, d2), h2 = m39.duration, m39.didExpandCalendarUnit && "week" !== c2 && (h2 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
+      const c3 = s3.time.add24HourDays(s3.date.days), d4 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h4 = d4.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d4.divmod(Se), m40 = Math.sign(l3 - u3) === c3.sign(), f3 = h4.addToEpochNs(n3);
+      let y2 = 0, p3 = d4;
+      return "date" === Vt(r3) && (y2 = l3, p3 = d4.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p3 }, nudgedEpochNs: f3, didExpandCalendarUnit: m40 };
+    })(h3, n2, a2, s2, c2, d3), h3 = m39.duration, m39.didExpandCalendarUnit && "week" !== c2 && (h3 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
       let c3 = t3;
       if (s3 === a3) return c3;
-      const d3 = it.indexOf(a3);
-      for (let t4 = it.indexOf(s3) - 1; t4 >= d3; t4--) {
+      const d4 = it.indexOf(a3);
+      for (let t4 = it.indexOf(s3) - 1; t4 >= d4; t4--) {
         const s4 = it[t4];
         if ("week" === s4 && "week" !== a3) continue;
-        let d4;
+        let d5;
         switch (s4) {
           case "year":
-            d4 = { years: c3.date.years + e2, months: 0, weeks: 0, days: 0 };
+            d5 = { years: c3.date.years + e2, months: 0, weeks: 0, days: 0 };
             break;
           case "month": {
             const t5 = c3.date.months + e2;
-            d4 = Nt(c3.date, 0, 0, t5);
+            d5 = Nt(c3.date, 0, 0, t5);
             break;
           }
           case "week": {
             const t5 = c3.date.weeks + e2;
-            d4 = Nt(c3.date, 0, t5);
+            d5 = Nt(c3.date, 0, t5);
             break;
           }
         }
-        const h3 = xt(Sn(i3, r3.isoDate, d4, "constrain"), r3.time);
+        const h4 = xt(Sn(i3, r3.isoDate, d5, "constrain"), r3.time);
         let u3;
-        if (u3 = o3 ? An(o3, h3, "compatible") : pr(h3), p(n3, u3) === -e2) break;
-        c3 = { date: d4, time: TimeDuration.ZERO };
+        if (u3 = o3 ? An(o3, h4, "compatible") : pr(h4), p(n3, u3) === -e2) break;
+        c3 = { date: d5, time: TimeDuration.ZERO };
       }
       return c3;
-    })(l2, h2, m39.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h2;
+    })(l2, h3, m39.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h3;
   }
   function ro(e2, t2, n2, r2, o2, i2) {
     return Kt(i2) || r2 && "day" === i2 ? to(Ir(e2) < 0 ? -1 : 1, e2, t2, n2, r2, o2, 1, i2, "trunc").total : Yo(e2.time.add24HourDays(e2.date.days), i2);
@@ -22318,8 +22326,8 @@
     let s2 = Wt(t2, "largestUnit", n2, "auto");
     if (r2.includes(s2)) throw new RangeError(`largestUnit must be one of ${a2.join(", ")}, not ${s2}`);
     const c2 = Ft(t2);
-    let d2 = Ut(t2, "trunc");
-    "since" === e2 && (d2 = (function(e3) {
+    let d3 = Ut(t2, "trunc");
+    "since" === e2 && (d3 = (function(e3) {
       switch (e3) {
         case "ceil":
           return "floor";
@@ -22332,13 +22340,13 @@
         default:
           return e3;
       }
-    })(d2));
-    const h2 = Wt(t2, "smallestUnit", n2, o2);
-    if (r2.includes(h2)) throw new RangeError(`smallestUnit must be one of ${a2.join(", ")}, not ${h2}`);
-    const u2 = Gt(i2, h2);
-    if ("auto" === s2 && (s2 = u2), Gt(s2, h2) !== s2) throw new RangeError(`largestUnit ${s2} cannot be smaller than smallestUnit ${h2}`);
-    const l2 = { hour: 24, minute: 60, second: 60, millisecond: 1e3, microsecond: 1e3, nanosecond: 1e3 }[h2];
-    return void 0 !== l2 && Ht(c2, l2, false), { largestUnit: s2, roundingIncrement: c2, roundingMode: d2, smallestUnit: h2 };
+    })(d3));
+    const h3 = Wt(t2, "smallestUnit", n2, o2);
+    if (r2.includes(h3)) throw new RangeError(`smallestUnit must be one of ${a2.join(", ")}, not ${h3}`);
+    const u2 = Gt(i2, h3);
+    if ("auto" === s2 && (s2 = u2), Gt(s2, h3) !== s2) throw new RangeError(`largestUnit ${s2} cannot be smaller than smallestUnit ${h3}`);
+    const l2 = { hour: 24, minute: 60, second: 60, millisecond: 1e3, microsecond: 1e3, nanosecond: 1e3 }[h3];
+    return void 0 !== l2 && Ht(c2, l2, false), { largestUnit: s2, roundingIncrement: c2, roundingMode: d3, smallestUnit: h3 };
   }
   function so(e2, t2, n2, r2) {
     const o2 = cn(n2), i2 = ao(e2, Zo(r2), "time", [], "nanosecond", "second");
@@ -22348,12 +22356,12 @@
   function co(e2, t2, n2, r2) {
     const o2 = rn(n2), i2 = re(t2, E), a2 = re(o2, E);
     if (!xn(i2, a2)) throw new RangeError(`cannot compute difference between dates of ${i2} and ${a2} calendars`);
-    const s2 = ao(e2, Zo(r2), "date", [], "day", "day"), c2 = ce("%Temporal.Duration%"), d2 = re(t2, D), h2 = re(o2, D);
-    if (0 === Ro(d2, h2)) return new c2();
-    let u2 = { date: jn(i2, d2, h2, s2.largestUnit), time: TimeDuration.ZERO };
+    const s2 = ao(e2, Zo(r2), "date", [], "day", "day"), c2 = ce("%Temporal.Duration%"), d3 = re(t2, D), h3 = re(o2, D);
+    if (0 === Ro(d3, h3)) return new c2();
+    let u2 = { date: jn(i2, d3, h3, s2.largestUnit), time: TimeDuration.ZERO };
     if ("day" !== s2.smallestUnit || 1 !== s2.roundingIncrement) {
-      const e3 = xt(d2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
-      u2 = no(u2, pr(xt(h2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
+      const e3 = xt(d3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
+      u2 = no(u2, pr(xt(h3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
     }
     let l2 = _r(u2, "day");
     return "since" === e2 && (l2 = Sr(l2)), l2;
@@ -22361,9 +22369,9 @@
   function ho(e2, t2, n2, r2) {
     const o2 = an(n2), i2 = re(t2, E), a2 = re(o2, E);
     if (!xn(i2, a2)) throw new RangeError(`cannot compute difference between dates of ${i2} and ${a2} calendars`);
-    const s2 = ao(e2, Zo(r2), "datetime", [], "nanosecond", "day"), c2 = ce("%Temporal.Duration%"), d2 = re(t2, T), h2 = re(o2, T);
-    if (0 === jo(d2, h2)) return new c2();
-    let u2 = _r(oo(d2, h2, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode), s2.largestUnit);
+    const s2 = ao(e2, Zo(r2), "datetime", [], "nanosecond", "day"), c2 = ce("%Temporal.Duration%"), d3 = re(t2, T), h3 = re(o2, T);
+    if (0 === jo(d3, h3)) return new c2();
+    let u2 = _r(oo(d3, h3, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode), s2.largestUnit);
     return "since" === e2 && (u2 = Sr(u2)), u2;
   }
   function uo(e2, t2, n2, r2) {
@@ -22378,30 +22386,30 @@
     if (!xn(i2, a2)) throw new RangeError(`cannot compute difference between months of ${i2} and ${a2} calendars`);
     const s2 = ao(e2, Zo(r2), "date", ["week", "day"], "month", "year"), c2 = ce("%Temporal.Duration%");
     if (0 == Ro(re(t2, D), re(o2, D))) return new c2();
-    const d2 = en(i2, re(t2, D), "year-month");
-    d2.day = 1;
-    const h2 = Ln(i2, d2, "constrain"), u2 = en(i2, re(o2, D), "year-month");
+    const d3 = en(i2, re(t2, D), "year-month");
+    d3.day = 1;
+    const h3 = Ln(i2, d3, "constrain"), u2 = en(i2, re(o2, D), "year-month");
     u2.day = 1;
     const l2 = Ln(i2, u2, "constrain");
-    let m39 = { date: Nt(jn(i2, h2, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
+    let m39 = { date: Nt(jn(i2, h3, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
     if ("month" !== s2.smallestUnit || 1 !== s2.roundingIncrement) {
-      const e3 = xt(h2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
+      const e3 = xt(h3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
       m39 = no(m39, pr(xt(l2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
     }
-    let f2 = _r(m39, "day");
-    return "since" === e2 && (f2 = Sr(f2)), f2;
+    let f3 = _r(m39, "day");
+    return "since" === e2 && (f3 = Sr(f3)), f3;
   }
   function mo(t2, n2, r2, o2) {
     const i2 = fn(r2), a2 = re(n2, E), s2 = re(i2, E);
     if (!xn(a2, s2)) throw new RangeError(`cannot compute difference between dates of ${a2} and ${s2} calendars`);
-    const c2 = ao(t2, Zo(o2), "datetime", [], "nanosecond", "hour"), d2 = re(n2, b), h2 = re(i2, b), u2 = ce("%Temporal.Duration%");
+    const c2 = ao(t2, Zo(o2), "datetime", [], "nanosecond", "hour"), d3 = re(n2, b), h3 = re(i2, b), u2 = ce("%Temporal.Duration%");
     let l2;
-    if ("date" !== Vt(c2.largestUnit)) l2 = _r(Xr(d2, h2, c2.roundingIncrement, c2.smallestUnit, c2.roundingMode), c2.largestUnit);
+    if ("date" !== Vt(c2.largestUnit)) l2 = _r(Xr(d3, h3, c2.roundingIncrement, c2.smallestUnit, c2.roundingMode), c2.largestUnit);
     else {
       const t3 = re(n2, $);
       if (!Zn(t3, re(i2, $))) throw new RangeError("When calculating difference between time zones, largestUnit must be 'hours' or smaller because day lengths can vary between time zones due to DST or time zone offset changes.");
-      if (import_jsbi.default.equal(d2, h2)) return new u2();
-      l2 = _r(io(d2, h2, t3, a2, c2.largestUnit, c2.roundingIncrement, c2.smallestUnit, c2.roundingMode), "hour");
+      if (import_jsbi.default.equal(d3, h3)) return new u2();
+      l2 = _r(io(d3, h3, t3, a2, c2.largestUnit, c2.roundingIncrement, c2.smallestUnit, c2.roundingMode), "hour");
     }
     return "since" === t2 && (l2 = Sr(l2)), l2;
   }
@@ -22444,27 +22452,27 @@
   function bo(e2, t2, n2, r2) {
     let o2 = sn(n2);
     "subtract" === e2 && (o2 = Sr(o2));
-    const i2 = Lt(Zo(r2)), a2 = re(t2, E), s2 = qr(o2), c2 = re(t2, T), d2 = fo(c2.time, s2.time), h2 = Nt(s2.date, d2.deltaDays);
-    return zr(h2.years, h2.months, h2.weeks, h2.days, 0, 0, 0, 0, 0, 0), wn(xt(Sn(a2, c2.isoDate, h2, i2), d2), a2);
+    const i2 = Lt(Zo(r2)), a2 = re(t2, E), s2 = qr(o2), c2 = re(t2, T), d3 = fo(c2.time, s2.time), h3 = Nt(s2.date, d3.deltaDays);
+    return zr(h3.years, h3.months, h3.weeks, h3.days, 0, 0, 0, 0, 0, 0), wn(xt(Sn(a2, c2.isoDate, h3, i2), d3), a2);
   }
   function Do(e2, t2, n2) {
     let r2 = sn(n2);
     "subtract" === e2 && (r2 = Sr(r2));
-    const o2 = qr(r2), { hour: i2, minute: a2, second: s2, millisecond: c2, microsecond: d2, nanosecond: h2 } = fo(re(t2, M), o2.time);
-    return Tn(jt(i2, a2, s2, c2, d2, h2, "reject"));
+    const o2 = qr(r2), { hour: i2, minute: a2, second: s2, millisecond: c2, microsecond: d3, nanosecond: h3 } = fo(re(t2, M), o2.time);
+    return Tn(jt(i2, a2, s2, c2, d3, h3, "reject"));
   }
   function To(e2, t2, n2, r2) {
     let o2 = sn(n2);
     "subtract" === e2 && (o2 = Sr(o2));
     const i2 = Lt(Zo(r2)), a2 = Mr(o2), s2 = re(t2, E), c2 = en(s2, re(t2, D), "year-month");
     c2.day = 1;
-    let d2 = Ln(s2, c2, "constrain");
+    let d3 = Ln(s2, c2, "constrain");
     if (a2 < 0) {
-      const e3 = Sn(s2, d2, { months: 1 }, "constrain");
-      d2 = Or(e3.year, e3.month, e3.day - 1);
+      const e3 = Sn(s2, d3, { months: 1 }, "constrain");
+      d3 = Or(e3.year, e3.month, e3.day - 1);
     }
-    const h2 = Wr(o2);
-    return Lr(d2), En(Pn(s2, en(s2, Sn(s2, d2, h2, i2), "year-month"), i2), s2);
+    const h3 = Wr(o2);
+    return Lr(d3), En(Pn(s2, en(s2, Sn(s2, d3, h3, i2), "year-month"), i2), s2);
   }
   function Mo(e2, t2, n2, r2) {
     let o2 = sn(n2);
@@ -22473,16 +22481,16 @@
     return $n(po(re(t2, b), a2, s2, c2, i2), a2, s2);
   }
   function Eo(e2, t2, n2) {
-    const r2 = Math.trunc(e2 / t2), o2 = e2 % t2, i2 = e2 < 0 ? "negative" : "positive", a2 = Math.abs(r2), s2 = a2 + 1, c2 = Bo(Math.abs(2 * o2) - t2), d2 = a2 % 2 == 0, h2 = ue(n2, i2), u2 = 0 === o2 ? a2 : le(a2, s2, c2, d2, h2);
+    const r2 = Math.trunc(e2 / t2), o2 = e2 % t2, i2 = e2 < 0 ? "negative" : "positive", a2 = Math.abs(r2), s2 = a2 + 1, c2 = Bo(Math.abs(2 * o2) - t2), d3 = a2 % 2 == 0, h3 = ue(n2, i2), u2 = 0 === o2 ? a2 : le(a2, s2, c2, d3, h3);
     return t2 * ("positive" === i2 ? u2 : -u2);
   }
   function Io(o2, i2, a2, s2) {
     const c2 = at[a2] * i2;
     return (function(o3, i3, a3) {
-      const s3 = m(o3), c3 = m(i3), d2 = import_jsbi.default.divide(s3, c3), h2 = import_jsbi.default.remainder(s3, c3), u2 = ue(a3, "positive");
+      const s3 = m(o3), c3 = m(i3), d3 = import_jsbi.default.divide(s3, c3), h3 = import_jsbi.default.remainder(s3, c3), u2 = ue(a3, "positive");
       let l2, g2;
-      import_jsbi.default.lessThan(s3, t) ? (l2 = import_jsbi.default.subtract(d2, n), g2 = d2) : (l2 = d2, g2 = import_jsbi.default.add(d2, n));
-      const w2 = p(y(import_jsbi.default.multiply(h2, r)), c3) * (import_jsbi.default.lessThan(s3, t) ? -1 : 1) + 0, v2 = import_jsbi.default.equal(h2, t) ? d2 : le(l2, g2, w2, f(l2), u2);
+      import_jsbi.default.lessThan(s3, t) ? (l2 = import_jsbi.default.subtract(d3, n), g2 = d3) : (l2 = d3, g2 = import_jsbi.default.add(d3, n));
+      const w2 = p(y(import_jsbi.default.multiply(h3, r)), c3) * (import_jsbi.default.lessThan(s3, t) ? -1 : 1) + 0, v2 = import_jsbi.default.equal(h3, t) ? d3 : le(l2, g2, w2, f(l2), u2);
       return import_jsbi.default.multiply(v2, c3);
     })(o2, import_jsbi.default.BigInt(c2), s2);
   }
@@ -22492,28 +22500,28 @@
     return xt(Or(o2, i2, a2 + s2.deltaDays), s2);
   }
   function Oo({ hour: e2, minute: t2, second: n2, millisecond: r2, microsecond: o2, nanosecond: i2 }, a2, s2, c2) {
-    let d2;
+    let d3;
     switch (s2) {
       case "day":
       case "hour":
-        d2 = 1e3 * (1e3 * (1e3 * (60 * (60 * e2 + t2) + n2) + r2) + o2) + i2;
+        d3 = 1e3 * (1e3 * (1e3 * (60 * (60 * e2 + t2) + n2) + r2) + o2) + i2;
         break;
       case "minute":
-        d2 = 1e3 * (1e3 * (1e3 * (60 * t2 + n2) + r2) + o2) + i2;
+        d3 = 1e3 * (1e3 * (1e3 * (60 * t2 + n2) + r2) + o2) + i2;
         break;
       case "second":
-        d2 = 1e3 * (1e3 * (1e3 * n2 + r2) + o2) + i2;
+        d3 = 1e3 * (1e3 * (1e3 * n2 + r2) + o2) + i2;
         break;
       case "millisecond":
-        d2 = 1e3 * (1e3 * r2 + o2) + i2;
+        d3 = 1e3 * (1e3 * r2 + o2) + i2;
         break;
       case "microsecond":
-        d2 = 1e3 * o2 + i2;
+        d3 = 1e3 * o2 + i2;
         break;
       case "nanosecond":
-        d2 = i2;
+        d3 = i2;
     }
-    const h2 = at[s2], u2 = Eo(d2, h2 * a2, c2) / h2;
+    const h3 = at[s2], u2 = Eo(d3, h3 * a2, c2) / h3;
     switch (s2) {
       case "day":
         return { deltaDays: u2, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 };
@@ -22645,16 +22653,16 @@
     const n2 = Xo[e2];
     let r2 = t2.year;
     const { dayOfWeek: o2, dayOfYear: i2, daysInYear: a2 } = n2.isoToDate(t2, { dayOfWeek: true, dayOfYear: true, daysInYear: true }), s2 = n2.getFirstDayOfWeek(), c2 = n2.getMinimalDaysInFirstWeek();
-    let d2 = (o2 + 7 - s2) % 7, h2 = (o2 - i2 + 7001 - s2) % 7, u2 = Math.floor((i2 - 1 + h2) / 7);
-    if (7 - h2 >= c2 && ++u2, 0 == u2) u2 = (function(e3, t3, n3, r3) {
+    let d3 = (o2 + 7 - s2) % 7, h3 = (o2 - i2 + 7001 - s2) % 7, u2 = Math.floor((i2 - 1 + h3) / 7);
+    if (7 - h3 >= c2 && ++u2, 0 == u2) u2 = (function(e3, t3, n3, r3) {
       let o3 = (r3 - e3 - n3 + 1) % 7;
       o3 < 0 && (o3 += 7);
       let i3 = Math.floor((n3 + o3 - 1) / 7);
       return 7 - o3 >= t3 && ++i3, i3;
     })(s2, c2, i2 + n2.isoToDate(n2.dateAdd(t2, { years: -1 }, "constrain"), { daysInYear: true }).daysInYear, o2), r2--;
     else if (i2 >= a2 - 5) {
-      let e3 = (d2 + a2 - i2) % 7;
-      e3 < 0 && (e3 += 7), 6 - e3 >= c2 && i2 + 7 - d2 > a2 && (u2 = 1, r2++);
+      let e3 = (d3 + a2 - i2) % 7;
+      e3 < 0 && (e3 += 7), 6 - e3 >= c2 && i2 + 7 - d3 > a2 && (u2 = 1, r2++);
     }
     return { week: u2, year: r2 };
   }
@@ -22719,8 +22727,8 @@
     }
     o2 = Cr(e2.year + i2, e2.month + a2);
     const s2 = kr(o2.year, o2.month, e2.day);
-    let c2 = 0, d2 = Gr(t2.year, t2.month - 1, t2.day) - Gr(s2.year, s2.month - 1, s2.day);
-    return "week" === n2 && (c2 = Math.trunc(d2 / 7), d2 %= 7), { years: i2, months: a2, weeks: c2, days: d2 };
+    let c2 = 0, d3 = Gr(t2.year, t2.month - 1, t2.day) - Gr(s2.year, s2.month - 1, s2.day);
+    return "week" === n2 && (c2 = Math.trunc(d3 / 7), d3 %= 7), { years: i2, months: a2, weeks: c2, days: d3 };
   }, isoToDate({ year: e2, month: t2, day: n2 }, r2) {
     const o2 = { era: void 0, eraYear: void 0, year: e2, month: t2, day: n2, daysInWeek: 7, monthsInYear: 12 };
     if (r2.monthCode && (o2.monthCode = ei(t2)), r2.dayOfWeek) {
@@ -22791,36 +22799,36 @@
     isoToCalendarDate(e2, t2) {
       const { year: n2, month: r2, day: o2 } = e2, i2 = JSON.stringify({ func: "isoToCalendarDate", isoYear: n2, isoMonth: r2, isoDay: o2, id: this.id }), a2 = t2.get(i2);
       if (a2) return a2;
-      const s2 = ni({ isoYear: n2, isoMonth: r2, isoDay: o2 }), c2 = this.getCalendarParts(s2), d2 = {};
+      const s2 = ni({ isoYear: n2, isoMonth: r2, isoDay: o2 }), c2 = this.getCalendarParts(s2), d3 = {};
       for (let e3 = 0; e3 < c2.length; e3++) {
         const { type: t3, value: n3 } = c2[e3];
-        if ("year" !== t3 && "relatedYear" !== t3 || (this.hasEra ? d2.eraYear = +n3 : d2.year = +n3), "month" === t3) {
+        if ("year" !== t3 && "relatedYear" !== t3 || (this.hasEra ? d3.eraYear = +n3 : d3.year = +n3), "month" === t3) {
           const e4 = /^([0-9]*)(.*?)$/.exec(n3);
           if (!e4 || 3 != e4.length || !e4[1] && !e4[2]) throw new RangeError(`Unexpected month: ${n3}`);
-          if (d2.month = e4[1] ? +e4[1] : 1, d2.month < 1) throw new RangeError(`Invalid month ${n3} from ${s2}[u-ca-${this.id}] (probably due to https://bugs.chromium.org/p/v8/issues/detail?id=10527)`);
-          if (d2.month > 13) throw new RangeError(`Invalid month ${n3} from ${s2}[u-ca-${this.id}] (probably due to https://bugs.chromium.org/p/v8/issues/detail?id=10529)`);
-          e4[2] && (d2.monthExtra = e4[2]);
+          if (d3.month = e4[1] ? +e4[1] : 1, d3.month < 1) throw new RangeError(`Invalid month ${n3} from ${s2}[u-ca-${this.id}] (probably due to https://bugs.chromium.org/p/v8/issues/detail?id=10527)`);
+          if (d3.month > 13) throw new RangeError(`Invalid month ${n3} from ${s2}[u-ca-${this.id}] (probably due to https://bugs.chromium.org/p/v8/issues/detail?id=10529)`);
+          e4[2] && (d3.monthExtra = e4[2]);
         }
-        "day" === t3 && (d2.day = +n3), this.hasEra && "era" === t3 && null != n3 && "" !== n3 && (d2.era = n3.split(" (")[0].normalize("NFD").replace(/[^-0-9 \p{L}]/gu, "").replace(/ /g, "-").toLowerCase());
+        "day" === t3 && (d3.day = +n3), this.hasEra && "era" === t3 && null != n3 && "" !== n3 && (d3.era = n3.split(" (")[0].normalize("NFD").replace(/[^-0-9 \p{L}]/gu, "").replace(/ /g, "-").toLowerCase());
       }
-      if (this.hasEra && void 0 === d2.eraYear) throw new RangeError(`Intl.DateTimeFormat.formatToParts lacks relatedYear in ${this.id} calendar. Try Node 14+ or modern browsers.`);
+      if (this.hasEra && void 0 === d3.eraYear) throw new RangeError(`Intl.DateTimeFormat.formatToParts lacks relatedYear in ${this.id} calendar. Try Node 14+ or modern browsers.`);
       if (this.hasEra) {
-        const e3 = this.eras.find(((e4) => d2.era === e4.genericName));
-        e3 && (d2.era = e3.code);
+        const e3 = this.eras.find(((e4) => d3.era === e4.genericName));
+        e3 && (d3.era = e3.code);
       }
       if (this.reviseIntlEra) {
-        const { era: t3, eraYear: n3 } = this.reviseIntlEra(d2, e2);
-        d2.era = t3, d2.eraYear = n3;
+        const { era: t3, eraYear: n3 } = this.reviseIntlEra(d3, e2);
+        d3.era = t3, d3.eraYear = n3;
       }
       this.checkIcuBugs && this.checkIcuBugs(e2);
-      const h2 = this.adjustCalendarDate(d2, t2, "constrain", true);
-      if (void 0 === h2.year) throw new RangeError(`Missing year converting ${JSON.stringify(e2)}`);
-      if (void 0 === h2.month) throw new RangeError(`Missing month converting ${JSON.stringify(e2)}`);
-      if (void 0 === h2.day) throw new RangeError(`Missing day converting ${JSON.stringify(e2)}`);
-      return t2.set(i2, h2), ["constrain", "reject"].forEach(((n3) => {
-        const r3 = JSON.stringify({ func: "calendarToIsoDate", year: h2.year, month: h2.month, day: h2.day, overflow: n3, id: this.id });
+      const h3 = this.adjustCalendarDate(d3, t2, "constrain", true);
+      if (void 0 === h3.year) throw new RangeError(`Missing year converting ${JSON.stringify(e2)}`);
+      if (void 0 === h3.month) throw new RangeError(`Missing month converting ${JSON.stringify(e2)}`);
+      if (void 0 === h3.day) throw new RangeError(`Missing day converting ${JSON.stringify(e2)}`);
+      return t2.set(i2, h3), ["constrain", "reject"].forEach(((n3) => {
+        const r3 = JSON.stringify({ func: "calendarToIsoDate", year: h3.year, month: h3.month, day: h3.day, overflow: n3, id: this.id });
         t2.set(r3, e2);
-      })), h2;
+      })), h3;
     }
     validateCalendarDate(e2) {
       const { month: t2, year: n2, day: r2, eraYear: o2, monthCode: i2, monthExtra: a2 } = e2;
@@ -22852,9 +22860,9 @@
       let o2 = this.adjustCalendarDate(e2, n2, t2, false);
       o2 = this.regulateMonthDayNaive(o2, t2, n2);
       const { year: i2, month: a2, day: s2 } = o2, c2 = JSON.stringify({ func: "calendarToIsoDate", year: i2, month: a2, day: s2, overflow: t2, id: this.id });
-      let d2, h2 = n2.get(c2);
-      if (h2) return h2;
-      if (void 0 !== r2.year && void 0 !== r2.month && void 0 !== r2.day && (r2.year !== o2.year || r2.month !== o2.month || r2.day !== o2.day) && (d2 = JSON.stringify({ func: "calendarToIsoDate", year: r2.year, month: r2.month, day: r2.day, overflow: t2, id: this.id }), h2 = n2.get(d2), h2)) return h2;
+      let d3, h3 = n2.get(c2);
+      if (h3) return h3;
+      if (void 0 !== r2.year && void 0 !== r2.month && void 0 !== r2.day && (r2.year !== o2.year || r2.month !== o2.month || r2.day !== o2.day) && (d3 = JSON.stringify({ func: "calendarToIsoDate", year: r2.year, month: r2.month, day: r2.day, overflow: t2, id: this.id }), h3 = n2.get(d3), h3)) return h3;
       let u2 = this.estimateIsoDate({ year: i2, month: a2, day: s2 });
       const l2 = (e3) => {
         let r3 = this.addDaysIso(u2, e3);
@@ -22867,27 +22875,27 @@
         }
         return r3;
       };
-      let m39 = 0, f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2);
+      let m39 = 0, f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3);
       if (0 !== y2.years || 0 !== y2.months || 0 !== y2.days) {
         const e3 = 365 * y2.years + 30 * y2.months + y2.days;
-        u2 = this.addDaysIso(u2, e3), f2 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m39 = this.compareCalendarDates(o2, f2);
+        u2 = this.addDaysIso(u2, e3), f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m39 = this.compareCalendarDates(o2, f3);
       }
-      let p2 = 8;
+      let p3 = 8;
       for (; m39; ) {
-        u2 = this.addDaysIso(u2, m39 * p2);
-        const e3 = f2;
-        f2 = this.isoToCalendarDate(u2, n2);
+        u2 = this.addDaysIso(u2, m39 * p3);
+        const e3 = f3;
+        f3 = this.isoToCalendarDate(u2, n2);
         const i3 = m39;
-        if (m39 = this.compareCalendarDates(o2, f2), m39) {
-          if (y2 = ri(o2, f2), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m39 = 0;
-          else if (i3 && m39 !== i3) if (p2 > 1) p2 /= 2;
+        if (m39 = this.compareCalendarDates(o2, f3), m39) {
+          if (y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m39 = 0;
+          else if (i3 && m39 !== i3) if (p3 > 1) p3 /= 2;
           else {
             if ("reject" === t2) throw new RangeError(`Can't find ISO date from calendar date: ${JSON.stringify({ ...r2 })}`);
-            this.compareCalendarDates(f2, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m39 = 0;
+            this.compareCalendarDates(f3, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m39 = 0;
           }
         }
       }
-      if (n2.set(c2, u2), d2 && n2.set(d2, u2), void 0 === o2.year || void 0 === o2.month || void 0 === o2.day || void 0 === o2.monthCode || this.hasEra && (void 0 === o2.era || void 0 === o2.eraYear)) throw new RangeError("Unexpected missing property");
+      if (n2.set(c2, u2), d3 && n2.set(d3, u2), void 0 === o2.year || void 0 === o2.month || void 0 === o2.day || void 0 === o2.monthCode || this.hasEra && (void 0 === o2.era || void 0 === o2.eraYear)) throw new RangeError("Unexpected missing property");
       return u2;
     }
     compareCalendarDates(e2, t2) {
@@ -22920,7 +22928,7 @@
       return o2;
     }
     addCalendar(e2, { years: t2 = 0, months: n2 = 0, weeks: r2 = 0, days: o2 = 0 }, i2, a2) {
-      const { year: s2, day: c2, monthCode: d2 } = e2, h2 = this.adjustCalendarDate({ year: s2 + t2, monthCode: d2, day: c2 }, a2), u2 = this.addMonthsCalendar(h2, n2, i2, a2), l2 = o2 + 7 * r2;
+      const { year: s2, day: c2, monthCode: d3 } = e2, h3 = this.adjustCalendarDate({ year: s2 + t2, monthCode: d3, day: c2 }, a2), u2 = this.addMonthsCalendar(h3, n2, i2, a2), l2 = o2 + 7 * r2;
       return this.addDaysCalendar(u2, l2, a2);
     }
     untilCalendar(e2, t2, n2, r2) {
@@ -22938,16 +22946,16 @@
         case "year": {
           const i3 = this.compareCalendarDates(t2, e2);
           if (!i3) return { years: 0, months: 0, weeks: 0, days: 0 };
-          const c2 = t2.year - e2.year, d2 = t2.day - e2.day;
+          const c2 = t2.year - e2.year, d3 = t2.day - e2.day;
           if ("year" === n2 && c2) {
             let n3 = 0;
-            t2.monthCode > e2.monthCode && (n3 = 1), t2.monthCode < e2.monthCode && (n3 = -1), n3 || (n3 = Math.sign(d2)), s2 = n3 * i3 < 0 ? c2 - i3 : c2;
+            t2.monthCode > e2.monthCode && (n3 = 1), t2.monthCode < e2.monthCode && (n3 = -1), n3 || (n3 = Math.sign(d3)), s2 = n3 * i3 < 0 ? c2 - i3 : c2;
           }
-          let h2, u2 = s2 ? this.addCalendar(e2, { years: s2 }, "constrain", r2) : e2;
+          let h3, u2 = s2 ? this.addCalendar(e2, { years: s2 }, "constrain", r2) : e2;
           do {
-            a2 += i3, h2 = u2, u2 = this.addMonthsCalendar(h2, i3, "constrain", r2), u2.day !== e2.day && (u2 = this.regulateDate({ ...u2, day: e2.day }, "constrain", r2));
+            a2 += i3, h3 = u2, u2 = this.addMonthsCalendar(h3, i3, "constrain", r2), u2.day !== e2.day && (u2 = this.regulateDate({ ...u2, day: e2.day }, "constrain", r2));
           } while (this.compareCalendarDates(t2, u2) * i3 >= 0);
-          a2 -= i3, o2 = this.calendarDaysUntil(h2, t2, r2);
+          a2 -= i3, o2 = this.calendarDaysUntil(h3, t2, r2);
           break;
         }
       }
@@ -22956,8 +22964,8 @@
     daysInMonth(e2, t2) {
       const { day: n2 } = e2, r2 = this.maximumMonthLength(e2), o2 = this.minimumMonthLength(e2);
       if (o2 === r2) return o2;
-      const i2 = n2 <= r2 - o2 ? r2 : o2, a2 = this.calendarToIsoDate(e2, "constrain", t2), s2 = this.addDaysIso(a2, i2), c2 = this.isoToCalendarDate(s2, t2), d2 = this.addDaysIso(s2, -c2.day);
-      return this.isoToCalendarDate(d2, t2).day;
+      const i2 = n2 <= r2 - o2 ? r2 : o2, a2 = this.calendarToIsoDate(e2, "constrain", t2), s2 = this.addDaysIso(a2, i2), c2 = this.isoToCalendarDate(s2, t2), d3 = this.addDaysIso(s2, -c2.day);
+      return this.isoToCalendarDate(d3, t2).day;
     }
     daysInPreviousMonth(e2, t2) {
       const { day: n2, month: r2, year: o2 } = e2;
@@ -22966,8 +22974,8 @@
       i2 = { ...i2, month: a2 };
       const s2 = this.minimumMonthLength(i2), c2 = this.maximumMonthLength(i2);
       if (s2 === c2) return c2;
-      const d2 = this.calendarToIsoDate(e2, "constrain", t2), h2 = this.addDaysIso(d2, -n2);
-      return this.isoToCalendarDate(h2, t2).day;
+      const d3 = this.calendarToIsoDate(e2, "constrain", t2), h3 = this.addDaysIso(d3, -n2);
+      return this.isoToCalendarDate(h3, t2).day;
     }
     startOfCalendarYear(e2) {
       return { year: e2.year, month: 1, monthCode: "M01", day: 1 };
@@ -22983,17 +22991,17 @@
       return 1972;
     }
     monthDayFromFields(e2, t2, n2) {
-      let r2, o2, i2, a2, s2, { era: c2, eraYear: d2, year: h2, month: u2, monthCode: l2, day: m39 } = e2;
-      if (void 0 !== u2 && void 0 === h2 && (!this.hasEra || void 0 === c2 || void 0 === d2)) throw new TypeError("when month is present, year (or era and eraYear) are required");
-      (void 0 === l2 || void 0 !== h2 || this.hasEra && void 0 !== d2) && ({ monthCode: l2, day: m39 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
-      const f2 = { year: this.monthDaySearchStartYear(l2, m39), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f2, n2), p2 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m39 ? y2.year : y2.year - 1;
+      let r2, o2, i2, a2, s2, { era: c2, eraYear: d3, year: h3, month: u2, monthCode: l2, day: m39 } = e2;
+      if (void 0 !== u2 && void 0 === h3 && (!this.hasEra || void 0 === c2 || void 0 === d3)) throw new TypeError("when month is present, year (or era and eraYear) are required");
+      (void 0 === l2 || void 0 !== h3 || this.hasEra && void 0 !== d3) && ({ monthCode: l2, day: m39 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
+      const f3 = { year: this.monthDaySearchStartYear(l2, m39), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f3, n2), p3 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m39 ? y2.year : y2.year - 1;
       for (let e3 = 0; e3 < 20; e3++) {
-        const c3 = this.adjustCalendarDate({ day: m39, monthCode: l2, year: p2 - e3 }, n2), d3 = this.calendarToIsoDate(c3, "constrain", n2), h3 = this.isoToCalendarDate(d3, n2);
-        if ({ year: r2, month: o2, day: i2 } = d3, h3.monthCode === l2 && h3.day === m39) return { month: o2, day: i2, year: r2 };
+        const c3 = this.adjustCalendarDate({ day: m39, monthCode: l2, year: p3 - e3 }, n2), d4 = this.calendarToIsoDate(c3, "constrain", n2), h4 = this.isoToCalendarDate(d4, n2);
+        if ({ year: r2, month: o2, day: i2 } = d4, h4.monthCode === l2 && h4.day === m39) return { month: o2, day: i2, year: r2 };
         if ("constrain" === t2) {
-          const e4 = this.maxLengthOfMonthCodeInAnyYear(h3.monthCode);
-          if (h3.monthCode === l2 && h3.day === e4 && m39 > e4) return { month: o2, day: i2, year: r2 };
-          (void 0 === a2 || h3.monthCode === a2.monthCode && h3.day > a2.day) && (a2 = h3, s2 = d3);
+          const e4 = this.maxLengthOfMonthCodeInAnyYear(h4.monthCode);
+          if (h4.monthCode === l2 && h4.day === e4 && m39 > e4) return { month: o2, day: i2, year: r2 };
+          (void 0 === a2 || h4.monthCode === a2.monthCode && h4.day > a2.day) && (a2 = h4, s2 = d4);
         }
       }
       if ("constrain" === t2 && void 0 !== s2) return s2;
@@ -23418,18 +23426,18 @@
         const n3 = ni({ isoYear: e3, isoMonth: 2, isoDay: 1 }), r3 = new Date(n3);
         r3.setUTCDate(t3 + 1);
         const i3 = o2.formatToParts(r3), a3 = i3.find(((e4) => "month" === e4.type)).value, s3 = +i3.find(((e4) => "day" === e4.type)).value, c3 = i3.find(((e4) => "relatedYear" === e4.type));
-        let d3;
+        let d4;
         if (void 0 === c3) throw new RangeError(`Intl.DateTimeFormat.formatToParts lacks relatedYear in ${this.id} calendar. Try Node 14+ or modern browsers.`);
-        return d3 = +c3.value, { calendarMonthString: a3, calendarDay: s3, calendarYearToVerify: d3 };
+        return d4 = +c3.value, { calendarMonthString: a3, calendarDay: s3, calendarYearToVerify: d4 };
       };
-      let a2 = 17, { calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d2 } = i2(e2, a2);
+      let a2 = 17, { calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d3 } = i2(e2, a2);
       "1" !== s2 && (a2 += 29, { calendarMonthString: s2, calendarDay: c2 } = i2(e2, a2)), a2 -= c2 - 5;
-      const h2 = {};
-      let u2, l2, m39 = 1, f2 = false;
+      const h3 = {};
+      let u2, l2, m39 = 1, f3 = false;
       do {
-        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d2 } = i2(e2, a2)), u2 && (h2[l2].daysInMonth = u2 + 30 - c2), d2 !== e2 ? f2 = true : (h2[s2] = { monthIndex: m39++ }, a2 += 30), u2 = c2, l2 = s2;
-      } while (!f2);
-      return h2[l2].daysInMonth = u2 + 30 - c2, t2.set(n2, h2), h2;
+        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d3 } = i2(e2, a2)), u2 && (h3[l2].daysInMonth = u2 + 30 - c2), d3 !== e2 ? f3 = true : (h3[s2] = { monthIndex: m39++ }, a2 += 30), u2 = c2, l2 = s2;
+      } while (!f3);
+      return h3[l2].daysInMonth = u2 + 30 - c2, t2.set(n2, h3), h3;
     }
     estimateIsoDate(e2) {
       const { year: t2, month: n2 } = e2;
@@ -23457,9 +23465,9 @@
       } else if (void 0 === c2) {
         const e3 = this.getMonthList(o2, t2), r3 = Object.entries(e3), a3 = r3.length;
         "reject" === n2 ? (Nr(i2, 1, a3), Nr(s2, 1, this.maximumMonthLength())) : (i2 = jr(i2, 1, a3), s2 = jr(s2, 1, this.maximumMonthLength()));
-        const d2 = r3.find(((e4) => e4[1].monthIndex === i2));
-        if (void 0 === d2) throw new RangeError(`Invalid month ${i2} in Chinese year ${o2}`);
-        c2 = ei(+d2[0].replace("bis", ""), -1 !== d2[0].indexOf("bis"));
+        const d3 = r3.find(((e4) => e4[1].monthIndex === i2));
+        if (void 0 === d3) throw new RangeError(`Invalid month ${i2} in Chinese year ${o2}`);
+        c2 = ei(+d3[0].replace("bis", ""), -1 !== d3[0].indexOf("bis"));
       } else {
         const e3 = this.getMonthList(o2, t2);
         let n3 = c2.replace(/^M|L$/g, ((e4) => "L" === e4 ? "bis" : ""));
@@ -23529,8 +23537,8 @@
       return Go(t2);
     }
     dateAdd(e2, { years: t2, months: n2, weeks: r2, days: o2 }, i2) {
-      const a2 = OneObjectCache.getCacheForObject(e2), s2 = this.helper.isoToCalendarDate(e2, a2), c2 = this.helper.addCalendar(s2, { years: t2, months: n2, weeks: r2, days: o2 }, i2, a2), d2 = this.helper.calendarToIsoDate(c2, "constrain", a2);
-      return OneObjectCache.getCacheForObject(d2) || new OneObjectCache(a2).setObject(d2), d2;
+      const a2 = OneObjectCache.getCacheForObject(e2), s2 = this.helper.isoToCalendarDate(e2, a2), c2 = this.helper.addCalendar(s2, { years: t2, months: n2, weeks: r2, days: o2 }, i2, a2), d3 = this.helper.calendarToIsoDate(c2, "constrain", a2);
+      return OneObjectCache.getCacheForObject(d3) || new OneObjectCache(a2).setObject(d3), d3;
     }
     dateUntil(e2, t2, n2) {
       const r2 = OneObjectCache.getCacheForObject(e2), o2 = OneObjectCache.getCacheForObject(t2), i2 = this.helper.isoToCalendarDate(e2, r2), a2 = this.helper.isoToCalendarDate(t2, o2);
@@ -24003,9 +24011,9 @@
   }
   ae(PlainDate, "Temporal.PlainDate");
   var PlainDateTime = class {
-    constructor(e2, t2, n2, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d2 = "iso8601") {
-      const h2 = _e(e2), u2 = _e(t2), l2 = _e(n2), m39 = void 0 === r2 ? 0 : _e(r2), f2 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p2 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d2 ? "iso8601" : Ve(d2));
-      Ur(h2, u2, l2, m39, f2, y2, p2, g2, w2), gn(this, { isoDate: { year: h2, month: u2, day: l2 }, time: { hour: m39, minute: f2, second: y2, millisecond: p2, microsecond: g2, nanosecond: w2 } }, v2);
+    constructor(e2, t2, n2, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d3 = "iso8601") {
+      const h3 = _e(e2), u2 = _e(t2), l2 = _e(n2), m39 = void 0 === r2 ? 0 : _e(r2), f3 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p3 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d3 ? "iso8601" : Ve(d3));
+      Ur(h3, u2, l2, m39, f3, y2, p3, g2, w2), gn(this, { isoDate: { year: h3, month: u2, day: l2 }, time: { hour: m39, minute: f3, second: y2, millisecond: p3, microsecond: g2, nanosecond: w2 } }, v2);
     }
     get calendarId() {
       return vt(this, yt), re(this, E);
@@ -24118,8 +24126,8 @@
       vt(this, yt);
       const t2 = Zo(e2), n2 = Zt(t2), r2 = zt(t2), o2 = Ut(t2, "trunc"), i2 = Wt(t2, "smallestUnit", "time", void 0);
       if ("hour" === i2) throw new RangeError('smallestUnit must be a time unit other than "hour"');
-      const { precision: a2, unit: s2, increment: c2 } = At(i2, r2), d2 = Co(re(this, T), c2, s2, o2);
-      return Br(d2), nr(d2, re(this, E), a2, n2);
+      const { precision: a2, unit: s2, increment: c2 } = At(i2, r2), d3 = Co(re(this, T), c2, s2, o2);
+      return Br(d3), nr(d3, re(this, E), a2, n2);
     }
     toJSON() {
       return vt(this, yt), nr(re(this, T), re(this, E), "auto");
@@ -24159,9 +24167,9 @@
   }
   ae(PlainDateTime, "Temporal.PlainDateTime");
   var Duration = class _Duration {
-    constructor(e2 = 0, t2 = 0, n2 = 0, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d2 = 0) {
-      const h2 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m39 = void 0 === r2 ? 0 : Ge(r2), f2 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p2 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d2 ? 0 : Ge(d2);
-      zr(h2, u2, l2, m39, f2, y2, p2, g2, w2, v2), te(this), oe(this, Y, h2), oe(this, R, u2), oe(this, S, l2), oe(this, j, m39), oe(this, k, f2), oe(this, N, y2), oe(this, x, p2), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
+    constructor(e2 = 0, t2 = 0, n2 = 0, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d3 = 0) {
+      const h3 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m39 = void 0 === r2 ? 0 : Ge(r2), f3 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p3 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d3 ? 0 : Ge(d3);
+      zr(h3, u2, l2, m39, f3, y2, p3, g2, w2, v2), te(this), oe(this, Y, h3), oe(this, R, u2), oe(this, S, l2), oe(this, j, m39), oe(this, k, f3), oe(this, N, y2), oe(this, x, p3), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
     }
     get years() {
       return vt(this, lt), re(this, Y);
@@ -24201,8 +24209,8 @@
     }
     with(e2) {
       vt(this, lt);
-      const t2 = kt(e2), { years: n2 = re(this, Y), months: r2 = re(this, R), weeks: o2 = re(this, S), days: i2 = re(this, j), hours: a2 = re(this, k), minutes: s2 = re(this, N), seconds: c2 = re(this, x), milliseconds: d2 = re(this, L), microseconds: h2 = re(this, P), nanoseconds: u2 = re(this, U) } = t2;
-      return new _Duration(n2, r2, o2, i2, a2, s2, c2, d2, h2, u2);
+      const t2 = kt(e2), { years: n2 = re(this, Y), months: r2 = re(this, R), weeks: o2 = re(this, S), days: i2 = re(this, j), hours: a2 = re(this, k), minutes: s2 = re(this, N), seconds: c2 = re(this, x), milliseconds: d3 = re(this, L), microseconds: h3 = re(this, P), nanoseconds: u2 = re(this, U) } = t2;
+      return new _Duration(n2, r2, o2, i2, a2, s2, c2, d3, h3, u2);
     }
     negated() {
       return vt(this, lt), Sr(this);
@@ -24221,11 +24229,11 @@
       const t2 = Jt(this), n2 = "string" == typeof e2 ? Fo("smallestUnit", e2) : Zo(e2);
       let r2 = Wt(n2, "largestUnit", "datetime", void 0, ["auto"]), { plainRelativeTo: o2, zonedRelativeTo: i2 } = _t(n2);
       const a2 = Ft(n2), s2 = Ut(n2, "halfExpand");
-      let c2 = Wt(n2, "smallestUnit", "datetime", void 0), d2 = true;
-      c2 || (d2 = false, c2 = "nanosecond");
-      const h2 = Gt(t2, c2);
+      let c2 = Wt(n2, "smallestUnit", "datetime", void 0), d3 = true;
+      c2 || (d3 = false, c2 = "nanosecond");
+      const h3 = Gt(t2, c2);
       let u2 = true;
-      if (r2 || (u2 = false, r2 = h2), "auto" === r2 && (r2 = h2), !d2 && !u2) throw new RangeError("at least one of smallestUnit or largestUnit is required");
+      if (r2 || (u2 = false, r2 = h3), "auto" === r2 && (r2 = h3), !d3 && !u2) throw new RangeError("at least one of smallestUnit or largestUnit is required");
       if (Gt(r2, c2) !== r2) throw new RangeError(`largestUnit ${r2} cannot be smaller than smallestUnit ${c2}`);
       const l2 = { hour: 24, minute: 60, second: 60, millisecond: 1e3, microsecond: 1e3, nanosecond: 1e3 }[c2];
       if (void 0 !== l2 && Ht(a2, l2, false), a2 > 1 && "date" === Vt(c2) && r2 !== c2) throw new RangeError("For calendar units with roundingIncrement > 1, use largestUnit = smallestUnit");
@@ -24236,8 +24244,8 @@
       }
       if (o2) {
         let e3 = qr(this);
-        const t3 = fo({ deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }, e3.time), n3 = re(o2, D), i3 = re(o2, E), d3 = Sn(i3, n3, Nt(e3.date, t3.deltaDays), "constrain");
-        return e3 = oo(xt(n3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }), xt(d3, t3), i3, r2, a2, c2, s2), _r(e3, r2);
+        const t3 = fo({ deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }, e3.time), n3 = re(o2, D), i3 = re(o2, E), d4 = Sn(i3, n3, Nt(e3.date, t3.deltaDays), "constrain");
+        return e3 = oo(xt(n3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 }), xt(d4, t3), i3, r2, a2, c2, s2), _r(e3, r2);
       }
       if (Kt(t2)) throw new RangeError(`a starting point is required for ${t2}s balancing`);
       if (Kt(r2)) throw new RangeError(`a starting point is required for ${r2}s balancing`);
@@ -24283,9 +24291,9 @@
       const { precision: i2, unit: a2, increment: s2 } = At(o2, n2);
       if ("nanosecond" === a2 && 1 === s2) return Qn(this, i2);
       const c2 = Jt(this);
-      let d2 = Ar(this);
-      const h2 = $o(d2.time, s2, a2, r2);
-      return d2 = Jr(d2.date, h2), Qn(_r(d2, Gt(c2, "second")), i2);
+      let d3 = Ar(this);
+      const h3 = $o(d3.time, s2, a2, r2);
+      return d3 = Jr(d3.date, h3), Qn(_r(d3, Gt(c2, "second")), i2);
     }
     toJSON() {
       return vt(this, lt), Qn(this, "auto");
@@ -24306,18 +24314,18 @@
     static compare(t2, n2, r2 = void 0) {
       const o2 = sn(t2), i2 = sn(n2), a2 = Zo(r2), { plainRelativeTo: s2, zonedRelativeTo: c2 } = _t(a2);
       if (re(o2, Y) === re(i2, Y) && re(o2, R) === re(i2, R) && re(o2, S) === re(i2, S) && re(o2, j) === re(i2, j) && re(o2, k) === re(i2, k) && re(o2, N) === re(i2, N) && re(o2, x) === re(i2, x) && re(o2, L) === re(i2, L) && re(o2, P) === re(i2, P) && re(o2, U) === re(i2, U)) return 0;
-      const d2 = Jt(o2), h2 = Jt(i2), u2 = Ar(o2), l2 = Ar(i2);
-      if (c2 && ("date" === Vt(d2) || "date" === Vt(h2))) {
+      const d3 = Jt(o2), h3 = Jt(i2), u2 = Ar(o2), l2 = Ar(i2);
+      if (c2 && ("date" === Vt(d3) || "date" === Vt(h3))) {
         const t3 = re(c2, $), n3 = re(c2, E), r3 = re(c2, b), o3 = po(r3, t3, n3, u2), i3 = po(r3, t3, n3, l2);
         return Bo(import_jsbi.default.toNumber(import_jsbi.default.subtract(o3, i3)));
       }
-      let m39 = u2.date.days, f2 = l2.date.days;
-      if (Kt(d2) || Kt(h2)) {
+      let m39 = u2.date.days, f3 = l2.date.days;
+      if (Kt(d3) || Kt(h3)) {
         if (!s2) throw new RangeError("A starting point is required for years, months, or weeks comparison");
-        m39 = Rr(u2.date, s2), f2 = Rr(l2.date, s2);
+        m39 = Rr(u2.date, s2), f3 = Rr(l2.date, s2);
       }
-      const y2 = u2.time.add24HourDays(m39), p2 = l2.time.add24HourDays(f2);
-      return y2.cmp(p2);
+      const y2 = u2.time.add24HourDays(m39), p3 = l2.time.add24HourDays(f3);
+      return y2.cmp(p3);
     }
   };
   ae(Duration, "Temporal.Duration");
@@ -24384,8 +24392,8 @@
   Object.defineProperty(Bi, Symbol.toStringTag, { value: "Temporal.Now", writable: false, enumerable: false, configurable: true });
   var PlainTime = class _PlainTime {
     constructor(e2 = 0, t2 = 0, n2 = 0, r2 = 0, o2 = 0, i2 = 0) {
-      const a2 = void 0 === e2 ? 0 : _e(e2), s2 = void 0 === t2 ? 0 : _e(t2), c2 = void 0 === n2 ? 0 : _e(n2), d2 = void 0 === r2 ? 0 : _e(r2), h2 = void 0 === o2 ? 0 : _e(o2), u2 = void 0 === i2 ? 0 : _e(i2);
-      Pr(a2, s2, c2, d2, h2, u2), Dn(this, { hour: a2, minute: s2, second: c2, millisecond: d2, microsecond: h2, nanosecond: u2 });
+      const a2 = void 0 === e2 ? 0 : _e(e2), s2 = void 0 === t2 ? 0 : _e(t2), c2 = void 0 === n2 ? 0 : _e(n2), d3 = void 0 === r2 ? 0 : _e(r2), h3 = void 0 === o2 ? 0 : _e(o2), u2 = void 0 === i2 ? 0 : _e(i2);
+      Pr(a2, s2, c2, d3, h3, u2), Dn(this, { hour: a2, minute: s2, second: c2, millisecond: d3, microsecond: h3, nanosecond: u2 });
     }
     get hour() {
       return vt(this, ft), re(this, M).hour;
@@ -24409,9 +24417,9 @@
       if (vt(this, ft), !Ae(e2)) throw new TypeError("invalid argument");
       bt(e2);
       const n2 = nn(e2, "partial"), r2 = nn(this);
-      let { hour: o2, minute: i2, second: a2, millisecond: s2, microsecond: c2, nanosecond: d2 } = Object.assign(r2, n2);
-      const h2 = Lt(Zo(t2));
-      return { hour: o2, minute: i2, second: a2, millisecond: s2, microsecond: c2, nanosecond: d2 } = jt(o2, i2, a2, s2, c2, d2, h2), new _PlainTime(o2, i2, a2, s2, c2, d2);
+      let { hour: o2, minute: i2, second: a2, millisecond: s2, microsecond: c2, nanosecond: d3 } = Object.assign(r2, n2);
+      const h3 = Lt(Zo(t2));
+      return { hour: o2, minute: i2, second: a2, millisecond: s2, microsecond: c2, nanosecond: d3 } = jt(o2, i2, a2, s2, c2, d3, h3), new _PlainTime(o2, i2, a2, s2, c2, d3);
     }
     add(e2) {
       return vt(this, ft), Do("add", this, e2);
@@ -24656,8 +24664,8 @@
       const n2 = re(this, E), r2 = re(this, $), o2 = Fn3(r2, re(this, b)), i2 = Hi(this);
       let a2 = { ...en(n2, i2.isoDate), ...i2.time, offset: Hn(o2) };
       a2 = Rn(n2, a2, tn(n2, e2, ["year", "month", "monthCode", "day"], ["hour", "minute", "second", "millisecond", "microsecond", "nanosecond", "offset"], "partial"));
-      const s2 = Zo(t2), c2 = Pt(s2), d2 = Bt(s2, "prefer"), h2 = on(n2, a2, Lt(s2)), u2 = sr(a2.offset);
-      return $n(mn(h2.isoDate, h2.time, "option", u2, r2, c2, d2, false), r2, n2);
+      const s2 = Zo(t2), c2 = Pt(s2), d3 = Bt(s2, "prefer"), h3 = on(n2, a2, Lt(s2)), u2 = sr(a2.offset);
+      return $n(mn(h3.isoDate, h3.time, "option", u2, r2, c2, d3, false), r2, n2);
     }
     withPlainTime(e2 = void 0) {
       vt(this, wt);
@@ -24691,16 +24699,16 @@
       if (vt(this, wt), void 0 === t2) throw new TypeError("options parameter is required");
       const n2 = "string" == typeof t2 ? Fo("smallestUnit", t2) : Zo(t2), r2 = Ft(n2), o2 = Ut(n2, "halfExpand"), i2 = Wt(n2, "smallestUnit", "time", qt, ["day"]), a2 = { day: 1, hour: 24, minute: 60, second: 60, millisecond: 1e3, microsecond: 1e3, nanosecond: 1e3 }[i2];
       if (Ht(r2, a2, 1 === a2), "nanosecond" === i2 && 1 === r2) return $n(re(this, b), re(this, $), re(this, E));
-      const s2 = re(this, $), c2 = re(this, b), d2 = Hi(this);
-      let h2;
+      const s2 = re(this, $), c2 = re(this, b), d3 = Hi(this);
+      let h3;
       if ("day" === i2) {
-        const t3 = d2.isoDate, n3 = Or(t3.year, t3.month, t3.day + 1), r3 = _n(s2, t3), i3 = _n(s2, n3), a3 = import_jsbi.default.subtract(i3, r3);
-        h2 = TimeDuration.fromEpochNsDiff(c2, r3).round(a3, o2).addToEpochNs(r3);
+        const t3 = d3.isoDate, n3 = Or(t3.year, t3.month, t3.day + 1), r3 = _n(s2, t3), i3 = _n(s2, n3), a3 = import_jsbi.default.subtract(i3, r3);
+        h3 = TimeDuration.fromEpochNsDiff(c2, r3).round(a3, o2).addToEpochNs(r3);
       } else {
-        const e2 = Co(d2, r2, i2, o2), t3 = Fn3(s2, c2);
-        h2 = mn(e2.isoDate, e2.time, "option", t3, s2, "compatible", "prefer", false);
+        const e2 = Co(d3, r2, i2, o2), t3 = Fn3(s2, c2);
+        h3 = mn(e2.isoDate, e2.time, "option", t3, s2, "compatible", "prefer", false);
       }
-      return $n(h2, s2, re(this, E));
+      return $n(h3, s2, re(this, E));
     }
     equals(t2) {
       vt(this, wt);
@@ -24715,8 +24723,8 @@
       if ("hour" === a2) throw new RangeError('smallestUnit must be a time unit other than "hour"');
       const s2 = (function(e3) {
         return Ho(e3, "timeZoneName", ["auto", "never", "critical"], "auto");
-      })(t2), { precision: c2, unit: d2, increment: h2 } = At(a2, r2);
-      return ir(this, c2, n2, s2, o2, { unit: d2, increment: h2, roundingMode: i2 });
+      })(t2), { precision: c2, unit: d3, increment: h3 } = At(a2, r2);
+      return ir(this, c2, n2, s2, o2, { unit: d3, increment: h3, roundingMode: i2 });
     }
     toLocaleString(e2 = void 0, t2 = void 0) {
       vt(this, wt);
@@ -26907,7 +26915,7 @@
     // loadGroups retrieves the groups matching the currently selected filter from
     // the database. When no filter is selected, every group is loaded.
     loadGroups = async () => {
-      const filter = this.filters.find((f2) => f2.id == this.config.selectedFilterId);
+      const filter = this.filters.find((f3) => f3.id == this.config.selectedFilterId);
       if (filter == void 0) {
         this.groups = await this.#database.allGroups();
       } else {
@@ -28450,6 +28458,196 @@
   // src/view/widget-message-create.tsx
   var import_mithril13 = __toESM(require_mithril(), 1);
 
+  // node_modules/blurhash/dist/esm/index.js
+  var q2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "#", "$", "%", "*", "+", ",", "-", ".", ":", ";", "=", "?", "@", "[", "]", "^", "_", "{", "|", "}", "~"];
+  var x2 = (t2) => {
+    let e2 = 0;
+    for (let r2 = 0; r2 < t2.length; r2++) {
+      let n2 = t2[r2], l2 = q2.indexOf(n2);
+      e2 = e2 * 83 + l2;
+    }
+    return e2;
+  };
+  var p2 = (t2, e2) => {
+    var r2 = "";
+    for (let n2 = 1; n2 <= e2; n2++) {
+      let l2 = Math.floor(t2) / Math.pow(83, e2 - n2) % 83;
+      r2 += q2[Math.floor(l2)];
+    }
+    return r2;
+  };
+  var f2 = (t2) => {
+    let e2 = t2 / 255;
+    return e2 <= 0.04045 ? e2 / 12.92 : Math.pow((e2 + 0.055) / 1.055, 2.4);
+  };
+  var h2 = (t2) => {
+    let e2 = Math.max(0, Math.min(1, t2));
+    return e2 <= 31308e-7 ? Math.trunc(e2 * 12.92 * 255 + 0.5) : Math.trunc((1.055 * Math.pow(e2, 0.4166666666666667) - 0.055) * 255 + 0.5);
+  };
+  var F2 = (t2) => t2 < 0 ? -1 : 1;
+  var M2 = (t2, e2) => F2(t2) * Math.pow(Math.abs(t2), e2);
+  var d2 = class extends Error {
+    constructor(e2) {
+      super(e2), this.name = "ValidationError", this.message = e2;
+    }
+  };
+  var C2 = (t2) => {
+    if (!t2 || t2.length < 6) throw new d2("The blurhash string must be at least 6 characters");
+    let e2 = x2(t2[0]), r2 = Math.floor(e2 / 9) + 1, n2 = e2 % 9 + 1;
+    if (t2.length !== 4 + 2 * n2 * r2) throw new d2(`blurhash length mismatch: length is ${t2.length} but it should be ${4 + 2 * n2 * r2}`);
+  };
+  var N2 = (t2) => {
+    try {
+      C2(t2);
+    } catch (e2) {
+      return { result: false, errorReason: e2.message };
+    }
+    return { result: true };
+  };
+  var z2 = (t2) => {
+    let e2 = t2 >> 16, r2 = t2 >> 8 & 255, n2 = t2 & 255;
+    return [f2(e2), f2(r2), f2(n2)];
+  };
+  var L2 = (t2, e2) => {
+    let r2 = Math.floor(t2 / 361), n2 = Math.floor(t2 / 19) % 19, l2 = t2 % 19;
+    return [M2((r2 - 9) / 9, 2) * e2, M2((n2 - 9) / 9, 2) * e2, M2((l2 - 9) / 9, 2) * e2];
+  };
+  var U2 = (t2, e2, r2, n2) => {
+    C2(t2), n2 = n2 | 1;
+    let l2 = x2(t2[0]), m39 = Math.floor(l2 / 9) + 1, b2 = l2 % 9 + 1, i2 = (x2(t2[1]) + 1) / 166, u2 = new Array(b2 * m39);
+    for (let o2 = 0; o2 < u2.length; o2++) if (o2 === 0) {
+      let a2 = x2(t2.substring(2, 6));
+      u2[o2] = z2(a2);
+    } else {
+      let a2 = x2(t2.substring(4 + o2 * 2, 6 + o2 * 2));
+      u2[o2] = L2(a2, i2 * n2);
+    }
+    let c2 = e2 * 4, s2 = new Uint8ClampedArray(c2 * r2);
+    for (let o2 = 0; o2 < r2; o2++) for (let a2 = 0; a2 < e2; a2++) {
+      let y2 = 0, B2 = 0, R2 = 0;
+      for (let w2 = 0; w2 < m39; w2++) for (let P2 = 0; P2 < b2; P2++) {
+        let G2 = Math.cos(Math.PI * a2 * P2 / e2) * Math.cos(Math.PI * o2 * w2 / r2), T2 = u2[P2 + w2 * b2];
+        y2 += T2[0] * G2, B2 += T2[1] * G2, R2 += T2[2] * G2;
+      }
+      let V2 = h2(y2), I2 = h2(B2), E2 = h2(R2);
+      s2[4 * a2 + 0 + o2 * c2] = V2, s2[4 * a2 + 1 + o2 * c2] = I2, s2[4 * a2 + 2 + o2 * c2] = E2, s2[4 * a2 + 3 + o2 * c2] = 255;
+    }
+    return s2;
+  };
+  var j2 = U2;
+  var A2 = 4;
+  var D2 = (t2, e2, r2, n2) => {
+    let l2 = 0, m39 = 0, b2 = 0, g2 = e2 * A2;
+    for (let u2 = 0; u2 < e2; u2++) {
+      let c2 = A2 * u2;
+      for (let s2 = 0; s2 < r2; s2++) {
+        let o2 = c2 + s2 * g2, a2 = n2(u2, s2);
+        l2 += a2 * f2(t2[o2]), m39 += a2 * f2(t2[o2 + 1]), b2 += a2 * f2(t2[o2 + 2]);
+      }
+    }
+    let i2 = 1 / (e2 * r2);
+    return [l2 * i2, m39 * i2, b2 * i2];
+  };
+  var $2 = (t2) => {
+    let e2 = h2(t2[0]), r2 = h2(t2[1]), n2 = h2(t2[2]);
+    return (e2 << 16) + (r2 << 8) + n2;
+  };
+  var H2 = (t2, e2) => {
+    let r2 = Math.floor(Math.max(0, Math.min(18, Math.floor(M2(t2[0] / e2, 0.5) * 9 + 9.5)))), n2 = Math.floor(Math.max(0, Math.min(18, Math.floor(M2(t2[1] / e2, 0.5) * 9 + 9.5)))), l2 = Math.floor(Math.max(0, Math.min(18, Math.floor(M2(t2[2] / e2, 0.5) * 9 + 9.5))));
+    return r2 * 19 * 19 + n2 * 19 + l2;
+  };
+  var O2 = (t2, e2, r2, n2, l2) => {
+    if (n2 < 1 || n2 > 9 || l2 < 1 || l2 > 9) throw new d2("BlurHash must have between 1 and 9 components");
+    if (e2 * r2 * 4 !== t2.length) throw new d2("Width and height must match the pixels array");
+    let m39 = [];
+    for (let s2 = 0; s2 < l2; s2++) for (let o2 = 0; o2 < n2; o2++) {
+      let a2 = o2 == 0 && s2 == 0 ? 1 : 2, y2 = D2(t2, e2, r2, (B2, R2) => a2 * Math.cos(Math.PI * o2 * B2 / e2) * Math.cos(Math.PI * s2 * R2 / r2));
+      m39.push(y2);
+    }
+    let b2 = m39[0], g2 = m39.slice(1), i2 = "", u2 = n2 - 1 + (l2 - 1) * 9;
+    i2 += p2(u2, 1);
+    let c2;
+    if (g2.length > 0) {
+      let s2 = Math.max(...g2.map((a2) => Math.max(...a2))), o2 = Math.floor(Math.max(0, Math.min(82, Math.floor(s2 * 166 - 0.5))));
+      c2 = (o2 + 1) / 166, i2 += p2(o2, 1);
+    } else c2 = 1, i2 += p2(0, 1);
+    return i2 += p2($2(b2), 4), g2.forEach((s2) => {
+      i2 += p2(H2(s2, c2), 2);
+    }), i2;
+  };
+  var S2 = O2;
+
+  // src/service/blurhash.ts
+  var COMPONENTS_X = 4;
+  var COMPONENTS_Y = 3;
+  var SAMPLE_SIZE = 32;
+  var PLACEHOLDER_SIZE = 32;
+  async function encodeBlurhash(url) {
+    try {
+      const image = await loadImage(url);
+      const context = drawToCanvas(image, SAMPLE_SIZE, SAMPLE_SIZE);
+      if (context == null) {
+        return "";
+      }
+      const pixels = context.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+      return S2(pixels.data, pixels.width, pixels.height, COMPONENTS_X, COMPONENTS_Y);
+    } catch (error) {
+      console.warn("Unable to encode blurhash:", error);
+      return "";
+    }
+  }
+  function blurhashToDataUri(blurhash) {
+    if (!N2(blurhash).result) {
+      return "";
+    }
+    const pixels = j2(blurhash, PLACEHOLDER_SIZE, PLACEHOLDER_SIZE);
+    const canvas = document.createElement("canvas");
+    canvas.width = PLACEHOLDER_SIZE;
+    canvas.height = PLACEHOLDER_SIZE;
+    const context = canvas.getContext("2d");
+    if (context == null) {
+      return "";
+    }
+    const imageData = context.createImageData(PLACEHOLDER_SIZE, PLACEHOLDER_SIZE);
+    imageData.data.set(pixels);
+    context.putImageData(imageData, 0, 0);
+    return canvas.toDataURL();
+  }
+  var dataUriCache = /* @__PURE__ */ new Map();
+  function blurhashBackgroundStyle(blurhash) {
+    if (blurhash == void 0 || blurhash == "") {
+      return "";
+    }
+    let dataUri = dataUriCache.get(blurhash);
+    if (dataUri == void 0) {
+      dataUri = blurhashToDataUri(blurhash);
+      dataUriCache.set(blurhash, dataUri);
+    }
+    if (dataUri == "") {
+      return "";
+    }
+    return `background-image:url(${dataUri});background-size:cover;background-position:center;`;
+  }
+  function loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Unable to load image for blurhash"));
+      image.src = url;
+    });
+  }
+  function drawToCanvas(image, width, height) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (context == null) {
+      return null;
+    }
+    context.drawImage(image, 0, 0, width, height);
+    return context;
+  }
+
   // src/view/widget-mention-popup.tsx
   var import_mithril11 = __toESM(require_mithril(), 1);
   var ACTOR_SEARCH_ENDPOINT = "/.api/actors";
@@ -29085,6 +29283,14 @@
           const attachment = dataUriToAttachment(reader.result, file.name, file.size);
           vnode.state.pending.push(attachment);
           import_mithril13.default.redraw();
+          if (attachmentKind(attachment) == "image") {
+            encodeBlurhash(attachment.url).then((blurhash) => {
+              if (blurhash != "") {
+                attachment.blurhash = blurhash;
+                import_mithril13.default.redraw();
+              }
+            });
+          }
         };
         reader.onerror = () => {
           console.error("Error reading file:", reader.error);
@@ -29187,7 +29393,7 @@
     drawThumbnail(attachment) {
       switch (attachmentKind(attachment)) {
         case "image":
-          return /* @__PURE__ */ (0, import_mithril14.default)("img", { src: attachment.url, class: "message-attachment-thumb", alt: "" });
+          return /* @__PURE__ */ (0, import_mithril14.default)("img", { src: attachment.url, class: "message-attachment-thumb", style: blurhashBackgroundStyle(attachment.blurhash), alt: "" });
         // NOSONAR: typescript:S6853
         case "video":
           return /* @__PURE__ */ (0, import_mithril14.default)("video", { src: attachment.url, class: "message-attachment-thumb", preload: "metadata", muted: true });
@@ -29730,7 +29936,7 @@
       const isCurrent = index == vnode.state.index;
       switch (attachmentKind(attachment)) {
         case "image":
-          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril26.default)("img", { src: attachment.url, class: "attachment-media", alt: attachment.name }), " ", this.drawDownloadButton(attachment, "attachment-download-overlay"));
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril26.default)("img", { src: attachment.url, class: "attachment-media", style: blurhashBackgroundStyle(attachment.blurhash), alt: attachment.name }), " ", this.drawDownloadButton(attachment, "attachment-download-overlay"));
         case "video":
           return isCurrent ? /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true }), this.drawDownloadButton(attachment, "attachment-download-corner")) : /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-film" }));
         case "audio":
@@ -30238,7 +30444,7 @@
       vnode.state.tags = filter.tags.map((tag) => "#" + tag).join(" ");
     }
     view(vnode) {
-      const isNew = !vnode.attrs.controller.filters.some((f2) => f2.id == vnode.attrs.filter.id);
+      const isNew = !vnode.attrs.controller.filters.some((f3) => f3.id == vnode.attrs.filter.id);
       return /* @__PURE__ */ (0, import_mithril34.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril34.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-title" }, isNew ? /* @__PURE__ */ (0, import_mithril34.default)("span", null, /* @__PURE__ */ (0, import_mithril34.default)("i", { class: "bi bi-plus" }), " Add a Filter") : /* @__PURE__ */ (0, import_mithril34.default)("span", null, /* @__PURE__ */ (0, import_mithril34.default)("i", { class: "bi bi-pencil" }), " Edit Filter")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "filterName" }, "Filter Name"), " ", /* @__PURE__ */ (0, import_mithril34.default)("input", { id: "filterName", type: "text", tabIndex: "0", value: vnode.state.name, oninput: (event) => this.setName(vnode, event) })), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril34.default)("label", { for: "filterTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril34.default)("input", { id: "filterTags", type: "text", placeholder: "#add #hashtags #here", value: vnode.state.tags, oninput: (event) => this.setTags(vnode, event) })), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril34.default)("label", null, "State(s)"), " ", STATE_OPTIONS.map((option) => /* @__PURE__ */ (0, import_mithril34.default)("label", { key: option.state, for: "state-" + option.state }, " ", /* @__PURE__ */ (0, import_mithril34.default)(
         "input",
         {
@@ -30338,7 +30544,7 @@
     // viewGhost renders the floating copy of the row being dragged. It tracks the
     // cursor vertically and stays pinned to the row's horizontal position.
     viewGhost(vnode) {
-      const filter = vnode.attrs.controller.filters.find((f2) => f2.id === vnode.state.dragId);
+      const filter = vnode.attrs.controller.filters.find((f3) => f3.id === vnode.state.dragId);
       if (filter == void 0) {
         return null;
       }
@@ -30442,7 +30648,7 @@
         return;
       }
       const filters = vnode.attrs.controller.filters;
-      const from = filters.findIndex((f2) => f2.id === dragId);
+      const from = filters.findIndex((f3) => f3.id === dragId);
       if (from < 0) {
         return;
       }
@@ -30532,7 +30738,7 @@
     // moveByKeyboard moves the filter one slot in the given direction and persists the order
     moveByKeyboard(vnode, filter, direction) {
       const filters = vnode.attrs.controller.filters;
-      const from = filters.findIndex((f2) => f2.id === filter.id);
+      const from = filters.findIndex((f3) => f3.id === filter.id);
       const to2 = from + direction;
       if (to2 < 0 || to2 >= filters.length) {
         return;
@@ -30575,7 +30781,7 @@
     addFilter(vnode) {
       const filters = vnode.attrs.controller.filters;
       const filter = NewFilter();
-      filter.sort = filters.length > 0 ? Math.max(...filters.map((f2) => f2.sort)) + 1 : 1;
+      filter.sort = filters.length > 0 ? Math.max(...filters.map((f3) => f3.sort)) + 1 : 1;
       vnode.state.editFilter = filter;
     }
     // openEdit opens the edit dialog for an existing filter

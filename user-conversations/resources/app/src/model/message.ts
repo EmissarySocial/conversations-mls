@@ -8,6 +8,8 @@ export type AttachmentKind = "image" | "video" | "audio" | "file"
 // self-contained "data:" URI (for files this client embeds) or a remote URL (for
 // received messages). width/height are optional and used only when a remote
 // Document supplies them; size is 0 when unknown (e.g. linked, non-embedded files).
+// blurhash, when present on an image, is a BlurHash string rendered as a blurry
+// placeholder until the full image loads.
 export type Attachment = {
 	url: string
 	mediaType: string
@@ -15,6 +17,7 @@ export type Attachment = {
 	size: number
 	width?: number
 	height?: number
+	blurhash?: string
 }
 
 // MessageData represents the raw data structure of a Message
@@ -212,6 +215,10 @@ export function attachmentToDocument(attachment: Attachment): { [key: string]: a
 
 	if (attachment.height != undefined) {
 		document["height"] = attachment.height
+	}
+
+	if (attachment.blurhash != undefined) {
+		document["blurhash"] = attachment.blurhash
 	}
 
 	return document

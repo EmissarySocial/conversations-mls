@@ -3,6 +3,7 @@ import { type Attachment, attachmentIcon, attachmentKind } from "../model/messag
 import { ViewController } from "./controller"
 import { Modal } from "./modal"
 import { formatFileSize } from "./utils"
+import { blurhashBackgroundStyle } from "../service/blurhash"
 
 // SWIPE_THRESHOLD is the minimum horizontal travel (in pixels) of a pointer
 // gesture that counts as a swipe to the next/previous attachment.
@@ -164,7 +165,7 @@ export class Attachments {
 			case "image":
 				return (
 					<div class="attachment-frame">
-						<img src={attachment.url} class="attachment-media" alt={attachment.name} /> {/* NOSONAR: typescript:S6853 */}
+						<img src={attachment.url} class="attachment-media" style={blurhashBackgroundStyle(attachment.blurhash)} alt={attachment.name} /> {/* NOSONAR: typescript:S6853 */}
 						{this.drawDownloadButton(attachment, "attachment-download-overlay")}
 					</div>
 				)
