@@ -4,6 +4,7 @@ import { Temporal } from "@js-temporal/polyfill"
 ;(globalThis as any).Temporal ??= Temporal
 
 import { Document } from "./document"
+import { attachmentToDocument } from "../model/message"
 
 describe("Document scalar accessors", () => {
 
@@ -61,6 +62,35 @@ describe("Document scalar accessors", () => {
 		expect(doc.attachments()).toHaveLength(2)
 		expect(doc.attachments()[0]!.url).toBe("https://x.test/a.png")
 		expect(doc.attachments()[1]!.url).toBe("https://x.test/b.txt")
+	})
+
+	test("attachments reads width/height and Video/Audio types", () => {
+		const doc = new Document({
+			type: "Note",
+			attachment: [
+				{ type: "Video", mediaType: "video/mp4", url: "https://x.test/v.mp4", name: "v.mp4", width: 1920, height: 1080 },
+				{ type: "Audio", mediaType: "audio/mpeg", url: "https://x.test/a.mp3", name: "a.mp3" },
+			],
+		})
+		const [video, audio] = doc.attachments()
+		expect(video).toEqual({ url: "https://x.test/v.mp4", mediaType: "video/mp4", name: "v.mp4", size: 0, width: 1920, height: 1080 })
+		expect(audio!.width).toBeUndefined()
+		expect(audio!.height).toBeUndefined()
+	})
+
+	test("attachments falls back to the 'href' property when 'url' is absent", () => {
+		const doc = new Document({
+			type: "Note",
+			attachment: { type: "Document", mediaType: "application/pdf", href: "https://x.test/doc.pdf" },
+		})
+		expect(doc.attachments()[0]!.url).toBe("https://x.test/doc.pdf")
+	})
+
+	test("attachments round-trips an Attachment through attachmentToDocument", () => {
+		const original = { url: "data:image/png;base64,AAAA", mediaType: "image/png", name: "a.png", size: 3, width: 64, height: 48 }
+		const doc = new Document({ type: "Note", attachment: attachmentToDocument(original) })
+		// size is not carried on the wire, so it decodes back as 0
+		expect(doc.attachments()[0]).toEqual({ ...original, size: 0 })
 	})
 
 	test("resolves the namespaced ActivityStreams key as a fallback", () => {
