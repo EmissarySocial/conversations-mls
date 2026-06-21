@@ -10,7 +10,6 @@ import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
 import { groupIsEncrypted } from "../model/group"
 import { GroupFrame } from "./group-frame"
-import { GroupMenu } from "./widget-groupMenu"
 
 dayjs.extend(relativeTime)
 
@@ -65,7 +64,7 @@ export class GroupMessages {
 
 		// Display messages
 		return (
-			<GroupFrame controller={controller} active="messages" growHeader={true} headerExtra={<GroupMenu controller={controller} group={group} />}>
+			<GroupFrame controller={controller} active="messages">
 				<div id="conversation-messages" class={classNames}>
 					<div class="flex-grow padding-sm padding-bottom-lg">
 						{controller.messages.map(message => {
