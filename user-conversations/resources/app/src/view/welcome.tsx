@@ -1,10 +1,10 @@
 import m from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 
 type WelcomeVnode = m.Vnode<WelcomeAttrs, WelcomeState>
 
 type WelcomeAttrs = {
-	controller: Controller
+	controller: ViewController
 }
 
 type WelcomeState = {

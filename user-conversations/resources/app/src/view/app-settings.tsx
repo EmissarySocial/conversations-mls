@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import type { ViewController as Controller, SettingsTab } from "./controller"
+import type { ViewController, SettingsTab } from "./controller"
 import { synthClick } from "./utils"
 import { AppSettingsGeneral } from "./app-settings-general"
 import { AppSettingsFilters } from "./app-settings-filters"
@@ -8,7 +8,7 @@ import { AppSettingsSignout } from "./app-settings-signout"
 type AppSettingsVnode = Vnode<AppSettingsArgs, AppSettingsState>
 
 interface AppSettingsArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface AppSettingsState {

@@ -1,6 +1,6 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"
@@ -9,7 +9,7 @@ import { groupIsEncrypted } from "../model/group"
 type AddGroupMemberVnode = Vnode<AddGroupMemberAttrs, AddGroupMemberState>
 
 interface AddGroupMemberAttrs {
-	controller: Controller
+	controller: ViewController
 	close: () => void
 }
 

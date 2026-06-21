@@ -1,12 +1,12 @@
 import m, { type Vnode } from "mithril"
 
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { haltEvent, synthClick } from "./utils"
 
 type AppSignInVnode = Vnode<AppSignInArgs, AppSignInState>
 
 interface AppSignInArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface AppSignInState {

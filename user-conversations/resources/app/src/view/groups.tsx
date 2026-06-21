@@ -1,5 +1,5 @@
 import m from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
 import { FilterMenu } from "./widget-filterMenu"
@@ -7,7 +7,7 @@ import { FilterMenu } from "./widget-filterMenu"
 type GroupsVnode = m.Vnode<GroupsAttrs, GroupsState>
 
 type GroupsAttrs = {
-	controller: Controller
+	controller: ViewController
 }
 
 type GroupsState = {}

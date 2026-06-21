@@ -3,7 +3,7 @@ import type Stream from "mithril/stream"
 
 import dayjs from "dayjs"
 
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { WidgetMessageCreate } from "./widget-message-create"
 import { ViewMessage } from "./message"
 import relativeTime from "dayjs/plugin/relativeTime"
@@ -16,7 +16,7 @@ dayjs.extend(relativeTime)
 type GroupMessagesVnode = VnodeDOM<GroupMessagesAttrs, GroupMessagesState>
 
 type GroupMessagesAttrs = {
-	controller: Controller
+	controller: ViewController
 }
 
 type GroupMessagesState = {
@@ -46,7 +46,7 @@ export class GroupMessages {
 	// Archived). The button matching the group's current state appears selected;
 	// clicking an unselected button changes the group's state. The label is used as
 	// the accessible name for the icon-only button.
-	viewStateButton(controller: Controller, group: Group | EncryptedGroup, state: GroupState, icon: string, label: string): m.Children {
+	viewStateButton(controller: ViewController, group: Group | EncryptedGroup, state: GroupState, icon: string, label: string): m.Children {
 
 		const isSelected = (group.stateId == state)
 		const cssClass = "text-sm" + (isSelected ? " pressed" : "")

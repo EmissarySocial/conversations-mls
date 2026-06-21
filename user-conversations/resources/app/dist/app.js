@@ -8525,26 +8525,26 @@
     "node_modules/mithril/stream/stream.js"(exports, module) {
       (function() {
         "use strict";
-        Stream5.SKIP = {};
-        Stream5.lift = lift;
-        Stream5.scan = scan;
-        Stream5.merge = merge;
-        Stream5.combine = combine;
-        Stream5.scanMerge = scanMerge;
-        Stream5["fantasy-land/of"] = Stream5;
+        Stream6.SKIP = {};
+        Stream6.lift = lift;
+        Stream6.scan = scan;
+        Stream6.merge = merge;
+        Stream6.combine = combine;
+        Stream6.scanMerge = scanMerge;
+        Stream6["fantasy-land/of"] = Stream6;
         var warnedHalt = false;
-        Object.defineProperty(Stream5, "HALT", {
+        Object.defineProperty(Stream6, "HALT", {
           get: function() {
             warnedHalt || console.log("HALT is deprecated and has been renamed to SKIP");
             warnedHalt = true;
-            return Stream5.SKIP;
+            return Stream6.SKIP;
           }
         });
-        function Stream5(value) {
+        function Stream6(value) {
           var dependentStreams = [];
           var dependentFns = [];
           function stream(v2) {
-            if (arguments.length && v2 !== Stream5.SKIP) {
+            if (arguments.length && v2 !== Stream6.SKIP) {
               value = v2;
               if (open(stream)) {
                 stream._changing();
@@ -8556,8 +8556,8 @@
             }
             return value;
           }
-          stream.constructor = Stream5;
-          stream._state = arguments.length && value !== Stream5.SKIP ? "active" : "pending";
+          stream.constructor = Stream6;
+          stream._state = arguments.length && value !== Stream6.SKIP ? "active" : "pending";
           stream._parents = [];
           stream._changing = function() {
             if (open(stream)) stream._state = "changing";
@@ -8566,7 +8566,7 @@
             });
           };
           stream._map = function(fn2, ignoreInitial) {
-            var target = ignoreInitial ? Stream5() : Stream5(fn2(value));
+            var target = ignoreInitial ? Stream6() : Stream6(fn2(value));
             target._parents.push(stream);
             dependentStreams.push(target);
             dependentFns.push(fn2);
@@ -8577,7 +8577,7 @@
           };
           var end;
           function createEnd() {
-            end = Stream5();
+            end = Stream6();
             end.map(function(value2) {
               if (value2 === true) {
                 stream._parents.forEach(function(p2) {
@@ -8615,11 +8615,11 @@
         }
         function combine(fn2, streams) {
           var ready = streams.every(function(s2) {
-            if (s2.constructor !== Stream5)
+            if (s2.constructor !== Stream6)
               throw new Error("Ensure that each item passed to stream.combine/stream.merge/lift is a stream.");
             return s2._state === "active";
           });
-          var stream = ready ? Stream5(fn2.apply(null, streams.concat([streams]))) : Stream5();
+          var stream = ready ? Stream6(fn2.apply(null, streams.concat([streams]))) : Stream6();
           var changed = [];
           var mappers = streams.map(function(s2) {
             return s2._map(function(value) {
@@ -8655,7 +8655,7 @@
         function scan(fn2, acc, origin) {
           var stream = origin.map(function(v2) {
             var next = fn2(acc, v2);
-            if (next !== Stream5.SKIP) acc = next;
+            if (next !== Stream6.SKIP) acc = next;
             return next;
           });
           stream(acc);
@@ -8686,9 +8686,9 @@
         function open(s2) {
           return s2._state === "pending" || s2._state === "active" || s2._state === "changing";
         }
-        if (typeof module !== "undefined") module["exports"] = Stream5;
-        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream5;
-        else window.m = { stream: Stream5 };
+        if (typeof module !== "undefined") module["exports"] = Stream6;
+        else if (typeof window.m === "function" && !("stream" in window.m)) window.m.stream = Stream6;
+        else window.m = { stream: Stream6 };
       })();
     }
   });
@@ -27453,6 +27453,192 @@
   // src/view/app.tsx
   var import_mithril40 = __toESM(require_mithril(), 1);
 
+  // src/view/controller.ts
+  var import_stream3 = __toESM(require_stream2(), 1);
+  var ViewController = class {
+    #controller;
+    constructor(controller2) {
+      this.#controller = controller2;
+    }
+    //////////////////////////////////////////
+    // State (delegated to the service Controller)
+    //////////////////////////////////////////
+    get config() {
+      return this.#controller.config;
+    }
+    set config(value) {
+      this.#controller.config = value;
+    }
+    get groups() {
+      return this.#controller.groups;
+    }
+    set groups(value) {
+      this.#controller.groups = value;
+    }
+    get messages() {
+      return this.#controller.messages;
+    }
+    set messages(value) {
+      this.#controller.messages = value;
+    }
+    get filters() {
+      return this.#controller.filters;
+    }
+    set filters(value) {
+      this.#controller.filters = value;
+    }
+    get groupStream() {
+      return this.#controller.groupStream;
+    }
+    get groupMemberStream() {
+      return this.#controller.groupMemberStream;
+    }
+    get groupContactStream() {
+      return this.#controller.groupContactStream;
+    }
+    get message() {
+      return this.#controller.message;
+    }
+    set message(value) {
+      this.#controller.message = value;
+    }
+    get inReplyTo() {
+      return this.#controller.inReplyTo;
+    }
+    set inReplyTo(value) {
+      this.#controller.inReplyTo = value;
+    }
+    get pageView() {
+      return this.#controller.pageView;
+    }
+    set pageView(value) {
+      this.#controller.pageView = value;
+    }
+    get settingsTab() {
+      return this.#controller.settingsTab;
+    }
+    set settingsTab(value) {
+      this.#controller.settingsTab = value;
+    }
+    get modalView() {
+      return this.#controller.modalView;
+    }
+    set modalView(value) {
+      this.#controller.modalView = value;
+    }
+    get isWindowFocused() {
+      return this.#controller.isWindowFocused;
+    }
+    set isWindowFocused(value) {
+      this.#controller.isWindowFocused = value;
+    }
+    get isApplicationRunning() {
+      return this.#controller.isApplicationRunning;
+    }
+    set isApplicationRunning(value) {
+      this.#controller.isApplicationRunning = value;
+    }
+    get stopReason() {
+      return this.#controller.stopReason;
+    }
+    set stopReason(value) {
+      this.#controller.stopReason = value;
+    }
+    //////////////////////////////////////////
+    // Lifecycle & configuration
+    //////////////////////////////////////////
+    start = () => this.#controller.start();
+    startupConfiguration = (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => this.#controller.startupConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur);
+    saveConfiguration = (clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) => this.#controller.saveConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur);
+    saveConfig = () => this.#controller.saveConfig();
+    signIn = (passcode) => this.#controller.signIn(passcode);
+    stop = (message) => this.#controller.stop(message);
+    eraseDevice = () => this.#controller.eraseDevice();
+    onFocusWindow = () => this.#controller.onFocusWindow();
+    onBlurWindow = () => this.#controller.onBlurWindow();
+    //////////////////////////////////////////
+    // Page & modal navigation
+    //////////////////////////////////////////
+    page_index = () => this.#controller.page_index();
+    page_settings = () => this.#controller.page_settings();
+    page_groups = () => this.#controller.page_groups();
+    page_group_messages = () => this.#controller.page_group_messages();
+    page_group_members = () => this.#controller.page_group_members();
+    page_group_notes = () => this.#controller.page_group_notes();
+    page_group_leave = () => this.#controller.page_group_leave();
+    page_signout = () => this.#controller.page_signout();
+    modal_addGroupMember = () => this.#controller.modal_addGroupMember();
+    modal_close = () => this.#controller.modal_close();
+    modal_newConversation = () => this.#controller.modal_newConversation();
+    modal_editMessage = (messageId) => this.#controller.modal_editMessage(messageId);
+    modal_messageHistory = (messageId) => this.#controller.modal_messageHistory(messageId);
+    modal_startReaction = (message) => this.#controller.modal_startReaction(message);
+    modal_startReaction_callback = (emoji) => this.#controller.modal_startReaction_callback(emoji);
+    //////////////////////////////////////////
+    // Host integration
+    //////////////////////////////////////////
+    host_actor = (actorId) => this.#controller.host_actor(actorId);
+    host_block = (actorId) => this.#controller.host_block(actorId);
+    host_keyPackages = () => this.#controller.host_keyPackages();
+    //////////////////////////////////////////
+    // Actor & account
+    //////////////////////////////////////////
+    actorId = () => this.#controller.actorId();
+    actorIcon = () => this.#controller.actorIcon();
+    lastMessage = (messageId) => this.#controller.lastMessage(messageId);
+    useEncryptedMessages = () => this.#controller.useEncryptedMessages();
+    //////////////////////////////////////////
+    // KeyPackages
+    //////////////////////////////////////////
+    createOrUpdateKeyPackage = () => this.#controller.createOrUpdateKeyPackage();
+    loadKeyPackage = () => this.#controller.loadKeyPackage();
+    loadOrCreateKeyPackage = () => this.#controller.loadOrCreateKeyPackage();
+    loadActorKeyPackages = (actorId) => this.#controller.loadActorKeyPackages(actorId);
+    //////////////////////////////////////////
+    // Groups
+    //////////////////////////////////////////
+    createGroup = (recipients, initialMessage, encrypted) => this.#controller.createGroup(recipients, initialMessage, encrypted);
+    joinGroup = (group) => this.#controller.joinGroup(group);
+    loadGroups = () => this.#controller.loadGroups();
+    loadFilters = () => this.#controller.loadFilters();
+    saveFilter = (filter) => this.#controller.saveFilter(filter);
+    deleteFilter = (filterId) => this.#controller.deleteFilter(filterId);
+    selectedFilterName = () => this.#controller.selectedFilterName();
+    setConversationFilter = (filterId) => this.#controller.setConversationFilter(filterId);
+    saveGroupAndSync = (group) => this.#controller.saveGroupAndSync(group);
+    saveGroup = (group) => this.#controller.saveGroup(group);
+    syncGroup = (group) => this.#controller.syncGroup(group);
+    leaveGroup = (groupId) => this.#controller.leaveGroup(groupId);
+    selectGroup = (groupId) => this.#controller.selectGroup(groupId);
+    clearSelectedGroup = () => this.#controller.clearSelectedGroup();
+    reconcileSelectedGroup = () => this.#controller.reconcileSelectedGroup();
+    selectedGroupId = () => this.#controller.selectedGroupId();
+    getFirstMessageInGroup = (groupId) => this.#controller.getFirstMessageInGroup(groupId);
+    setGroupState = (group, stateId) => this.#controller.setGroupState(group, stateId);
+    setSelectedGroupState = (stateId) => this.#controller.setSelectedGroupState(stateId);
+    addGroupMembers = (actorIds) => this.#controller.addGroupMembers(actorIds);
+    removeGroupMember = (actorId) => this.#controller.removeGroupMember(actorId);
+    //////////////////////////////////////////
+    // Messages
+    //////////////////////////////////////////
+    loadMessages = () => this.#controller.loadMessages();
+    loadMessage = (messageId) => this.#controller.loadMessage(messageId);
+    startReply = (message) => this.#controller.startReply(message);
+    removeReply = () => this.#controller.removeReply();
+    sendMessage = (content) => this.#controller.sendMessage(content);
+    sendFile = (file) => this.#controller.sendFile(file);
+    updateMessage = (message) => this.#controller.updateMessage(message);
+    clearMessage = () => this.#controller.clearMessage();
+    deleteMessage = (messageId) => this.#controller.deleteMessage(messageId);
+    reactToMessage = (messageId, content = "\u2764\uFE0F") => this.#controller.reactToMessage(messageId, content);
+    undoReaction = (messageId) => this.#controller.undoReaction(messageId);
+    //////////////////////////////////////////
+    // Contacts & inbound activities
+    //////////////////////////////////////////
+    getContactStream = (actorId) => this.#controller.getContactStream(actorId);
+    receiveActivity = (activity, retryCount = 0) => this.#controller.receiveActivity(activity, retryCount);
+  };
+
   // src/view/welcome.tsx
   var import_mithril2 = __toESM(require_mithril(), 1);
   var Welcome = class {
@@ -28249,11 +28435,11 @@
 
   // src/view/modal-pickEmoji.tsx
   var import_mithril12 = __toESM(require_mithril(), 1);
-  var import_stream3 = __toESM(require_stream2(), 1);
+  var import_stream4 = __toESM(require_stream2(), 1);
   var PickEmoji = class {
     oninit(vnode) {
       vnode.state.recentEmojis = JSON.parse(localStorage.getItem("recentEmojis") || "[]");
-      vnode.state.emojiGroups = (0, import_stream3.default)([]);
+      vnode.state.emojiGroups = (0, import_stream4.default)([]);
       fetch("/.templates/user-conversations/resources/emoji/data-by-group.json", { cache: "force-cache" }).then((response) => response.json()).then((emojis) => {
         vnode.state.emojiGroups(emojis);
         vnode.state.emojiGroups.end(true);
@@ -29990,16 +30176,7 @@
   var import_mithril39 = __toESM(require_mithril(), 1);
   var AppLoading = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "width-32 circle" }), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "bold text-lg margin-none" }, "Conversations")), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-grow" }), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "text-lg margin-none text-light-gray" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center padding text-sm" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { role: "textbox", class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril39.default)("label", { class: "bi bi-search" }), /* @__PURE__ */ (0, import_mithril39.default)(
-        "input",
-        {
-          id: "idSearch",
-          type: "text",
-          placeholder: "Search",
-          class: "flex-grow margin-none padding-none",
-          style: "border:none; outline:none;"
-        }
-      )), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "text-lg text-light-gray margin-none clickable" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-filter-circle" }))))), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
+      return /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, "Loading..."), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "text-lg text-gray padding-none margin-none" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-filter-circle" })), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "text-gray text-lg margin-none padding-xs" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril39.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "conversations-scroll" }), /* @__PURE__ */ (0, import_mithril39.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril39.default)("span", null, "Settings")))), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
     }
   };
 
@@ -30036,7 +30213,7 @@
 
   // src/service/contacts.ts
   var import_mithril41 = __toESM(require_mithril(), 1);
-  var import_stream4 = __toESM(require_stream2(), 1);
+  var import_stream5 = __toESM(require_stream2(), 1);
   var Contacts = class {
     #contacts;
     // Map of contact ID to Contact object
@@ -30065,7 +30242,7 @@
     }
     // getContactStream retrieves a contact by ID from the in-memory map
     getContactStream(id) {
-      let result = (0, import_stream4.default)(NewContact(id));
+      let result = (0, import_stream5.default)(NewContact(id));
       const cachedValue = this.#contacts.get(id);
       if (cachedValue != void 0) {
         result(cachedValue);
@@ -30129,7 +30306,8 @@
     const delivery = new Delivery();
     const directory = new Directory(delivery, proxy, actorId);
     const receiver = new Receiver();
-    controller = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
+    const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
+    controller = new ViewController(serviceController);
     controller.start();
     import_mithril42.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril42.default)(App, { controller }) });
     window.addEventListener("focus", async () => {

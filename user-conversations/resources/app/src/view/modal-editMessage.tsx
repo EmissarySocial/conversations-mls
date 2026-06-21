@@ -1,6 +1,6 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { groupIsEncrypted } from "../model/group"
 import { htmlToText } from "../service/utils"
 import { Modal } from "./modal"
@@ -9,7 +9,7 @@ import { synthClick } from "./utils"
 type EditMessageVnode = Vnode<EditMessageAttrs, EditMessageState>
 
 interface EditMessageAttrs {
-	controller: Controller
+	controller: ViewController
 	close: () => void
 }
 

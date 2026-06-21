@@ -1,6 +1,6 @@
 import m, { type Vnode } from "mithril"
 import { type Message } from "../model/message"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"
@@ -9,7 +9,7 @@ import { formatFileSize, isEmoji, synthClick } from "./utils"
 type ViewMessageVnode = Vnode<ViewMessageAttrs, ViewMessageState>
 
 type ViewMessageAttrs = {
-	controller: Controller
+	controller: ViewController
 	key: string
 	message: Message
 	showDate: string
@@ -163,7 +163,7 @@ export class ViewMessage {
 		throw new Error(`Unknown message type: ${message.type}`)
 	}
 
-	drawContent(controller: Controller, message: Message): JSX.Element {
+	drawContent(controller: ViewController, message: Message): JSX.Element {
 
 		return <>
 			{message.attachments.map(attachment => (
@@ -194,7 +194,7 @@ export class ViewMessage {
 	// onContentClick intercepts clicks on @mention links inside rendered message
 	// content (an inert m.trust island) and routes them to the host's profile viewer
 	// instead of navigating to the remote profile URL.
-	onContentClick(controller: Controller, event: MouseEvent) {
+	onContentClick(controller: ViewController, event: MouseEvent) {
 		const actorId = this.mentionActorId(event.target)
 		if (actorId == "") {
 			return
@@ -205,7 +205,7 @@ export class ViewMessage {
 
 	// onContentKeydown handles keyboard activation (Enter/Space) of a focused mention
 	// link, routing it to the host profile viewer like a click.
-	onContentKeydown(controller: Controller, event: KeyboardEvent) {
+	onContentKeydown(controller: ViewController, event: KeyboardEvent) {
 		if (event.key != "Enter" && event.key != " ") {
 			return
 		}

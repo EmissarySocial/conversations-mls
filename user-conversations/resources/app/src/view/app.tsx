@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import type { Config } from "../model/config"
 import { Welcome } from "./welcome"
 import { Index } from "."
@@ -12,7 +12,7 @@ import { AppLoading } from "./app-loading"
 type AppVnode = Vnode<AppAttrs, AppState>
 
 type AppAttrs = {
-	controller: Controller
+	controller: ViewController
 }
 
 type AppState = {

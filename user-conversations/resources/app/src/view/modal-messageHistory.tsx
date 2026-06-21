@@ -1,12 +1,12 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { Modal } from "./modal"
 
 type MessageHistoryVnode = Vnode<MessageHistoryAttrs, MessageHistoryState>
 
 interface MessageHistoryAttrs {
-	controller: Controller
+	controller: ViewController
 	close: () => void
 }
 

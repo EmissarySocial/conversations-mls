@@ -1,6 +1,6 @@
 import m, { type Vnode } from "mithril"
 import { Actor } from "../as/actor"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 
 // MentionPopupController is the imperative handle a host (e.g. a message composer)
 // uses to drive the popup's keyboard navigation while focus stays in its own text
@@ -18,7 +18,7 @@ export interface MentionPopupController {
 type MentionPopupVnode = Vnode<MentionPopupArgs, MentionPopupState>
 
 interface MentionPopupArgs {
-	controller: Controller
+	controller: ViewController
 
 	// query is the text typed after the "@" (without the "@"). The popup searches
 	// whenever this changes. An empty query clears the results.

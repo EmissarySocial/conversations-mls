@@ -1,12 +1,12 @@
 import m, { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { type Group } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupLeaveVnode = Vnode<GroupLeaveArgs, GroupLeaveState>
 
 interface GroupLeaveArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface GroupLeaveState {

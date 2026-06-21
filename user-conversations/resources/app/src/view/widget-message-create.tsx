@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 import type { Message } from "../model/message"
 import type { Emoji } from "../model/emoji"
 import { groupIsEncrypted } from "../model/group"
@@ -14,7 +14,7 @@ const MESSAGE_INPUT_ID = "message-input"
 type WidgetMessageCreateVnode = Vnode<WidgetMessageCreateAttrs, WidgetMessageCreateState>
 
 type WidgetMessageCreateAttrs = {
-	controller: Controller
+	controller: ViewController
 	inReplyTo: Message | undefined
 }
 

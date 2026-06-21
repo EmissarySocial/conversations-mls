@@ -1,13 +1,13 @@
 import m, { type Vnode } from "mithril"
 
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { groupIsEncrypted } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupWelcomeVnode = Vnode<GroupWelcomeArgs, GroupWelcomeState>
 
 interface GroupWelcomeArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface GroupWelcomeState {

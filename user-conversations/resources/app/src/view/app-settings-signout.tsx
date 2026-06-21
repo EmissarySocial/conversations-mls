@@ -1,10 +1,10 @@
 import m from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 
 type SignoutVnode = m.Vnode<SignoutArgs, SignoutState>
 
 interface SignoutArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface SignoutState { }

@@ -1,5 +1,5 @@
 import m from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 import { NewFilter, type Filter } from "../model/filter"
 import { WidgetFilterEdit, STATE_OPTIONS } from "./widget-filter-edit"
 import { haltEvent, synthClick } from "./utils"
@@ -7,7 +7,7 @@ import { haltEvent, synthClick } from "./utils"
 type FiltersVnode = m.Vnode<FiltersArgs, FiltersState>
 
 interface FiltersArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface FiltersState {

@@ -2,13 +2,13 @@ import m from "mithril"
 import { type VnodeDOM } from "mithril"
 import { Actor } from "../as/actor"
 import { keyCode } from "./utils"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 import type { KeyPackage } from "ts-mls"
 
 type ActorSearchVnode = VnodeDOM<ActorSearchAttrs, ActorSearchState>
 
 interface ActorSearchAttrs {
-	controller: Controller
+	controller: ViewController
 	id: string
 	name: string
 	value: Actor[]

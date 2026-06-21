@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import type { Filter } from "../model/filter"
 import type { GroupState } from "../model/group"
 import { Modal } from "./modal"
@@ -8,7 +8,7 @@ import { haltEvent } from "./utils"
 type FilterEditVnode = Vnode<FilterEditAttrs, FilterEditState>
 
 interface FilterEditAttrs {
-	controller: Controller
+	controller: ViewController
 	filter: Filter
 	close: () => void
 }

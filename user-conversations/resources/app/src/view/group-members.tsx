@@ -1,14 +1,14 @@
 import m, { type Vnode } from "mithril"
 import { type Contact } from "../model/contact"
 
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupMembersVnode = Vnode<GroupMembersArgs, GroupMembersState>
 
 interface GroupMembersArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface GroupMembersState {

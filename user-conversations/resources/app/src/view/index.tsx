@@ -1,7 +1,7 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { type Group } from "../model/group"
-import { ViewController as Controller } from "./controller"
+import { ViewController } from "./controller"
 import { NewConversation } from "./modal-newConversation"
 import { Groups } from "./groups"
 import { GroupMessages } from "./group-messages"
@@ -18,7 +18,7 @@ import { GroupWelcome } from "./group-welcome"
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
 type IndexAttrs = {
-	controller: Controller
+	controller: ViewController
 }
 
 type IndexState = {

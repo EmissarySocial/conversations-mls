@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 import type { EmojiKey } from "../model/emoji"
 import { synthClick } from "./utils"
 import { SavedNotice } from "./widget-saved-notice"
@@ -8,7 +8,7 @@ import { Toggle } from "./widget-toggle"
 type GeneralVnode = Vnode<GeneralArgs, GeneralState>
 
 interface GeneralArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface GeneralState {

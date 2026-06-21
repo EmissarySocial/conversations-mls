@@ -1,12 +1,12 @@
 import m from "mithril"
-import type { ViewController as Controller } from "./controller"
+import type { ViewController } from "./controller"
 import { synthClick } from "./utils"
 import { Popup } from "./widget-popup"
 
 type FilterMenuVnode = m.Vnode<FilterMenuArgs, FilterMenuState>
 
 interface FilterMenuArgs {
-	controller: Controller
+	controller: ViewController
 }
 
 interface FilterMenuState { }
@@ -33,7 +33,7 @@ export class FilterMenu {
 	}
 
 	// viewMenu renders the body of the filter pop-up
-	viewMenu(controller: Controller, close: () => void): m.Children {
+	viewMenu(controller: ViewController, close: () => void): m.Children {
 
 		const selectedId = controller.config.selectedFilterId
 
@@ -57,13 +57,13 @@ export class FilterMenu {
 	}
 
 	// select applies the chosen filter and closes the pop-up
-	select(controller: Controller, close: () => void, filterId: string) {
+	select(controller: ViewController, close: () => void, filterId: string) {
 		controller.setConversationFilter(filterId)
 		close()
 	}
 
 	// manage closes the pop-up and navigates to the settings "Filters" tab
-	manage(controller: Controller, close: () => void) {
+	manage(controller: ViewController, close: () => void) {
 		close()
 		controller.page_settings()
 	}
