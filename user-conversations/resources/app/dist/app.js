@@ -1064,9 +1064,9 @@
         var path = template.slice(0, pathEnd);
         var query = {};
         Object.assign(query, params);
-        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m40, key, variadic) {
+        var resolved = path.replace(/:([^\/\.-]+)(\.{3})?/g, function(m42, key, variadic) {
           delete query[key];
-          if (params[key] == null) return m40;
+          if (params[key] == null) return m42;
           return variadic ? params[key] : encodeURIComponent(String(params[key]));
         });
         var newQueryIndex = resolved.indexOf("?");
@@ -1343,8 +1343,8 @@
           // don't also accidentally escape `-` and make it harder to detect it to
           // ban it from template parameters.
           /:([^\/.-]+)(\.{3}|\.(?!\.)|-)?|[\\^$*+.()|\[\]{}]/g,
-          function(m40, key, extra) {
-            if (key == null) return "\\" + m40;
+          function(m42, key, extra) {
+            if (key == null) return "\\" + m42;
             keys.push({ k: key, r: extra === "..." });
             if (extra === "...") return "(.*)";
             if (extra === ".") return "([^/]+)\\.";
@@ -1597,26 +1597,26 @@
       var mountRedraw = require_mount_redraw2();
       var request = require_request2();
       var router = require_route();
-      var m40 = function m41() {
+      var m42 = function m43() {
         return hyperscript.apply(this, arguments);
       };
-      m40.m = hyperscript;
-      m40.trust = hyperscript.trust;
-      m40.fragment = hyperscript.fragment;
-      m40.Fragment = "[";
-      m40.mount = mountRedraw.mount;
-      m40.route = router;
-      m40.render = require_render2();
-      m40.redraw = mountRedraw.redraw;
-      m40.request = request.request;
-      m40.parseQueryString = require_parse();
-      m40.buildQueryString = require_build();
-      m40.parsePathname = require_parse2();
-      m40.buildPathname = require_build2();
-      m40.vnode = require_vnode();
-      m40.censor = require_censor();
-      m40.domFor = require_domFor();
-      module.exports = m40;
+      m42.m = hyperscript;
+      m42.trust = hyperscript.trust;
+      m42.fragment = hyperscript.fragment;
+      m42.Fragment = "[";
+      m42.mount = mountRedraw.mount;
+      m42.route = router;
+      m42.render = require_render2();
+      m42.redraw = mountRedraw.redraw;
+      m42.request = request.request;
+      m42.parseQueryString = require_parse();
+      m42.buildQueryString = require_build();
+      m42.parsePathname = require_parse2();
+      m42.buildPathname = require_build2();
+      m42.vnode = require_vnode();
+      m42.censor = require_censor();
+      m42.domFor = require_domFor();
+      module.exports = m42;
     }
   });
 
@@ -3593,9 +3593,9 @@
     while (a2 !== _0n3) {
       const q3 = b2 / a2;
       const r2 = b2 - a2 * q3;
-      const m40 = x3 - u2 * q3;
+      const m42 = x3 - u2 * q3;
       const n2 = y2 - v2 * q3;
-      b2 = a2, a2 = r2, x3 = u2, y2 = v2, u2 = m40, v2 = n2;
+      b2 = a2, a2 = r2, x3 = u2, y2 = v2, u2 = m42, v2 = n2;
     }
     const gcd = b2;
     if (gcd !== _1n3)
@@ -5128,17 +5128,17 @@
       k: "number",
       hash: "function"
     });
-    const { p: p3, k: k2, m: m40, hash, expand, DST } = options;
+    const { p: p3, k: k2, m: m42, hash, expand, DST } = options;
     asafenumber(hash.outputLen, "valid hash");
     abytes4(msg);
     asafenumber(count);
     if (count < 1)
       throw new Error("hash_to_field: expected count >= 1");
-    if (m40 < 1)
+    if (m42 < 1)
       throw new Error("hash_to_field: expected m >= 1");
     const log2p = p3.toString(2).length;
     const L3 = Math.ceil((log2p + k2) / 8);
-    const len_in_bytes = count * m40 * L3;
+    const len_in_bytes = count * m42 * L3;
     let prb;
     if (expand === "xmd") {
       prb = expand_message_xmd(msg, DST, len_in_bytes, hash);
@@ -5151,9 +5151,9 @@
     }
     const u2 = new Array(count);
     for (let i2 = 0; i2 < count; i2++) {
-      const e2 = new Array(m40);
-      for (let j3 = 0; j3 < m40; j3++) {
-        const elm_offset = L3 * (j3 + i2 * m40);
+      const e2 = new Array(m42);
+      for (let j3 = 0; j3 < m42; j3++) {
+        const elm_offset = L3 * (j3 + i2 * m42);
         const tv = prb.subarray(elm_offset, elm_offset + L3);
         e2[j3] = mod3(os2ip(tv), p3);
       }
@@ -6176,8 +6176,8 @@
     });
     const poprf = (info) => {
       info = inputBytes("info", info);
-      const m40 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
-      const T2 = Point.BASE.multiply(m40);
+      const m42 = hashToScalarPrefixed(encode2("Info", info), ctxPOPRF);
+      const T2 = Point.BASE.multiply(m42);
       return Object.freeze({
         generateKeyPair,
         deriveKeyPair: (seed, keyInfo) => deriveKeyPair(ctxPOPRF, seed, keyInfo),
@@ -6202,7 +6202,7 @@
           if (!Array.isArray(blinded))
             throw new Error("expected array");
           const skS = Fn4.fromBytes(secretKey);
-          const t2 = Fn4.add(skS, m40);
+          const t2 = Fn4.add(skS, m42);
           const invT = Fn4.inv(t2);
           const blindedPoints = blinded.map((i2) => wirePoint("blinded", i2));
           const evalPoints = blindedPoints.map((i2) => i2.multiply(invT));
@@ -6235,7 +6235,7 @@
           const inputPoint = hashToGroup(input, ctxPOPRF);
           if (inputPoint.equals(Point.ZERO))
             throw new Error("Input point at infinity");
-          const t2 = Fn4.add(skS, m40);
+          const t2 = Fn4.add(skS, m42);
           const invT = Fn4.inv(t2);
           const unblinded = inputPoint.multiply(invT).toBytes();
           return hashInput(input, info, unblinded);
@@ -8177,7 +8177,7 @@
         seedArgs.push(abytes4(e2, void 0, "extraEntropy"));
       }
       const seed = concatBytes3(...seedArgs);
-      const m40 = h1int;
+      const m42 = h1int;
       function k2sig(kBytes) {
         const k2 = bits2int(kBytes);
         if (!Fn4.isValidNot0(k2))
@@ -8187,7 +8187,7 @@
         const r2 = Fn4.create(q3.x);
         if (r2 === _0n9)
           return;
-        const s2 = Fn4.create(ik * Fn4.create(m40 + r2 * d3));
+        const s2 = Fn4.create(ik * Fn4.create(m42 + r2 * d3));
         if (s2 === _0n9)
           return;
         let recovery = (q3.x === r2 ? 0 : 2) | Number(q3.y & _1n10);
@@ -8263,8 +8263,8 @@
       init_modular();
       divNearest = (num, den) => (num + (num >= 0 ? den : -den) / _2n8) / den;
       DERErr = class extends Error {
-        constructor(m40 = "") {
-          super(m40);
+        constructor(m42 = "") {
+          super(m42);
         }
       };
       DER = {
@@ -8797,22 +8797,22 @@
             return !!e3;
           })();
         }
-        function m40(_3, g3) {
+        function m42(_3, g3) {
           var l3 = null == _3 ? null : "undefined" != typeof Symbol && _3[Symbol.iterator] || _3["@@iterator"];
           if (null != l3) {
-            var s3, d4, r3, h4, b3 = [], a3 = true, m41 = false;
+            var s3, d4, r3, h4, b3 = [], a3 = true, m43 = false;
             try {
               if (r3 = (l3 = l3.call(_3)).next, 0 === g3) {
                 if (Object(l3) !== l3) return;
                 a3 = false;
               } else for (; !(a3 = (s3 = r3.call(l3)).done) && (b3.push(s3.value), b3.length !== g3); a3 = true) ;
             } catch (e3) {
-              m41 = true, d4 = e3;
+              m43 = true, d4 = e3;
             } finally {
               try {
                 if (!a3 && null != l3.return && (h4 = l3.return(), Object(h4) !== h4)) return;
               } finally {
-                if (m41) throw d4;
+                if (m43) throw d4;
               }
             }
             return b3;
@@ -8832,7 +8832,7 @@
           }, y2(i3, t3);
         }
         function f3(t3, i3) {
-          return _2(t3) || m40(t3, i3) || B2(t3, i3) || c2();
+          return _2(t3) || m42(t3, i3) || B2(t3, i3) || c2();
         }
         function k2(_3, t3) {
           if ("object" != typeof _3 || !_3) return _3;
@@ -8917,7 +8917,7 @@
           } }, { key: "__inplaceMultiplyAdd", value: function n3(e4, t4, _4) {
             _4 > this.length && (_4 = this.length);
             for (var o3 = 32767 & e4, l3 = e4 >>> 15, a3 = 0, s3 = t4, u3 = 0; u3 < _4; u3++) {
-              var r3 = this.__digit(u3), h4 = 32767 & r3, b3 = r3 >>> 15, m41 = g3.__imul(h4, o3), c3 = g3.__imul(h4, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f4 = s3 + m41 + a3;
+              var r3 = this.__digit(u3), h4 = 32767 & r3, b3 = r3 >>> 15, m43 = g3.__imul(h4, o3), c3 = g3.__imul(h4, l3), v3 = g3.__imul(b3, o3), y3 = g3.__imul(b3, l3), f4 = s3 + m43 + a3;
               a3 = f4 >>> 30, f4 &= 1073741823, f4 += ((32767 & c3) << 15) + ((32767 & v3) << 15), a3 += f4 >>> 30, s3 = y3 + (c3 >>> 15) + (v3 >>> 15), this.__setDigit(u3, 1073741823 & f4);
             }
             if (0 !== a3 || 0 !== s3) throw new Error("implementation bug");
@@ -8939,16 +8939,16 @@
               0 == (1 & _4) && (g4 = this.__digit(t4 + s3 + 1), a3 = (32767 & g4) - b3 - l3, l3 = 1 & a3 >>> 15, this.__setDigit(t4 + e4.length, 1073709056 & g4 | 32767 & a3));
             } else {
               t4 >>= 1;
-              for (var m41 = 0; m41 < e4.length - 1; m41++) {
-                var c3 = this.__digit(t4 + m41), v3 = e4.__digit(m41), y3 = (32767 & c3) - (32767 & v3) - l3;
+              for (var m43 = 0; m43 < e4.length - 1; m43++) {
+                var c3 = this.__digit(t4 + m43), v3 = e4.__digit(m43), y3 = (32767 & c3) - (32767 & v3) - l3;
                 l3 = 1 & y3 >>> 15;
                 var f4 = (c3 >>> 15) - (v3 >>> 15) - l3;
-                l3 = 1 & f4 >>> 15, this.__setDigit(t4 + m41, (32767 & f4) << 15 | 32767 & y3);
+                l3 = 1 & f4 >>> 15, this.__setDigit(t4 + m43, (32767 & f4) << 15 | 32767 & y3);
               }
-              var k3 = this.__digit(t4 + m41), D4 = e4.__digit(m41), p4 = (32767 & k3) - (32767 & D4) - l3;
+              var k3 = this.__digit(t4 + m43), D4 = e4.__digit(m43), p4 = (32767 & k3) - (32767 & D4) - l3;
               l3 = 1 & p4 >>> 15;
               var B3 = 0;
-              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D4 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m41, (32767 & B3) << 15 | 32767 & p4);
+              0 == (1 & _4) && (B3 = (k3 >>> 15) - (D4 >>> 15) - l3, l3 = 1 & B3 >>> 15), this.__setDigit(t4 + m43, (32767 & B3) << 15 | 32767 & p4);
             }
             return l3;
           } }, { key: "__inplaceRightShift", value: function t4(e4) {
@@ -9003,9 +9003,9 @@
             if (1024 < l3) return e4.sign ? -Infinity : 1 / 0;
             var a3 = l3 - 1, s3 = n3, u3 = i4 - 1, r3 = o3 + 3, d4 = 32 === r3 ? 0 : s3 << r3;
             d4 >>>= 12;
-            var h4 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m41 = 20 + r3;
-            for (0 < h4 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d4 |= s3 >>> 30 - h4, b3 = s3 << h4 + 2, m41 = h4 + 2); 0 < m41 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m41 ? s3 << m41 - 30 : s3 >>> 30 - m41, m41 -= 30;
-            var c3 = g3.__decideRounding(e4, m41, u3, s3);
+            var h4 = r3 - 12, b3 = 12 <= r3 ? 0 : s3 << 20 + r3, m43 = 20 + r3;
+            for (0 < h4 && 0 < u3 && (u3--, s3 = e4.__digit(u3), d4 |= s3 >>> 30 - h4, b3 = s3 << h4 + 2, m43 = h4 + 2); 0 < m43 && 0 < u3; ) u3--, s3 = e4.__digit(u3), b3 |= 30 <= m43 ? s3 << m43 - 30 : s3 >>> 30 - m43, m43 -= 30;
+            var c3 = g3.__decideRounding(e4, m43, u3, s3);
             if ((1 === c3 || 0 === c3 && 1 == (1 & b3)) && (b3 = b3 + 1 >>> 0, 0 === b3 && (d4++, 0 != d4 >>> 20 && (d4 = 0, a3++, 1023 < a3)))) return e4.sign ? -Infinity : 1 / 0;
             var v3 = e4.sign ? -2147483648 : 0;
             return a3 = a3 + 1023 << 20, g3.__kBitConversionInts[g3.__kBitConversionIntHigh] = v3 | a3 | d4, g3.__kBitConversionInts[g3.__kBitConversionIntLow] = b3, g3.__kBitConversionDouble[0];
@@ -9243,8 +9243,8 @@
             g3.__kBitConversionDouble[0] = e4;
             var _4, n3 = 2047 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] >>> 20, o3 = n3 - 1023, l3 = (0 | o3 / 30) + 1, a3 = new g3(l3, i4), s3 = 1048576, u3 = 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh] | s3, r3 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], d4 = 20, h4 = o3 % 30, b3 = 0;
             if (h4 < d4) {
-              var m41 = d4 - h4;
-              b3 = m41 + 32, _4 = u3 >>> m41, u3 = u3 << 32 - m41 | r3 >>> m41, r3 <<= 32 - m41;
+              var m43 = d4 - h4;
+              b3 = m43 + 32, _4 = u3 >>> m43, u3 = u3 << 32 - m43 | r3 >>> m43, r3 <<= 32 - m43;
             } else if (h4 === d4) b3 = 32, _4 = u3, u3 = r3, r3 = 0;
             else {
               var c3 = h4 - d4;
@@ -9362,14 +9362,14 @@
             o3 = (85 & o3 >>> 1) + (85 & o3), o3 = (51 & o3 >>> 2) + (51 & o3), o3 = (15 & o3 >>> 4) + (15 & o3);
             var l3 = o3, a3 = t4 - 1, s3 = e4.__digit(n3 - 1), u3 = g3.__clz30(s3), r3 = 30 * n3 - u3, d4 = 0 | (r3 + l3 - 1) / l3;
             if (e4.sign && d4++, 268435456 < d4) throw new Error("string too long");
-            for (var h4 = Array(d4), b3 = d4 - 1, m41 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
-              var y3 = e4.__digit(v3), f4 = (m41 | y3 << c3) & a3;
+            for (var h4 = Array(d4), b3 = d4 - 1, m43 = 0, c3 = 0, v3 = 0; v3 < n3 - 1; v3++) {
+              var y3 = e4.__digit(v3), f4 = (m43 | y3 << c3) & a3;
               h4[b3--] = g3.__kConversionChars[f4];
               var k3 = l3 - c3;
-              for (m41 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h4[b3--] = g3.__kConversionChars[m41 & a3], m41 >>>= l3, c3 -= l3;
+              for (m43 = y3 >>> k3, c3 = 30 - k3; c3 >= l3; ) h4[b3--] = g3.__kConversionChars[m43 & a3], m43 >>>= l3, c3 -= l3;
             }
-            var D4 = (m41 | s3 << c3) & a3;
-            for (h4[b3--] = g3.__kConversionChars[D4], m41 = s3 >>> l3 - c3; 0 !== m41; ) h4[b3--] = g3.__kConversionChars[m41 & a3], m41 >>>= l3;
+            var D4 = (m43 | s3 << c3) & a3;
+            for (h4[b3--] = g3.__kConversionChars[D4], m43 = s3 >>> l3 - c3; 0 !== m43; ) h4[b3--] = g3.__kConversionChars[m43 & a3], m43 >>>= l3;
             if (e4.sign && (h4[b3--] = "-"), -1 !== b3) throw new Error("implementation bug");
             return h4.join("");
           } }, { key: "__toStringGeneric", value: function n3(e4, t4, _4) {
@@ -9381,13 +9381,13 @@
             }
             var a3 = 30 * o3 - g3.__clz30(e4.__digit(o3 - 1)), s3 = g3.__kMaxBitsPerChar[t4], u3 = s3 - 1, r3 = a3 * g3.__kBitsPerCharTableMultiplier;
             r3 += u3 - 1, r3 = 0 | r3 / u3;
-            var d4, h4, b3 = r3 + 1 >> 1, m41 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m41.__unsignedDigit(0);
-            if (1 === m41.length && 32767 >= c3) {
+            var d4, h4, b3 = r3 + 1 >> 1, m43 = g3.exponentiate(g3.__oneDigit(t4, false), g3.__oneDigit(b3, false)), c3 = m43.__unsignedDigit(0);
+            if (1 === m43.length && 32767 >= c3) {
               d4 = new g3(e4.length, false), d4.__initializeDigits();
               for (var v3, y3 = 0, f4 = 2 * e4.length - 1; 0 <= f4; f4--) v3 = y3 << 15 | e4.__halfDigit(f4), d4.__setHalfDigit(f4, 0 | v3 / c3), y3 = 0 | v3 % c3;
               h4 = y3.toString(t4);
             } else {
-              var k3 = g3.__absoluteDivLarge(e4, m41, true, true);
+              var k3 = g3.__absoluteDivLarge(e4, m43, true, true);
               d4 = k3.quotient;
               var D4 = k3.remainder.__trim();
               h4 = g3.__toStringGeneric(D4, t4, true);
@@ -9435,26 +9435,26 @@
             var a3 = e4.length, s3 = e4.__digit(a3 - 1), u3 = g3.__clz30(s3), r3 = 30 * a3 - u3, d4 = l3 + 1;
             if (r3 < d4) return g3.__absoluteLess(_4);
             if (r3 > d4) return g3.__absoluteGreater(_4);
-            var h4 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m41 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
+            var h4 = 1048576, b3 = 1048576 | 1048575 & g3.__kBitConversionInts[g3.__kBitConversionIntHigh], m43 = g3.__kBitConversionInts[g3.__kBitConversionIntLow], c3 = 20, v3 = 29 - u3;
             if (v3 !== (0 | (r3 - 1) % 30)) throw new Error("implementation bug");
             var y3, f4 = 0;
             if (v3 < c3) {
               var k3 = c3 - v3;
-              f4 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m41 >>> k3, m41 <<= 32 - k3;
-            } else if (v3 === c3) f4 = 32, y3 = b3, b3 = m41, m41 = 0;
+              f4 = k3 + 32, y3 = b3 >>> k3, b3 = b3 << 32 - k3 | m43 >>> k3, m43 <<= 32 - k3;
+            } else if (v3 === c3) f4 = 32, y3 = b3, b3 = m43, m43 = 0;
             else {
               var D4 = v3 - c3;
-              f4 = 32 - D4, y3 = b3 << D4 | m41 >>> 32 - D4, b3 = m41 << D4, m41 = 0;
+              f4 = 32 - D4, y3 = b3 << D4 | m43 >>> 32 - D4, b3 = m43 << D4, m43 = 0;
             }
             if (s3 >>>= 0, y3 >>>= 0, s3 > y3) return g3.__absoluteGreater(_4);
             if (s3 < y3) return g3.__absoluteLess(_4);
             for (var p4 = a3 - 2; 0 <= p4; p4--) {
-              0 < f4 ? (f4 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m41 >>> 2, m41 <<= 30) : y3 = 0;
+              0 < f4 ? (f4 -= 30, y3 = b3 >>> 2, b3 = b3 << 30 | m43 >>> 2, m43 <<= 30) : y3 = 0;
               var B3 = e4.__unsignedDigit(p4);
               if (B3 > y3) return g3.__absoluteGreater(_4);
               if (B3 < y3) return g3.__absoluteLess(_4);
             }
-            if (0 !== b3 || 0 !== m41) {
+            if (0 !== b3 || 0 !== m43) {
               if (0 === f4) throw new Error("implementation bug");
               return g3.__absoluteLess(_4);
             }
@@ -9573,7 +9573,7 @@
           } }, { key: "__multiplyAccumulate", value: function o3(e4, t4, _4, n3) {
             if (0 !== t4) {
               for (var l3 = 32767 & t4, a3 = t4 >>> 15, s3 = 0, u3 = 0, r3 = 0; r3 < e4.length; r3++, n3++) {
-                var d4 = _4.__digit(n3), h4 = e4.__digit(r3), b3 = 32767 & h4, m41 = h4 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m41, l3), f4 = g3.__imul(m41, a3);
+                var d4 = _4.__digit(n3), h4 = e4.__digit(r3), b3 = 32767 & h4, m43 = h4 >>> 15, c3 = g3.__imul(b3, l3), v3 = g3.__imul(b3, a3), y3 = g3.__imul(m43, l3), f4 = g3.__imul(m43, a3);
                 d4 += u3 + c3 + s3, s3 = d4 >>> 30, d4 &= 1073741823, d4 += ((32767 & v3) << 15) + ((32767 & y3) << 15), s3 += d4 >>> 30, u3 = f4 + (v3 >>> 15) + (y3 >>> 15), _4.__setDigit(n3, 1073741823 & d4);
               }
               for (; 0 !== s3 || 0 !== u3; n3++) {
@@ -9583,8 +9583,8 @@
             }
           } }, { key: "__internalMultiplyAdd", value: function a3(e4, t4, _4, o3, l3) {
             for (var s3 = _4, u3 = 0, d4 = 0; d4 < o3; d4++) {
-              var h4 = e4.__digit(d4), b3 = g3.__imul(32767 & h4, t4), m41 = g3.__imul(h4 >>> 15, t4), c3 = b3 + ((32767 & m41) << 15) + u3 + s3;
-              s3 = c3 >>> 30, u3 = m41 >>> 15, l3.__setDigit(d4, 1073741823 & c3);
+              var h4 = e4.__digit(d4), b3 = g3.__imul(32767 & h4, t4), m43 = g3.__imul(h4 >>> 15, t4), c3 = b3 + ((32767 & m43) << 15) + u3 + s3;
+              s3 = c3 >>> 30, u3 = m43 >>> 15, l3.__setDigit(d4, 1073741823 & c3);
             }
             if (l3.length > o3) for (l3.__setDigit(o3++, s3 + u3); o3 < l3.length; ) l3.__setDigit(o3++, 0);
             else if (0 !== s3 + u3) throw new Error("implementation bug");
@@ -9608,16 +9608,16 @@
             r3.__initializeDigits();
             var d4 = g3.__clz15(t4.__halfDigit(l3 - 1));
             0 < d4 && (t4 = g3.__specialLeftShift(t4, d4, 0));
-            for (var h4 = g3.__specialLeftShift(e4, d4, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m41 = a3; 0 <= m41; m41--) {
-              var v3 = 32767, y3 = h4.__halfDigit(m41 + l3);
+            for (var h4 = g3.__specialLeftShift(e4, d4, 1), u3 = t4.__halfDigit(l3 - 1), b3 = 0, m43 = a3; 0 <= m43; m43--) {
+              var v3 = 32767, y3 = h4.__halfDigit(m43 + l3);
               if (y3 !== u3) {
-                var f4 = (y3 << 15 | h4.__halfDigit(m41 + l3 - 1)) >>> 0;
+                var f4 = (y3 << 15 | h4.__halfDigit(m43 + l3 - 1)) >>> 0;
                 v3 = 0 | f4 / u3;
-                for (var k3 = 0 | f4 % u3, D4 = t4.__halfDigit(l3 - 2), p4 = h4.__halfDigit(m41 + l3 - 2); g3.__imul(v3, D4) >>> 0 > (k3 << 16 | p4) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
+                for (var k3 = 0 | f4 % u3, D4 = t4.__halfDigit(l3 - 2), p4 = h4.__halfDigit(m43 + l3 - 2); g3.__imul(v3, D4) >>> 0 > (k3 << 16 | p4) >>> 0 && (v3--, k3 += u3, !(32767 < k3)); ) ;
               }
               g3.__internalMultiplyAdd(t4, v3, 0, n3, r3);
-              var B3 = h4.__inplaceSub(r3, m41, l3 + 1);
-              0 !== B3 && (B3 = h4.__inplaceAdd(t4, m41, l3), h4.__setHalfDigit(m41 + l3, 32767 & h4.__halfDigit(m41 + l3) + B3), v3--), i4 && (1 & m41 ? b3 = v3 << 15 : s3.__setDigit(m41 >>> 1, b3 | v3));
+              var B3 = h4.__inplaceSub(r3, m43, l3 + 1);
+              0 !== B3 && (B3 = h4.__inplaceAdd(t4, m43, l3), h4.__setHalfDigit(m43 + l3, 32767 & h4.__halfDigit(m43 + l3) + B3), v3--), i4 && (1 & m43 ? b3 = v3 << 15 : s3.__setDigit(m43 >>> 1, b3 | v3));
             }
             if (_4) return h4.__inplaceRightShift(d4), i4 ? { quotient: s3, remainder: h4 } : h4;
             if (i4) return s3;
@@ -9640,7 +9640,7 @@
               for (var h4 = 0; h4 < o3; h4++) r3.__setDigit(h4, 0);
               for (; h4 < u3; h4++) r3.__setDigit(h4, e4.__digit(h4 - o3));
             } else {
-              for (var b3 = 0, m41 = 0; m41 < o3; m41++) r3.__setDigit(m41, 0);
+              for (var b3 = 0, m43 = 0; m43 < o3; m43++) r3.__setDigit(m43, 0);
               for (var c3, v3 = 0; v3 < a3; v3++) c3 = e4.__digit(v3), r3.__setDigit(v3 + o3, 1073741823 & c3 << l3 | b3), b3 = c3 >>> 30 - l3;
               if (s3) r3.__setDigit(a3 + o3, b3);
               else if (0 !== b3) throw new Error("implementation bug");
@@ -9661,7 +9661,7 @@
               }
             }
             if (r3 && 0 === s3) {
-              var m41 = e4.__digit(n3 - 1), c3 = 0 == ~m41;
+              var m43 = e4.__digit(n3 - 1), c3 = 0 == ~m43;
               c3 && u3++;
             }
             var v3 = new g3(u3, o3);
@@ -9714,15 +9714,15 @@
           } }, { key: "__truncateAndSubFromPowerOfTwo", value: function n3(e4, t4, _4) {
             for (var o3 = Math.min, l3, a3 = 0 | (e4 + 29) / 30, s3 = new g3(a3, _4), u3 = 0, d4 = a3 - 1, h4 = 0, b3 = o3(d4, t4.length); u3 < b3; u3++) l3 = 0 - t4.__digit(u3) - h4, h4 = 1 & l3 >>> 30, s3.__setDigit(u3, 1073741823 & l3);
             for (; u3 < d4; u3++) s3.__setDigit(u3, 0 | 1073741823 & -h4);
-            var m41, c3 = d4 < t4.length ? t4.__digit(d4) : 0, v3 = e4 % 30;
-            if (0 === v3) m41 = 0 - c3 - h4, m41 &= 1073741823;
+            var m43, c3 = d4 < t4.length ? t4.__digit(d4) : 0, v3 = e4 % 30;
+            if (0 === v3) m43 = 0 - c3 - h4, m43 &= 1073741823;
             else {
               var y3 = 32 - v3;
               c3 = c3 << y3 >>> y3;
               var f4 = 1 << 32 - y3;
-              m41 = f4 - c3 - h4, m41 &= f4 - 1;
+              m43 = f4 - c3 - h4, m43 &= f4 - 1;
             }
-            return s3.__setDigit(d4, m41), s3.__trim();
+            return s3.__setDigit(d4, m43), s3.__trim();
           } }, { key: "__digitPow", value: function i4(e4, t4) {
             for (var _4 = 1; 0 < t4; ) 1 & t4 && (_4 *= e4), t4 >>>= 1, e4 *= e4;
             return _4;
@@ -9754,12 +9754,12 @@
         var t2 = 1e3, e2 = 6e4, n2 = 36e5, r2 = "millisecond", i2 = "second", s2 = "minute", u2 = "hour", a2 = "day", o2 = "week", c2 = "month", f3 = "quarter", h3 = "year", d3 = "date", l2 = "Invalid Date", $3 = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[Tt\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/, y2 = /\[([^\]]+)]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a|A|m{1,2}|s{1,2}|Z{1,2}|SSS/g, M3 = { name: "en", weekdays: "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), months: "January_February_March_April_May_June_July_August_September_October_November_December".split("_"), ordinal: function(t3) {
           var e3 = ["th", "st", "nd", "rd"], n3 = t3 % 100;
           return "[" + t3 + (e3[(n3 - 20) % 10] || e3[n3] || e3[0]) + "]";
-        } }, m40 = function(t3, e3, n3) {
+        } }, m42 = function(t3, e3, n3) {
           var r3 = String(t3);
           return !r3 || r3.length >= e3 ? t3 : "" + Array(e3 + 1 - r3.length).join(n3) + t3;
-        }, v2 = { s: m40, z: function(t3) {
+        }, v2 = { s: m42, z: function(t3) {
           var e3 = -t3.utcOffset(), n3 = Math.abs(e3), r3 = Math.floor(n3 / 60), i3 = n3 % 60;
-          return (e3 <= 0 ? "+" : "-") + m40(r3, 2, "0") + ":" + m40(i3, 2, "0");
+          return (e3 <= 0 ? "+" : "-") + m42(r3, 2, "0") + ":" + m42(i3, 2, "0");
         }, m: function t3(e3, n3) {
           if (e3.date() < n3.date()) return -t3(n3, e3);
           var r3 = 12 * (n3.year() - e3.year()) + (n3.month() - e3.month()), i3 = e3.clone().add(r3, c2), s3 = n3 - i3 < 0, u3 = e3.clone().add(r3 + (s3 ? -1 : 1), c2);
@@ -9799,8 +9799,8 @@
           function M4(t3) {
             this.$L = w2(t3.locale, null, true), this.parse(t3), this.$x = this.$x || t3.x || {}, this[p3] = true;
           }
-          var m41 = M4.prototype;
-          return m41.parse = function(t3) {
+          var m43 = M4.prototype;
+          return m43.parse = function(t3) {
             this.$d = (function(t4) {
               var e3 = t4.date, n3 = t4.utc;
               if (null === e3) return /* @__PURE__ */ new Date(NaN);
@@ -9815,33 +9815,33 @@
               }
               return new Date(e3);
             })(t3), this.init();
-          }, m41.init = function() {
+          }, m43.init = function() {
             var t3 = this.$d;
             this.$y = t3.getFullYear(), this.$M = t3.getMonth(), this.$D = t3.getDate(), this.$W = t3.getDay(), this.$H = t3.getHours(), this.$m = t3.getMinutes(), this.$s = t3.getSeconds(), this.$ms = t3.getMilliseconds();
-          }, m41.$utils = function() {
+          }, m43.$utils = function() {
             return b2;
-          }, m41.isValid = function() {
+          }, m43.isValid = function() {
             return !(this.$d.toString() === l2);
-          }, m41.isSame = function(t3, e3) {
+          }, m43.isSame = function(t3, e3) {
             var n3 = O3(t3);
             return this.startOf(e3) <= n3 && n3 <= this.endOf(e3);
-          }, m41.isAfter = function(t3, e3) {
+          }, m43.isAfter = function(t3, e3) {
             return O3(t3) < this.startOf(e3);
-          }, m41.isBefore = function(t3, e3) {
+          }, m43.isBefore = function(t3, e3) {
             return this.endOf(e3) < O3(t3);
-          }, m41.$g = function(t3, e3, n3) {
+          }, m43.$g = function(t3, e3, n3) {
             return b2.u(t3) ? this[e3] : this.set(n3, t3);
-          }, m41.unix = function() {
+          }, m43.unix = function() {
             return Math.floor(this.valueOf() / 1e3);
-          }, m41.valueOf = function() {
+          }, m43.valueOf = function() {
             return this.$d.getTime();
-          }, m41.startOf = function(t3, e3) {
+          }, m43.startOf = function(t3, e3) {
             var n3 = this, r3 = !!b2.u(e3) || e3, f4 = b2.p(t3), l3 = function(t4, e4) {
               var i3 = b2.w(n3.$u ? Date.UTC(n3.$y, e4, t4) : new Date(n3.$y, e4, t4), n3);
               return r3 ? i3 : i3.endOf(a2);
             }, $4 = function(t4, e4) {
               return b2.w(n3.toDate()[t4].apply(n3.toDate("s"), (r3 ? [0, 0, 0, 0] : [23, 59, 59, 999]).slice(e4)), n3);
-            }, y3 = this.$W, M5 = this.$M, m42 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
+            }, y3 = this.$W, M5 = this.$M, m44 = this.$D, v3 = "set" + (this.$u ? "UTC" : "");
             switch (f4) {
               case h3:
                 return r3 ? l3(1, 0) : l3(31, 11);
@@ -9849,7 +9849,7 @@
                 return r3 ? l3(1, M5) : l3(0, M5 + 1);
               case o2:
                 var g3 = this.$locale().weekStart || 0, D4 = (y3 < g3 ? y3 + 7 : y3) - g3;
-                return l3(r3 ? m42 - D4 : m42 + (6 - D4), M5);
+                return l3(r3 ? m44 - D4 : m44 + (6 - D4), M5);
               case a2:
               case d3:
                 return $4(v3 + "Hours", 0);
@@ -9862,20 +9862,20 @@
               default:
                 return this.clone();
             }
-          }, m41.endOf = function(t3) {
+          }, m43.endOf = function(t3) {
             return this.startOf(t3, false);
-          }, m41.$set = function(t3, e3) {
+          }, m43.$set = function(t3, e3) {
             var n3, o3 = b2.p(t3), f4 = "set" + (this.$u ? "UTC" : ""), l3 = (n3 = {}, n3[a2] = f4 + "Date", n3[d3] = f4 + "Date", n3[c2] = f4 + "Month", n3[h3] = f4 + "FullYear", n3[u2] = f4 + "Hours", n3[s2] = f4 + "Minutes", n3[i2] = f4 + "Seconds", n3[r2] = f4 + "Milliseconds", n3)[o3], $4 = o3 === a2 ? this.$D + (e3 - this.$W) : e3;
             if (o3 === c2 || o3 === h3) {
               var y3 = this.clone().set(d3, 1);
               y3.$d[l3]($4), y3.init(), this.$d = y3.set(d3, Math.min(this.$D, y3.daysInMonth())).$d;
             } else l3 && this.$d[l3]($4);
             return this.init(), this;
-          }, m41.set = function(t3, e3) {
+          }, m43.set = function(t3, e3) {
             return this.clone().$set(t3, e3);
-          }, m41.get = function(t3) {
+          }, m43.get = function(t3) {
             return this[b2.p(t3)]();
-          }, m41.add = function(r3, f4) {
+          }, m43.add = function(r3, f4) {
             var d4, l3 = this;
             r3 = Number(r3);
             var $4 = b2.p(f4), y3 = function(t3) {
@@ -9886,11 +9886,11 @@
             if ($4 === h3) return this.set(h3, this.$y + r3);
             if ($4 === a2) return y3(1);
             if ($4 === o2) return y3(7);
-            var M5 = (d4 = {}, d4[s2] = e2, d4[u2] = n2, d4[i2] = t2, d4)[$4] || 1, m42 = this.$d.getTime() + r3 * M5;
-            return b2.w(m42, this);
-          }, m41.subtract = function(t3, e3) {
+            var M5 = (d4 = {}, d4[s2] = e2, d4[u2] = n2, d4[i2] = t2, d4)[$4] || 1, m44 = this.$d.getTime() + r3 * M5;
+            return b2.w(m44, this);
+          }, m43.subtract = function(t3, e3) {
             return this.add(-1 * t3, e3);
-          }, m41.format = function(t3) {
+          }, m43.format = function(t3) {
             var e3 = this, n3 = this.$locale();
             if (!this.isValid()) return n3.invalidDate || l2;
             var r3 = t3 || "YYYY-MM-DDTHH:mm:ssZ", i3 = b2.z(this), s3 = this.$H, u3 = this.$m, a3 = this.$M, o3 = n3.weekdays, c3 = n3.months, f4 = n3.meridiem, h4 = function(t4, n4, i4, s4) {
@@ -9956,11 +9956,11 @@
                 return null;
               })(t4) || i3.replace(":", "");
             }));
-          }, m41.utcOffset = function() {
+          }, m43.utcOffset = function() {
             return 15 * -Math.round(this.$d.getTimezoneOffset() / 15);
-          }, m41.diff = function(r3, d4, l3) {
-            var $4, y3 = this, M5 = b2.p(d4), m42 = O3(r3), v3 = (m42.utcOffset() - this.utcOffset()) * e2, g3 = this - m42, D4 = function() {
-              return b2.m(y3, m42);
+          }, m43.diff = function(r3, d4, l3) {
+            var $4, y3 = this, M5 = b2.p(d4), m44 = O3(r3), v3 = (m44.utcOffset() - this.utcOffset()) * e2, g3 = this - m44, D4 = function() {
+              return b2.m(y3, m44);
             };
             switch (M5) {
               case h3:
@@ -9991,23 +9991,23 @@
                 $4 = g3;
             }
             return l3 ? $4 : b2.a($4);
-          }, m41.daysInMonth = function() {
+          }, m43.daysInMonth = function() {
             return this.endOf(c2).$D;
-          }, m41.$locale = function() {
+          }, m43.$locale = function() {
             return D3[this.$L];
-          }, m41.locale = function(t3, e3) {
+          }, m43.locale = function(t3, e3) {
             if (!t3) return this.$L;
             var n3 = this.clone(), r3 = w2(t3, e3, true);
             return r3 && (n3.$L = r3), n3;
-          }, m41.clone = function() {
+          }, m43.clone = function() {
             return b2.w(this.$d, this);
-          }, m41.toDate = function() {
+          }, m43.toDate = function() {
             return new Date(this.valueOf());
-          }, m41.toJSON = function() {
+          }, m43.toJSON = function() {
             return this.isValid() ? this.toISOString() : null;
-          }, m41.toISOString = function() {
+          }, m43.toISOString = function() {
             return this.$d.toISOString();
-          }, m41.toString = function() {
+          }, m43.toString = function() {
             return this.$d.toUTCString();
           }, M4;
         })(), k2 = _2.prototype;
@@ -10038,7 +10038,7 @@
             return n2.fromToBase(r3, e3, t3, o3);
           }
           t2.en.relativeTime = o2, n2.fromToBase = function(e3, n3, i3, d4, u2) {
-            for (var f3, a2, s2, l2 = i3.$locale().relativeTime || o2, h3 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m40 = h3.length, c2 = 0; c2 < m40; c2 += 1) {
+            for (var f3, a2, s2, l2 = i3.$locale().relativeTime || o2, h3 = r2.thresholds || [{ l: "s", r: 44, d: "second" }, { l: "m", r: 89 }, { l: "mm", r: 44, d: "minute" }, { l: "h", r: 89 }, { l: "hh", r: 21, d: "hour" }, { l: "d", r: 35 }, { l: "dd", r: 25, d: "day" }, { l: "M", r: 45 }, { l: "MM", r: 10, d: "month" }, { l: "y", r: 17 }, { l: "yy", d: "year" }], m42 = h3.length, c2 = 0; c2 < m42; c2 += 1) {
               var y2 = h3[c2];
               y2.d && (f3 = d4 ? t2(e3).diff(i3, y2.d, true) : i3.diff(e3, y2.d, true));
               var p3 = (r2.rounding || Math.round)(Math.abs(f3));
@@ -10071,7 +10071,7 @@
   });
 
   // src/app.tsx
-  var import_mithril44 = __toESM(require_mithril(), 1);
+  var import_mithril46 = __toESM(require_mithril(), 1);
 
   // node_modules/idb/build/index.js
   var instanceOfAny = (object, constructors) => constructors.some((c2) => object instanceof c2);
@@ -13959,11 +13959,11 @@
     return (msg) => {
       switch (msg.contentType) {
         case contentTypes.application:
-          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m40) => [m40.applicationData, m40.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([varLenDataEncoder, framedContentAuthDataEncoder], (m42) => [m42.applicationData, m42.auth]), config)(msg);
         case contentTypes.proposal:
-          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m40) => [m40.proposal, m40.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([proposalEncoder, framedContentAuthDataEncoder], (m42) => [m42.proposal, m42.auth]), config)(msg);
         case contentTypes.commit:
-          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m40) => [m40.commit, m40.auth]), config)(msg);
+          return encoderWithPadding(contramapBufferEncoders([commitEncoder, framedContentAuthDataEncoder], (m42) => [m42.commit, m42.auth]), config)(msg);
       }
     };
   }
@@ -21189,11 +21189,11 @@
     const o2 = +r2, i2 = +(t2[2] ?? t2[4] ?? 1), a2 = +(t2[3] ?? t2[5] ?? 1), s2 = void 0 !== t2[6], c2 = +(t2[6] ?? 0), d3 = +(t2[7] ?? t2[10] ?? 0);
     let h3 = +(t2[8] ?? t2[11] ?? 0);
     60 === h3 && (h3 = 59);
-    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m40 = +u2.slice(3, 6), f3 = +u2.slice(6, 9);
+    const u2 = (t2[9] ?? t2[12] ?? "") + "000000000", l2 = +u2.slice(0, 3), m42 = +u2.slice(3, 6), f3 = +u2.slice(6, 9);
     let y2, p3 = false;
     t2[13] ? (y2 = void 0, p3 = true) : t2[14] && (y2 = t2[14]);
     const g2 = t2[15];
-    return Ur(o2, i2, a2, c2, d3, h3, l2, m40, f3), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d3, second: h3, millisecond: l2, microsecond: m40, nanosecond: f3 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p3, calendar: n2 };
+    return Ur(o2, i2, a2, c2, d3, h3, l2, m42, f3), { year: o2, month: i2, day: a2, time: s2 ? { hour: c2, minute: d3, second: h3, millisecond: l2, microsecond: m42, nanosecond: f3 } : "start-of-day", tzAnnotation: g2, offset: y2, z: p3, calendar: n2 };
   }
   function Et(e2) {
     const t2 = Ee.exec(e2);
@@ -21500,16 +21500,16 @@
         if (!t4) throw new RangeError(`invalid duration: ${e4}`);
         if (t4.every(((e5, t5) => t5 < 2 || void 0 === e5))) throw new RangeError(`invalid duration: ${e4}`);
         const n4 = "-" === t4[1] ? -1 : 1, r4 = void 0 === t4[2] ? 0 : _e(t4[2]) * n4, o3 = void 0 === t4[3] ? 0 : _e(t4[3]) * n4, i3 = void 0 === t4[4] ? 0 : _e(t4[4]) * n4, a3 = void 0 === t4[5] ? 0 : _e(t4[5]) * n4, s3 = void 0 === t4[6] ? 0 : _e(t4[6]) * n4, c3 = t4[7], d4 = t4[8], h4 = t4[9], u2 = t4[10], l2 = t4[11];
-        let m40 = 0, f3 = 0, y2 = 0;
+        let m42 = 0, f3 = 0, y2 = 0;
         if (void 0 !== c3) {
           if (d4 ?? h4 ?? u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
           y2 = 3600 * _e((c3 + "000000000").slice(0, 9)) * n4;
-        } else if (m40 = void 0 === d4 ? 0 : _e(d4) * n4, void 0 !== h4) {
+        } else if (m42 = void 0 === d4 ? 0 : _e(d4) * n4, void 0 !== h4) {
           if (u2 ?? l2) throw new RangeError("only the smallest unit can be fractional");
           y2 = 60 * _e((h4 + "000000000").slice(0, 9)) * n4;
         } else f3 = void 0 === u2 ? 0 : _e(u2) * n4, void 0 !== l2 && (y2 = _e((l2 + "000000000").slice(0, 9)) * n4);
         const p3 = y2 % 1e3, g2 = Math.trunc(y2 / 1e3) % 1e3, w2 = Math.trunc(y2 / 1e6) % 1e3;
-        return f3 += Math.trunc(y2 / 1e9) % 60, m40 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m40, f3, w2, g2, p3), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m40, seconds: f3, milliseconds: w2, microseconds: g2, nanoseconds: p3 };
+        return f3 += Math.trunc(y2 / 1e9) % 60, m42 += Math.trunc(y2 / 6e10), zr(r4, o3, i3, a3, s3, m42, f3, w2, g2, p3), { years: r4, months: o3, weeks: i3, days: a3, hours: s3, minutes: m42, seconds: f3, milliseconds: w2, microseconds: g2, nanoseconds: p3 };
       })(e3);
       return new (ce("%Temporal.Duration%"))(t3, n3, r3, o2, i2, a2, s2, c2, d3, h3);
     })(Ve(e2));
@@ -21531,7 +21531,7 @@
       const t3 = Mt(e3);
       if (!t3.z && !t3.offset) throw new RangeError("Temporal.Instant requires a time zone offset");
       return t3;
-    })(Ve(t2)), { hour: c2 = 0, minute: d3 = 0, second: h3 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m40 = 0 } = "start-of-day" === i2 ? {} : i2, f3 = $r(n2, r2, o2, c2, d3, h3, u2, l2, m40 - (s2 ? 0 : sr(a2)));
+    })(Ve(t2)), { hour: c2 = 0, minute: d3 = 0, second: h3 = 0, millisecond: u2 = 0, microsecond: l2 = 0, nanosecond: m42 = 0 } = "start-of-day" === i2 ? {} : i2, f3 = $r(n2, r2, o2, c2, d3, h3, u2, l2, m42 - (s2 ? 0 : sr(a2)));
     return Kr(f3.isoDate), Cn(pr(f3));
   }
   function dn(e2, t2) {
@@ -21610,14 +21610,14 @@
       const l2 = Lt(u3);
       ({ isoDate: n2, time: r2 } = on(a2, d4, l2));
     } else {
-      let u3, l2, m40, f3, y2;
-      ({ year: m40, month: f3, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
+      let u3, l2, m42, f3, y2;
+      ({ year: m42, month: f3, day: y2, time: r2, tzAnnotation: u3, offset: i2, z: l2, calendar: a2 } = (function(e3) {
         const t3 = Mt(e3);
         if (!t3.tzAnnotation) throw new RangeError("Temporal.ZonedDateTime requires a time zone ID in brackets");
         return t3;
       })(Ve(e2))), o2 = Bn(u3), l2 ? h3 = "exact" : i2 || (h3 = "wall"), a2 || (a2 = "iso8601"), a2 = zo(a2), d3 = true;
       const p3 = Zo(t2);
-      s2 = Pt(p3), c2 = Bt(p3, "reject"), Lt(p3), n2 = { year: m40, month: f3, day: y2 };
+      s2 = Pt(p3), c2 = Bt(p3, "reject"), Lt(p3), n2 = { year: m42, month: f3, day: y2 };
     }
     let u2 = 0;
     return "option" === h3 && (u2 = sr(i2)), $n(mn(n2, r2, h3, u2, o2, s2, c2, d3), o2, a2);
@@ -22090,8 +22090,8 @@
   function Yr(e2, t2, n2, r2, o2, i2) {
     let a2, s2 = e2, c2 = t2, d3 = n2, h3 = r2, u2 = o2, l2 = i2;
     ({ div: a2, mod: l2 } = de(l2, 3)), u2 += a2, l2 < 0 && (u2 -= 1, l2 += 1e3), { div: a2, mod: u2 } = de(u2, 3), h3 += a2, u2 < 0 && (h3 -= 1, u2 += 1e3), d3 += Math.trunc(h3 / 1e3), h3 %= 1e3, h3 < 0 && (d3 -= 1, h3 += 1e3), c2 += Math.trunc(d3 / 60), d3 %= 60, d3 < 0 && (c2 -= 1, d3 += 60), s2 += Math.trunc(c2 / 60), c2 %= 60, c2 < 0 && (s2 -= 1, c2 += 60);
-    let m40 = Math.trunc(s2 / 24);
-    return s2 %= 24, s2 < 0 && (m40 -= 1, s2 += 24), m40 += 0, s2 += 0, c2 += 0, d3 += 0, h3 += 0, u2 += 0, l2 += 0, { deltaDays: m40, hour: s2, minute: c2, second: d3, millisecond: h3, microsecond: u2, nanosecond: l2 };
+    let m42 = Math.trunc(s2 / 24);
+    return s2 %= 24, s2 < 0 && (m42 -= 1, s2 += 24), m42 += 0, s2 += 0, c2 += 0, d3 += 0, h3 += 0, u2 += 0, l2 += 0, { deltaDays: m42, hour: s2, minute: c2, second: d3, millisecond: h3, microsecond: u2, nanosecond: l2 };
   }
   function Rr(e2, t2) {
     const n2 = Nt(e2, 0);
@@ -22150,7 +22150,7 @@
       }
     }
     if (Math.abs(e2) >= 2 ** 32 || Math.abs(t2) >= 2 ** 32 || Math.abs(n2) >= 2 ** 32) throw new RangeError("years, months, and weeks must be < 2\xB3\xB2");
-    const l2 = de(s2, 3), m40 = de(c2, 6), f3 = de(d3, 9), y2 = de(1e6 * l2.mod + 1e3 * m40.mod + f3.mod, 9).div, p3 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m40.div + f3.div + y2;
+    const l2 = de(s2, 3), m42 = de(c2, 6), f3 = de(d3, 9), y2 = de(1e6 * l2.mod + 1e3 * m42.mod + f3.mod, 9).div, p3 = 86400 * r2 + 3600 * o2 + 60 * i2 + a2 + l2.div + m42.div + f3.div + y2;
     if (!Number.isSafeInteger(p3)) throw new RangeError("total of duration time units cannot exceed 9007199254740991.999999999 s");
   }
   function Ar(e2) {
@@ -22224,8 +22224,8 @@
     const s2 = import_jsbi.default.subtract(r2, n2);
     if (import_jsbi.default.equal(s2, t)) return { date: { years: 0, months: 0, weeks: 0, days: 0 }, time: TimeDuration.ZERO };
     const c2 = import_jsbi.default.lessThan(s2, t) ? -1 : 1, d3 = zn(o2, n2), h3 = zn(o2, r2);
-    let u2, l2 = 0, m40 = 1 === c2 ? 2 : 1, f3 = Vr(d3.time, h3.time);
-    for (f3.sign() === -c2 && l2++; l2 <= m40; l2++) {
+    let u2, l2 = 0, m42 = 1 === c2 ? 2 : 1, f3 = Vr(d3.time, h3.time);
+    for (f3.sign() === -c2 && l2++; l2 <= m42; l2++) {
       u2 = xt(Or(h3.isoDate.year, h3.isoDate.month, h3.isoDate.day - l2 * c2), d3.time);
       const e2 = An(o2, u2, "compatible");
       if (f3 = TimeDuration.fromEpochNsDiff(r2, e2), f3.sign() !== -c2) break;
@@ -22234,55 +22234,55 @@
     return Jr(jn(i2, d3.isoDate, u2.isoDate, y2), f3);
   }
   function to(t2, n2, r2, o2, i2, a2, s2, c2, d3) {
-    let h3, u2, l2, m40, f3 = n2;
+    let h3, u2, l2, m42, f3 = n2;
     switch (c2) {
       case "year": {
         const e2 = Eo(f3.date.years, s2, "trunc");
-        h3 = e2, u2 = e2 + s2 * t2, l2 = { years: h3, months: 0, weeks: 0, days: 0 }, m40 = { ...l2, years: u2 };
+        h3 = e2, u2 = e2 + s2 * t2, l2 = { years: h3, months: 0, weeks: 0, days: 0 }, m42 = { ...l2, years: u2 };
         break;
       }
       case "month": {
         const e2 = Eo(f3.date.months, s2, "trunc");
-        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, 0, 0, h3), m40 = Nt(f3.date, 0, 0, u2);
+        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, 0, 0, h3), m42 = Nt(f3.date, 0, 0, u2);
         break;
       }
       case "week": {
         const e2 = Nt(f3.date, 0, 0), n3 = Sn(a2, o2.isoDate, e2, "constrain"), r3 = jn(a2, n3, Or(n3.year, n3.month, n3.day + f3.date.days), "week"), i3 = Eo(f3.date.weeks + r3.weeks, s2, "trunc");
-        h3 = i3, u2 = i3 + s2 * t2, l2 = Nt(f3.date, 0, h3), m40 = Nt(f3.date, 0, u2);
+        h3 = i3, u2 = i3 + s2 * t2, l2 = Nt(f3.date, 0, h3), m42 = Nt(f3.date, 0, u2);
         break;
       }
       case "day": {
         const e2 = Eo(f3.date.days, s2, "trunc");
-        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, h3), m40 = Nt(f3.date, u2);
+        h3 = e2, u2 = e2 + s2 * t2, l2 = Nt(f3.date, h3), m42 = Nt(f3.date, u2);
         break;
       }
     }
-    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p3 = Sn(a2, o2.isoDate, m40, "constrain");
+    const y2 = Sn(a2, o2.isoDate, l2, "constrain"), p3 = Sn(a2, o2.isoDate, m42, "constrain");
     let g2, w2;
     const v2 = xt(y2, o2.time), b2 = xt(p3, o2.time);
     i2 ? (g2 = An(i2, v2, "compatible"), w2 = An(i2, b2, "compatible")) : (g2 = pr(v2), w2 = pr(b2));
     const D3 = TimeDuration.fromEpochNsDiff(r2, g2), T2 = TimeDuration.fromEpochNsDiff(w2, g2), M3 = ue(d3, t2 < 0 ? "negative" : "positive"), E2 = D3.add(D3).abs().subtract(T2.abs()).sign(), I2 = Math.abs(h3) / s2 % 2 == 0, C3 = D3.isZero() ? Math.abs(h3) : D3.cmp(T2) ? le(Math.abs(h3), Math.abs(u2), E2, I2, M3) : Math.abs(u2), O3 = new TimeDuration(import_jsbi.default.add(import_jsbi.default.multiply(T2.totalNs, import_jsbi.default.BigInt(h3)), import_jsbi.default.multiply(D3.totalNs, import_jsbi.default.BigInt(s2 * t2)))).fdiv(T2.totalNs), $3 = C3 === Math.abs(u2);
-    return f3 = { date: $3 ? m40 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f3, nudgedEpochNs: $3 ? w2 : g2, didExpandCalendarUnit: $3 }, total: O3 };
+    return f3 = { date: $3 ? m42 : l2, time: TimeDuration.ZERO }, { nudgeResult: { duration: f3, nudgedEpochNs: $3 ? w2 : g2, didExpandCalendarUnit: $3 }, total: O3 };
   }
   function no(t2, n2, r2, o2, i2, a2, s2, c2, d3) {
     let h3 = t2;
     const u2 = Kt(c2) || o2 && "day" === c2, l2 = Ir(h3) < 0 ? -1 : 1;
-    let m40;
-    return u2 ? { nudgeResult: m40 } = to(l2, h3, n2, r2, o2, i2, s2, c2, d3) : m40 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
+    let m42;
+    return u2 ? { nudgeResult: m42 } = to(l2, h3, n2, r2, o2, i2, s2, c2, d3) : m42 = o2 ? (function(t3, n3, r3, o3, i3, a3, s3, c3) {
       let d4 = n3;
-      const h4 = Sn(i3, r3.isoDate, d4.date, "constrain"), u3 = xt(h4, r3.time), l3 = xt(Or(h4.year, h4.month, h4.day + t3), r3.time), m41 = An(o3, u3, "compatible"), f3 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f3, m41);
+      const h4 = Sn(i3, r3.isoDate, d4.date, "constrain"), u3 = xt(h4, r3.time), l3 = xt(Or(h4.year, h4.month, h4.day + t3), r3.time), m43 = An(o3, u3, "compatible"), f3 = An(o3, l3, "compatible"), y2 = TimeDuration.fromEpochNsDiff(f3, m43);
       if (y2.sign() !== t3) throw new RangeError("time zone returned inconsistent Instants");
       const p3 = import_jsbi.default.BigInt(at[s3] * a3);
       let g2 = d4.time.round(p3, c3);
       const w2 = g2.subtract(y2), v2 = w2.sign() !== -t3;
       let b2, D3;
-      return v2 ? (b2 = t3, g2 = w2.round(p3, c3), D3 = g2.addToEpochNs(f3)) : (b2 = 0, D3 = g2.addToEpochNs(m41)), { duration: Jr(Nt(d4.date, d4.date.days + b2), g2), nudgedEpochNs: D3, didExpandCalendarUnit: v2 };
+      return v2 ? (b2 = t3, g2 = w2.round(p3, c3), D3 = g2.addToEpochNs(f3)) : (b2 = 0, D3 = g2.addToEpochNs(m43)), { duration: Jr(Nt(d4.date, d4.date.days + b2), g2), nudgedEpochNs: D3, didExpandCalendarUnit: v2 };
     })(l2, h3, r2, o2, i2, s2, c2, d3) : (function(t3, n3, r3, o3, i3, a3) {
       let s3 = t3;
-      const c3 = s3.time.add24HourDays(s3.date.days), d4 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h4 = d4.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d4.divmod(Se), m41 = Math.sign(l3 - u3) === c3.sign(), f3 = h4.addToEpochNs(n3);
+      const c3 = s3.time.add24HourDays(s3.date.days), d4 = c3.round(import_jsbi.default.BigInt(o3 * at[i3]), a3), h4 = d4.subtract(c3), { quotient: u3 } = c3.divmod(Se), { quotient: l3 } = d4.divmod(Se), m43 = Math.sign(l3 - u3) === c3.sign(), f3 = h4.addToEpochNs(n3);
       let y2 = 0, p3 = d4;
-      return "date" === Vt(r3) && (y2 = l3, p3 = d4.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p3 }, nudgedEpochNs: f3, didExpandCalendarUnit: m41 };
-    })(h3, n2, a2, s2, c2, d3), h3 = m40.duration, m40.didExpandCalendarUnit && "week" !== c2 && (h3 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
+      return "date" === Vt(r3) && (y2 = l3, p3 = d4.add(TimeDuration.fromComponents(24 * -l3, 0, 0, 0, 0, 0))), { duration: { date: Nt(s3.date, y2), time: p3 }, nudgedEpochNs: f3, didExpandCalendarUnit: m43 };
+    })(h3, n2, a2, s2, c2, d3), h3 = m42.duration, m42.didExpandCalendarUnit && "week" !== c2 && (h3 = (function(e2, t3, n3, r3, o3, i3, a3, s3) {
       let c3 = t3;
       if (s3 === a3) return c3;
       const d4 = it.indexOf(a3);
@@ -22311,7 +22311,7 @@
         c3 = { date: d5, time: TimeDuration.ZERO };
       }
       return c3;
-    })(l2, h3, m40.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h3;
+    })(l2, h3, m42.nudgedEpochNs, r2, o2, i2, a2, Gt(c2, "day"))), h3;
   }
   function ro(e2, t2, n2, r2, o2, i2) {
     return Kt(i2) || r2 && "day" === i2 ? to(Ir(e2) < 0 ? -1 : 1, e2, t2, n2, r2, o2, 1, i2, "trunc").total : Yo(e2.time.add24HourDays(e2.date.days), i2);
@@ -22400,12 +22400,12 @@
     const h3 = Ln(i2, d3, "constrain"), u2 = en(i2, re(o2, D), "year-month");
     u2.day = 1;
     const l2 = Ln(i2, u2, "constrain");
-    let m40 = { date: Nt(jn(i2, h3, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
+    let m42 = { date: Nt(jn(i2, h3, l2, s2.largestUnit), 0, 0), time: TimeDuration.ZERO };
     if ("month" !== s2.smallestUnit || 1 !== s2.roundingIncrement) {
       const e3 = xt(h3, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 });
-      m40 = no(m40, pr(xt(l2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
+      m42 = no(m42, pr(xt(l2, { deltaDays: 0, hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0, nanosecond: 0 })), e3, null, i2, s2.largestUnit, s2.roundingIncrement, s2.smallestUnit, s2.roundingMode);
     }
-    let f3 = _r(m40, "day");
+    let f3 = _r(m42, "day");
     return "since" === e2 && (f3 = Sr(f3)), f3;
   }
   function mo(t2, n2, r2, o2) {
@@ -22884,23 +22884,23 @@
         }
         return r3;
       };
-      let m40 = 0, f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3);
+      let m42 = 0, f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3);
       if (0 !== y2.years || 0 !== y2.months || 0 !== y2.days) {
         const e3 = 365 * y2.years + 30 * y2.months + y2.days;
-        u2 = this.addDaysIso(u2, e3), f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m40 = this.compareCalendarDates(o2, f3);
+        u2 = this.addDaysIso(u2, e3), f3 = this.isoToCalendarDate(u2, n2), y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months ? u2 = l2(y2.days) : m42 = this.compareCalendarDates(o2, f3);
       }
       let p3 = 8;
-      for (; m40; ) {
-        u2 = this.addDaysIso(u2, m40 * p3);
+      for (; m42; ) {
+        u2 = this.addDaysIso(u2, m42 * p3);
         const e3 = f3;
         f3 = this.isoToCalendarDate(u2, n2);
-        const i3 = m40;
-        if (m40 = this.compareCalendarDates(o2, f3), m40) {
-          if (y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m40 = 0;
-          else if (i3 && m40 !== i3) if (p3 > 1) p3 /= 2;
+        const i3 = m42;
+        if (m42 = this.compareCalendarDates(o2, f3), m42) {
+          if (y2 = ri(o2, f3), 0 === y2.years && 0 === y2.months) u2 = l2(y2.days), m42 = 0;
+          else if (i3 && m42 !== i3) if (p3 > 1) p3 /= 2;
           else {
             if ("reject" === t2) throw new RangeError(`Can't find ISO date from calendar date: ${JSON.stringify({ ...r2 })}`);
-            this.compareCalendarDates(f3, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m40 = 0;
+            this.compareCalendarDates(f3, e3) > 0 && (u2 = this.addDaysIso(u2, -1)), m42 = 0;
           }
         }
       }
@@ -23000,21 +23000,21 @@
       return 1972;
     }
     monthDayFromFields(e2, t2, n2) {
-      let r2, o2, i2, a2, s2, { era: c2, eraYear: d3, year: h3, month: u2, monthCode: l2, day: m40 } = e2;
+      let r2, o2, i2, a2, s2, { era: c2, eraYear: d3, year: h3, month: u2, monthCode: l2, day: m42 } = e2;
       if (void 0 !== u2 && void 0 === h3 && (!this.hasEra || void 0 === c2 || void 0 === d3)) throw new TypeError("when month is present, year (or era and eraYear) are required");
-      (void 0 === l2 || void 0 !== h3 || this.hasEra && void 0 !== d3) && ({ monthCode: l2, day: m40 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
-      const f3 = { year: this.monthDaySearchStartYear(l2, m40), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f3, n2), p3 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m40 ? y2.year : y2.year - 1;
+      (void 0 === l2 || void 0 !== h3 || this.hasEra && void 0 !== d3) && ({ monthCode: l2, day: m42 } = this.isoToCalendarDate(this.calendarToIsoDate(e2, t2, n2), n2));
+      const f3 = { year: this.monthDaySearchStartYear(l2, m42), month: 12, day: 31 }, y2 = this.isoToCalendarDate(f3, n2), p3 = y2.monthCode > l2 || y2.monthCode === l2 && y2.day >= m42 ? y2.year : y2.year - 1;
       for (let e3 = 0; e3 < 20; e3++) {
-        const c3 = this.adjustCalendarDate({ day: m40, monthCode: l2, year: p3 - e3 }, n2), d4 = this.calendarToIsoDate(c3, "constrain", n2), h4 = this.isoToCalendarDate(d4, n2);
-        if ({ year: r2, month: o2, day: i2 } = d4, h4.monthCode === l2 && h4.day === m40) return { month: o2, day: i2, year: r2 };
+        const c3 = this.adjustCalendarDate({ day: m42, monthCode: l2, year: p3 - e3 }, n2), d4 = this.calendarToIsoDate(c3, "constrain", n2), h4 = this.isoToCalendarDate(d4, n2);
+        if ({ year: r2, month: o2, day: i2 } = d4, h4.monthCode === l2 && h4.day === m42) return { month: o2, day: i2, year: r2 };
         if ("constrain" === t2) {
           const e4 = this.maxLengthOfMonthCodeInAnyYear(h4.monthCode);
-          if (h4.monthCode === l2 && h4.day === e4 && m40 > e4) return { month: o2, day: i2, year: r2 };
+          if (h4.monthCode === l2 && h4.day === e4 && m42 > e4) return { month: o2, day: i2, year: r2 };
           (void 0 === a2 || h4.monthCode === a2.monthCode && h4.day > a2.day) && (a2 = h4, s2 = d4);
         }
       }
       if ("constrain" === t2 && void 0 !== s2) return s2;
-      throw new RangeError(`No recent ${this.id} year with monthCode ${l2} and day ${m40}`);
+      throw new RangeError(`No recent ${this.id} year with monthCode ${l2} and day ${m42}`);
     }
     getFirstDayOfWeek() {
     }
@@ -23442,9 +23442,9 @@
       let a2 = 17, { calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d3 } = i2(e2, a2);
       "1" !== s2 && (a2 += 29, { calendarMonthString: s2, calendarDay: c2 } = i2(e2, a2)), a2 -= c2 - 5;
       const h3 = {};
-      let u2, l2, m40 = 1, f3 = false;
+      let u2, l2, m42 = 1, f3 = false;
       do {
-        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d3 } = i2(e2, a2)), u2 && (h3[l2].daysInMonth = u2 + 30 - c2), d3 !== e2 ? f3 = true : (h3[s2] = { monthIndex: m40++ }, a2 += 30), u2 = c2, l2 = s2;
+        ({ calendarMonthString: s2, calendarDay: c2, calendarYearToVerify: d3 } = i2(e2, a2)), u2 && (h3[l2].daysInMonth = u2 + 30 - c2), d3 !== e2 ? f3 = true : (h3[s2] = { monthIndex: m42++ }, a2 += 30), u2 = c2, l2 = s2;
       } while (!f3);
       return h3[l2].daysInMonth = u2 + 30 - c2, t2.set(n2, h3), h3;
     }
@@ -24021,8 +24021,8 @@
   ae(PlainDate, "Temporal.PlainDate");
   var PlainDateTime = class {
     constructor(e2, t2, n2, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d3 = "iso8601") {
-      const h3 = _e(e2), u2 = _e(t2), l2 = _e(n2), m40 = void 0 === r2 ? 0 : _e(r2), f3 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p3 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d3 ? "iso8601" : Ve(d3));
-      Ur(h3, u2, l2, m40, f3, y2, p3, g2, w2), gn(this, { isoDate: { year: h3, month: u2, day: l2 }, time: { hour: m40, minute: f3, second: y2, millisecond: p3, microsecond: g2, nanosecond: w2 } }, v2);
+      const h3 = _e(e2), u2 = _e(t2), l2 = _e(n2), m42 = void 0 === r2 ? 0 : _e(r2), f3 = void 0 === o2 ? 0 : _e(o2), y2 = void 0 === i2 ? 0 : _e(i2), p3 = void 0 === a2 ? 0 : _e(a2), g2 = void 0 === s2 ? 0 : _e(s2), w2 = void 0 === c2 ? 0 : _e(c2), v2 = zo(void 0 === d3 ? "iso8601" : Ve(d3));
+      Ur(h3, u2, l2, m42, f3, y2, p3, g2, w2), gn(this, { isoDate: { year: h3, month: u2, day: l2 }, time: { hour: m42, minute: f3, second: y2, millisecond: p3, microsecond: g2, nanosecond: w2 } }, v2);
     }
     get calendarId() {
       return vt(this, yt), re(this, E);
@@ -24177,8 +24177,8 @@
   ae(PlainDateTime, "Temporal.PlainDateTime");
   var Duration = class _Duration {
     constructor(e2 = 0, t2 = 0, n2 = 0, r2 = 0, o2 = 0, i2 = 0, a2 = 0, s2 = 0, c2 = 0, d3 = 0) {
-      const h3 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m40 = void 0 === r2 ? 0 : Ge(r2), f3 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p3 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d3 ? 0 : Ge(d3);
-      zr(h3, u2, l2, m40, f3, y2, p3, g2, w2, v2), te(this), oe(this, Y, h3), oe(this, R, u2), oe(this, S, l2), oe(this, j, m40), oe(this, k, f3), oe(this, N, y2), oe(this, x, p3), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
+      const h3 = void 0 === e2 ? 0 : Ge(e2), u2 = void 0 === t2 ? 0 : Ge(t2), l2 = void 0 === n2 ? 0 : Ge(n2), m42 = void 0 === r2 ? 0 : Ge(r2), f3 = void 0 === o2 ? 0 : Ge(o2), y2 = void 0 === i2 ? 0 : Ge(i2), p3 = void 0 === a2 ? 0 : Ge(a2), g2 = void 0 === s2 ? 0 : Ge(s2), w2 = void 0 === c2 ? 0 : Ge(c2), v2 = void 0 === d3 ? 0 : Ge(d3);
+      zr(h3, u2, l2, m42, f3, y2, p3, g2, w2, v2), te(this), oe(this, Y, h3), oe(this, R, u2), oe(this, S, l2), oe(this, j, m42), oe(this, k, f3), oe(this, N, y2), oe(this, x, p3), oe(this, L, g2), oe(this, P, w2), oe(this, U, v2);
     }
     get years() {
       return vt(this, lt), re(this, Y);
@@ -24258,13 +24258,13 @@
       }
       if (Kt(t2)) throw new RangeError(`a starting point is required for ${t2}s balancing`);
       if (Kt(r2)) throw new RangeError(`a starting point is required for ${r2}s balancing`);
-      let m40 = qr(this);
+      let m42 = qr(this);
       if ("day" === c2) {
-        const { quotient: e3, remainder: t3 } = m40.time.divmod(Se);
-        let n3 = m40.date.days + e3 + Yo(t3, "day");
-        n3 = Eo(n3, a2, s2), m40 = Jr({ years: 0, months: 0, weeks: 0, days: n3 }, TimeDuration.ZERO);
-      } else m40 = Jr({ years: 0, months: 0, weeks: 0, days: 0 }, $o(m40.time, a2, c2, s2));
-      return _r(m40, r2);
+        const { quotient: e3, remainder: t3 } = m42.time.divmod(Se);
+        let n3 = m42.date.days + e3 + Yo(t3, "day");
+        n3 = Eo(n3, a2, s2), m42 = Jr({ years: 0, months: 0, weeks: 0, days: n3 }, TimeDuration.ZERO);
+      } else m42 = Jr({ years: 0, months: 0, weeks: 0, days: 0 }, $o(m42.time, a2, c2, s2));
+      return _r(m42, r2);
     }
     total(t2) {
       if (vt(this, lt), void 0 === t2) throw new TypeError("options argument is required");
@@ -24328,12 +24328,12 @@
         const t3 = re(c2, $), n3 = re(c2, E), r3 = re(c2, b), o3 = po(r3, t3, n3, u2), i3 = po(r3, t3, n3, l2);
         return Bo(import_jsbi.default.toNumber(import_jsbi.default.subtract(o3, i3)));
       }
-      let m40 = u2.date.days, f3 = l2.date.days;
+      let m42 = u2.date.days, f3 = l2.date.days;
       if (Kt(d3) || Kt(h3)) {
         if (!s2) throw new RangeError("A starting point is required for years, months, or weeks comparison");
-        m40 = Rr(u2.date, s2), f3 = Rr(l2.date, s2);
+        m42 = Rr(u2.date, s2), f3 = Rr(l2.date, s2);
       }
-      const y2 = u2.time.add24HourDays(m40), p3 = l2.time.add24HourDays(f3);
+      const y2 = u2.time.add24HourDays(m42), p3 = l2.time.add24HourDays(f3);
       return y2.cmp(p3);
     }
   };
@@ -26438,8 +26438,9 @@
     groupContactStream;
     message;
     inReplyTo;
+    // pageView holds the app-level "gate" state during startup (LOADING / WELCOME /
+    // SIGN-IN), then "READY" once the URL router takes over (see view/controller.ts).
     pageView = "LOADING";
-    settingsTab = "GENERAL";
     modalView = "";
     // modalAttachments holds the attachments shown by the lightbox modal, and
     // modalAttachmentIndex is the one currently displayed.
@@ -26547,7 +26548,7 @@
         await this.loadMessages();
       });
       this.loadFilters().then(() => this.loadGroups());
-      this.pageView = "GROUPS";
+      this.pageView = "READY";
       import_mithril.default.redraw();
     };
     // startupConfiguration is called when the user submits their options from the initial welcome screen
@@ -26654,15 +26655,10 @@
     //////////////////////////////////////////
     // Pages
     //////////////////////////////////////////
-    page_index = () => {
-      this.pageView = "INDEX";
-      import_mithril.default.redraw();
-    };
-    page_settings = () => {
-      this.pageView = "SETTINGS";
-      this.settingsTab = "GENERAL";
-      import_mithril.default.redraw();
-    };
+    // NOTE: page navigation is now URL-driven in the view layer (view/controller.ts
+    // page_* methods call m.route.set; pageView/settingsTab read m.route). The service
+    // controller only retains "gate" page state (LOADING / WELCOME / SIGN-IN / READY,
+    // set during start()) plus page_signout.
     // selectedFilterName returns the display name of the currently selected
     // conversation filter (empty string if none is selected).
     selectedFilterName = () => {
@@ -26674,22 +26670,6 @@
       this.config.selectedFilterId = filterId;
       await this.#database.saveConfig(this.config);
       await this.loadGroups();
-      import_mithril.default.redraw();
-    };
-    page_groups = () => {
-      this.pageView = "GROUPS";
-      import_mithril.default.redraw();
-    };
-    page_group_messages = () => {
-      this.pageView = "GROUP-MESSAGES";
-      import_mithril.default.redraw();
-    };
-    page_group_members = () => {
-      this.pageView = "GROUP-MEMBERS";
-      import_mithril.default.redraw();
-    };
-    page_group_notes = () => {
-      this.pageView = "GROUP-NOTES";
       import_mithril.default.redraw();
     };
     page_signout = () => {
@@ -26905,7 +26885,7 @@
       this.setGroupState(group, "ACTIVE");
       this.groupStream(group);
       await this.sendMessage(initialMessage);
-      this.pageView = "GROUP-MESSAGES";
+      import_mithril.default.route.set("/groups/:groupId", { groupId: group.id });
     };
     joinGroup = async (group) => {
       if (group.stateId != "WELCOME") {
@@ -27019,7 +26999,7 @@
       }
       await this.loadMessages();
       this.inReplyTo = void 0;
-      this.page_group_messages();
+      import_mithril.default.redraw();
     };
     // clearSelectedGroup resets the displayed group to an empty placeholder. The
     // placeholder uses an empty ID so selectedGroupId() reports "nothing selected".
@@ -27591,10 +27571,8 @@
     }
   };
 
-  // src/view/app.tsx
-  var import_mithril42 = __toESM(require_mithril(), 1);
-
   // src/view/controller.ts
+  var import_mithril2 = __toESM(require_mithril(), 1);
   var import_stream3 = __toESM(require_stream2(), 1);
   var ViewController = class {
     #controller;
@@ -27649,17 +27627,43 @@
     set inReplyTo(value) {
       this.#controller.inReplyTo = value;
     }
+    // pageView reports the current top-level view. Gate states (LOADING / WELCOME /
+    // SIGN-IN, set on the service controller during startup) take precedence and are
+    // returned directly. Once startup passes the gates the service controller reports
+    // "READY", and the actual page is derived from the URL route instead.
     get pageView() {
-      return this.#controller.pageView;
+      const gate = this.#controller.pageView;
+      if (gate != "READY") {
+        return gate;
+      }
+      return this.#routePageView();
     }
     set pageView(value) {
       this.#controller.pageView = value;
     }
+    // #routePageView maps the current route to a pageView string (the values the
+    // view switch in app.tsx / index.tsx expects).
+    #routePageView() {
+      const route = import_mithril2.default.route.get() ?? "";
+      if (route.startsWith("/settings")) {
+        return "SETTINGS";
+      }
+      if (route.includes("/notes")) {
+        return "GROUP-NOTES";
+      }
+      if (route.includes("/people")) {
+        return "GROUP-MEMBERS";
+      }
+      return "GROUP-MESSAGES";
+    }
+    // settingsTab is derived from the /settings/:tab route param (uppercased to match
+    // the SettingsTab union). Setting it navigates to the corresponding route.
     get settingsTab() {
-      return this.#controller.settingsTab;
+      const tab = (import_mithril2.default.route.param("tab") ?? "general").toUpperCase();
+      return tab;
     }
     set settingsTab(value) {
-      this.#controller.settingsTab = value;
+      import_mithril2.default.route.set("/settings/:tab", { tab: value.toLowerCase() });
     }
     get modalView() {
       return this.#controller.modalView;
@@ -27706,13 +27710,30 @@
     //////////////////////////////////////////
     // Page & modal navigation
     //////////////////////////////////////////
-    page_index = () => this.#controller.page_index();
-    page_settings = () => this.#controller.page_settings();
-    page_groups = () => this.#controller.page_groups();
-    page_group_messages = () => this.#controller.page_group_messages();
-    page_group_members = () => this.#controller.page_group_members();
-    page_group_notes = () => this.#controller.page_group_notes();
+    // Navigation is URL-driven: page_* methods set the route, and pageView /
+    // settingsTab read it back (see above). The selected group id comes from the
+    // route's :groupId param via routeSelectGroup, so these build group URLs from
+    // the currently-selected group.
+    page_index = () => import_mithril2.default.route.set("/groups");
+    page_settings = () => import_mithril2.default.route.set("/settings/:tab", { tab: "general" });
+    page_groups = () => import_mithril2.default.route.set("/groups");
+    page_group_messages = () => import_mithril2.default.route.set("/groups/:groupId", { groupId: this.selectedGroupId() });
+    page_group_members = () => import_mithril2.default.route.set("/groups/:groupId/people", { groupId: this.selectedGroupId() });
+    page_group_notes = () => import_mithril2.default.route.set("/groups/:groupId/notes", { groupId: this.selectedGroupId() });
     page_signout = () => this.#controller.page_signout();
+    // routeSelectGroup selects the group named in the URL, but only when it differs
+    // from the current selection — so re-rendering the same route does not trigger a
+    // reload loop. An empty id clears the selection (the /groups index route).
+    routeSelectGroup = (groupId) => {
+      if (groupId == this.selectedGroupId()) {
+        return;
+      }
+      if (groupId == "") {
+        this.#controller.clearSelectedGroup();
+        return;
+      }
+      this.#controller.selectGroup(groupId);
+    };
     modal_addGroupMember = () => this.#controller.modal_addGroupMember();
     modal_close = () => this.#controller.modal_close();
     modal_newConversation = () => this.#controller.modal_newConversation();
@@ -27756,7 +27777,10 @@
     saveGroup = (group) => this.#controller.saveGroup(group);
     syncGroup = (group) => this.#controller.syncGroup(group);
     leaveGroup = (groupId) => this.#controller.leaveGroup(groupId);
-    selectGroup = (groupId) => this.#controller.selectGroup(groupId);
+    // selectGroup navigates to the group's URL; the route resolver (routeSelectGroup)
+    // performs the actual selection + message load. Keeping selection URL-driven means
+    // the back button and deep links work, and there is one source of truth.
+    selectGroup = (groupId) => import_mithril2.default.route.set("/groups/:groupId", { groupId });
     clearSelectedGroup = () => this.#controller.clearSelectedGroup();
     reconcileSelectedGroup = () => this.#controller.reconcileSelectedGroup();
     selectedGroupId = () => this.#controller.selectedGroupId();
@@ -27785,8 +27809,14 @@
     receiveActivity = (activity, retryCount = 0) => this.#controller.receiveActivity(activity, retryCount);
   };
 
+  // src/view/routes.tsx
+  var import_mithril44 = __toESM(require_mithril(), 1);
+
+  // src/view/app.tsx
+  var import_mithril43 = __toESM(require_mithril(), 1);
+
   // src/view/welcome.tsx
-  var import_mithril2 = __toESM(require_mithril(), 1);
+  var import_mithril3 = __toESM(require_mithril(), 1);
   var Welcome = class {
     oninit(vnode) {
       vnode.state.clientName = this.defaultClientName();
@@ -27797,7 +27827,7 @@
       vnode.state.isEncryptedMessages = true;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril2.default)("hr", null), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril2.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril2.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril2.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "clientName" }, "Device Name"), " ", /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "passcode" }, "Device Passcode"), " ", /* @__PURE__ */ (0, import_mithril2.default)("input", { id: "passcode", type: "password", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril2.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril2.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril2.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril2.default)("div", null, vnode.state.isDesktopNotificationsPermission == "denied" ? "Desktop Notifications Denied" : "Allow Desktop Notifications"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril2.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril2.default)("br", null), /* @__PURE__ */ (0, import_mithril2.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
+      return /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "app-content" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "margin-top-xl width-100%" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "card padding-lg width-100% max-width-800 margin-horizontal-auto" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "align-center text-light-gray", style: "font-size:80px;" }, /* @__PURE__ */ (0, import_mithril3.default)("i", { class: "bi bi-chat" })), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "align-center text-2xl" }, "Welcome to Conversations"), /* @__PURE__ */ (0, import_mithril3.default)("hr", null), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "margin-vertical-lg" }, "Conversations collect all of your personal messages into a single place.", " ", 'You can send "direct messages" to any Fediverse account, and send "encrypted messages" to accounts that support it.', " ", /* @__PURE__ */ (0, import_mithril3.default)("a", { href: "https://emissary.dev/conversations", class: "nowrap" }, "Learn more about encrypted conversations ", /* @__PURE__ */ (0, import_mithril3.default)("i", { class: "bi bi-arrow-up-right-square" }))), /* @__PURE__ */ (0, import_mithril3.default)("form", { onsubmit: (event) => this.submit(event, vnode) }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "clientName" }, "Device Name"), " ", /* @__PURE__ */ (0, import_mithril3.default)("input", { id: "clientName", type: "text", tabIndex: "0", value: vnode.state.clientName, oninput: (event) => this.setClientName(vnode, event), autofocus: true, required: true }), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-xs text-gray margin-right-xs" }, "You can have conversations on multiple devices. Choose a unique name for this one.")), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "passcode" }, "Device Passcode"), " ", /* @__PURE__ */ (0, import_mithril3.default)("input", { id: "passcode", type: "password", tabIndex: "0", value: vnode.state.passcode, oninput: (event) => this.setPasscode(vnode, event), required: true, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-xs text-gray margin-right-xs" }, "Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.")), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril3.default)("input", { type: "checkbox", tabIndex: "0", id: "isEncryptedMessages", checked: vnode.state.isEncryptedMessages, onchange: (event) => this.setEncryptedMessages(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "isEncryptedMessages" }, " ", /* @__PURE__ */ (0, import_mithril3.default)("div", null, "Send Encrypted Messages When Possible"))), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril3.default)("input", { type: "checkbox", tabIndex: "0", id: "isHideOnBlur", checked: vnode.state.isHideOnBlur, onchange: (event) => this.setHideOnBlur(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "isHideOnBlur" }, " ", /* @__PURE__ */ (0, import_mithril3.default)("div", null, "Hide Conversations When You Leave This Window"))), /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril3.default)("input", { type: "checkbox", tabIndex: "0", id: "isDesktopNotifications", checked: vnode.state.isDesktopNotifications, disabled: vnode.state.isDesktopNotificationsPermission === "denied", onchange: (event) => this.setDesktopNotifications(vnode, event), style: "height:1em; width:1em;" }), /* @__PURE__ */ (0, import_mithril3.default)("label", { for: "isDesktopNotifications" }, /* @__PURE__ */ (0, import_mithril3.default)("div", null, vnode.state.isDesktopNotificationsPermission == "denied" ? "Desktop Notifications Denied" : "Allow Desktop Notifications"), vnode.state.isDesktopNotificationsPermission === "denied" && /* @__PURE__ */ (0, import_mithril3.default)("div", { class: "text-xs text-gray margin-right-xs" }, "To re-enable desktop notifications, go to your browser settings."))))), /* @__PURE__ */ (0, import_mithril3.default)("br", null), /* @__PURE__ */ (0, import_mithril3.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Continue to Conversations \u2192")))));
     }
     setClientName = (vnode, event) => {
       const target = event.target;
@@ -27837,7 +27867,7 @@
         vnode.state.isDesktopNotifications,
         vnode.state.isHideOnBlur
       );
-      import_mithril2.default.redraw();
+      import_mithril3.default.redraw();
     }
     defaultClientName() {
       const userAgent = navigator.userAgent;
@@ -27875,15 +27905,15 @@
   };
 
   // src/view/index.tsx
-  var import_mithril29 = __toESM(require_mithril(), 1);
   var import_mithril30 = __toESM(require_mithril(), 1);
+  var import_mithril31 = __toESM(require_mithril(), 1);
 
   // src/view/modal-newConversation.tsx
-  var import_mithril6 = __toESM(require_mithril(), 1);
   var import_mithril7 = __toESM(require_mithril(), 1);
+  var import_mithril8 = __toESM(require_mithril(), 1);
 
   // src/view/modal.tsx
-  var import_mithril3 = __toESM(require_mithril(), 1);
+  var import_mithril4 = __toESM(require_mithril(), 1);
 
   // src/view/utils.ts
   function haltEvent(event) {
@@ -27969,14 +27999,14 @@
         document.getElementById("modal")?.classList.add("ready");
         const firstElement = vnode.dom.querySelector("[tabIndex]");
         firstElement?.focus();
-        import_mithril3.default.redraw();
+        import_mithril4.default.redraw();
       });
     }
     onremove() {
       globalThis.removeEventListener("keydown", this.#onEscape);
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal", onkeydown: (event) => this.onkeydown(event, vnode) }, " ", /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal-underlay", onclick: vnode.attrs.close }), /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal-window" }, vnode.children));
+      return /* @__PURE__ */ (0, import_mithril4.default)("div", { id: "modal", onkeydown: (event) => this.onkeydown(event, vnode) }, " ", /* @__PURE__ */ (0, import_mithril4.default)("div", { id: "modal-underlay", onclick: vnode.attrs.close }), /* @__PURE__ */ (0, import_mithril4.default)("div", { id: "modal-window" }, vnode.children));
     }
     onkeydown(event, vnode) {
       switch (keyCode(event)) {
@@ -28005,8 +28035,8 @@
   };
 
   // src/view/widget-actorSearch.tsx
-  var import_mithril4 = __toESM(require_mithril(), 1);
   var import_mithril5 = __toESM(require_mithril(), 1);
+  var import_mithril6 = __toESM(require_mithril(), 1);
   var ActorSearch = class {
     oninit(vnode) {
       vnode.state.search = "";
@@ -28017,12 +28047,12 @@
       vnode.state.requestSeq = 0;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "input flex-row flex-wrap" }, vnode.attrs.value.map((actor, index) => {
+      return /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "autocomplete" }, /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "input flex-row flex-wrap" }, vnode.attrs.value.map((actor, index) => {
         const isSecure = vnode.state.keyPackages[actor.id()] != void 0;
-        return /* @__PURE__ */ (0, import_mithril4.default)("span", { key: actor.id(), class: isSecure ? "blue tag" : "tag unencrypted-tag" }, /* @__PURE__ */ (0, import_mithril4.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril4.default)("img", { src: actor.icon(), alt: "", class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril4.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril4.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", role: "button", tabindex: "0", onclick: () => this.removeActor(vnode, index), onkeydown: (event) => {
+        return /* @__PURE__ */ (0, import_mithril5.default)("span", { key: actor.id(), class: isSecure ? "blue tag" : "tag unencrypted-tag" }, /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: "", class: "circle", style: "height:1em;" }), /* @__PURE__ */ (0, import_mithril5.default)("span", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("i", { class: "margin-left-sm clickable bi bi-x-lg", role: "button", tabindex: "0", onclick: () => this.removeActor(vnode, index), onkeydown: (event) => {
           if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index);
         } })));
-      }), /* @__PURE__ */ (0, import_mithril4.default)(
+      }), /* @__PURE__ */ (0, import_mithril5.default)(
         "input",
         {
           id: vnode.attrs.id,
@@ -28043,8 +28073,8 @@
           onfocus: () => this.loadOptions(vnode),
           onblur: () => this.onblur(vnode)
         }
-      )), vnode.state.actors.length ? /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "options", style: `position:${vnode.attrs.position || "absolute"};` }, /* @__PURE__ */ (0, import_mithril4.default)("div", { role: "menu", class: "menu" }, vnode.state.actors.map((actor, index) => {
-        return /* @__PURE__ */ (0, import_mithril4.default)(
+      )), vnode.state.actors.length ? /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "options", style: `position:${vnode.attrs.position || "absolute"};` }, /* @__PURE__ */ (0, import_mithril5.default)("div", { role: "menu", class: "menu" }, vnode.state.actors.map((actor, index) => {
+        return /* @__PURE__ */ (0, import_mithril5.default)(
           "div",
           {
             key: actor.id(),
@@ -28054,8 +28084,8 @@
             onmousedown: () => this.selectActor(vnode, index),
             "aria-selected": index == vnode.state.highlightedOption ? "true" : null
           },
-          /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "width-32", "aria-hidden": "true" }, /* @__PURE__ */ (0, import_mithril4.default)("img", { src: actor.icon(), alt: "", class: "width-32 circle" })),
-          /* @__PURE__ */ (0, import_mithril4.default)("div", null, /* @__PURE__ */ (0, import_mithril4.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril4.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
+          /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "width-32", "aria-hidden": "true" }, /* @__PURE__ */ (0, import_mithril5.default)("img", { src: actor.icon(), alt: "", class: "width-32 circle" })),
+          /* @__PURE__ */ (0, import_mithril5.default)("div", null, /* @__PURE__ */ (0, import_mithril5.default)("div", null, actor.name()), /* @__PURE__ */ (0, import_mithril5.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
         );
       }))) : null);
     }
@@ -28111,9 +28141,9 @@
       }
       vnode.state.loading = true;
       const seq = ++vnode.state.requestSeq;
-      import_mithril4.default.redraw();
+      import_mithril5.default.redraw();
       try {
-        const actors = await import_mithril4.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
+        const actors = await import_mithril5.default.request(vnode.attrs.endpoint + "?q=" + vnode.state.search);
         if (seq != vnode.state.requestSeq) {
           return;
         }
@@ -28133,7 +28163,7 @@
         if (seq == vnode.state.requestSeq) {
           vnode.state.loading = false;
         }
-        import_mithril4.default.redraw();
+        import_mithril5.default.redraw();
       }
     }
     // dedupeActors returns the actors with duplicate ids removed, keeping first-seen
@@ -28153,7 +28183,7 @@
       requestAnimationFrame(() => {
         vnode.state.actors = [];
         vnode.state.highlightedOption = -1;
-        import_mithril4.default.redraw();
+        import_mithril5.default.redraw();
       });
     }
     selectActor(vnode, index) {
@@ -28224,7 +28254,7 @@
       vnode.state.sending = false;
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril6.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril6.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-plus" }), " Start a Conversation"), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril6.default)("label", { for: "actorSearch" }, "Participants"), " ", /* @__PURE__ */ (0, import_mithril6.default)(
+      return /* @__PURE__ */ (0, import_mithril7.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril7.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-plus" }), " Start a Conversation"), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "actorSearch" }, "Participants"), " ", /* @__PURE__ */ (0, import_mithril7.default)(
         ActorSearch,
         {
           id: "actorSearch",
@@ -28234,7 +28264,7 @@
           endpoint: "/.api/actors",
           onselect: (actors, canBeEncrypted) => this.selectActors(vnode, actors, canBeEncrypted)
         }
-      )), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril6.default)("label", { for: "message" }, "Message"), " ", /* @__PURE__ */ (0, import_mithril6.default)("textarea", { id: "message", rows: "8", onchange: (event) => this.setPlaintext(vnode, event) }), vnode.state.canBeEncrypted && /* @__PURE__ */ (0, import_mithril6.default)("label", { for: "wantEncryption" }, /* @__PURE__ */ (0, import_mithril6.default)(
+      )), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "message" }, "Message"), " ", /* @__PURE__ */ (0, import_mithril7.default)("textarea", { id: "message", rows: "8", onchange: (event) => this.setPlaintext(vnode, event) }), vnode.state.canBeEncrypted && /* @__PURE__ */ (0, import_mithril7.default)("label", { for: "wantEncryption" }, /* @__PURE__ */ (0, import_mithril7.default)(
         "input",
         {
           id: "wantEncryption",
@@ -28242,40 +28272,40 @@
           checked: vnode.state.wantEncryption,
           onchange: (event) => this.setWantEncryption(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril6.default)("span", null, "Use Encrypted Messaging")), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril6.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril6.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
+      ), /* @__PURE__ */ (0, import_mithril7.default)("span", null, "Use Encrypted Messaging")), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "text-sm text-gray" }, this.description(vnode))))), /* @__PURE__ */ (0, import_mithril7.default)("div", { class: "margin-top" }, this.submitButton(vnode), /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Close"))));
     }
     description(vnode) {
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril6.default)(import_mithril6.default.Fragment, null);
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null);
       }
       if (!vnode.attrs.controller.useEncryptedMessages()) {
-        return /* @__PURE__ */ (0, import_mithril6.default)(import_mithril6.default.Fragment, null, 'Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.');
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, 'Encrypted messages are disabled. This message will be sent as "plain text" and may be readable by others on the Internet.');
       }
       if (vnode.state.canBeEncrypted) {
         if (vnode.state.wantEncryption) {
-          return /* @__PURE__ */ (0, import_mithril6.default)(import_mithril6.default.Fragment, null, "Encrypted messages cannot be read by anyone other than the recipients. But, conversations may not be recoverable if you lose access to this device.");
+          return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "Encrypted messages cannot be read by anyone other than the recipients. But, conversations may not be recoverable if you lose access to this device.");
         }
-        return /* @__PURE__ */ (0, import_mithril6.default)(import_mithril6.default.Fragment, null, "If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.");
+        return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "If you disable encryption, conversations will be easier to recover when you change devices, but others on the Internet may be able to intercept your messages.");
       }
-      return /* @__PURE__ */ (0, import_mithril6.default)(import_mithril6.default.Fragment, null, "One or more recipients (above in yellow) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.");
+      return /* @__PURE__ */ (0, import_mithril7.default)(import_mithril7.default.Fragment, null, "One or more recipients (above in yellow) cannot participate in encrypted conversations. Others on the Internet may be able to intercept your messages.");
     }
     submitButton(vnode) {
       if (vnode.state.sending) {
-        return /* @__PURE__ */ (0, import_mithril6.default)("button", { class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril6.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-arrow-clockwise" })), " Sending");
+        return /* @__PURE__ */ (0, import_mithril7.default)("button", { class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril7.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-arrow-clockwise" })), " Sending");
       }
       if (vnode.state.actors.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril6.default)("button", { type: "submit", class: "primary", disabled: true }, "Start a Conversation");
+        return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "primary", disabled: true }, "Start a Conversation");
       }
       if (this.isEncrypted(vnode)) {
-        return /* @__PURE__ */ (0, import_mithril6.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-lock-fill" }), " Send Encrypted Message");
+        return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-lock-fill" }), " Send Encrypted Message");
       }
-      return /* @__PURE__ */ (0, import_mithril6.default)("button", { type: "submit", class: "success", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril6.default)("i", { class: "bi bi-card-text" }), " Send Direct Message");
+      return /* @__PURE__ */ (0, import_mithril7.default)("button", { type: "submit", class: "success", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril7.default)("i", { class: "bi bi-card-text" }), " Send Direct Message");
     }
     // selectActors updates the selected actors when the ActorSearch component adds/removes participants
     selectActors(vnode, actors, canBeEncrypted) {
       vnode.state.actors = actors;
       vnode.state.canBeEncrypted = canBeEncrypted;
-      import_mithril6.default.redraw();
+      import_mithril7.default.redraw();
     }
     // setPlaintext updates the content message in the component state as the user types
     setPlaintext(vnode, event) {
@@ -28314,13 +28344,13 @@
   };
 
   // src/view/groups.tsx
-  var import_mithril10 = __toESM(require_mithril(), 1);
+  var import_mithril11 = __toESM(require_mithril(), 1);
 
   // src/view/widget-filterMenu.tsx
-  var import_mithril9 = __toESM(require_mithril(), 1);
+  var import_mithril10 = __toESM(require_mithril(), 1);
 
   // src/view/widget-popup.tsx
-  var import_mithril8 = __toESM(require_mithril(), 1);
+  var import_mithril9 = __toESM(require_mithril(), 1);
   var Popup = class {
     oninit(vnode) {
       vnode.state.isOpen = false;
@@ -28333,7 +28363,7 @@
     }
     view(vnode) {
       const alignClass = "popup-align-" + (vnode.attrs.align ?? "center");
-      return /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "popup-anchor" }, vnode.attrs.trigger(() => this.toggle(vnode), vnode.state.isOpen), vnode.state.isOpen && /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "popup popup-below " + alignClass }, /* @__PURE__ */ (0, import_mithril8.default)("div", { class: "popup-caret" }), vnode.attrs.content(() => this.close(vnode))));
+      return /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup-anchor" }, vnode.attrs.trigger(() => this.toggle(vnode), vnode.state.isOpen), vnode.state.isOpen && /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup popup-below " + alignClass }, /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup-caret" }), vnode.attrs.content(() => this.close(vnode))));
     }
     toggle(vnode) {
       if (vnode.state.isOpen) {
@@ -28367,7 +28397,7 @@
     close(vnode) {
       vnode.state.isOpen = false;
       this.detach(vnode);
-      import_mithril8.default.redraw();
+      import_mithril9.default.redraw();
     }
     // detach removes any document listeners attached for the popup
     detach(vnode) {
@@ -28386,10 +28416,10 @@
   var FilterMenu = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril9.default)(
+      return /* @__PURE__ */ (0, import_mithril10.default)(
         Popup,
         {
-          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup-button", role: "button", tabindex: "0", title: "Filter conversations", "aria-label": "Filter conversations", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-filter" })),
+          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "popup-button", role: "button", tabindex: "0", title: "Filter conversations", "aria-label": "Filter conversations", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-filter" })),
           content: (close) => this.viewMenu(controller2, close)
         }
       );
@@ -28397,7 +28427,7 @@
     // viewMenu renders the body of the filter pop-up
     viewMenu(controller2, close) {
       const selectedId = controller2.config.selectedFilterId;
-      return /* @__PURE__ */ (0, import_mithril9.default)("div", null, controller2.filters.map((filter) => /* @__PURE__ */ (0, import_mithril9.default)("div", { key: filter.id, class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.select(controller2, close, filter.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("span", { class: "popup-menu-icon" }, filter.id == selectedId ? /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-check" }) : null), /* @__PURE__ */ (0, import_mithril9.default)("span", null, filter.name))), /* @__PURE__ */ (0, import_mithril9.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.manage(controller2, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-gear" })), /* @__PURE__ */ (0, import_mithril9.default)("span", null, "Manage Filters")));
+      return /* @__PURE__ */ (0, import_mithril10.default)("div", null, controller2.filters.map((filter) => /* @__PURE__ */ (0, import_mithril10.default)("div", { key: filter.id, class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.select(controller2, close, filter.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "popup-menu-icon" }, filter.id == selectedId ? /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-check" }) : null), /* @__PURE__ */ (0, import_mithril10.default)("span", null, filter.name))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.manage(controller2, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-gear" })), /* @__PURE__ */ (0, import_mithril10.default)("span", null, "Manage Filters")));
     }
     // select applies the chosen filter and closes the pop-up
     select(controller2, close, filterId) {
@@ -28417,28 +28447,28 @@
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "popup-button primary", role: "button", tabindex: "0", title: "New conversation", "aria-label": "New conversation", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-lg" }))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
+      return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril11.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "popup-button primary", role: "button", tabindex: "0", title: "New conversation", "aria-label": "New conversation", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-plus-lg" }))), /* @__PURE__ */ (0, import_mithril11.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
         let cssClass = "sidebar-item flex-row flex-align-center padding padding-right-sm hover-trigger";
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";
         }
-        return /* @__PURE__ */ (0, import_mithril10.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-grow nowrap pos-relative group-list-item-body" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-grow group-list-item-label" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
-      })), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "sidebar-item flex-row flex-align-center padding-horizontal clickable", role: "button", tabIndex: "0", onclick: () => controller2.page_settings(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril10.default)("span", null, "Settings")));
+        return /* @__PURE__ */ (0, import_mithril11.default)("div", { key: group.id, class: cssClass, role: "button", tabIndex: "0", onclick: () => controller2.selectGroup(group.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "width-48 circle flex-center", style: `color:var(--white); background-color:${groupColor(group)}` }, this.groupIcon(group)), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-grow nowrap pos-relative group-list-item-body" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-grow group-list-item-label" }, this.groupLabel(group)), this.unreadMarker(vnode, group)));
+      })), /* @__PURE__ */ (0, import_mithril11.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "sidebar-item flex-row flex-align-center padding-horizontal clickable", role: "button", tabIndex: "0", onclick: () => controller2.page_settings(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril11.default)("span", null, "Settings")));
     }
     groupIcon(group) {
       if (group.stateId == "IMPORTANT") {
-        return /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-star-fill" });
+        return /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-star-fill" });
       }
       if (groupIsEncrypted(group)) {
-        return /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-lock-fill" });
+        return /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-lock-fill" });
       }
-      return /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-chat-fill" });
+      return /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-chat-fill" });
     }
     groupLabel(group) {
       if (group.stateId == "WELCOME") {
-        return /* @__PURE__ */ (0, import_mithril10.default)(import_mithril10.default.Fragment, null, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold" }, "Invitation (", groupIsEncrypted(group) ? "Encrypted" : "Plaintext", ")"), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.defaultName || ""));
+        return /* @__PURE__ */ (0, import_mithril11.default)(import_mithril11.default.Fragment, null, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "bold" }, "Invitation (", groupIsEncrypted(group) ? "Encrypted" : "Plaintext", ")"), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.defaultName || ""));
       }
-      return /* @__PURE__ */ (0, import_mithril10.default)(import_mithril10.default.Fragment, null, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center bold" }, /* @__PURE__ */ (0, import_mithril10.default)("span", { class: "flex-grow ellipsis", style: "min-width:0" }, group.name || group.defaultName || "")), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || ""));
+      return /* @__PURE__ */ (0, import_mithril11.default)(import_mithril11.default.Fragment, null, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "flex-row flex-align-center bold" }, /* @__PURE__ */ (0, import_mithril11.default)("span", { class: "flex-grow ellipsis", style: "min-width:0" }, group.name || group.defaultName || "")), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-xs text-light-gray ellipsis-multiline-2" }, group.lastMessage || ""));
     }
     unreadMarker(vnode, group) {
       if (!group.unread) {
@@ -28448,16 +28478,16 @@
         return null;
       }
       const color = groupIsEncrypted(group) ? "var(--blue50)" : "#F2C94C";
-      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "text-xs group-list-item-unread", style: `color:${color};` }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-circle-fill" }));
+      return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "text-xs group-list-item-unread", style: `color:${color};` }, /* @__PURE__ */ (0, import_mithril11.default)("i", { class: "bi bi-circle-fill" }));
     }
   };
 
   // src/view/group-messages.tsx
-  var import_mithril17 = __toESM(require_mithril(), 1);
+  var import_mithril18 = __toESM(require_mithril(), 1);
   var import_dayjs2 = __toESM(require_dayjs_min(), 1);
 
   // src/view/widget-message-create.tsx
-  var import_mithril13 = __toESM(require_mithril(), 1);
+  var import_mithril14 = __toESM(require_mithril(), 1);
 
   // node_modules/blurhash/dist/esm/index.js
   var q2 = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "#", "$", "%", "*", "+", ",", "-", ".", ":", ";", "=", "?", "@", "[", "]", "^", "_", "{", "|", "}", "~"];
@@ -28515,7 +28545,7 @@
   };
   var U2 = (t2, e2, r2, n2) => {
     C2(t2), n2 = n2 | 1;
-    let l2 = x2(t2[0]), m40 = Math.floor(l2 / 9) + 1, b2 = l2 % 9 + 1, i2 = (x2(t2[1]) + 1) / 166, u2 = new Array(b2 * m40);
+    let l2 = x2(t2[0]), m42 = Math.floor(l2 / 9) + 1, b2 = l2 % 9 + 1, i2 = (x2(t2[1]) + 1) / 166, u2 = new Array(b2 * m42);
     for (let o2 = 0; o2 < u2.length; o2++) if (o2 === 0) {
       let a2 = x2(t2.substring(2, 6));
       u2[o2] = z2(a2);
@@ -28526,7 +28556,7 @@
     let c2 = e2 * 4, s2 = new Uint8ClampedArray(c2 * r2);
     for (let o2 = 0; o2 < r2; o2++) for (let a2 = 0; a2 < e2; a2++) {
       let y2 = 0, B2 = 0, R2 = 0;
-      for (let w2 = 0; w2 < m40; w2++) for (let P2 = 0; P2 < b2; P2++) {
+      for (let w2 = 0; w2 < m42; w2++) for (let P2 = 0; P2 < b2; P2++) {
         let G2 = Math.cos(Math.PI * a2 * P2 / e2) * Math.cos(Math.PI * o2 * w2 / r2), T2 = u2[P2 + w2 * b2];
         y2 += T2[0] * G2, B2 += T2[1] * G2, R2 += T2[2] * G2;
       }
@@ -28538,16 +28568,16 @@
   var j2 = U2;
   var A2 = 4;
   var D2 = (t2, e2, r2, n2) => {
-    let l2 = 0, m40 = 0, b2 = 0, g2 = e2 * A2;
+    let l2 = 0, m42 = 0, b2 = 0, g2 = e2 * A2;
     for (let u2 = 0; u2 < e2; u2++) {
       let c2 = A2 * u2;
       for (let s2 = 0; s2 < r2; s2++) {
         let o2 = c2 + s2 * g2, a2 = n2(u2, s2);
-        l2 += a2 * f2(t2[o2]), m40 += a2 * f2(t2[o2 + 1]), b2 += a2 * f2(t2[o2 + 2]);
+        l2 += a2 * f2(t2[o2]), m42 += a2 * f2(t2[o2 + 1]), b2 += a2 * f2(t2[o2 + 2]);
       }
     }
     let i2 = 1 / (e2 * r2);
-    return [l2 * i2, m40 * i2, b2 * i2];
+    return [l2 * i2, m42 * i2, b2 * i2];
   };
   var $2 = (t2) => {
     let e2 = h2(t2[0]), r2 = h2(t2[1]), n2 = h2(t2[2]);
@@ -28560,12 +28590,12 @@
   var O2 = (t2, e2, r2, n2, l2) => {
     if (n2 < 1 || n2 > 9 || l2 < 1 || l2 > 9) throw new d2("BlurHash must have between 1 and 9 components");
     if (e2 * r2 * 4 !== t2.length) throw new d2("Width and height must match the pixels array");
-    let m40 = [];
+    let m42 = [];
     for (let s2 = 0; s2 < l2; s2++) for (let o2 = 0; o2 < n2; o2++) {
       let a2 = o2 == 0 && s2 == 0 ? 1 : 2, y2 = D2(t2, e2, r2, (B2, R2) => a2 * Math.cos(Math.PI * o2 * B2 / e2) * Math.cos(Math.PI * s2 * R2 / r2));
-      m40.push(y2);
+      m42.push(y2);
     }
-    let b2 = m40[0], g2 = m40.slice(1), i2 = "", u2 = n2 - 1 + (l2 - 1) * 9;
+    let b2 = m42[0], g2 = m42.slice(1), i2 = "", u2 = n2 - 1 + (l2 - 1) * 9;
     i2 += p2(u2, 1);
     let c2;
     if (g2.length > 0) {
@@ -28650,7 +28680,7 @@
   }
 
   // src/view/widget-mention-popup.tsx
-  var import_mithril11 = __toESM(require_mithril(), 1);
+  var import_mithril12 = __toESM(require_mithril(), 1);
   var ACTOR_SEARCH_ENDPOINT = "/.api/actors";
   var SEARCH_DEBOUNCE_MS = 150;
   var MentionPopup = class {
@@ -28681,7 +28711,7 @@
     }
     view(vnode) {
       const style = `position:fixed; left:${vnode.attrs.left}px; bottom:${vnode.attrs.bottom}px; z-index:200;`;
-      return /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "popup mention-popup", role: "menu", style }, vnode.state.actors.map((actor, index) => /* @__PURE__ */ (0, import_mithril11.default)(
+      return /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "popup mention-popup", role: "menu", style }, vnode.state.actors.map((actor, index) => /* @__PURE__ */ (0, import_mithril12.default)(
         "div",
         {
           key: actor.id(),
@@ -28691,8 +28721,8 @@
           onmousedown: (event) => this.onItemMousedown(vnode, index, event),
           "aria-selected": index == vnode.state.highlighted ? "true" : null
         },
-        /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "width-32 flex-shrink-0", "aria-hidden": "true" }, /* @__PURE__ */ (0, import_mithril11.default)("img", { src: actor.icon(), alt: "", class: "width-32 circle" })),
-        /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "margin-left-xs" }, /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril11.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
+        /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "width-32 flex-shrink-0", "aria-hidden": "true" }, /* @__PURE__ */ (0, import_mithril12.default)("img", { src: actor.icon(), alt: "", class: "width-32 circle" })),
+        /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-left-xs" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "bold" }, actor.name()), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "margin-none text-xs text-light-gray" }, actor.computedUsername()))
       )));
     }
     // onItemMousedown selects a result. mousedown (not click) fires before the text
@@ -28729,7 +28759,7 @@
     async runSearch(vnode, query) {
       const seq = ++vnode.state.requestSeq;
       try {
-        const results = await import_mithril11.default.request(ACTOR_SEARCH_ENDPOINT + "?q=" + encodeURIComponent(query));
+        const results = await import_mithril12.default.request(ACTOR_SEARCH_ENDPOINT + "?q=" + encodeURIComponent(query));
         if (seq != vnode.state.requestSeq) {
           return;
         }
@@ -28745,7 +28775,7 @@
           vnode.state.actors = [];
         }
       } finally {
-        import_mithril11.default.redraw();
+        import_mithril12.default.redraw();
       }
     }
     // commit fires onselect with the highlighted actor's "@user@host" handle.
@@ -28767,7 +28797,7 @@
         return;
       }
       this.vnode.state.highlighted = (this.vnode.state.highlighted + delta + count) % count;
-      import_mithril11.default.redraw();
+      import_mithril12.default.redraw();
     }
     selectHighlighted() {
       if (this.vnode.state.actors[this.vnode.state.highlighted] == void 0) {
@@ -28779,7 +28809,7 @@
   };
 
   // src/view/modal-pickEmoji.tsx
-  var import_mithril12 = __toESM(require_mithril(), 1);
+  var import_mithril13 = __toESM(require_mithril(), 1);
   var import_stream4 = __toESM(require_stream2(), 1);
   var PickEmoji = class {
     oninit(vnode) {
@@ -28788,7 +28818,7 @@
       fetch("/.templates/user-conversations/resources/emoji/data-by-group.json", { cache: "force-cache" }).then((response) => response.json()).then((emojis) => {
         vnode.state.emojiGroups(emojis);
         vnode.state.emojiGroups.end(true);
-        import_mithril12.default.redraw();
+        import_mithril13.default.redraw();
       });
     }
     // Focus the search input when the modal opens
@@ -28803,7 +28833,7 @@
     view(vnode) {
       let emojiGroups = vnode.state.emojiGroups();
       if (!vnode.state.emojiGroups.end()) {
-        return /* @__PURE__ */ (0, import_mithril12.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril12.default)(
+        return /* @__PURE__ */ (0, import_mithril13.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril13.default)(
           "input",
           {
             id: "emoji-search",
@@ -28811,7 +28841,7 @@
             placeholder: "Search...",
             class: "margin-bottom"
           }
-        ), /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "emoji-picker" }, "Loading..."));
+        ), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "emoji-picker" }, "Loading..."));
       }
       let filteredGroups;
       if (vnode.state.searchQuery) {
@@ -28828,7 +28858,7 @@
       } else {
         filteredGroups = emojiGroups;
       }
-      return /* @__PURE__ */ (0, import_mithril12.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril12.default)(
+      return /* @__PURE__ */ (0, import_mithril13.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril13.default)(
         "input",
         {
           id: "emoji-search",
@@ -28838,7 +28868,7 @@
           value: vnode.state.searchQuery,
           oninput: (event) => this.filterEmojis(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril12.default)("div", { id: "emoji-picker" }, vnode.state.recentEmojis.length > 0 && /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "emoji-group-title" }, /* @__PURE__ */ (0, import_mithril12.default)("span", null, "Recently Used "), /* @__PURE__ */ (0, import_mithril12.default)(
+      ), /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "emoji-picker" }, vnode.state.recentEmojis.length > 0 && /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "emoji-group-title" }, /* @__PURE__ */ (0, import_mithril13.default)("span", null, "Recently Used "), /* @__PURE__ */ (0, import_mithril13.default)(
         "span",
         {
           class: "link margin-left-xs",
@@ -28848,7 +28878,7 @@
           onkeyup: synthClick
         },
         "clear"
-      )), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "emoji-grid" }, vnode.state.recentEmojis.map((emoji) => /* @__PURE__ */ (0, import_mithril12.default)(
+      )), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "emoji-grid" }, vnode.state.recentEmojis.map((emoji) => /* @__PURE__ */ (0, import_mithril13.default)(
         "div",
         {
           key: emoji.emoji,
@@ -28860,7 +28890,7 @@
           onkeyup: synthClick
         },
         emoji.emoji
-      )))), filteredGroups.map((emojiGroup) => /* @__PURE__ */ (0, import_mithril12.default)("div", { key: emojiGroup.slug, class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "emoji-group-title" }, emojiGroup.name), /* @__PURE__ */ (0, import_mithril12.default)("div", { class: "emoji-grid" }, emojiGroup.emojis.map((emoji) => /* @__PURE__ */ (0, import_mithril12.default)(
+      )))), filteredGroups.map((emojiGroup) => /* @__PURE__ */ (0, import_mithril13.default)("div", { key: emojiGroup.slug, class: "emoji-group" }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "emoji-group-title" }, emojiGroup.name), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "emoji-grid" }, emojiGroup.emojis.map((emoji) => /* @__PURE__ */ (0, import_mithril13.default)(
         "div",
         {
           key: emoji.emoji,
@@ -29000,13 +29030,13 @@
       const group = controller2.groupStream();
       const isEncrypted = groupIsEncrypted(group);
       if (group.stateId === "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "card padding-vertical-xl padding-horizontal align-center bg-stripes" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril13.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, "start a new conversation"), ".");
+        return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "card padding-vertical-xl padding-horizontal align-center bg-stripes" }, "This conversation is closed. You can no longer send messages here. But you can ", /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, "start a new conversation"), ".");
       }
       let backgroundStyle = "";
       if (!isEncrypted) {
         backgroundStyle = `background: repeating-linear-gradient(135deg,rgba(127, 127, 127, 0.1), rgba(127, 127, 127, 0.1) 10px, rgba(255, 255, 255, 0.1) 10px, rgba(255, 255, 255, 0.1) 20px);`;
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)(import_mithril13.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs text-gray" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-lock-fill" }), " PRIVATE MESSAGE (encrypted)") : /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " DIRECT MESSAGE (not encrypted)"), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril13.default)("div", { role: "textbox", class: "flex-grow flex-column" + (isEncrypted ? "" : " unencrypted-textbox") }, this.drawPending(vnode), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril13.default)(
+      return /* @__PURE__ */ (0, import_mithril14.default)(import_mithril14.default.Fragment, null, isEncrypted ? /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-sm padding-xs text-gray" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-lock-fill" }), " PRIVATE MESSAGE (encrypted)") : /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-sm padding-xs bold bg-stripes" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-exclamation-triangle-fill" }), " DIRECT MESSAGE (not encrypted)"), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-row flex-justify", style: backgroundStyle }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, this.drawReply(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { role: "textbox", class: "flex-grow flex-column" + (isEncrypted ? "" : " unencrypted-textbox") }, this.drawPending(vnode), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril14.default)(
         "textarea",
         {
           id: MESSAGE_INPUT_ID,
@@ -29018,13 +29048,13 @@
           onclick: (e2) => this.syncMention(vnode, e2.target),
           onblur: () => this.closeMention(vnode)
         }
-      ), this.drawMentionPopup(vnode), vnode.state.showEmojiPicker && /* @__PURE__ */ (0, import_mithril13.default)(
+      ), this.drawMentionPopup(vnode), vnode.state.showEmojiPicker && /* @__PURE__ */ (0, import_mithril14.default)(
         PickEmoji,
         {
           onselect: (emoji) => this.insertEmoji(vnode, emoji.emoji),
           close: () => this.closeEmojiPicker(vnode)
         }
-      ), this.hasContent(vnode) && /* @__PURE__ */ (0, import_mithril13.default)(
+      ), this.hasContent(vnode) && /* @__PURE__ */ (0, import_mithril14.default)(
         "button",
         {
           type: "button",
@@ -29035,8 +29065,8 @@
           onclick: () => this.sendMessage(vnode),
           style: "font-size:16px;"
         },
-        /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-arrow-up" })
-      ), /* @__PURE__ */ (0, import_mithril13.default)(
+        /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-arrow-up" })
+      ), /* @__PURE__ */ (0, import_mithril14.default)(
         "button",
         {
           tabIndex: "0",
@@ -29044,8 +29074,8 @@
           onclick: () => this.openEmojiPicker(vnode),
           style: "font-size:16px;"
         },
-        /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-emoji-smile" })
-      ), " ", /* @__PURE__ */ (0, import_mithril13.default)(
+        /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-emoji-smile" })
+      ), " ", /* @__PURE__ */ (0, import_mithril14.default)(
         "label",
         {
           for: "fileInput",
@@ -29054,8 +29084,8 @@
           title: "Attach a File",
           style: "font-size:16px;"
         },
-        /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-image" })
-      )))), /* @__PURE__ */ (0, import_mithril13.default)(
+        /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-image" })
+      )))), /* @__PURE__ */ (0, import_mithril14.default)(
         "input",
         {
           type: "file",
@@ -29071,7 +29101,7 @@
       if (vnode.attrs.inReplyTo == void 0) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "reply-panel", oncreate: () => document.getElementById("message-input") }, /* @__PURE__ */ (0, import_mithril13.default)("div", null, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-x-circle-fill clickable", role: "button", tabIndex: "0", onclick: () => vnode.attrs.controller.removeReply(), onkeypress: synthClick })), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "margin-horizontal-sm bold" }, "Replying To:"), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "flex-grow" }, vnode.attrs.inReplyTo.content));
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "reply-panel", oncreate: () => document.getElementById("message-input") }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-x-circle-fill clickable", role: "button", tabIndex: "0", onclick: () => vnode.attrs.controller.removeReply(), onkeypress: synthClick })), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-horizontal-sm bold" }, "Replying To:"), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, vnode.attrs.inReplyTo.content));
     }
     onkeydown(vnode, event) {
       if (this.mentionPopupIsActive(vnode)) {
@@ -29127,7 +29157,7 @@
       if (mention == null) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)(
+      return /* @__PURE__ */ (0, import_mithril14.default)(
         MentionPopup,
         {
           controller: vnode.attrs.controller,
@@ -29160,7 +29190,7 @@
     closeMention(vnode) {
       if (vnode.state.mention != null) {
         vnode.state.mention = null;
-        import_mithril13.default.redraw();
+        import_mithril14.default.redraw();
       }
     }
     // insertMention replaces the in-progress token with the chosen "@user@host"
@@ -29188,7 +29218,7 @@
       document.getElementById("modal")?.classList.remove("ready");
       globalThis.setTimeout(() => {
         vnode.state.showEmojiPicker = false;
-        import_mithril13.default.redraw();
+        import_mithril14.default.redraw();
         this.focusInput();
       }, 240);
     }
@@ -29217,7 +29247,7 @@
           field.setSelectionRange(caret, caret);
         }
       });
-      import_mithril13.default.redraw();
+      import_mithril14.default.redraw();
     }
     // hasContent reports whether the composer has anything to send: non-empty text
     // or at least one pending attachment.
@@ -29239,7 +29269,7 @@
       if (vnode.state.pending.length == 0) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { id: "pending-attachments", class: "flex-row flex-wrap padding-xs" }, vnode.state.pending.map((attachment, index) => /* @__PURE__ */ (0, import_mithril13.default)("div", { key: attachment.url, class: "pending-attachment" }, this.drawPendingPreview(attachment), /* @__PURE__ */ (0, import_mithril13.default)(
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { id: "pending-attachments", class: "flex-row flex-wrap padding-xs" }, vnode.state.pending.map((attachment, index) => /* @__PURE__ */ (0, import_mithril14.default)("div", { key: attachment.url, class: "pending-attachment" }, this.drawPendingPreview(attachment), /* @__PURE__ */ (0, import_mithril14.default)(
         "button",
         {
           type: "button",
@@ -29248,16 +29278,16 @@
           tabIndex: "0",
           onclick: () => this.removePending(vnode, index)
         },
-        /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi bi-x-circle-fill" })
-      ), /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "pending-attachment-name text-sm text-gray" }, attachment.name))));
+        /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-x-circle-fill" })
+      ), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "pending-attachment-name text-sm text-gray" }, attachment.name))));
     }
     // drawPendingPreview renders the thumbnail (image) or type icon for a single
     // pending attachment.
     drawPendingPreview(attachment) {
       if (attachmentKind(attachment) == "image") {
-        return /* @__PURE__ */ (0, import_mithril13.default)("img", { src: attachment.url, class: "pending-attachment-thumb", alt: "" });
+        return /* @__PURE__ */ (0, import_mithril14.default)("img", { src: attachment.url, class: "pending-attachment-thumb", alt: "" });
       }
-      return /* @__PURE__ */ (0, import_mithril13.default)("div", { class: "pending-attachment-thumb" }, /* @__PURE__ */ (0, import_mithril13.default)("i", { class: "bi " + attachmentIcon(attachment) }));
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "pending-attachment-thumb" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi " + attachmentIcon(attachment) }));
     }
     // removePending removes the attachment at `index` from the pending tray.
     removePending(vnode, index) {
@@ -29283,12 +29313,12 @@
           }
           const attachment = dataUriToAttachment(reader.result, file.name, file.size);
           vnode.state.pending.push(attachment);
-          import_mithril13.default.redraw();
+          import_mithril14.default.redraw();
           if (attachmentKind(attachment) == "image") {
             encodeBlurhash(attachment.url).then((blurhash) => {
               if (blurhash != "") {
                 attachment.blurhash = blurhash;
-                import_mithril13.default.redraw();
+                import_mithril14.default.redraw();
               }
             });
           }
@@ -29304,7 +29334,7 @@
   };
 
   // src/view/message.tsx
-  var import_mithril14 = __toESM(require_mithril(), 1);
+  var import_mithril15 = __toESM(require_mithril(), 1);
   var import_dayjs = __toESM(require_dayjs_min(), 1);
   var ViewMessage = class {
     // view returns the JSX for the messages within the selectedGroup.
@@ -29320,33 +29350,33 @@
       switch (message.type) {
         case "SENT": {
           if (isEmoji(message.content)) {
-            return /* @__PURE__ */ (0, import_mithril14.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-none padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-gray" }, /* @__PURE__ */ (0, import_mithril14.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-pencil-square" }), " Edit"), this.drawAcknowledgements(vnode), this.drawPostTime(vnode)))));
+            return /* @__PURE__ */ (0, import_mithril15.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bubble" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "margin-none padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-gray" }, /* @__PURE__ */ (0, import_mithril15.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-pencil-square" }), " Edit"), this.drawAcknowledgements(vnode), this.drawPostTime(vnode)))));
           }
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode)));
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { key: vnode.attrs.key, class: "message sent" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode)));
         }
         case "RECEIVED": {
           if (isEmoji(message.content)) {
-            return /* @__PURE__ */ (0, import_mithril14.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril14.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-gray" }, this.drawPostTime(vnode))))));
+            return /* @__PURE__ */ (0, import_mithril15.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril15.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bubble" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "padding-top-lg padding-bottom-sm", style: "font-size:48px;" }, message.content), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message-options flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-gray" }, this.drawPostTime(vnode))))));
           }
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril14.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode))));
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { key: vnode.attrs.key, class: "message received" }, /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "sender-icon" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril15.default)("img", { src: sender.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "flex-grow" }, sender != void 0 && /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "sender" }, sender.name || "..."), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "bubble" }, this.drawContent(controller2, message), this.drawReactions(vnode))));
         }
         case "ADD-ACTOR": {
           const contact = vnode.attrs.controller.getContactStream(message.sender)();
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { key: vnode.attrs.key, class: "message status" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril14.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;", alt: "" }), contact.name), " ", " ", "JOINED the conversation at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { key: vnode.attrs.key, class: "message status" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;", alt: "" }), contact.name), " ", " ", "JOINED the conversation at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
         }
         case "REMOVE-ACTOR": {
           const contact = vnode.attrs.controller.getContactStream(message.sender)();
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril14.default)("div", null, /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril14.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;", alt: "" }), contact.name), " ", " ", "left the conversation at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril15.default)("div", null, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("img", { src: contact.icon, class: "circle margin-right-xs", style: "height:1em;", alt: "" }), contact.name), " ", " ", "left the conversation at ", (0, import_dayjs.default)(message.createDate).format("h:mm A")));
         }
         case "ADD-DEVICE": {
-          return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, senderName), " ", " ", "ADDED a new device");
+          return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message status" }, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "link", role: "button", tabIndex: "0", onclick: () => controller2.host_actor(message.sender), onkeypress: synthClick }, senderName), " ", " ", "ADDED a new device");
         }
         case "REMOVE-DEVICE":
       }
       throw new Error(`Unknown message type: ${message.type}`);
     }
     drawContent(controller2, message) {
-      return /* @__PURE__ */ (0, import_mithril14.default)(import_mithril14.default.Fragment, null, this.drawAttachments(controller2, message), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "padding-xs message-content", onclick: (event) => this.onContentClick(controller2, event), onkeydown: (event) => this.onContentKeydown(controller2, event) }, import_mithril14.default.trust(message.content)));
+      return /* @__PURE__ */ (0, import_mithril15.default)(import_mithril15.default.Fragment, null, this.drawAttachments(controller2, message), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "padding-xs message-content", onclick: (event) => this.onContentClick(controller2, event), onkeydown: (event) => this.onContentKeydown(controller2, event) }, import_mithril15.default.trust(message.content)));
     }
     // drawAttachments renders the message's attachments as a grid of thumbnails.
     // Displayable attachments (image/video/audio) open the lightbox; a file that can
@@ -29355,7 +29385,7 @@
       if (message.attachments.length == 0) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => this.drawAttachmentTile(controller2, message, attachment, index)));
+      return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => this.drawAttachmentTile(controller2, message, attachment, index)));
     }
     // drawAttachmentTile renders a single attachment thumbnail in the message bubble.
     // Downloadable-only files render as a download anchor so clicking them downloads
@@ -29363,7 +29393,7 @@
     // still reachable).
     drawAttachmentTile(controller2, message, attachment, index) {
       if (attachmentKind(attachment) == "file") {
-        return /* @__PURE__ */ (0, import_mithril14.default)(
+        return /* @__PURE__ */ (0, import_mithril15.default)(
           "a",
           {
             key: attachment.url,
@@ -29377,7 +29407,7 @@
           this.drawThumbnail(attachment)
         );
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)(
+      return /* @__PURE__ */ (0, import_mithril15.default)(
         "button",
         {
           key: attachment.url,
@@ -29395,12 +29425,12 @@
     drawThumbnail(attachment) {
       switch (attachmentKind(attachment)) {
         case "image":
-          return /* @__PURE__ */ (0, import_mithril14.default)("img", { src: attachment.url, class: "message-attachment-thumb", style: blurhashBackgroundStyle(attachment.blurhash), alt: "" });
+          return /* @__PURE__ */ (0, import_mithril15.default)("img", { src: attachment.url, class: "message-attachment-thumb", style: blurhashBackgroundStyle(attachment.blurhash), alt: "" });
         // NOSONAR: typescript:S6853
         case "video":
-          return /* @__PURE__ */ (0, import_mithril14.default)("video", { src: attachment.url, class: "message-attachment-thumb", preload: "metadata", muted: true });
+          return /* @__PURE__ */ (0, import_mithril15.default)("video", { src: attachment.url, class: "message-attachment-thumb", preload: "metadata", muted: true });
         default:
-          return /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-file" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "message-attachment-name text-sm" }, attachment.name || "File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "text-sm text-gray" }, formatFileSize(attachment.size)));
+          return /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "message-attachment-file" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "message-attachment-name text-sm" }, attachment.name || "File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "text-sm text-gray" }, formatFileSize(attachment.size)));
       }
     }
     // mentionActorId returns the profile URL of the mention link containing the given
@@ -29440,33 +29470,33 @@
       const message = vnode.attrs.message;
       const reactions = Object.entries(message.reactions);
       const isSentByMe = message.type == "SENT";
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-options flex-row flex-align-center" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril14.default)("div", null, reactions.map(([content, actors]) => {
+      return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "message-options flex-row flex-align-center" }, reactions.length > 0 && /* @__PURE__ */ (0, import_mithril15.default)("div", null, reactions.map(([content, actors]) => {
         const hasReacted = message.reactions[content]?.includes(controller2.actorId());
         const reactionCount = actors.length > 1 ? actors.length : "";
         if (isSentByMe) {
-          return /* @__PURE__ */ (0, import_mithril14.default)("button", { key: content }, content, " ", reactionCount);
+          return /* @__PURE__ */ (0, import_mithril15.default)("button", { key: content }, content, " ", reactionCount);
         }
         if (hasReacted) {
-          return /* @__PURE__ */ (0, import_mithril14.default)("button", { key: content, class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
+          return /* @__PURE__ */ (0, import_mithril15.default)("button", { key: content, class: "selected", onclick: () => controller2.undoReaction(message.id) }, content, " ", reactionCount);
         }
-        return /* @__PURE__ */ (0, import_mithril14.default)("button", { key: content, tabIndex: "0", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
-      })), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril14.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril14.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril14.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "text-gray" }, this.drawAcknowledgements(vnode), this.drawPostTime(vnode)));
+        return /* @__PURE__ */ (0, import_mithril15.default)("button", { key: content, tabIndex: "0", onclick: () => controller2.reactToMessage(message.id, content) }, content, " ", reactionCount);
+      })), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-gray flex-grow" }, isSentByMe || /* @__PURE__ */ (0, import_mithril15.default)("button", { tabIndex: "0", onclick: () => controller2.modal_startReaction(message) }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-emoji-smile" }), " Like"), /* @__PURE__ */ (0, import_mithril15.default)("button", { tabIndex: "0", onclick: () => controller2.startReply(message) }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-reply" }), " Reply"), isSentByMe && /* @__PURE__ */ (0, import_mithril15.default)("button", { tabIndex: "0", onclick: () => controller2.modal_editMessage(message.id) }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-pencil-square" }), " Edit")), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "text-gray" }, this.drawAcknowledgements(vnode), this.drawPostTime(vnode)));
     }
     drawAcknowledgements(vnode) {
       if (vnode.attrs.message.received.length == 0) {
         return null;
       }
       if (vnode.attrs.message.received.length < 5) {
-        return /* @__PURE__ */ (0, import_mithril14.default)("span", null, vnode.attrs.message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril14.default)("i", { key: actorId, class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
+        return /* @__PURE__ */ (0, import_mithril15.default)("span", null, vnode.attrs.message.received.map((actorId) => /* @__PURE__ */ (0, import_mithril15.default)("i", { key: actorId, class: "bi bi-check-circle", style: "margin-right:2px;", title: `Received by ${actorId}` })), /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)("span", null, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;" }), " ", vnode.attrs.message.received.length, /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
+      return /* @__PURE__ */ (0, import_mithril15.default)("span", null, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-check-circle", style: "margin-right:2px;" }), " ", vnode.attrs.message.received.length, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "margin-horizontal-xs" }, "\xB7"));
     }
     drawPostTime(vnode) {
       const message = vnode.attrs.message;
       if (message.history.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"));
+        return /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"));
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)(
+      return /* @__PURE__ */ (0, import_mithril15.default)(
         "span",
         {
           class: "clickable",
@@ -29475,16 +29505,16 @@
           onclick: () => vnode.attrs.controller.modal_messageHistory(message.id),
           onkeypress: synthClick
         },
-        /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "nowrap text-underline margin-right-xs" }, /* @__PURE__ */ (0, import_mithril14.default)("i", { class: "bi bi-clock-history" }), " Edited"),
-        /* @__PURE__ */ (0, import_mithril14.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))
+        /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "nowrap text-underline margin-right-xs" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-clock-history" }), " Edited"),
+        /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "nowrap" }, (0, import_dayjs.default)(message.updateDate).format("hh:mm A"))
       );
     }
     drawPostDate(vnode) {
       const showDate = vnode.attrs.showDate;
       if (showDate == "") {
-        return /* @__PURE__ */ (0, import_mithril14.default)("div", null);
+        return /* @__PURE__ */ (0, import_mithril15.default)("div", null);
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "margin-top margin-horizontal-sm text-sm text-light-gray" }, vnode.attrs.showDate);
+      return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "margin-top margin-horizontal-sm text-sm text-light-gray" }, vnode.attrs.showDate);
     }
     sendReaction(vnode, content) {
       vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content);
@@ -29502,31 +29532,31 @@
   var import_relativeTime = __toESM(require_relativeTime(), 1);
 
   // src/view/group-frame.tsx
-  var import_mithril16 = __toESM(require_mithril(), 1);
+  var import_mithril17 = __toESM(require_mithril(), 1);
 
   // src/view/widget-groupMenu.tsx
-  var import_mithril15 = __toESM(require_mithril(), 1);
+  var import_mithril16 = __toESM(require_mithril(), 1);
   var GroupMenu = class {
     view(vnode) {
       const { controller: controller2, group } = vnode.attrs;
-      return /* @__PURE__ */ (0, import_mithril15.default)(
+      return /* @__PURE__ */ (0, import_mithril16.default)(
         Popup,
         {
           align: "right",
-          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "popup-button", role: "button", tabindex: "0", title: "Conversation options", "aria-label": "Conversation options", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-three-dots" })),
+          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "popup-button", role: "button", tabindex: "0", title: "Conversation options", "aria-label": "Conversation options", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril16.default)("i", { class: "bi bi-three-dots" })),
           content: (close) => this.viewMenu(controller2, group, close)
         }
       );
     }
     // viewMenu renders the body of the group pop-up
     viewMenu(controller2, group, close) {
-      return /* @__PURE__ */ (0, import_mithril15.default)("div", null, this.viewStateItem(controller2, group, close, "IMPORTANT", "Important"), this.viewStateItem(controller2, group, close, "ACTIVE", "Active"), this.viewStateItem(controller2, group, close, "ARCHIVED", "Archived"), /* @__PURE__ */ (0, import_mithril15.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.markUnread(controller2, group, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-app-indicator" })), /* @__PURE__ */ (0, import_mithril15.default)("span", null, "Mark Unread")), /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "popup-menu-item clickable text-red", role: "button", tabIndex: "0", onclick: () => this.leave(controller2, group, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-x-lg" })), /* @__PURE__ */ (0, import_mithril15.default)("span", null, "Leave Group")));
+      return /* @__PURE__ */ (0, import_mithril16.default)("div", null, this.viewStateItem(controller2, group, close, "IMPORTANT", "Important"), this.viewStateItem(controller2, group, close, "ACTIVE", "Active"), this.viewStateItem(controller2, group, close, "ARCHIVED", "Archived"), /* @__PURE__ */ (0, import_mithril16.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.markUnread(controller2, group, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril16.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril16.default)("i", { class: "bi bi-app-indicator" })), /* @__PURE__ */ (0, import_mithril16.default)("span", null, "Mark Unread")), /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "popup-menu-item clickable text-red", role: "button", tabIndex: "0", onclick: () => this.leave(controller2, group, close), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril16.default)("span", { class: "popup-menu-icon" }, /* @__PURE__ */ (0, import_mithril16.default)("i", { class: "bi bi-x-lg" })), /* @__PURE__ */ (0, import_mithril16.default)("span", null, "Leave Group")));
     }
     // viewStateItem renders one of the state choices, with a checkmark on the
     // group's current state.
     viewStateItem(controller2, group, close, state, label) {
       const isSelected = group.stateId == state;
-      return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.selectState(controller2, close, state), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril15.default)("span", { class: "popup-menu-icon" }, isSelected ? /* @__PURE__ */ (0, import_mithril15.default)("i", { class: "bi bi-check" }) : null), /* @__PURE__ */ (0, import_mithril15.default)("span", null, label));
+      return /* @__PURE__ */ (0, import_mithril16.default)("div", { class: "popup-menu-item clickable", role: "button", tabIndex: "0", onclick: () => this.selectState(controller2, close, state), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril16.default)("span", { class: "popup-menu-icon" }, isSelected ? /* @__PURE__ */ (0, import_mithril16.default)("i", { class: "bi bi-check" }) : null), /* @__PURE__ */ (0, import_mithril16.default)("span", null, label));
     }
     // selectState changes the group's state and closes the pop-up
     selectState(controller2, close, state) {
@@ -29552,15 +29582,15 @@
       const { controller: controller2, active } = vnode.attrs;
       const group = controller2.groupStream();
       const groupName = group.name || group.defaultName || "Messages";
-      return /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-details", style: { "--focus-color": groupColor(group) } }, /* @__PURE__ */ (0, import_mithril16.default)("div", { id: "conversation-header", class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tablist", class: "margin-none padding-none underlined flex-grow" }, this.tab(controller2, active, "messages", groupName, () => controller2.page_group_messages()), this.tab(controller2, active, "notes", "Notes", () => controller2.page_group_notes()), this.tab(controller2, active, "members", "People (" + group.members.length + ")", () => controller2.page_group_members()), active == "leave" && /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, "Leave")), /* @__PURE__ */ (0, import_mithril16.default)(GroupMenu, { controller: controller2, group })), vnode.children);
+      return /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-details", style: { "--focus-color": groupColor(group) } }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-header", class: "flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { role: "tablist", class: "margin-none padding-none underlined flex-grow" }, this.tab(controller2, active, "messages", groupName, () => controller2.page_group_messages()), this.tab(controller2, active, "notes", "Notes", () => controller2.page_group_notes()), this.tab(controller2, active, "members", "People (" + group.members.length + ")", () => controller2.page_group_members()), active == "leave" && /* @__PURE__ */ (0, import_mithril17.default)("div", { role: "tab", "aria-selected": "true" }, "Leave")), /* @__PURE__ */ (0, import_mithril17.default)(GroupMenu, { controller: controller2, group })), vnode.children);
     }
     // tab renders a single header tab. The active tab is marked aria-selected and is
     // not clickable; the rest navigate to their page.
     tab(controller2, active, tab, label, navigate) {
       if (active == tab) {
-        return /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", "aria-selected": "true" }, label);
+        return /* @__PURE__ */ (0, import_mithril17.default)("div", { role: "tab", "aria-selected": "true" }, label);
       }
-      return /* @__PURE__ */ (0, import_mithril16.default)("div", { role: "tab", tabIndex: "0", onclick: navigate, onkeypress: synthClick }, label);
+      return /* @__PURE__ */ (0, import_mithril17.default)("div", { role: "tab", tabIndex: "0", onclick: navigate, onkeypress: synthClick }, label);
     }
   };
 
@@ -29592,19 +29622,19 @@
       const group = controller2.groupStream();
       let lastSender = "";
       const classNames = groupIsEncrypted(group) ? "encrypted" : "";
-      return /* @__PURE__ */ (0, import_mithril17.default)(GroupFrame, { controller: controller2, active: "messages" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-messages", class: classNames }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
+      return /* @__PURE__ */ (0, import_mithril18.default)(GroupFrame, { controller: controller2, active: "messages" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: classNames }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow padding-sm padding-bottom-lg" }, controller2.messages.map((message) => {
         let sender;
         if (message.sender != lastSender) {
           sender = vnode.state.contacts.find((contact) => contact().id == message.sender);
           lastSender = message.sender;
         }
-        return /* @__PURE__ */ (0, import_mithril17.default)(ViewMessage, { key: message.id, controller: controller2, message, sender, showDate: "" });
-      }))), /* @__PURE__ */ (0, import_mithril17.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril17.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril17.default)(WidgetMessageCreate, { controller: vnode.attrs.controller, inReplyTo: vnode.attrs.controller.inReplyTo }))));
+        return /* @__PURE__ */ (0, import_mithril18.default)(ViewMessage, { key: message.id, controller: controller2, message, sender, showDate: "" });
+      }))), /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-create-widget" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "padding-sm" }, /* @__PURE__ */ (0, import_mithril18.default)(WidgetMessageCreate, { controller: vnode.attrs.controller, inReplyTo: vnode.attrs.controller.inReplyTo }))));
     }
   };
 
   // src/view/group-notes.tsx
-  var import_mithril18 = __toESM(require_mithril(), 1);
+  var import_mithril19 = __toESM(require_mithril(), 1);
   var GroupNotes = class {
     oninit(vnode) {
       vnode.state.group = vnode.attrs.controller.groupStream();
@@ -29612,7 +29642,7 @@
     }
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril18.default)(GroupFrame, { controller: controller2, active: "notes" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril18.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupName" }, "Custom Name"), " ", /* @__PURE__ */ (0, import_mithril18.default)(
+      return /* @__PURE__ */ (0, import_mithril19.default)(GroupFrame, { controller: controller2, active: "notes" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril19.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "card padding max-width-640" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril19.default)("label", { for: "idGroupName" }, "Custom Name"), " ", /* @__PURE__ */ (0, import_mithril19.default)(
         "input",
         {
           id: "idGroupName",
@@ -29620,7 +29650,7 @@
           value: vnode.state.group.name,
           oninput: (event) => this.setName(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) helps you organize conversations. If empty, member list is displayed.")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupNotes" }, "Notes"), " ", /* @__PURE__ */ (0, import_mithril18.default)(
+      ), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) helps you organize conversations. If empty, member list is displayed.")), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril19.default)("label", { for: "idGroupNotes" }, "Notes"), " ", /* @__PURE__ */ (0, import_mithril19.default)(
         "textarea",
         {
           id: "idGroupNotes",
@@ -29628,7 +29658,7 @@
           rows: "8",
           oninput: (event) => this.setSummary(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Notes about this conversation. Not shared with other group members.")), this.widgetState(vnode), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril18.default)(
+      ), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Notes about this conversation. Not shared with other group members.")), this.widgetState(vnode), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril19.default)("label", { for: "idGroupTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril19.default)(
         "input",
         {
           id: "idGroupTags",
@@ -29637,23 +29667,23 @@
           value: vnode.state.tags,
           oninput: (event) => this.setTags(vnode, event)
         }
-      ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Organizes conversations using conversation filters.")))), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril18.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril18.default)("button", { type: "button", tabindex: "0", onclick: () => this.close(vnode) }, "Cancel")))))));
+      ), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Organizes conversations using conversation filters.")))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril19.default)("button", { type: "submit", class: "primary", tabindex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril19.default)("button", { type: "button", tabindex: "0", onclick: () => this.close(vnode) }, "Cancel")))))));
     }
     widgetState(vnode) {
       if (vnode.state.group.stateId === "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupState" }, "Status"), " ", /* @__PURE__ */ (0, import_mithril18.default)("select", { disabled: true }, /* @__PURE__ */ (0, import_mithril18.default)("option", null, "Closed")), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "This group is closed and you can no longer post to it."));
+        return /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril19.default)("label", { for: "idGroupState" }, "Status"), " ", /* @__PURE__ */ (0, import_mithril19.default)("select", { disabled: true }, /* @__PURE__ */ (0, import_mithril19.default)("option", null, "Closed")), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-gray" }, "This group is closed and you can no longer post to it."));
       }
-      return /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril18.default)("label", { for: "idGroupState" }, "Status"), " ", /* @__PURE__ */ (0, import_mithril18.default)(
+      return /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril19.default)("label", { for: "idGroupState" }, "Status"), " ", /* @__PURE__ */ (0, import_mithril19.default)(
         "select",
         {
           id: "idGroupState",
           value: vnode.state.group.stateId,
           oninput: (event) => this.setState(vnode, event)
         },
-        /* @__PURE__ */ (0, import_mithril18.default)("option", { value: "IMPORTANT" }, "Important"),
-        /* @__PURE__ */ (0, import_mithril18.default)("option", { value: "ACTIVE" }, "Active"),
-        /* @__PURE__ */ (0, import_mithril18.default)("option", { value: "ARCHIVED" }, "Archived")
-      ), /* @__PURE__ */ (0, import_mithril18.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Organizes conversations using conversation filters."));
+        /* @__PURE__ */ (0, import_mithril19.default)("option", { value: "IMPORTANT" }, "Important"),
+        /* @__PURE__ */ (0, import_mithril19.default)("option", { value: "ACTIVE" }, "Active"),
+        /* @__PURE__ */ (0, import_mithril19.default)("option", { value: "ARCHIVED" }, "Archived")
+      ), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-xs text-gray" }, "(PRIVATE) Organizes conversations using conversation filters."));
     }
     setName(vnode, event) {
       const target = event.target;
@@ -29701,7 +29731,7 @@
   };
 
   // src/view/group-members.tsx
-  var import_mithril19 = __toESM(require_mithril(), 1);
+  var import_mithril20 = __toESM(require_mithril(), 1);
   var GroupMembers = class {
     oninit(vnode) {
       return void 0;
@@ -29711,15 +29741,15 @@
       const group = controller2.groupStream();
       const contactStreams = controller2.groupContactStream();
       const contacts = contactStreams.map((contactStream) => contactStream()).filter((contact) => contact !== void 0).filter((contact) => contact.id != controller2.actorId());
-      return /* @__PURE__ */ (0, import_mithril19.default)(GroupFrame, { controller: controller2, active: "members" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "table" }, group.stateId === "CLOSED" ? null : /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--focus-color)" }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-plus" }))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, "Invite one or more people to this conversation"))), contacts.map((contact) => {
-        return /* @__PURE__ */ (0, import_mithril19.default)("div", { key: contact.id, class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("img", { src: contact.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm", role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "align-right" }, this.drawActionButton(vnode, group, contact)));
-      }), /* @__PURE__ */ (0, import_mithril19.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => this.leaveGroup(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril19.default)("div", null, /* @__PURE__ */ (0, import_mithril19.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--red60)" }, /* @__PURE__ */ (0, import_mithril19.default)("i", { class: "bi bi-x" }))), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "bold" }, "Leave Group"), /* @__PURE__ */ (0, import_mithril19.default)("div", { class: "text-gray" }, "Leave this conversation and remove it from all your devices."))))));
+      return /* @__PURE__ */ (0, import_mithril20.default)(GroupFrame, { controller: controller2, active: "members" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { id: "conversation-messages", class: "padding" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "table" }, group.stateId === "CLOSED" ? null : /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => vnode.attrs.controller.modal_addGroupMember(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--focus-color)" }, /* @__PURE__ */ (0, import_mithril20.default)("i", { class: "bi bi-plus" }))), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, "Add People"), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, "Invite one or more people to this conversation"))), contacts.map((contact) => {
+        return /* @__PURE__ */ (0, import_mithril20.default)("div", { key: contact.id, class: "flex-row", role: "button" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril20.default)("img", { src: contact.icon, class: "circle width-48", alt: "" })), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm", role: "link", tabIndex: "0", onclick: () => controller2.host_actor(contact.id), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, contact.name), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, contact.username)), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "align-right" }, this.drawActionButton(vnode, group, contact)));
+      }), /* @__PURE__ */ (0, import_mithril20.default)("div", { role: "link", tabIndex: "0", class: "flex-row", onclick: () => this.leaveGroup(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("span", { class: "circle width-48 flex-center text-white text-xl margin-none", style: "background-color:var(--red60)" }, /* @__PURE__ */ (0, import_mithril20.default)("i", { class: "bi bi-x" }))), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow padding-left-sm" }, /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "bold" }, "Leave Group"), /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "text-gray" }, "Leave this conversation and remove it from all your devices."))))));
     }
     drawActionButton(vnode, group, contact) {
       if (group.stateId == "CLOSED") {
-        return /* @__PURE__ */ (0, import_mithril19.default)("button", { disabled: true }, "Remote");
+        return /* @__PURE__ */ (0, import_mithril20.default)("button", { disabled: true }, "Remote");
       }
-      return /* @__PURE__ */ (0, import_mithril19.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove");
+      return /* @__PURE__ */ (0, import_mithril20.default)("button", { class: "text-sm", tabIndex: "0", onclick: () => this.removeGroupMember(vnode, contact.id) }, "Remove");
     }
     async leaveGroup(vnode) {
       if (!confirm("If you leave this group, message history will be removed from all of your devices. Are you sure you want to leave?")) {
@@ -29743,16 +29773,16 @@
   };
 
   // src/view/empty.tsx
-  var import_mithril20 = __toESM(require_mithril(), 1);
+  var import_mithril21 = __toESM(require_mithril(), 1);
   var Empty = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril20.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril20.default)("div", null, "Messages will appear here when you"), /* @__PURE__ */ (0, import_mithril20.default)("div", null, /* @__PURE__ */ (0, import_mithril20.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => vnode.attrs.controller.modal_newConversation(), onkeypress: synthClick }, "Start a Conversation")));
+      return /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril21.default)("div", null, "Messages will appear here when you"), /* @__PURE__ */ (0, import_mithril21.default)("div", null, /* @__PURE__ */ (0, import_mithril21.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => vnode.attrs.controller.modal_newConversation(), onkeypress: synthClick }, "Start a Conversation")));
     }
   };
 
   // src/view/modal-addGroupMember.tsx
-  var import_mithril21 = __toESM(require_mithril(), 1);
   var import_mithril22 = __toESM(require_mithril(), 1);
+  var import_mithril23 = __toESM(require_mithril(), 1);
   var AddGroupMember = class {
     oninit(vnode) {
       vnode.state.actors = [];
@@ -29761,7 +29791,7 @@
     view(vnode) {
       const group = vnode.attrs.controller.groupStream();
       const isEncrypted = groupIsEncrypted(group);
-      return /* @__PURE__ */ (0, import_mithril21.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril21.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode), style: { "--focus-color": groupColor(group) } }, /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril21.default)("i", { class: "bi bi-plus" }), " Add People"), isEncrypted ? /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril21.default)("b", null, "This is an encrypted conversation."), " New members MUST support encrypted messaging to join.") : /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril21.default)("b", null, "This is an unencrypted conversation."), " Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted."), /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril21.default)("label", { for: "actorIds" }, "Enter Username(s)"), " ", /* @__PURE__ */ (0, import_mithril21.default)(
+      return /* @__PURE__ */ (0, import_mithril22.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril22.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode), style: { "--focus-color": groupColor(group) } }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril22.default)("i", { class: "bi bi-plus" }), " Add People"), isEncrypted ? /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril22.default)("b", null, "This is an encrypted conversation."), " New members MUST support encrypted messaging to join.") : /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril22.default)("b", null, "This is an unencrypted conversation."), " Anyone on the Fediverse can be added to this conversation, but messages will not be encrypted."), /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril22.default)("label", { for: "actorIds" }, "Enter Username(s)"), " ", /* @__PURE__ */ (0, import_mithril22.default)(
         ActorSearch,
         {
           controller: vnode.attrs.controller,
@@ -29781,14 +29811,14 @@
         if (!vnode.state.canBeEncrypted) {
           disabled = true;
         }
-        return /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril21.default)("button", { type: "submit", class: "primary", tabIndex: "0", disabled }, /* @__PURE__ */ (0, import_mithril21.default)("i", { class: "bi bi-lock-fill" }), /* @__PURE__ */ (0, import_mithril21.default)("span", null, "Add People (Encrypted)")), /* @__PURE__ */ (0, import_mithril21.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"));
+        return /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril22.default)("button", { type: "submit", class: "primary", tabIndex: "0", disabled }, /* @__PURE__ */ (0, import_mithril22.default)("i", { class: "bi bi-lock-fill" }), /* @__PURE__ */ (0, import_mithril22.default)("span", null, "Add People (Encrypted)")), /* @__PURE__ */ (0, import_mithril22.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"));
       }
-      return /* @__PURE__ */ (0, import_mithril21.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril21.default)("button", { type: "submit", class: "success", tabIndex: "0", disabled }, /* @__PURE__ */ (0, import_mithril21.default)("i", { class: "bi bi-card-text" }), " Add People (Not Encrypted)"), /* @__PURE__ */ (0, import_mithril21.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"));
+      return /* @__PURE__ */ (0, import_mithril22.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril22.default)("button", { type: "submit", class: "success", tabIndex: "0", disabled }, /* @__PURE__ */ (0, import_mithril22.default)("i", { class: "bi bi-card-text" }), " Add People (Not Encrypted)"), /* @__PURE__ */ (0, import_mithril22.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close"));
     }
     selectActors(vnode, actors, canBeEncrypted) {
       vnode.state.actors = actors;
       vnode.state.canBeEncrypted = canBeEncrypted;
-      import_mithril21.default.redraw();
+      import_mithril22.default.redraw();
     }
     async onsubmit(event, vnode) {
       const participants = vnode.state.actors.map((actor) => actor.id());
@@ -29805,8 +29835,8 @@
   };
 
   // src/view/modal-editMessage.tsx
-  var import_mithril23 = __toESM(require_mithril(), 1);
   var import_mithril24 = __toESM(require_mithril(), 1);
+  var import_mithril25 = __toESM(require_mithril(), 1);
   var EditMessage = class {
     oninit(vnode) {
       if (vnode.attrs.controller.message == void 0) {
@@ -29818,7 +29848,7 @@
       const isEncrypted = groupIsEncrypted(vnode.attrs.controller.groupStream());
       const saveButtonClass = isEncrypted ? "primary" : "success";
       const textareaClass = isEncrypted ? "" : "unencrypted-textbox";
-      return /* @__PURE__ */ (0, import_mithril23.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril23.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "bi bi-pencil-square" }), " Edit Message"), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril23.default)("textarea", { rows: "8", tabindex: "0", class: textareaClass, value: vnode.state.content, oninput: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "text-sm text-gray" }, "Changes will be sent to all participants, but some apps may not display edits.")))), /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril23.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril23.default)("button", { class: saveButtonClass, tabindex: "0" }, isEncrypted ? null : /* @__PURE__ */ (0, import_mithril23.default)("i", { class: "bi bi-chat-fill" }), " Save Changes"), /* @__PURE__ */ (0, import_mithril23.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close")), /* @__PURE__ */ (0, import_mithril23.default)("div", null, /* @__PURE__ */ (0, import_mithril23.default)("span", { class: "text-red", role: "button", tabIndex: "0", onclick: () => this.delete(vnode), onkeypress: synthClick }, "Delete")))));
+      return /* @__PURE__ */ (0, import_mithril24.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril24.default)("form", { onsubmit: (event) => this.onsubmit(event, vnode) }, /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "layout-title" }, /* @__PURE__ */ (0, import_mithril24.default)("i", { class: "bi bi-pencil-square" }), " Edit Message"), /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril24.default)("textarea", { rows: "8", tabindex: "0", class: textareaClass, value: vnode.state.content, oninput: (event) => this.setMessage(vnode, event) }), /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "text-sm text-gray" }, "Changes will be sent to all participants, but some apps may not display edits.")))), /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "margin-top flex-row" }, /* @__PURE__ */ (0, import_mithril24.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril24.default)("button", { class: saveButtonClass, tabindex: "0" }, isEncrypted ? null : /* @__PURE__ */ (0, import_mithril24.default)("i", { class: "bi bi-chat-fill" }), " Save Changes"), /* @__PURE__ */ (0, import_mithril24.default)("button", { onclick: vnode.attrs.close, tabIndex: "0" }, "Close")), /* @__PURE__ */ (0, import_mithril24.default)("div", null, /* @__PURE__ */ (0, import_mithril24.default)("span", { class: "text-red", role: "button", tabIndex: "0", onclick: () => this.delete(vnode), onkeypress: synthClick }, "Delete")))));
     }
     setMessage(vnode, event) {
       const target = event.target;
@@ -29850,8 +29880,8 @@
   };
 
   // src/view/modal-messageHistory.tsx
-  var import_mithril25 = __toESM(require_mithril(), 1);
   var import_mithril26 = __toESM(require_mithril(), 1);
+  var import_mithril27 = __toESM(require_mithril(), 1);
   var MessageHistory = class {
     oninit(vnode) {
       if (vnode.attrs.controller.message == void 0) {
@@ -29861,7 +29891,7 @@
     }
     view(vnode) {
       const message = vnode.attrs.controller.message;
-      return /* @__PURE__ */ (0, import_mithril25.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril25.default)("h1", null, /* @__PURE__ */ (0, import_mithril25.default)("i", { class: "bi bi-clock-history" }), " Message History"), /* @__PURE__ */ (0, import_mithril25.default)("div", { class: "table scroll-vertical margin-bottom", style: "max-height:600px;" }, message.history.map((content, index) => /* @__PURE__ */ (0, import_mithril25.default)("div", { key: content }, index + 1, ". ", content)), /* @__PURE__ */ (0, import_mithril25.default)("div", { key: message.content }, message.history.length + 1, ". ", message.content)), /* @__PURE__ */ (0, import_mithril25.default)("button", { onclick: () => this.close(vnode), tabIndex: "0" }, "Close"));
+      return /* @__PURE__ */ (0, import_mithril26.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril26.default)("h1", null, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-clock-history" }), " Message History"), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "table scroll-vertical margin-bottom", style: "max-height:600px;" }, message.history.map((content, index) => /* @__PURE__ */ (0, import_mithril26.default)("div", { key: content }, index + 1, ". ", content)), /* @__PURE__ */ (0, import_mithril26.default)("div", { key: message.content }, message.history.length + 1, ". ", message.content)), /* @__PURE__ */ (0, import_mithril26.default)("button", { onclick: () => this.close(vnode), tabIndex: "0" }, "Close"));
     }
     close(vnode) {
       vnode.attrs.controller.clearMessage();
@@ -29870,7 +29900,7 @@
   };
 
   // src/view/modal-attachments.tsx
-  var import_mithril27 = __toESM(require_mithril(), 1);
+  var import_mithril28 = __toESM(require_mithril(), 1);
   var SWIPE_THRESHOLD = 50;
   var DRAG_SLOP = 8;
   var Attachments = class {
@@ -29904,12 +29934,12 @@
     view(vnode) {
       const attachments = vnode.attrs.controller.modalAttachments;
       if (attachments.length == 0) {
-        return /* @__PURE__ */ (0, import_mithril27.default)(Modal, { close: vnode.attrs.close });
+        return /* @__PURE__ */ (0, import_mithril28.default)(Modal, { close: vnode.attrs.close });
       }
       const hasMultiple = attachments.length > 1;
       const atStart = vnode.state.index <= 0;
       const atEnd = vnode.state.index >= attachments.length - 1;
-      return /* @__PURE__ */ (0, import_mithril27.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril27.default)(
+      return /* @__PURE__ */ (0, import_mithril28.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril28.default)(
         "div",
         {
           id: "attachment-viewer",
@@ -29920,7 +29950,7 @@
           onpointerup: (event) => this.onpointerup(vnode, event),
           onpointercancel: (event) => this.onpointercancel(vnode, event)
         },
-        /* @__PURE__ */ (0, import_mithril27.default)(
+        /* @__PURE__ */ (0, import_mithril28.default)(
           "button",
           {
             type: "button",
@@ -29929,9 +29959,9 @@
             tabIndex: "0",
             onclick: vnode.attrs.close
           },
-          /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-x-lg" })
+          /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-x-lg" })
         ),
-        hasMultiple && /* @__PURE__ */ (0, import_mithril27.default)(
+        hasMultiple && /* @__PURE__ */ (0, import_mithril28.default)(
           "button",
           {
             type: "button",
@@ -29941,10 +29971,10 @@
             disabled: atStart,
             onclick: () => this.previous(vnode)
           },
-          /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-chevron-left" })
+          /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-chevron-left" })
         ),
-        /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-stage" }, /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-track", style: `transform:translateX(${-vnode.state.index * 100}%)` }, attachments.map((attachment, index) => /* @__PURE__ */ (0, import_mithril27.default)("div", { key: attachment.url, class: "attachment-slide" }, this.drawAttachment(vnode, attachment, index))))),
-        hasMultiple && /* @__PURE__ */ (0, import_mithril27.default)(
+        /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-stage" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-track", style: `transform:translateX(${-vnode.state.index * 100}%)` }, attachments.map((attachment, index) => /* @__PURE__ */ (0, import_mithril28.default)("div", { key: attachment.url, class: "attachment-slide" }, this.drawAttachment(vnode, attachment, index))))),
+        hasMultiple && /* @__PURE__ */ (0, import_mithril28.default)(
           "button",
           {
             type: "button",
@@ -29954,9 +29984,9 @@
             disabled: atEnd,
             onclick: () => this.next(vnode)
           },
-          /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-chevron-right" })
+          /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-chevron-right" })
         ),
-        hasMultiple && /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-counter text-sm" }, vnode.state.index + 1, " / ", attachments.length)
+        hasMultiple && /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-counter text-sm" }, vnode.state.index + 1, " / ", attachments.length)
       ));
     }
     // drawAttachment renders the body for a single attachment, choosing the player
@@ -29966,20 +29996,20 @@
       const isCurrent = index == vnode.state.index;
       switch (attachmentKind(attachment)) {
         case "image":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril27.default)("img", { src: attachment.url, class: "attachment-media", style: blurhashBackgroundStyle(attachment.blurhash), alt: attachment.name }), " ", this.drawDownloadButton(attachment, "attachment-download-overlay"));
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril28.default)("img", { src: attachment.url, class: "attachment-media", style: blurhashBackgroundStyle(attachment.blurhash), alt: attachment.name }), " ", this.drawDownloadButton(attachment, "attachment-download-overlay"));
         case "video":
-          return isCurrent ? /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril27.default)("video", { src: attachment.url, class: "attachment-media", controls: true }), this.drawDownloadButton(attachment, "attachment-download-corner")) : /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-film" }));
+          return isCurrent ? /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril28.default)("video", { src: attachment.url, class: "attachment-media", controls: true }), this.drawDownloadButton(attachment, "attachment-download-corner")) : /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-film" }));
         case "audio":
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril27.default)("audio", { src: attachment.url, controls: true }), this.drawDownloadButton(attachment, "margin-top"));
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril28.default)("audio", { src: attachment.url, controls: true }), this.drawDownloadButton(attachment, "margin-top"));
         default:
-          return /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "attachment-download" }, /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "bold" }, attachment.name || "Download File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril27.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)), this.drawDownloadButton(attachment, "margin-top"));
+          return /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "attachment-download" }, /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "bold" }, attachment.name || "Download File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)), this.drawDownloadButton(attachment, "margin-top"));
       }
     }
     // drawDownloadButton renders the "Download" link for an attachment. `extraClass`
     // positions it for the surrounding layout (e.g. an overlay on an image, a corner
     // badge on a video, or a plain button below an audio/file card).
     drawDownloadButton(attachment, extraClass) {
-      return /* @__PURE__ */ (0, import_mithril27.default)(
+      return /* @__PURE__ */ (0, import_mithril28.default)(
         "a",
         {
           href: attachment.url,
@@ -29988,7 +30018,7 @@
           target: "_blank",
           rel: "noopener noreferrer"
         },
-        /* @__PURE__ */ (0, import_mithril27.default)("i", { class: "bi bi-download" }),
+        /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "bi bi-download" }),
         " Download"
       );
     }
@@ -30131,7 +30161,7 @@
       }
       this.track()?.classList.remove("dragging");
       this.restTrackOffset(vnode);
-      import_mithril27.default.redraw();
+      import_mithril28.default.redraw();
     }
     // onpointercancel abandons an in-progress gesture (e.g. the browser took over
     // for a scroll), snapping the track back to rest.
@@ -30142,12 +30172,12 @@
       vnode.state.drag = null;
       this.track()?.classList.remove("dragging");
       this.restTrackOffset(vnode);
-      import_mithril27.default.redraw();
+      import_mithril28.default.redraw();
     }
   };
 
   // src/view/group-welcome.tsx
-  var import_mithril28 = __toESM(require_mithril(), 1);
+  var import_mithril29 = __toESM(require_mithril(), 1);
   var GroupWelcome = class {
     // oninit loads the first message from the database when the component is first created
     oninit(vnode) {
@@ -30155,7 +30185,7 @@
       const group = vnode.attrs.controller.groupStream();
       vnode.attrs.controller.getFirstMessageInGroup(group.id).then((content) => {
         vnode.state.firstMessage = htmlToText(content);
-        import_mithril28.default.redraw();
+        import_mithril29.default.redraw();
       });
     }
     // view renders the welcome screen shown when the user receives a new group invitation
@@ -30166,7 +30196,7 @@
       const isEncrypted = groupIsEncrypted(group);
       const contacts = contactStreams.map((contactStream) => contactStream()).filter((contact) => contact !== void 0).filter((contact) => contact.id != controller2.actorId());
       const creator = contacts.find((contact) => contact.id == group.createdById);
-      return /* @__PURE__ */ (0, import_mithril28.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "flex-column flex-align-center max-width-640 padding-xl" }, /* @__PURE__ */ (0, import_mithril28.default)("img", { src: creator?.icon, class: "width-96 circle margin-none", alt: "" }), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-xl margin-none" }, creator?.name), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-gray link margin-bottom", onclick: () => this.clickUsername(vnode), onkeyup: synthClick, role: "button", tabindex: "0" }, creator?.username, " ", /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "margin-left-xs bi bi-arrow-up-right-square" })), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-lg" }, isEncrypted ? /* @__PURE__ */ (0, import_mithril28.default)("div", null, "is inviting you to an ", /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "margin-left-xs bi bi-lock-fill" }), " ", /* @__PURE__ */ (0, import_mithril28.default)("b", null, "encrypted conversation")) : /* @__PURE__ */ (0, import_mithril28.default)("div", null, "is inviting you to a ", /* @__PURE__ */ (0, import_mithril28.default)("i", { class: "margin-left-xs bi bi-card-text" }), " ", /* @__PURE__ */ (0, import_mithril28.default)("b", null, "plaintext conversation"), ".")), isEncrypted ? /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-gray" }, "(Encrypted converations cannot be read by anyone outside of the group)") : /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "text-gray" }, "(Plaintext conversations may be visible by others on the Internet)"), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-top-xl card padding width-100% max-width-480" }, /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril28.default)("i", null, creator?.name), " says... ", this.firstMessagePreview(vnode.state.firstMessage)), /* @__PURE__ */ (0, import_mithril28.default)("div", { class: "margin-top-xl flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril28.default)("button", { class: "primary", onclick: () => this.clickAccept(vnode) }, "Accept"), /* @__PURE__ */ (0, import_mithril28.default)("button", { class: "text-red", onclick: () => this.clickIgnore(vnode) }, "Ignore"), /* @__PURE__ */ (0, import_mithril28.default)("button", { class: "text-red", onclick: () => this.clickBlock(vnode) }, "Block"))))));
+      return /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "conversation-details" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "conversation-messages" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "flex-column flex-align-center max-width-640 padding-xl" }, /* @__PURE__ */ (0, import_mithril29.default)("img", { src: creator?.icon, class: "width-96 circle margin-none", alt: "" }), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-xl margin-none" }, creator?.name), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-gray link margin-bottom", onclick: () => this.clickUsername(vnode), onkeyup: synthClick, role: "button", tabindex: "0" }, creator?.username, " ", /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "margin-left-xs bi bi-arrow-up-right-square" })), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-lg" }, isEncrypted ? /* @__PURE__ */ (0, import_mithril29.default)("div", null, "is inviting you to an ", /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "margin-left-xs bi bi-lock-fill" }), " ", /* @__PURE__ */ (0, import_mithril29.default)("b", null, "encrypted conversation")) : /* @__PURE__ */ (0, import_mithril29.default)("div", null, "is inviting you to a ", /* @__PURE__ */ (0, import_mithril29.default)("i", { class: "margin-left-xs bi bi-card-text" }), " ", /* @__PURE__ */ (0, import_mithril29.default)("b", null, "plaintext conversation"), ".")), isEncrypted ? /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-gray" }, "(Encrypted converations cannot be read by anyone outside of the group)") : /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "text-gray" }, "(Plaintext conversations may be visible by others on the Internet)"), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "margin-top-xl card padding width-100% max-width-480" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "margin-bottom" }, /* @__PURE__ */ (0, import_mithril29.default)("i", null, creator?.name), " says... ", this.firstMessagePreview(vnode.state.firstMessage)), /* @__PURE__ */ (0, import_mithril29.default)("div", { class: "margin-top-xl flex-row flex-align-center" }, /* @__PURE__ */ (0, import_mithril29.default)("button", { class: "primary", onclick: () => this.clickAccept(vnode) }, "Accept"), /* @__PURE__ */ (0, import_mithril29.default)("button", { class: "text-red", onclick: () => this.clickIgnore(vnode) }, "Ignore"), /* @__PURE__ */ (0, import_mithril29.default)("button", { class: "text-red", onclick: () => this.clickBlock(vnode) }, "Block"))))));
     }
     /*
     <div class="margin-vertical-xl">
@@ -30226,25 +30256,25 @@
       vnode.state.modal = "";
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril29.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril29.default)(Groups, { controller: vnode.attrs.controller })), this.viewDetails(vnode), this.viewModals(vnode));
+      return /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril30.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril30.default)(Groups, { controller: vnode.attrs.controller })), this.viewDetails(vnode), this.viewModals(vnode));
     }
     viewDetails(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
       if (group.id == "") {
-        return /* @__PURE__ */ (0, import_mithril29.default)(Empty, { controller: controller2 });
+        return /* @__PURE__ */ (0, import_mithril30.default)(Empty, { controller: controller2 });
       }
       if (group.stateId == "WELCOME") {
-        return /* @__PURE__ */ (0, import_mithril29.default)(GroupWelcome, { controller: controller2 });
+        return /* @__PURE__ */ (0, import_mithril30.default)(GroupWelcome, { controller: controller2 });
       }
       switch (vnode.attrs.controller.pageView) {
         case "GROUP-MEMBERS":
-          return /* @__PURE__ */ (0, import_mithril29.default)(GroupMembers, { controller: vnode.attrs.controller });
+          return /* @__PURE__ */ (0, import_mithril30.default)(GroupMembers, { controller: vnode.attrs.controller });
         case "GROUP-NOTES":
-          return /* @__PURE__ */ (0, import_mithril29.default)(GroupNotes, { controller: vnode.attrs.controller });
+          return /* @__PURE__ */ (0, import_mithril30.default)(GroupNotes, { controller: vnode.attrs.controller });
         case "GROUP-MESSAGES":
         default: {
-          return /* @__PURE__ */ (0, import_mithril29.default)(GroupMessages, { controller: vnode.attrs.controller });
+          return /* @__PURE__ */ (0, import_mithril30.default)(GroupMessages, { controller: vnode.attrs.controller });
         }
       }
     }
@@ -30254,17 +30284,17 @@
       const modalView = controller2.modalView;
       switch (modalView) {
         case "ADD-GROUP-MEMBER":
-          return /* @__PURE__ */ (0, import_mithril29.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(AddGroupMember, { controller: controller2, close: () => this.closeModal(vnode) });
         case "EDIT-MESSAGE":
-          return /* @__PURE__ */ (0, import_mithril29.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(EditMessage, { controller: controller2, close: () => this.closeModal(vnode) });
         case "MESSAGE-START-REACTION":
-          return /* @__PURE__ */ (0, import_mithril29.default)(PickEmoji, { onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(PickEmoji, { onselect: controller2.modal_startReaction_callback, close: () => this.closeModal(vnode) });
         case "MESSAGE-HISTORY":
-          return /* @__PURE__ */ (0, import_mithril29.default)(MessageHistory, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(MessageHistory, { controller: controller2, close: () => this.closeModal(vnode) });
         case "NEW-CONVERSATION":
-          return /* @__PURE__ */ (0, import_mithril29.default)(NewConversation, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(NewConversation, { controller: controller2, close: () => this.closeModal(vnode) });
         case "ATTACHMENTS":
-          return /* @__PURE__ */ (0, import_mithril29.default)(Attachments, { controller: controller2, close: () => this.closeModal(vnode) });
+          return /* @__PURE__ */ (0, import_mithril30.default)(Attachments, { controller: controller2, close: () => this.closeModal(vnode) });
       }
       return void 0;
     }
@@ -30273,43 +30303,43 @@
       document.getElementById("modal")?.classList.remove("ready");
       globalThis.setTimeout(() => {
         vnode.attrs.controller.modal_close();
-        import_mithril29.default.redraw();
+        import_mithril30.default.redraw();
       }, 240);
     }
   };
 
   // src/view/app-blurred.tsx
-  var import_mithril31 = __toESM(require_mithril(), 1);
+  var import_mithril32 = __toESM(require_mithril(), 1);
   var AppBlurred = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril31.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
+      return /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril32.default)("div", { class: "align-center text-lg bold" }, "Conversations will display when you return to this tab."));
     }
   };
 
   // src/view/app-settings.tsx
-  var import_mithril38 = __toESM(require_mithril(), 1);
+  var import_mithril39 = __toESM(require_mithril(), 1);
 
   // src/view/app-settings-general.tsx
-  var import_mithril34 = __toESM(require_mithril(), 1);
+  var import_mithril35 = __toESM(require_mithril(), 1);
 
   // src/view/widget-saved-notice.tsx
-  var import_mithril32 = __toESM(require_mithril(), 1);
+  var import_mithril33 = __toESM(require_mithril(), 1);
   var SavedNotice = class {
     view(vnode) {
       const saved = vnode.attrs.saved;
       const cssClass = "saved-notice" + (saved ? " visible" : "");
-      return /* @__PURE__ */ (0, import_mithril32.default)("span", { class: cssClass, "aria-hidden": saved ? "false" : "true" }, /* @__PURE__ */ (0, import_mithril32.default)("i", { class: "bi bi-check" }), " Changes saved");
+      return /* @__PURE__ */ (0, import_mithril33.default)("span", { class: cssClass, "aria-hidden": saved ? "false" : "true" }, /* @__PURE__ */ (0, import_mithril33.default)("i", { class: "bi bi-check" }), " Changes saved");
     }
   };
 
   // src/view/widget-toggle.tsx
-  var import_mithril33 = __toESM(require_mithril(), 1);
+  var import_mithril34 = __toESM(require_mithril(), 1);
   var Toggle = class {
     view(vnode) {
       const { value, trueText, falseText, text: text2, disabled } = vnode.attrs;
       const stateText = value ? trueText : falseText;
       const label = stateText != void 0 && stateText != "" ? stateText : text2;
-      return /* @__PURE__ */ (0, import_mithril33.default)(
+      return /* @__PURE__ */ (0, import_mithril34.default)(
         "span",
         {
           class: "toggle-container",
@@ -30321,8 +30351,8 @@
           onclick: () => this.activate(vnode),
           onkeydown: (event) => this.onKeydown(vnode, event)
         },
-        /* @__PURE__ */ (0, import_mithril33.default)("span", { class: "toggle" }, /* @__PURE__ */ (0, import_mithril33.default)("span", { class: "marker" })),
-        label != void 0 && /* @__PURE__ */ (0, import_mithril33.default)("label", null, label)
+        /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "toggle" }, /* @__PURE__ */ (0, import_mithril34.default)("span", { class: "marker" })),
+        label != void 0 && /* @__PURE__ */ (0, import_mithril34.default)("label", null, label)
       );
     }
     // activate requests the opposite of the current value (unless disabled).
@@ -30356,7 +30386,7 @@
       vnode.state.emojiKey = [];
       vnode.attrs.controller.loadKeyPackage().then((keyPackage) => {
         vnode.state.emojiKey = keyPackage?.emojiKey ?? [];
-        import_mithril34.default.redraw();
+        import_mithril35.default.redraw();
       });
     }
     onremove(vnode) {
@@ -30365,12 +30395,12 @@
       }
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", null, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding margin-bottom" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "General"), this.viewNotifications(vnode)), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "card padding" }, this.viewEncryption(vnode)), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "pos-absolute-top-right" }, /* @__PURE__ */ (0, import_mithril34.default)(SavedNotice, { saved: vnode.state.saved })));
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "card padding margin-bottom" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "text-lg bold margin-bottom" }, "General"), this.viewNotifications(vnode)), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "card padding" }, this.viewEncryption(vnode)), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "pos-absolute-top-right" }, /* @__PURE__ */ (0, import_mithril35.default)(SavedNotice, { saved: vnode.state.saved })));
     }
     // viewNotifications renders the desktop/sound/focus notification preferences.
     viewNotifications(vnode) {
       const desktopDenied = vnode.state.permission === "denied";
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril34.default)(
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril35.default)(
         Toggle,
         {
           value: vnode.state.isDesktopNotifications,
@@ -30378,14 +30408,14 @@
           disabled: desktopDenied,
           onchange: (next) => this.setDesktopNotifications(vnode, next)
         }
-      ), desktopDenied && /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray margin-top-xs" }, "To re-enable desktop notifications, go to your browser settings.")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)(
+      ), desktopDenied && /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "text-xs text-gray margin-top-xs" }, "To re-enable desktop notifications, go to your browser settings.")), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril35.default)(
         Toggle,
         {
           value: vnode.state.isSoundNotifications,
           text: "Play Sound for New Messages",
           onchange: (next) => this.setSoundNotifications(vnode, next)
         }
-      )), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)(
+      )), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril35.default)(
         Toggle,
         {
           value: vnode.state.isHideOnBlur,
@@ -30396,7 +30426,7 @@
     }
     // viewEncryption renders the encryption toggle and, when enabled, the EmojiKey.
     viewEncryption(vnode) {
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", null, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-lg bold margin-bottom" }, "Encryption"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril34.default)(
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", null, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "text-lg bold margin-bottom" }, "Encryption"), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-vertical" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element flex-row" }, /* @__PURE__ */ (0, import_mithril35.default)(
         Toggle,
         {
           value: vnode.state.isEncryptedMessages,
@@ -30408,7 +30438,7 @@
     // viewEmojiKey renders the EmojiKey, shown only when encrypted messaging is enabled
     viewEmojiKey(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-top-xl" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "bold margin-bottom" }, "EmojiKeys"), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril34.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "flex-row" }, vnode.state.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril34.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril34.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril34.default)("div", { class: "text-xs text-gray" }, name)))));
+      return /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "margin-top-xl" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "bold margin-bottom" }, "EmojiKeys"), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "margin-bottom-lg" }, "EmojiKeys give you an easy way to verify your identity. When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey. EmojiKey change frequently, so make sure you're comparing the most recent one.", " ", /* @__PURE__ */ (0, import_mithril35.default)("span", { role: "link", class: "link", tabIndex: "0", onclick: () => controller2.host_keyPackages(), onkeypress: synthClick }, "View all registered devices \u2192")), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "flex-row" }, vnode.state.emojiKey.map(([emoji, name]) => /* @__PURE__ */ (0, import_mithril35.default)("div", { key: emoji, class: "layout-vertical align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { style: "font-size: 32px; line-height:1em;" }, emoji), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "text-xs text-gray" }, name)))));
     }
     async setDesktopNotifications(vnode, value) {
       if (value) {
@@ -30416,7 +30446,7 @@
         vnode.state.permission = permission;
         vnode.state.isDesktopNotifications = permission == "granted";
         this.save(vnode);
-        import_mithril34.default.redraw();
+        import_mithril35.default.redraw();
         return;
       }
       vnode.state.isDesktopNotifications = false;
@@ -30449,16 +30479,16 @@
       }
       vnode.state.savedTimeout = setTimeout(() => {
         vnode.state.saved = false;
-        import_mithril34.default.redraw();
+        import_mithril35.default.redraw();
       }, 2e3);
     }
   };
 
   // src/view/app-settings-filters.tsx
-  var import_mithril36 = __toESM(require_mithril(), 1);
+  var import_mithril37 = __toESM(require_mithril(), 1);
 
   // src/view/widget-filter-edit.tsx
-  var import_mithril35 = __toESM(require_mithril(), 1);
+  var import_mithril36 = __toESM(require_mithril(), 1);
   var STATE_OPTIONS = [
     { state: "IMPORTANT", label: "Important" },
     { state: "ACTIVE", label: "Current" },
@@ -30473,7 +30503,7 @@
     }
     view(vnode) {
       const isNew = !vnode.attrs.controller.filters.some((f3) => f3.id == vnode.attrs.filter.id);
-      return /* @__PURE__ */ (0, import_mithril35.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril35.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-title" }, isNew ? /* @__PURE__ */ (0, import_mithril35.default)("span", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-plus" }), " Add a Filter") : /* @__PURE__ */ (0, import_mithril35.default)("span", null, /* @__PURE__ */ (0, import_mithril35.default)("i", { class: "bi bi-pencil" }), " Edit Filter")), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril35.default)("label", { for: "filterName" }, "Filter Name"), " ", /* @__PURE__ */ (0, import_mithril35.default)("input", { id: "filterName", type: "text", tabIndex: "0", value: vnode.state.name, oninput: (event) => this.setName(vnode, event) })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril35.default)("label", { for: "filterTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril35.default)("input", { id: "filterTags", type: "text", placeholder: "#add #hashtags #here", value: vnode.state.tags, oninput: (event) => this.setTags(vnode, event) })), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril35.default)("label", null, "State(s)"), " ", STATE_OPTIONS.map((option) => /* @__PURE__ */ (0, import_mithril35.default)("label", { key: option.state, for: "state-" + option.state }, " ", /* @__PURE__ */ (0, import_mithril35.default)(
+      return /* @__PURE__ */ (0, import_mithril36.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril36.default)("form", { onsubmit: (event) => this.save(event, vnode) }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout layout-vertical" }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout-title" }, isNew ? /* @__PURE__ */ (0, import_mithril36.default)("span", null, /* @__PURE__ */ (0, import_mithril36.default)("i", { class: "bi bi-plus" }), " Add a Filter") : /* @__PURE__ */ (0, import_mithril36.default)("span", null, /* @__PURE__ */ (0, import_mithril36.default)("i", { class: "bi bi-pencil" }), " Edit Filter")), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril36.default)("label", { for: "filterName" }, "Filter Name"), " ", /* @__PURE__ */ (0, import_mithril36.default)("input", { id: "filterName", type: "text", tabIndex: "0", value: vnode.state.name, oninput: (event) => this.setName(vnode, event) })), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril36.default)("label", { for: "filterTags" }, "Tags"), " ", /* @__PURE__ */ (0, import_mithril36.default)("input", { id: "filterTags", type: "text", placeholder: "#add #hashtags #here", value: vnode.state.tags, oninput: (event) => this.setTags(vnode, event) })), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "layout-element" }, /* @__PURE__ */ (0, import_mithril36.default)("label", null, "State(s)"), " ", STATE_OPTIONS.map((option) => /* @__PURE__ */ (0, import_mithril36.default)("label", { key: option.state, for: "state-" + option.state }, " ", /* @__PURE__ */ (0, import_mithril36.default)(
         "input",
         {
           id: "state-" + option.state,
@@ -30481,7 +30511,7 @@
           checked: vnode.state.states.includes(option.state),
           onchange: () => this.toggleState(vnode, option.state)
         }
-      ), /* @__PURE__ */ (0, import_mithril35.default)("span", null, option.label)))))), /* @__PURE__ */ (0, import_mithril35.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril35.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril35.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Cancel"))));
+      ), /* @__PURE__ */ (0, import_mithril36.default)("span", null, option.label)))))), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "margin-top" }, /* @__PURE__ */ (0, import_mithril36.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, "Save Changes"), /* @__PURE__ */ (0, import_mithril36.default)("button", { type: "button", onclick: vnode.attrs.close, tabIndex: "0" }, "Cancel"))));
     }
     setName(vnode, event) {
       vnode.state.name = event.target.value;
@@ -30517,7 +30547,7 @@
     }
     view(vnode) {
       const filters = vnode.attrs.controller.filters;
-      return /* @__PURE__ */ (0, import_mithril36.default)("div", null, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "text-lg bold margin-bottom" }, "Filters"), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "table filter-list" }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "flex-row flex-align-center clickable link", role: "button", tabIndex: "0", onclick: () => this.addFilter(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril36.default)("i", { class: "bi bi-plus" }), " Add a Filter")), this.viewRows(vnode, filters)), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "visually-hidden", "aria-live": "polite" }, vnode.state.announcement), this.viewGhost(vnode), vnode.state.editFilter && /* @__PURE__ */ (0, import_mithril36.default)(
+      return /* @__PURE__ */ (0, import_mithril37.default)("div", null, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "text-lg bold margin-bottom" }, "Filters"), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "table filter-list" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "flex-row flex-align-center clickable link", role: "button", tabIndex: "0", onclick: () => this.addFilter(vnode), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-plus" }), " Add a Filter")), this.viewRows(vnode, filters)), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "visually-hidden", "aria-live": "polite" }, vnode.state.announcement), this.viewGhost(vnode), vnode.state.editFilter && /* @__PURE__ */ (0, import_mithril37.default)(
         WidgetFilterEdit,
         {
           controller: vnode.attrs.controller,
@@ -30533,12 +30563,12 @@
       const rows = [];
       filters.forEach((filter, index) => {
         if (dropIndex === index) {
-          rows.push(/* @__PURE__ */ (0, import_mithril36.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
+          rows.push(/* @__PURE__ */ (0, import_mithril37.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
         }
         rows.push(this.viewRow(vnode, filters, filter));
       });
       if (dropIndex === filters.length) {
-        rows.push(/* @__PURE__ */ (0, import_mithril36.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
+        rows.push(/* @__PURE__ */ (0, import_mithril37.default)("div", { key: "__dropline__", class: "filter-drop-line" }));
       }
       return rows;
     }
@@ -30553,7 +30583,7 @@
         cssClass += " dragging";
       }
       const linkAttrs = filter.locked ? {} : { role: "button", tabIndex: "0", onclick: () => this.openEdit(vnode, filter), onkeypress: synthClick };
-      return /* @__PURE__ */ (0, import_mithril36.default)("div", { key: filter.id, class: cssClass, ...linkAttrs }, /* @__PURE__ */ (0, import_mithril36.default)(
+      return /* @__PURE__ */ (0, import_mithril37.default)("div", { key: filter.id, class: cssClass, ...linkAttrs }, /* @__PURE__ */ (0, import_mithril37.default)(
         "div",
         {
           class: "filter-grip",
@@ -30566,8 +30596,8 @@
           oncreate: (grip) => this.maybeFocus(grip, vnode, filter),
           onupdate: (grip) => this.maybeFocus(grip, vnode, filter)
         },
-        /* @__PURE__ */ (0, import_mithril36.default)("i", { class: "bi bi-grip-vertical" })
-      ), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "text-sm text-gray" }, this.summary(filter))), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "align-right" }, filters.length > 1 && !filter.locked && /* @__PURE__ */ (0, import_mithril36.default)("button", { type: "button", class: "text-xs", onclick: (event) => this.deleteFilter(event, vnode, filter) }, "Remove")));
+        /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-grip-vertical" })
+      ), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "text-sm text-gray" }, this.summary(filter))), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "align-right" }, filters.length > 1 && !filter.locked && /* @__PURE__ */ (0, import_mithril37.default)("button", { type: "button", class: "text-xs", onclick: (event) => this.deleteFilter(event, vnode, filter) }, "Remove")));
     }
     // viewGhost renders the floating copy of the row being dragged. It tracks the
     // cursor vertically and stays pinned to the row's horizontal position.
@@ -30577,7 +30607,7 @@
         return null;
       }
       const style = `left:${vnode.state.ghostLeft ?? 0}px; width:${vnode.state.ghostWidth ?? 0}px; top:${vnode.state.ghostTop ?? 0}px;`;
-      return /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "filter-drag-ghost flex-row flex-align-center", style }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "filter-grip" }, /* @__PURE__ */ (0, import_mithril36.default)("i", { class: "bi bi-grip-vertical" })), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril36.default)("div", { class: "text-sm text-gray" }, this.summary(filter))));
+      return /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "filter-drag-ghost flex-row flex-align-center", style }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "filter-grip" }, /* @__PURE__ */ (0, import_mithril37.default)("i", { class: "bi bi-grip-vertical" })), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "flex-grow" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "bold" }, filter.name), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "text-sm text-gray" }, this.summary(filter))));
     }
     // summary describes a filter's states and tags in a single line
     summary(filter) {
@@ -30625,18 +30655,18 @@
       vnode.state.ghostTop = event.clientY - (vnode.state.grabOffsetY ?? 0);
       vnode.state.dropIndex = this.computeDropIndex(vnode, event.clientY);
       this.updateAutoScroll(vnode);
-      import_mithril36.default.redraw();
+      import_mithril37.default.redraw();
     }
     // onUp commits the reorder and ends the drag
     onUp(_event, vnode) {
       this.commitReorder(vnode);
       this.endDrag(vnode);
-      import_mithril36.default.redraw();
+      import_mithril37.default.redraw();
     }
     // onCancel ends the drag without committing
     onCancel(vnode) {
       this.endDrag(vnode);
-      import_mithril36.default.redraw();
+      import_mithril37.default.redraw();
     }
     // endDrag tears down all drag listeners and state
     endDrag(vnode) {
@@ -30747,7 +30777,7 @@
       }
       container.scrollTop += dir * AUTOSCROLL_STEP;
       vnode.state.dropIndex = this.computeDropIndex(vnode, vnode.state.pointerY ?? 0);
-      import_mithril36.default.redraw();
+      import_mithril37.default.redraw();
       vnode.state.scrollRAF = requestAnimationFrame(() => this.autoScrollTick(vnode));
     }
     /////////////////////////////////////////////
@@ -30837,11 +30867,11 @@
   };
 
   // src/view/app-settings-signout.tsx
-  var import_mithril37 = __toESM(require_mithril(), 1);
+  var import_mithril38 = __toESM(require_mithril(), 1);
   var AppSettingsSignout = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril37.default)("div", null, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-element" }, "Close this current session. Your data will remain on this device, but cannot be accessed without a passcode."))), /* @__PURE__ */ (0, import_mithril37.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Sign Out")), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril37.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril37.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")));
+      return /* @__PURE__ */ (0, import_mithril38.default)("div", null, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "card padding" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "text-lg bold margin-bottom" }, "Sign Out"), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-element" }, "Close this current session. Your data will remain on this device, but cannot be accessed without a passcode."))), /* @__PURE__ */ (0, import_mithril38.default)("button", { class: "text-red", onclick: () => controller2.page_signout() }, "Sign Out")), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "card padding margin-top" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "text-lg bold margin-bottom" }, "Erase Device"), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-vertical margin-top" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-elements" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "layout-element" }, "Erase all conversation data from this device.  You'll be able to recover unencrypted conversations on another device. But encrypted conversations will be lost forever."))), /* @__PURE__ */ (0, import_mithril38.default)("button", { class: "text-red", onclick: () => this.eraseDevice(vnode) }, "Erase Device")));
     }
     eraseDevice(vnode) {
       if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
@@ -30854,12 +30884,12 @@
   // src/view/app-settings.tsx
   var AppSettings = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril38.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, this.viewSidebar(vnode)), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "app-content scroll-vertical flex-grow padding" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "max-width-800" }, this.viewSection(vnode), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "padding-vertical-xl" }))));
+      return /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0 scroll-vertical", style: "width:30%" }, this.viewSidebar(vnode)), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "app-content scroll-vertical flex-grow padding" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "max-width-800" }, this.viewSection(vnode), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "padding-vertical-xl" }))));
     }
     // viewSidebar renders the back button, title, and tab navigation
     viewSidebar(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril38.default)("div", null, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril38.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril38.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril38.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "GENERAL", "gear", "General"), this.viewTab(vnode, "FILTERS", "filter-circle", "Filters"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
+      return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "flex-row flex-align-center clickable", role: "link", tabIndex: "0", onclick: () => controller2.page_index(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "circle width-32 margin-none flex-center text-lg" }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-arrow-left" })), /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "bold text-lg margin-none" }, "Settings"))), /* @__PURE__ */ (0, import_mithril39.default)("hr", { class: "margin-vertical-sm" }), this.viewTab(vnode, "GENERAL", "gear", "General"), this.viewTab(vnode, "FILTERS", "filter-circle", "Filters"), this.viewTab(vnode, "SIGNOUT", "door-open", "Sign Out / Erase"));
     }
     // viewTab renders a single navigation row in the sidebar. The icon argument is
     // a Bootstrap Icon stem (e.g. "shield"); the unselected tab uses the outline
@@ -30871,19 +30901,19 @@
         cssClass += " highlight";
       }
       const iconClass = "bi bi-" + icon + (isSelected ? "-fill" : "");
-      return /* @__PURE__ */ (0, import_mithril38.default)("div", { class: cssClass, role: "button", tabIndex: "0", onclick: () => this.selectTab(vnode, tab), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril38.default)("i", { class: iconClass }), " ", /* @__PURE__ */ (0, import_mithril38.default)("span", { class: isSelected ? "bold" : "" }, label));
+      return /* @__PURE__ */ (0, import_mithril39.default)("div", { class: cssClass, role: "button", tabIndex: "0", onclick: () => this.selectTab(vnode, tab), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: iconClass }), " ", /* @__PURE__ */ (0, import_mithril39.default)("span", { class: isSelected ? "bold" : "" }, label));
     }
     // viewSection renders the content for the currently selected tab
     viewSection(vnode) {
       const controller2 = vnode.attrs.controller;
       switch (controller2.settingsTab) {
         case "GENERAL":
-          return /* @__PURE__ */ (0, import_mithril38.default)(AppSettingsGeneral, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppSettingsGeneral, { controller: controller2 });
         case "SIGNOUT":
-          return /* @__PURE__ */ (0, import_mithril38.default)(AppSettingsSignout, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppSettingsSignout, { controller: controller2 });
         case "FILTERS":
         default:
-          return /* @__PURE__ */ (0, import_mithril38.default)(AppSettingsFilters, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril39.default)(AppSettingsFilters, { controller: controller2 });
       }
     }
     selectTab(vnode, tab) {
@@ -30892,29 +30922,29 @@
   };
 
   // src/view/app-stopped.tsx
-  var import_mithril39 = __toESM(require_mithril(), 1);
+  var import_mithril40 = __toESM(require_mithril(), 1);
   var AppStopped = class {
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril39.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
+      return /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "card padding-xl width-512 align-center" }, this.message(vnode)));
     }
     message(vnode) {
       switch (vnode.attrs.message) {
         case "SESSION-EXPIRED":
-          return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("h2", null, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril40.default)("div", null, /* @__PURE__ */ (0, import_mithril40.default)("h2", null, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-slash-circle" }), " Application Stopped"), "It looks like you have signed in to a different account using another tab. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SERVER-DOWN":
-          return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("h2", null, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril40.default)("div", null, /* @__PURE__ */ (0, import_mithril40.default)("h2", null, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-exclamation-diamond" }), " Cannot Reach Server"), "Unable to reach the server and authenticate your session. To continue with conversations, you must ", /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         case "SIGN-OUT":
-          return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("h2", null, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
+          return /* @__PURE__ */ (0, import_mithril40.default)("div", null, /* @__PURE__ */ (0, import_mithril40.default)("h2", null, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-slash-circle" }), " Conversations Closed"), /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "Reload this page"), " to return to conversations.");
         case "UNSUPPORTED":
-          return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("h2", null, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril40.default)("div", null, /* @__PURE__ */ (0, import_mithril40.default)("h2", null, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-exclamation-diamond" }), " Unsupported Account"), "It looks like your account doesn't support the required APIs for conversations. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
         default:
-          return /* @__PURE__ */ (0, import_mithril39.default)("div", null, /* @__PURE__ */ (0, import_mithril39.default)("h2", null, /* @__PURE__ */ (0, import_mithril39.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril39.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
+          return /* @__PURE__ */ (0, import_mithril40.default)("div", null, /* @__PURE__ */ (0, import_mithril40.default)("h2", null, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-question-octagon" }), " Unknown Error: ", vnode.attrs.message), "An unrecognized error occurred. To return to conversations, you must ", /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link nowrap", role: "button", tabIndex: "0", onclick: () => location.reload(), onkeypress: synthClick }, "reload this page"), ".");
       }
     }
   };
 
   // src/view/app-signin.tsx
-  var import_mithril40 = __toESM(require_mithril(), 1);
+  var import_mithril41 = __toESM(require_mithril(), 1);
   var AppSignIn = class {
     oninit(vnode) {
       vnode.state.passcode = "";
@@ -30924,7 +30954,7 @@
       document.getElementById("passcode")?.focus();
     }
     view(vnode) {
-      return /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "card padding-lg width-640" }, /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "align-center text-light-gray margin-vertical", style: "font-size:80px;" }, "\xA0", /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-chat" }), "\xA0"), /* @__PURE__ */ (0, import_mithril40.default)("h1", { class: "align-center text-xl bold" }, "Conversations Passcode"), vnode.state.requestPending ? /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril40.default)("input", { type: "password", class: "flex-grow", hint: "Conversation Passcode", disabled: true }), /* @__PURE__ */ (0, import_mithril40.default)("button", { type: "submit", class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-arrow-clockwise" })))) : /* @__PURE__ */ (0, import_mithril40.default)("form", { onsubmit: (event) => this.submit(vnode, event) }, /* @__PURE__ */ (0, import_mithril40.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril40.default)("input", { id: "passcode", type: "password", class: "flex-grow", hint: "Conversation Passcode", oninput: (event) => this.setPasscode(vnode, event), value: vnode.state.passcode, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril40.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril40.default)("i", { class: "bi bi-arrow-right" })))), vnode.state.message && /* @__PURE__ */ (0, import_mithril40.default)("p", { class: "text-red margin-vertical" }, vnode.state.message), /* @__PURE__ */ (0, import_mithril40.default)("p", { class: "margin-vertical" }, "To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations."), /* @__PURE__ */ (0, import_mithril40.default)("p", { class: "margin-vertical" }, "You can ", /* @__PURE__ */ (0, import_mithril40.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => this.reset(vnode), onkeypress: synthClick }, "reset your passcode"), " if you don't remember it, but all encrypted messages will be lost.")));
+      return /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "pos-absolute-four-corners bg-stripes flex-center" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "card padding-lg width-640" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "align-center text-light-gray margin-vertical", style: "font-size:80px;" }, "\xA0", /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-chat" }), "\xA0"), /* @__PURE__ */ (0, import_mithril41.default)("h1", { class: "align-center text-xl bold" }, "Conversations Passcode"), vnode.state.requestPending ? /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril41.default)("input", { type: "password", class: "flex-grow", hint: "Conversation Passcode", disabled: true }), /* @__PURE__ */ (0, import_mithril41.default)("button", { type: "submit", class: "primary", disabled: true }, /* @__PURE__ */ (0, import_mithril41.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-arrow-clockwise" })))) : /* @__PURE__ */ (0, import_mithril41.default)("form", { onsubmit: (event) => this.submit(vnode, event) }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "margin-vertical flex-row" }, /* @__PURE__ */ (0, import_mithril41.default)("input", { id: "passcode", type: "password", class: "flex-grow", hint: "Conversation Passcode", oninput: (event) => this.setPasscode(vnode, event), value: vnode.state.passcode, autocomplete: "off" }), /* @__PURE__ */ (0, import_mithril41.default)("button", { type: "submit", class: "primary", tabIndex: "0" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-arrow-right" })))), vnode.state.message && /* @__PURE__ */ (0, import_mithril41.default)("p", { class: "text-red margin-vertical" }, vnode.state.message), /* @__PURE__ */ (0, import_mithril41.default)("p", { class: "margin-vertical" }, "To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations."), /* @__PURE__ */ (0, import_mithril41.default)("p", { class: "margin-vertical" }, "You can ", /* @__PURE__ */ (0, import_mithril41.default)("span", { class: "link", role: "link", tabIndex: "0", onclick: () => this.reset(vnode), onkeypress: synthClick }, "reset your passcode"), " if you don't remember it, but all encrypted messages will be lost.")));
     }
     setPasscode(vnode, event) {
       const input = event.target;
@@ -30938,7 +30968,7 @@
         vnode.state.passcode = "";
         vnode.state.requestPending = false;
         vnode.state.message = "Passcode incorrect. You cannot continue without the valid passcode.";
-        import_mithril40.default.redraw();
+        import_mithril41.default.redraw();
         globalThis.requestAnimationFrame(() => {
           document.getElementById("passcode")?.focus();
         });
@@ -30953,10 +30983,10 @@
   };
 
   // src/view/app-loading.tsx
-  var import_mithril41 = __toESM(require_mithril(), 1);
+  var import_mithril42 = __toESM(require_mithril(), 1);
   var AppLoading = class {
     view() {
-      return /* @__PURE__ */ (0, import_mithril41.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, "Loading..."), /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "popup-button", "aria-disabled": "true", "aria-label": "Filter conversations" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-filter" })), /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "popup-button primary", "aria-disabled": "true", "aria-label": "New conversation" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-plus-lg" }))), /* @__PURE__ */ (0, import_mithril41.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "conversations-scroll" }), /* @__PURE__ */ (0, import_mithril41.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "sidebar-item flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril41.default)("span", null, "Settings")))), /* @__PURE__ */ (0, import_mithril41.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril41.default)("div", null, /* @__PURE__ */ (0, import_mithril41.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril41.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
+      return /* @__PURE__ */ (0, import_mithril42.default)("div", { id: "conversations" }, /* @__PURE__ */ (0, import_mithril42.default)("div", { id: "app-sidebar", class: "table no-top-border flex-shrink-0", style: "width:30%" }, /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, "Loading..."), /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "popup-button", "aria-disabled": "true", "aria-label": "Filter conversations" }, /* @__PURE__ */ (0, import_mithril42.default)("i", { class: "bi bi-filter" })), /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "popup-button primary", "aria-disabled": "true", "aria-label": "New conversation" }, /* @__PURE__ */ (0, import_mithril42.default)("i", { class: "bi bi-plus-lg" }))), /* @__PURE__ */ (0, import_mithril42.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "conversations-scroll" }), /* @__PURE__ */ (0, import_mithril42.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "sidebar-item flex-row flex-align-center padding-horizontal" }, /* @__PURE__ */ (0, import_mithril42.default)("i", { class: "bi bi-gear" }), /* @__PURE__ */ (0, import_mithril42.default)("span", null, "Settings")))), /* @__PURE__ */ (0, import_mithril42.default)("div", { class: "flex-grow align-center padding-xl" }, /* @__PURE__ */ (0, import_mithril42.default)("div", null, /* @__PURE__ */ (0, import_mithril42.default)("span", { class: "spin" }, /* @__PURE__ */ (0, import_mithril42.default)("i", { class: "bi bi-arrow-repeat" })), " Loading...")));
     }
   };
 
@@ -30969,30 +30999,52 @@
       const controller2 = vnode.attrs.controller;
       if (!controller2.isApplicationRunning) {
         console.error(controller2);
-        return /* @__PURE__ */ (0, import_mithril42.default)(AppStopped, { message: controller2.stopReason });
+        return /* @__PURE__ */ (0, import_mithril43.default)(AppStopped, { message: controller2.stopReason });
       }
       if (!controller2.isWindowFocused) {
         if (controller2.config.isHideOnBlur) {
-          return /* @__PURE__ */ (0, import_mithril42.default)(AppBlurred, null);
+          return /* @__PURE__ */ (0, import_mithril43.default)(AppBlurred, null);
         }
       }
       switch (controller2.pageView) {
         case "LOADING":
-          return /* @__PURE__ */ (0, import_mithril42.default)(AppLoading, null);
+          return /* @__PURE__ */ (0, import_mithril43.default)(AppLoading, null);
         case "SETTINGS":
-          return /* @__PURE__ */ (0, import_mithril42.default)(AppSettings, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril43.default)(AppSettings, { controller: controller2 });
         case "SIGN-IN":
-          return /* @__PURE__ */ (0, import_mithril42.default)(AppSignIn, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril43.default)(AppSignIn, { controller: controller2 });
         case "WELCOME":
-          return /* @__PURE__ */ (0, import_mithril42.default)(Welcome, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril43.default)(Welcome, { controller: controller2 });
         default:
-          return /* @__PURE__ */ (0, import_mithril42.default)(Index, { controller: controller2 });
+          return /* @__PURE__ */ (0, import_mithril43.default)(Index, { controller: controller2 });
       }
     }
   };
 
+  // src/view/routes.tsx
+  function buildRoutes(controller2) {
+    const shell = (onmatch) => ({
+      onmatch: (params) => {
+        onmatch?.(params);
+        return void 0;
+      },
+      render: () => /* @__PURE__ */ (0, import_mithril44.default)(App, { controller: controller2 })
+    });
+    const groupId = (p3) => p3["groupId"] ?? "";
+    return {
+      "/groups": shell(() => controller2.routeSelectGroup("")),
+      "/groups/:groupId": shell((p3) => controller2.routeSelectGroup(groupId(p3))),
+      "/groups/:groupId/notes": shell((p3) => controller2.routeSelectGroup(groupId(p3))),
+      "/groups/:groupId/people": shell((p3) => controller2.routeSelectGroup(groupId(p3))),
+      "/settings": { onmatch: () => {
+        import_mithril44.default.route.set("/settings/:tab", { tab: "general" });
+      } },
+      "/settings/:tab": shell()
+    };
+  }
+
   // src/service/contacts.ts
-  var import_mithril43 = __toESM(require_mithril(), 1);
+  var import_mithril45 = __toESM(require_mithril(), 1);
   var import_stream5 = __toESM(require_stream2(), 1);
   var Contacts = class {
     #contacts;
@@ -31034,7 +31086,7 @@
         const contact = ContactFromActor(response);
         this.#contacts.set(id, contact);
         result(contact);
-        import_mithril43.default.redraw();
+        import_mithril45.default.redraw();
       });
       return result;
     }
@@ -31089,7 +31141,8 @@
     const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
     controller = new ViewController(serviceController);
     controller.start();
-    import_mithril44.default.mount(root2, { view: () => /* @__PURE__ */ (0, import_mithril44.default)(App, { controller }) });
+    import_mithril46.default.route.prefix = "#!";
+    import_mithril46.default.route(root2, "/groups", buildRoutes(controller));
     window.addEventListener("focus", async () => {
       controller.onFocusWindow();
     });

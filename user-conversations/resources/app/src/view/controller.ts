@@ -1,4 +1,5 @@
 // Mithril
+import m from "mithril"
 import Stream from "mithril/stream"
 
 // ts-mls
@@ -65,11 +66,42 @@ export class ViewController {
 	get inReplyTo(): Message | undefined { return this.#controller.inReplyTo }
 	set inReplyTo(value: Message | undefined) { this.#controller.inReplyTo = value }
 
-	get pageView(): string { return this.#controller.pageView }
+	// pageView reports the current top-level view. Gate states (LOADING / WELCOME /
+	// SIGN-IN, set on the service controller during startup) take precedence and are
+	// returned directly. Once startup passes the gates the service controller reports
+	// "READY", and the actual page is derived from the URL route instead.
+	get pageView(): string {
+		const gate = this.#controller.pageView
+		if (gate != "READY") {
+			return gate
+		}
+		return this.#routePageView()
+	}
 	set pageView(value: string) { this.#controller.pageView = value }
 
-	get settingsTab(): SettingsTab { return this.#controller.settingsTab }
-	set settingsTab(value: SettingsTab) { this.#controller.settingsTab = value }
+	// #routePageView maps the current route to a pageView string (the values the
+	// view switch in app.tsx / index.tsx expects).
+	#routePageView(): string {
+		const route = m.route.get() ?? ""
+		if (route.startsWith("/settings")) {
+			return "SETTINGS"
+		}
+		if (route.includes("/notes")) {
+			return "GROUP-NOTES"
+		}
+		if (route.includes("/people")) {
+			return "GROUP-MEMBERS"
+		}
+		return "GROUP-MESSAGES"
+	}
+
+	// settingsTab is derived from the /settings/:tab route param (uppercased to match
+	// the SettingsTab union). Setting it navigates to the corresponding route.
+	get settingsTab(): SettingsTab {
+		const tab = (m.route.param("tab") ?? "general").toUpperCase()
+		return tab as SettingsTab
+	}
+	set settingsTab(value: SettingsTab) { m.route.set("/settings/:tab", { tab: value.toLowerCase() }) }
 
 	get modalView(): string { return this.#controller.modalView }
 	set modalView(value: string) { this.#controller.modalView = value }
@@ -114,13 +146,31 @@ export class ViewController {
 	// Page & modal navigation
 	//////////////////////////////////////////
 
-	page_index = () => this.#controller.page_index()
-	page_settings = () => this.#controller.page_settings()
-	page_groups = () => this.#controller.page_groups()
-	page_group_messages = () => this.#controller.page_group_messages()
-	page_group_members = () => this.#controller.page_group_members()
-	page_group_notes = () => this.#controller.page_group_notes()
+	// Navigation is URL-driven: page_* methods set the route, and pageView /
+	// settingsTab read it back (see above). The selected group id comes from the
+	// route's :groupId param via routeSelectGroup, so these build group URLs from
+	// the currently-selected group.
+	page_index = () => m.route.set("/groups")
+	page_settings = () => m.route.set("/settings/:tab", { tab: "general" })
+	page_groups = () => m.route.set("/groups")
+	page_group_messages = () => m.route.set("/groups/:groupId", { groupId: this.selectedGroupId() })
+	page_group_members = () => m.route.set("/groups/:groupId/people", { groupId: this.selectedGroupId() })
+	page_group_notes = () => m.route.set("/groups/:groupId/notes", { groupId: this.selectedGroupId() })
 	page_signout = () => this.#controller.page_signout()
+
+	// routeSelectGroup selects the group named in the URL, but only when it differs
+	// from the current selection — so re-rendering the same route does not trigger a
+	// reload loop. An empty id clears the selection (the /groups index route).
+	routeSelectGroup = (groupId: string) => {
+		if (groupId == this.selectedGroupId()) {
+			return
+		}
+		if (groupId == "") {
+			this.#controller.clearSelectedGroup()
+			return
+		}
+		this.#controller.selectGroup(groupId)
+	}
 
 	modal_addGroupMember = () => this.#controller.modal_addGroupMember()
 	modal_close = () => this.#controller.modal_close()
@@ -177,7 +227,10 @@ export class ViewController {
 	syncGroup = (group: Group) => this.#controller.syncGroup(group)
 	leaveGroup = (groupId: string) => this.#controller.leaveGroup(groupId)
 
-	selectGroup = (groupId: string) => this.#controller.selectGroup(groupId)
+	// selectGroup navigates to the group's URL; the route resolver (routeSelectGroup)
+	// performs the actual selection + message load. Keeping selection URL-driven means
+	// the back button and deep links work, and there is one source of truth.
+	selectGroup = (groupId: string) => m.route.set("/groups/:groupId", { groupId })
 	clearSelectedGroup = () => this.#controller.clearSelectedGroup()
 	reconcileSelectedGroup = () => this.#controller.reconcileSelectedGroup()
 	selectedGroupId = () => this.#controller.selectedGroupId()

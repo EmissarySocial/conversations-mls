@@ -66,8 +66,9 @@ export class Controller {
 	message: Message | undefined
 	inReplyTo: Message | undefined
 
+	// pageView holds the app-level "gate" state during startup (LOADING / WELCOME /
+	// SIGN-IN), then "READY" once the URL router takes over (see view/controller.ts).
 	pageView: string = "LOADING"
-	settingsTab: SettingsTab = "GENERAL"
 	modalView: string = ""
 
 	// modalAttachments holds the attachments shown by the lightbox modal, and
@@ -237,8 +238,9 @@ export class Controller {
 		// Refresh Data for the UX (filters before groups, see above)
 		this.loadFilters().then(() => this.loadGroups())
 
-		// Update view once everything is initialized
-		this.pageView = "GROUPS"
+		// Gates passed: hand control to the URL router. "READY" tells the view facade's
+		// pageView getter to derive the page from the route instead of this state.
+		this.pageView = "READY"
 		m.redraw()
 	}
 
@@ -328,7 +330,7 @@ export class Controller {
 			return true
 
 		} catch (error) {
-			// Errors mean that we  do not have the correct passcode.
+			// Errors mean that we do not have the correct passcode.
 			console.error("Failed to sign in:", error)
 			return false
 		}
@@ -392,22 +394,15 @@ export class Controller {
 		}
 	}
 
+
 	//////////////////////////////////////////
 	// Pages
 	//////////////////////////////////////////
 
-	page_index = () => {
-		this.pageView = "INDEX"
-		m.redraw()
-	}
-
-	page_settings = () => {
-		this.pageView = "SETTINGS"
-
-		// Deliberately entering settings always starts on the default tab
-		this.settingsTab = "GENERAL"
-		m.redraw()
-	}
+	// NOTE: page navigation is now URL-driven in the view layer (view/controller.ts
+	// page_* methods call m.route.set; pageView/settingsTab read m.route). The service
+	// controller only retains "gate" page state (LOADING / WELCOME / SIGN-IN / READY,
+	// set during start()) plus page_signout.
 
 	// selectedFilterName returns the display name of the currently selected
 	// conversation filter (empty string if none is selected).
@@ -421,26 +416,6 @@ export class Controller {
 		this.config.selectedFilterId = filterId
 		await this.#database.saveConfig(this.config)
 		await this.loadGroups()
-		m.redraw()
-	}
-
-	page_groups = () => {
-		this.pageView = "GROUPS"
-		m.redraw()
-	}
-
-	page_group_messages = () => {
-		this.pageView = "GROUP-MESSAGES"
-		m.redraw()
-	}
-
-	page_group_members = () => {
-		this.pageView = "GROUP-MEMBERS"
-		m.redraw()
-	}
-
-	page_group_notes = () => {
-		this.pageView = "GROUP-NOTES"
 		m.redraw()
 	}
 
@@ -775,8 +750,9 @@ export class Controller {
 		// Send the initial message
 		await this.sendMessage(initialMessage)
 
-		// Move the view to the messages for this group
-		this.pageView = "GROUP-MESSAGES"
+		// Navigate to the new group's messages (URL-driven; the route resolver
+		// re-selects it, which is a no-op since it is already the current group).
+		m.route.set("/groups/:groupId", { groupId: group.id })
 	}
 
 	joinGroup = async (group: Group) => {
@@ -947,7 +923,9 @@ export class Controller {
 		await this.loadMessages()
 		this.inReplyTo = undefined
 
-		this.page_group_messages()
+		// Navigation is URL-driven in the view layer; selection here just loads the
+		// group's data. (The view facade routes to /groups/:id, which drives this.)
+		m.redraw()
 	}
 
 	// clearSelectedGroup resets the displayed group to an empty placeholder. The

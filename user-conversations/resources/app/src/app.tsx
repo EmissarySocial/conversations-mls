@@ -9,8 +9,8 @@ import { Controller } from "./service/controller"
 import { Proxy } from "./service/proxy"
 
 // Views
-import { App } from "./view/app"
 import { ViewController } from "./view/controller"
+import { buildRoutes } from "./view/routes"
 import { Contacts } from "./service/contacts"
 import { Host } from "./service/host"
 
@@ -49,8 +49,11 @@ async function startup() {
 	controller = new ViewController(serviceController)
 	controller.start()
 
-	// Pass the controller to the App component and mount the main application
-	m.mount(root, { view: () => <App controller={controller} /> })
+	// Mount the application with the URL router. The hashbang prefix ("#!") keeps the
+	// app's routing in the fragment so it never collides with Emissary's server-side
+	// routing (this SPA is mounted inside an Emissary-served page).
+	m.route.prefix = "#!"
+	m.route(root, "/groups", buildRoutes(controller))
 
 	window.addEventListener("focus", async () => {
 		controller.onFocusWindow()
