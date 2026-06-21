@@ -56,16 +56,19 @@ export class AppSettingsGeneral {
 
 		return (
 			<div>
-				<div class="flex-row flex-align-center margin-bottom">
-					<div class="text-lg bold flex-grow">General</div>
+				<div class="card padding margin-bottom">
+					<div class="text-lg bold margin-bottom">General</div>
+					{this.viewNotifications(vnode)}
+				</div>
+
+				<div class="card padding">
+					{this.viewEncryption(vnode)}
+				</div>
+
+				<div class="pos-absolute-top-right">
 					<SavedNotice saved={vnode.state.saved} />
 				</div>
 
-				{this.viewNotifications(vnode)}
-
-				<hr class="margin-vertical" />
-
-				{this.viewEncryption(vnode)}
 			</div>
 		)
 	}
@@ -112,7 +115,7 @@ export class AppSettingsGeneral {
 
 		return (
 			<div>
-				<div class="text-lg bold margin-top-lg margin-bottom">Encrypted Messaging</div>
+				<div class="text-lg bold margin-bottom">Encryption</div>
 
 				<div class="layout-vertical">
 					<div class="layout-elements">
@@ -138,7 +141,7 @@ export class AppSettingsGeneral {
 		const controller = vnode.attrs.controller
 
 		return (
-			<div class="margin-top card padding">
+			<div class="margin-top-xl">
 				<div class="bold margin-bottom">EmojiKeys</div>
 				<div class="margin-bottom-lg">
 					EmojiKeys give you an easy way to verify your identity.

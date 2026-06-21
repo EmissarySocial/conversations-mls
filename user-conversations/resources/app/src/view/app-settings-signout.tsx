@@ -20,17 +20,17 @@ export class AppSettingsSignout {
 		return (
 			<div>
 				<div class="card padding">
-					<div class="text-lg bold margin-bottom">Close Conversations</div>
+					<div class="text-lg bold margin-bottom">Sign Out</div>
 					<div class="layout-vertical margin-top">
 						<div class="layout-elements">
 							<div class="layout-element">
-								Close out this current session.
+								Close this current session.
 								Your data will remain on this device, but cannot be accessed without a passcode.
 							</div>
 						</div>
 					</div>
 
-					<button class="text-red" onclick={() => controller.page_signout()}>Close</button>
+					<button class="text-red" onclick={() => controller.page_signout()}>Sign Out</button>
 				</div>
 
 				<div class="card padding margin-top">
