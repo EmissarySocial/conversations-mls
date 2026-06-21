@@ -14,7 +14,6 @@ describe("Document scalar accessors", () => {
 			context: "https://x.test/group",
 			name: "A Note",
 			summary: "summary text",
-			attachment: "https://x.test/file.png",
 			generator: "https://x.test/app",
 			icon: "https://x.test/icon.png",
 		})
@@ -23,7 +22,6 @@ describe("Document scalar accessors", () => {
 		expect(doc.context()).toBe("https://x.test/group")
 		expect(doc.name()).toBe("A Note")
 		expect(doc.summary()).toBe("summary text")
-		expect(doc.attachment()).toBe("https://x.test/file.png")
 		expect(doc.generator()).toBe("https://x.test/app")
 		expect(doc.icon()).toBe("https://x.test/icon.png")
 	})
@@ -32,7 +30,37 @@ describe("Document scalar accessors", () => {
 		const doc = new Document({ type: "Note" })
 		expect(doc.content()).toBe("")
 		expect(doc.summary()).toBe("")
-		expect(doc.attachment()).toBe("")
+		expect(doc.attachments()).toEqual([])
+	})
+
+	test("attachments parses a structured Document attachment", () => {
+		const doc = new Document({
+			type: "Note",
+			attachment: { type: "Image", mediaType: "image/png", url: "https://x.test/file.png", name: "file.png", width: 640, height: 480 },
+		})
+		expect(doc.attachments()).toEqual([
+			{ url: "https://x.test/file.png", mediaType: "image/png", name: "file.png", size: 0, width: 640, height: 480 },
+		])
+	})
+
+	test("attachments accepts a legacy bare-string attachment", () => {
+		const doc = new Document({ type: "Note", attachment: "https://x.test/file.png" })
+		expect(doc.attachments()).toEqual([
+			{ url: "https://x.test/file.png", mediaType: "", name: "", size: 0 },
+		])
+	})
+
+	test("attachments parses multiple attachments", () => {
+		const doc = new Document({
+			type: "Note",
+			attachment: [
+				{ type: "Image", mediaType: "image/png", url: "https://x.test/a.png", name: "a.png" },
+				"https://x.test/b.txt",
+			],
+		})
+		expect(doc.attachments()).toHaveLength(2)
+		expect(doc.attachments()[0]!.url).toBe("https://x.test/a.png")
+		expect(doc.attachments()[1]!.url).toBe("https://x.test/b.txt")
 	})
 
 	test("resolves the namespaced ActivityStreams key as a fallback", () => {

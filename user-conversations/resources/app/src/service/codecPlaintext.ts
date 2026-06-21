@@ -2,7 +2,7 @@ import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 
 import { type Group, NewGroup } from "../model/group"
-import { type Message } from "../model/message"
+import { type Message, attachmentToDocument } from "../model/message"
 import { newId, uniqueStrings } from "../model/utils"
 import type { ICodec, IDatabase, IDelivery } from "./interfaces"
 
@@ -100,7 +100,7 @@ export class CodecPlaintext implements ICodec {
 			to: group.members,
 			context: group.id,
 			content: message.content,
-			attachment: message.attachments,
+			attachment: message.attachments.map(attachment => attachmentToDocument(attachment)),
 			published: new Date().toISOString(),
 		}
 	}

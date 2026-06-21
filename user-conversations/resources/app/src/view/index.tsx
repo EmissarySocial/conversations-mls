@@ -13,6 +13,7 @@ import { AddGroupMember } from "./modal-addGroupMember"
 import { EditMessage } from "./modal-editMessage"
 import { MessageHistory } from "./modal-messageHistory"
 import { PickEmoji } from "./modal-pickEmoji"
+import { Attachments } from "./modal-attachments"
 import { GroupWelcome } from "./group-welcome"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
@@ -100,6 +101,9 @@ export class Index {
 
 			case "NEW-CONVERSATION":
 				return <NewConversation controller={controller} close={() => this.closeModal(vnode)} />
+
+			case "ATTACHMENTS":
+				return <Attachments controller={controller} close={() => this.closeModal(vnode)} />
 
 		}
 

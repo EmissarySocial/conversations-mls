@@ -5,7 +5,7 @@ import { type DBSchema, type IDBPDatabase, openDB } from "idb"
 import { type Config, ConfigID, NewConfig } from "../model/config"
 import { type Filter } from "../model/filter"
 import { type EncryptedGroup, type Group, type GroupState, filterAndSortGroups } from "../model/group"
-import { Message, NewMessage, type MessageData } from "../model/message"
+import { Message, NewMessage, legacyAttachmentToAttachment, type MessageData } from "../model/message"
 import { type DBKeyPackage } from "../model/db-keypackage"
 
 // Model Objects
@@ -59,8 +59,8 @@ interface Schema extends DBSchema {
 type callbackFunction = () => void
 
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
-	return await openDB<Schema>(actorId, 2, {
-		upgrade(db, oldVersion, _newVersion, transaction) {
+	return await openDB<Schema>(actorId, 3, {
+		async upgrade(db, oldVersion, _newVersion, transaction) {
 
 			if (oldVersion < 1) {
 
@@ -77,8 +77,37 @@ export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema
 			if (oldVersion < 2) {
 				db.createObjectStore("filter", { keyPath: "id" })
 			}
+
+			// Migrate attachments from the legacy string[] form to structured Attachment[]
+			if (oldVersion >= 1 && oldVersion < 3) {
+				await migrateAttachments(transaction.objectStore("message"))
+			}
 		},
 	})
+}
+
+// migrateAttachments rewrites every stored message's "attachments" field from the
+// legacy string[] form (bare URLs or "data:" URIs) into the structured
+// Attachment[] form. It is a no-op for messages already in the new shape.
+async function migrateAttachments(store: any): Promise<void> {
+
+	let cursor = await store.openCursor()
+
+	while (cursor != null) {
+
+		const message = cursor.value
+		const attachments = message.attachments
+
+		// Only legacy records have an array of strings; skip anything already migrated
+		if (Array.isArray(attachments) && attachments.some((item: unknown) => typeof item == "string")) {
+			message.attachments = attachments.map((item: unknown) =>
+				typeof item == "string" ? legacyAttachmentToAttachment(item) : item
+			)
+			await cursor.update(message)
+		}
+
+		cursor = await cursor.continue()
+	}
 }
 
 export class Database implements IDatabase {

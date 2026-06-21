@@ -13,7 +13,7 @@ import { type Contact } from "../model/contact"
 import { type DBKeyPackage } from "../model/db-keypackage"
 import { type Emoji } from "../model/emoji"
 import { type EncryptedGroup, type Group, type GroupState } from "../model/group"
-import { Message } from "../model/message"
+import { type Attachment, Message } from "../model/message"
 import { type Filter } from "../model/filter"
 
 // The backing service-layer Controller
@@ -74,6 +74,9 @@ export class ViewController {
 	get modalView(): string { return this.#controller.modalView }
 	set modalView(value: string) { this.#controller.modalView = value }
 
+	get modalAttachments(): Attachment[] { return this.#controller.modalAttachments }
+	get modalAttachmentIndex(): number { return this.#controller.modalAttachmentIndex }
+
 	get isWindowFocused(): boolean { return this.#controller.isWindowFocused }
 	set isWindowFocused(value: boolean) { this.#controller.isWindowFocused = value }
 
@@ -127,6 +130,7 @@ export class ViewController {
 	modal_messageHistory = (messageId: string) => this.#controller.modal_messageHistory(messageId)
 	modal_startReaction = (message: Message) => this.#controller.modal_startReaction(message)
 	modal_startReaction_callback = (emoji: Emoji) => this.#controller.modal_startReaction_callback(emoji)
+	modal_attachments = (message: Message, index: number) => this.#controller.modal_attachments(message, index)
 
 	//////////////////////////////////////////
 	// Host integration
@@ -194,8 +198,7 @@ export class ViewController {
 	loadMessage = (messageId: string) => this.#controller.loadMessage(messageId)
 	startReply = (message: Message) => this.#controller.startReply(message)
 	removeReply = () => this.#controller.removeReply()
-	sendMessage = (content: string) => this.#controller.sendMessage(content)
-	sendFile = (file: string) => this.#controller.sendFile(file)
+	sendMessage = (content: string, attachments: Attachment[] = []) => this.#controller.sendMessage(content, attachments)
 	updateMessage = (message: Message) => this.#controller.updateMessage(message)
 	clearMessage = () => this.#controller.clearMessage()
 	deleteMessage = (messageId: string) => this.#controller.deleteMessage(messageId)

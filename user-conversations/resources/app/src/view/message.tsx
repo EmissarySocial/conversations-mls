@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { type Message } from "../model/message"
+import { type Attachment, type Message, attachmentIcon, attachmentKind } from "../model/message"
 import { ViewController } from "./controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
@@ -166,20 +166,60 @@ export class ViewMessage {
 	drawContent(controller: ViewController, message: Message): JSX.Element {
 
 		return <>
-			{message.attachments.map(attachment => (
-				attachment.startsWith("data:image") ? (
-					<><img src={attachment} class="width-100% rounded" alt="" /> {/* NOSONAR: typescript:S6853 */}</>
-				) : (
-					<a href={attachment} class="attachment" target="_blank" rel="noopener noreferrer"> {/* NOSONAR: typescript:S6853 */}
-						<i class="bi bi-file-earmark-arrow-down"></i> Download File ({formatFileSize(attachment.length)})
-					</a>
-				)
-			))}
+			{this.drawAttachments(controller, message)}
 			{/* NOSONAR S6848/S1082: the interactive elements are the native <a> mentions
 			    inside the trusted HTML; this is a delegation layer that also handles keyboard. */}
 			<div class="padding-xs message-content" onclick={(event: MouseEvent) => this.onContentClick(controller, event)} onkeydown={(event: KeyboardEvent) => this.onContentKeydown(controller, event)}>{m.trust(message.content)}</div>
 		</>
 
+	}
+
+	// drawAttachments renders the message's attachments as a grid of thumbnails.
+	// Clicking any thumbnail opens the attachment lightbox at that attachment.
+	drawAttachments(controller: ViewController, message: Message): JSX.Element | null {
+
+		if (message.attachments.length == 0) {
+			return null
+		}
+
+		return (
+			<div class="message-attachments flex-row flex-wrap">
+				{message.attachments.map((attachment, index) => (
+					<button
+						key={attachment.url}
+						type="button"
+						class="message-attachment"
+						aria-label={"View attachment " + (attachment.name || (index + 1))}
+						tabIndex="0"
+						onclick={() => controller.modal_attachments(message, index)}>
+						{this.drawThumbnail(attachment)}
+					</button>
+				))}
+			</div>
+		)
+	}
+
+	// drawThumbnail renders the preview for a single attachment: the image/video
+	// frame itself when one is available, otherwise a type icon with the file name.
+	drawThumbnail(attachment: Attachment): JSX.Element {
+
+		switch (attachmentKind(attachment)) {
+
+			case "image":
+				return <img src={attachment.url} class="message-attachment-thumb" alt="" /> // NOSONAR: typescript:S6853
+
+			case "video":
+				return <video src={attachment.url} class="message-attachment-thumb" preload="metadata" muted></video>
+
+			default:
+				return (
+					<span class="message-attachment-file flex-column flex-align-center flex-justify">
+						<i class={"bi " + attachmentIcon(attachment)}></i>
+						<span class="message-attachment-name text-sm">{attachment.name || "File"}</span>
+						{(attachment.size > 0) && <span class="text-sm text-gray">{formatFileSize(attachment.size)}</span>}
+					</span>
+				)
+		}
 	}
 
 	// mentionActorId returns the profile URL of the mention link containing the given

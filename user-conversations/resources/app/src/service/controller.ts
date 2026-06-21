@@ -17,7 +17,7 @@ import { type Contact } from "../model/contact"
 import { type DBKeyPackage } from "../model/db-keypackage"
 import { type Emoji } from "../model/emoji"
 import { type EncryptedGroup, type Group, type GroupState, NewGroup, groupIsEncrypted } from "../model/group"
-import { Message, NewMessage } from "../model/message"
+import { type Attachment, Message, NewMessage, summarizeAttachments } from "../model/message"
 
 // Services
 import { type ICodec, type IContacts, type IDelivery, type IDirectory, type IDatabase, type IHost, type IProxy, type IReceiver, type IWebFinger } from "./interfaces"
@@ -69,6 +69,11 @@ export class Controller {
 	pageView: string = "LOADING"
 	settingsTab: SettingsTab = "GENERAL"
 	modalView: string = ""
+
+	// modalAttachments holds the attachments shown by the lightbox modal, and
+	// modalAttachmentIndex is the one currently displayed.
+	modalAttachments: Attachment[] = []
+	modalAttachmentIndex: number = 0
 	isWindowFocused: boolean = true
 	isApplicationRunning: boolean = true
 	stopReason: string = ""
@@ -480,6 +485,21 @@ export class Controller {
 
 		this.message = message
 		this.modalView = "EDIT-MESSAGE"
+		m.redraw()
+	}
+
+	// modal_attachments opens the attachment lightbox for the given message,
+	// starting at the attachment at `index`.
+	modal_attachments = (message: Message, index: number) => {
+
+		// RULE: Do nothing if the message has no attachments
+		if (message.attachments.length == 0) {
+			return
+		}
+
+		this.modalAttachments = message.attachments
+		this.modalAttachmentIndex = index
+		this.modalView = "ATTACHMENTS"
 		m.redraw()
 	}
 
@@ -1093,8 +1113,8 @@ export class Controller {
 		m.redraw()
 	}
 
-	// sendMessage sends a message to the specified group
-	sendMessage = async (content: string) => {
+	// sendMessage sends a message (text and/or attachments) to the selected group.
+	sendMessage = async (content: string, attachments: Attachment[] = []) => {
 
 		console.log("sendMessage called with content:", content)
 
@@ -1110,6 +1130,7 @@ export class Controller {
 		message.groupId = group.id
 		message.sender = this.#actor.id()
 		message.content = await formatMessageContent(content, (handle) => this.#webfinger.resolveActorURL(handle))
+		message.attachments = attachments
 		message.type = "SENT"
 
 		if (this.inReplyTo != undefined) {
@@ -1144,59 +1165,14 @@ export class Controller {
 		this.removeReply()
 		await this.loadMessages()
 
-		// Update the group with the message metadata (lastMessage is text, not HTML)
-		group.lastMessage = htmlToText(content)
+		// Update the group with the message metadata (lastMessage is text, not HTML).
+		// Attachment-only messages have no text, so summarize them by count instead.
+		group.lastMessage = htmlToText(content) || summarizeAttachments(attachments)
 		group.lastMessageId = message.id
 		group.updateDate = Temporal.Now.instant().epochMilliseconds
 
 		// Save the group with updated message metadata
 		await this.saveGroup(group)
-	}
-
-	// sendFile sends a base64-encoded file to the specified group
-	sendFile = async (file: string) => {
-
-		// Get the currently selected group
-		const group = this.groupStream()
-
-		if (group.id == "") {
-			throw new Error("No group selected")
-		}
-
-		// Create a new Message record and save to the database
-		const message = NewMessage()
-		message.groupId = group.id
-		message.sender = this.#actor.id()
-		message.attachments = [file]
-		message.type = "SENT"
-
-		if (this.inReplyTo != undefined) {
-			message.inReplyTo = this.inReplyTo.id
-		}
-
-		// Save message and reload to refresh the UX
-		await this.#database.saveMessage(message)
-		await this.loadMessages()
-
-		// Update the group with the message content
-		await this.saveGroup(group)
-
-		// Encode the message object using the appropriate codec for this group
-		const codec = this.#getCodecForGroup(group)
-		const object = await codec.encodeMessage(group, message)
-
-		// Create an ActivityPub activity 
-		const activity = new Activity({
-			context: group.id,
-			actor: this.actorId(),
-			type: vocab.ActivityTypeCreate,
-			to: group.members,
-			object: object,
-		})
-
-		// (asynchronously) Send the activity through the delivery service
-		await this.#sendActivity(group, activity)
-		this.removeReply()
 	}
 
 	updateMessage = async (message: Message) => {
@@ -1550,9 +1526,7 @@ export class Controller {
 			updateDate: Date.now(),
 		})
 
-		if (object.attachment() != "") {
-			message.attachments = [object.attachment()] // TODO: support multiple attachments
-		}
+		message.attachments = object.attachments()
 
 		// Save the message to the database (this is idempotent)
 		await this.#database.saveMessage(message)

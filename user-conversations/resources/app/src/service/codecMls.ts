@@ -9,7 +9,7 @@ import * as vocab from "../as/vocab"
 
 // Application Types
 import { type EncryptedGroup, type Group, NewGroup, groupIsEncrypted } from "../model/group"
-import { type Message } from "../model/message"
+import { type Message, attachmentToDocument } from "../model/message"
 
 import { type ICodec, type IController, type IDatabase, type IDelivery, type IDirectory } from "./interfaces"
 
@@ -315,7 +315,7 @@ export class CodecMls implements ICodec {
 			to: group.members,
 			context: group.id,
 			content: message.content,
-			attachment: message.attachments,
+			attachment: message.attachments.map(attachment => attachmentToDocument(attachment)),
 			inReplyTo: message.inReplyTo,
 			published: new Date().toISOString(),
 		}

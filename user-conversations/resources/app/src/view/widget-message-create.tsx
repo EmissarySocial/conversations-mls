@@ -1,9 +1,14 @@
 import m, { type Vnode } from "mithril"
 import type { ViewController } from "./controller"
-import type { Message } from "../model/message"
+import { type Attachment, type Message, attachmentIcon, attachmentKind, dataUriToAttachment } from "../model/message"
 import type { Emoji } from "../model/emoji"
 import { groupIsEncrypted } from "../model/group"
-import { synthClick } from "./utils"
+import { formatFileSize, synthClick } from "./utils"
+
+// MAX_ATTACHMENT_BYTES is the largest file (in bytes) that may be embedded in a
+// message. Attachments are embedded as base64 "data:" URIs, so this limits the
+// original (pre-encoding) file size to keep messages a reasonable size.
+const MAX_ATTACHMENT_BYTES = 1024 * 1024
 import { MentionPopup, type MentionPopupController } from "./widget-mention-popup"
 import { PickEmoji } from "./modal-pickEmoji"
 import { activeMentionToken, replaceMentionToken, type MentionToken } from "./mentionToken"
@@ -39,6 +44,9 @@ type WidgetMessageCreateState = {
 	savedCaret?: number
 	// showEmojiPicker is true while this composer's own emoji picker modal is open.
 	showEmojiPicker: boolean
+	// pending holds attachments the user has added but not yet sent. They are
+	// shipped along with the next message and then cleared.
+	pending: Attachment[]
 }
 
 export class WidgetMessageCreate {
@@ -46,6 +54,7 @@ export class WidgetMessageCreate {
 		vnode.state.message = ""
 		vnode.state.mention = null
 		vnode.state.showEmojiPicker = false
+		vnode.state.pending = []
 	}
 
 	view(vnode: WidgetMessageCreateVnode) {
@@ -79,6 +88,7 @@ export class WidgetMessageCreate {
 			<div class="flex-row flex-justify" style={backgroundStyle}>
 				<div class="flex-grow">
 					{this.drawReply(vnode)}
+					{this.drawPending(vnode)}
 					<div role="textbox" class={"flex-grow flex-row flex-align-center" + (isEncrypted ? "" : " unencrypted-textbox")}>
 
 						<textarea
@@ -116,8 +126,9 @@ export class WidgetMessageCreate {
 				<input
 					type="file"
 					id="fileInput"
+					multiple
 					style="display:none;"
-					onchange={(e: Event) => this.sendFile(vnode, e)}>
+					onchange={(e: Event) => this.addFiles(vnode, e)}>
 				</input>
 			</div>
 		</>
@@ -320,46 +331,101 @@ export class WidgetMessageCreate {
 
 	sendMessage(vnode: WidgetMessageCreateVnode) {
 
-		// RULE: Do not send empty messages
-		if (vnode.state.message.trim() === "") {
+		const hasText = vnode.state.message.trim() !== ""
+		const hasAttachments = vnode.state.pending.length > 0
+
+		// RULE: Do not send messages that have neither text nor attachments
+		if (!hasText && !hasAttachments) {
 			return
 		}
 
-		vnode.attrs.controller.sendMessage(vnode.state.message)
+		vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending)
 		vnode.state.message = ""
 		vnode.state.mention = null
+		vnode.state.pending = []
 	}
 
-	sendFile(vnode: WidgetMessageCreateVnode, event: Event) {
+	// drawPending renders the tray of attachments the user has staged but not yet
+	// sent, each with a button to remove it from the tray.
+	drawPending(vnode: WidgetMessageCreateVnode) {
+
+		if (vnode.state.pending.length == 0) {
+			return null
+		}
+
+		return (
+			<div id="pending-attachments" class="flex-row flex-wrap padding-xs">
+				{vnode.state.pending.map((attachment, index) => (
+					<div key={attachment.url} class="pending-attachment">
+						{this.drawPendingPreview(attachment)}
+						<button
+							type="button"
+							class="pending-attachment-remove"
+							aria-label="Remove attachment"
+							tabIndex="0"
+							onclick={() => this.removePending(vnode, index)}><i class="bi bi-x-circle-fill"></i></button>
+						<div class="pending-attachment-name text-sm text-gray">{attachment.name}</div>
+					</div>
+				))}
+			</div>
+		)
+	}
+
+	// drawPendingPreview renders the thumbnail (image) or type icon for a single
+	// pending attachment.
+	drawPendingPreview(attachment: Attachment) {
+
+		if (attachmentKind(attachment) == "image") {
+			return <img src={attachment.url} class="pending-attachment-thumb" alt="" /> // NOSONAR: typescript:S6853
+		}
+
+		return <div class="pending-attachment-thumb flex-row flex-align-center flex-justify"><i class={"bi " + attachmentIcon(attachment)}></i></div>
+	}
+
+	// removePending removes the attachment at `index` from the pending tray.
+	removePending(vnode: WidgetMessageCreateVnode, index: number) {
+		vnode.state.pending.splice(index, 1)
+	}
+
+	// addFiles reads each selected file into a "data:" URI Attachment and adds it
+	// to the pending tray. Files larger than MAX_ATTACHMENT_BYTES are skipped with
+	// a notice to the user.
+	addFiles(vnode: WidgetMessageCreateVnode, event: Event) {
 
 		const target = event.target as HTMLInputElement
+
 		if (!target.files || target.files.length === 0) {
 			return
 		}
 
-		const file = target.files[0]
+		for (const file of Array.from(target.files)) {
 
-		if (!file) {
-			console.error("No file selected.")
-			return
-		}
-
-		const reader = new FileReader()
-		reader.onload = () => {
-			let base64: string = reader.result as string
-
-			if (reader.result == null) {
-				return
+			// RULE: Reject files that exceed the embedded-attachment size limit
+			if (file.size > MAX_ATTACHMENT_BYTES) {
+				alert(`"${file.name}" is ${formatFileSize(file.size)}, which is larger than the ${formatFileSize(MAX_ATTACHMENT_BYTES)} limit.`)
+				continue
 			}
 
-			vnode.attrs.controller.sendFile(base64)
+			const reader = new FileReader()
+
+			reader.onload = () => {
+				if (reader.result == null) {
+					return
+				}
+
+				const attachment = dataUriToAttachment(reader.result as string, file.name, file.size)
+				vnode.state.pending.push(attachment)
+				m.redraw()
+			}
+
+			reader.onerror = () => {
+				console.error("Error reading file:", reader.error)
+			}
+
+			reader.readAsDataURL(file)
 		}
 
-		reader.onerror = () => {
-			console.error("Error reading file:", reader.error)
-		}
-
-		reader.readAsDataURL(file)
-
+		// Reset the input so selecting the same file again still fires "change"
+		target.value = ""
 	}
 }

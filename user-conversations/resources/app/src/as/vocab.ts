@@ -60,11 +60,15 @@ export const ObjectTypeArticle = "Article"
 
 export const ObjectTypeAudio = "Audio"
 
+export const ObjectTypeDocument = "Document"
+
 export const ObjectTypeHashtag = "Hashtag"
 
 export const ObjectTypeImage = "Image"
 
 export const ObjectTypeNote = "Note"
+
+export const ObjectTypeVideo = "Video"
 
 export const ObjectTypeEmissaryContext = "emissary:Context"
 
@@ -110,9 +114,19 @@ export const PropertyMlsKeyPackages = "keyPackages"
 
 export const PropertyMlsMessages = "messages"
 
+export const PropertyHeight = "height"
+
+export const PropertyHref = "href"
+
+export const PropertyMediaType = "mediaType"
+
 export const PropertyName = "name"
 
 export const PropertyObject = "object"
+
+export const PropertyUrl = "url"
+
+export const PropertyWidth = "width"
 
 export const PropertyOutbox = "outbox"
 
