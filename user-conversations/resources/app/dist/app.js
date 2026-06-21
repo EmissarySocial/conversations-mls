@@ -25607,14 +25607,14 @@
       result.setContext(group.id);
       console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type());
       console.log(result.toObject());
-      this.#maybeSendAcknowledgement(group, result);
+      await this.#maybeSendAcknowledgement(group, result);
       return result;
     }
-    #maybeSendAcknowledgement(group, activity) {
+    async #maybeSendAcknowledgement(group, activity) {
       if (activity.type() !== ActivityTypeCreate) {
         return;
       }
-      this.sendActivity(group, new Activity({
+      await this.sendActivity(group, new Activity({
         actor: this.#actor.id(),
         type: ActivityTypeAcknowledge,
         to: [activity.actorId()],

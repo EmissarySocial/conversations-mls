@@ -653,14 +653,17 @@ export class CodecMls implements ICodec {
 		console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type())
 		console.log(result.toObject())
 
-		// Send Acknowledge message for certain kinds of activities.
-		this.#maybeSendAcknowledgement(group, result)
+		// Send Acknowledge message for certain kinds of activities. This is awaited so
+		// its group save (advancing MLS state) completes before the controller updates
+		// the group's lastMessage — otherwise a late-landing acknowledgement save would
+		// clobber the freshly-received message's preview with the previous value.
+		await this.#maybeSendAcknowledgement(group, result)
 
 		// Continue processing the message in the controller.
 		return result
 	}
 
-	#maybeSendAcknowledgement(group: EncryptedGroup, activity: Activity): void {
+	async #maybeSendAcknowledgement(group: EncryptedGroup, activity: Activity): Promise<void> {
 
 		// Only sent Acknowledgements for "Create" activities, which represent new messages.
 		if (activity.type() !== vocab.ActivityTypeCreate) {
@@ -668,7 +671,7 @@ export class CodecMls implements ICodec {
 		}
 
 		// Acknowledge successful message received
-		this.sendActivity(group, new Activity({
+		await this.sendActivity(group, new Activity({
 			actor: this.#actor.id(),
 			type: vocab.ActivityTypeAcknowledge,
 			to: [activity.actorId()],
