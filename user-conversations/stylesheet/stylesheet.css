@@ -16,7 +16,10 @@
 		flex-direction: column;
 		overflow: visible;
 
-		[role="button"] {
+		/* The round `.popup-button` (filter / new-conversation triggers) styles
+		   itself; exclude it so this rule's squircle radius + padding don't win on
+		   specificity and distort it into a rounded square. */
+		[role="button"]:not(.popup-button) {
 			padding: 8px;
 			border-radius: 8px;
 
@@ -261,8 +264,11 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.5em;
-	height: 1.5em;
+	width: calc(var(--rhythm) * 3);
+	height: calc(var(--rhythm) * 3);
+	flex-shrink: 0;
+	box-sizing: border-box;
+	padding: 0;
 	border-radius: 50%;
 	border: solid 1px var(--gray30);
 	background-color: var(--white);
@@ -272,6 +278,21 @@
 
 .popup-button:hover {
 	background-color: var(--gray10);
+}
+
+/* A primary (blue) variant of the round pop-up/icon button. Re-declares the
+   primary colors here so they win over `.popup-button`'s own white background
+   regardless of stylesheet load order. */
+.popup-button.primary {
+	background-color: var(--button-primary-background);
+	border-color: var(--button-primary-background);
+	color: var(--button-primary-color);
+}
+
+.popup-button.primary:hover {
+	background-color: var(--button-primary-background-hover);
+	border-color: var(--button-primary-background-hover);
+	color: var(--button-primary-color-hover);
 }
 
 /* `.popup` is chrome only — the visual card, with NO positioning. Position is the

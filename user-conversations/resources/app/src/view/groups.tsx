@@ -22,8 +22,8 @@ export class Groups {
 				<div class="flex-row flex-align-center padding-left">
 					<div class="bold text-lg margin-none flex-grow ellipsis" style="min-width:0">{controller.selectedFilterName()}</div>
 					<FilterMenu controller={controller} />
-					<div class="link text-lg margin-none padding-xs" role="button" tabindex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
-						<i class="bi bi-plus-circle-fill"></i>
+					<div class="popup-button primary" role="button" tabindex="0" title="New conversation" aria-label="New conversation" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
+						<i class="bi bi-plus-lg"></i>
 					</div>
 				</div>
 

@@ -28385,7 +28385,7 @@
       return /* @__PURE__ */ (0, import_mithril9.default)(
         Popup,
         {
-          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "text-lg text-gray padding-none margin-none clickable", role: "button", tabindex: "0", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-filter-circle" })),
+          trigger: (toggle) => /* @__PURE__ */ (0, import_mithril9.default)("div", { class: "popup-button", role: "button", tabindex: "0", title: "Filter conversations", "aria-label": "Filter conversations", onclick: toggle, onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril9.default)("i", { class: "bi bi-filter" })),
           content: (close) => this.viewMenu(controller2, close)
         }
       );
@@ -28411,7 +28411,7 @@
   var Groups = class {
     view(vnode) {
       const controller2 = vnode.attrs.controller;
-      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "link text-lg margin-none padding-xs", role: "button", tabindex: "0", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-circle-fill" }))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
+      return /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-pane" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "flex-row flex-align-center padding-left" }, /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "bold text-lg margin-none flex-grow ellipsis", style: "min-width:0" }, controller2.selectedFilterName()), /* @__PURE__ */ (0, import_mithril10.default)(FilterMenu, { controller: controller2 }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "popup-button primary", role: "button", tabindex: "0", title: "New conversation", "aria-label": "New conversation", onclick: () => controller2.modal_newConversation(), onkeypress: synthClick }, /* @__PURE__ */ (0, import_mithril10.default)("i", { class: "bi bi-plus-lg" }))), /* @__PURE__ */ (0, import_mithril10.default)("hr", { class: "margin-vertical-sm" }), /* @__PURE__ */ (0, import_mithril10.default)("div", { class: "conversations-scroll" }, controller2.groups.map((group) => {
         let cssClass = "flex-row flex-align-center padding padding-right-sm hover-trigger";
         if (group.id == controller2.selectedGroupId()) {
           cssClass += " highlight";

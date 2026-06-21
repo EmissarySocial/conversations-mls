@@ -23,8 +23,8 @@ export class FilterMenu {
 		return (
 			<Popup
 				trigger={(toggle: () => void) => (
-					<div class="text-lg text-gray padding-none margin-none clickable" role="button" tabindex="0" onclick={toggle} onkeypress={synthClick}>
-						<i class="bi bi-filter-circle"></i>
+					<div class="popup-button" role="button" tabindex="0" title="Filter conversations" aria-label="Filter conversations" onclick={toggle} onkeypress={synthClick}>
+						<i class="bi bi-filter"></i>
 					</div>
 				)}
 				content={(close: () => void) => this.viewMenu(controller, close)}
