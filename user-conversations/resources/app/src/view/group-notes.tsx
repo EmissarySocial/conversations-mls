@@ -1,8 +1,9 @@
 import m, { type Vnode } from "mithril"
 
-import { type Group, groupColor } from "../model/group"
+import { type Group } from "../model/group"
 import { ViewController } from "./controller"
-import { haltEvent, synthClick } from "./utils"
+import { GroupFrame } from "./group-frame"
+import { haltEvent } from "./utils"
 
 type GroupNotesVnode = Vnode<GroupNotesArgs, GroupNotesState>
 
@@ -26,17 +27,9 @@ export class GroupNotes {
 
 		// Collect variables
 		const controller = vnode.attrs.controller
-		const group = vnode.state.group
 
 		return (
-			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
-				<div id="conversation-header">
-					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" tabIndex="0" onclick={() => controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>
-						<div role="tab" aria-selected="true">Notes</div>
-						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
-					</div>
-				</div>
+			<GroupFrame controller={controller} active="notes">
 				<div id="conversation-messages" class="padding">
 					<form onsubmit={(event: SubmitEvent) => this.save(event, vnode)}>
 						<div class="card padding max-width-640">
@@ -91,7 +84,7 @@ export class GroupNotes {
 						</div>
 					</form>
 				</div>
-			</div>
+			</GroupFrame>
 		)
 	}
 

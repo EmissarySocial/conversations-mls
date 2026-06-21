@@ -7,7 +7,6 @@ import { Groups } from "./groups"
 import { GroupMessages } from "./group-messages"
 import { GroupNotes } from "./group-notes"
 import { GroupMembers } from "./group-members"
-import { GroupLeave } from "./group-leave"
 import { Empty } from "./empty"
 import { AddGroupMember } from "./modal-addGroupMember"
 import { EditMessage } from "./modal-editMessage"
@@ -69,9 +68,6 @@ export class Index {
 
 			case "GROUP-NOTES":
 				return <GroupNotes controller={vnode.attrs.controller} />
-
-			case "GROUP-LEAVE":
-				return <GroupLeave controller={vnode.attrs.controller} />
 
 			case "GROUP-MESSAGES":
 			default: {

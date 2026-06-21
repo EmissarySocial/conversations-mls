@@ -120,7 +120,6 @@ export class ViewController {
 	page_group_messages = () => this.#controller.page_group_messages()
 	page_group_members = () => this.#controller.page_group_members()
 	page_group_notes = () => this.#controller.page_group_notes()
-	page_group_leave = () => this.#controller.page_group_leave()
 	page_signout = () => this.#controller.page_signout()
 
 	modal_addGroupMember = () => this.#controller.modal_addGroupMember()

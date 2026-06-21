@@ -116,7 +116,7 @@ export class WidgetMessageCreate {
 							{this.hasContent(vnode) &&
 								<button
 									type="button"
-									class={isEncrypted ? "primary" : "success"}
+									class="primary"
 									tabIndex="0"
 									aria-label="Send Message"
 									title="Send"

@@ -286,14 +286,14 @@
    primary colors here so they win over `.popup-button`'s own white background
    regardless of stylesheet load order. */
 .popup-button.primary {
-	background-color: var(--button-primary-background);
-	border-color: var(--button-primary-background);
+	background-color: var(--focus-color);
+	border-color: var(--focus-color);
 	color: var(--button-primary-color);
 }
 
 .popup-button.primary:hover {
-	background-color: var(--button-primary-background-hover);
-	border-color: var(--button-primary-background-hover);
+	background-color: color-mix(in srgb, var(--focus-color), black 12%);
+	border-color: color-mix(in srgb, var(--focus-color), black 12%);
 	color: var(--button-primary-color-hover);
 }
 

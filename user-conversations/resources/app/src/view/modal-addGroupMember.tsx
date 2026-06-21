@@ -78,7 +78,7 @@ export class AddGroupMember {
 
 			return (
 				<div class="margin-top">
-					<button type="submit" class="primary" tabIndex="0" disabled={disabled} style={{ "background-color": "var(--focus-color)", "border-color": "var(--focus-color)" }}>
+					<button type="submit" class="primary" tabIndex="0" disabled={disabled}>
 						<i class="bi bi-lock-fill"></i>
 						<span>Add People (Encrypted)</span>
 					</button>

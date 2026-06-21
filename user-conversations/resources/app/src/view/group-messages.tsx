@@ -9,7 +9,7 @@ import { ViewMessage } from "./message"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
 import { groupIsEncrypted } from "../model/group"
-import { synthClick } from "./utils"
+import { GroupFrame } from "./group-frame"
 import { GroupMenu } from "./widget-groupMenu"
 
 dayjs.extend(relativeTime)
@@ -65,15 +65,7 @@ export class GroupMessages {
 
 		// Display messages
 		return (
-			<div id="conversation-details">
-				<div id="conversation-header" class="flex-row flex-align-center">
-					<div role="tablist" class="margin-none padding-none underlined flex-grow">
-						<div role="tab" aria-selected="true">{group.name || group.defaultName || "Messages"}</div>
-						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
-						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
-					</div>
-					<GroupMenu controller={controller} group={group} />
-				</div>
+			<GroupFrame controller={controller} active="messages" growHeader={true} headerExtra={<GroupMenu controller={controller} group={group} />}>
 				<div id="conversation-messages" class={classNames}>
 					<div class="flex-grow padding-sm padding-bottom-lg">
 						{controller.messages.map(message => {
@@ -94,7 +86,7 @@ export class GroupMessages {
 						<WidgetMessageCreate controller={vnode.attrs.controller} inReplyTo={vnode.attrs.controller.inReplyTo} />
 					</div>
 				</div>
-			</div>
+			</GroupFrame>
 		)
 	}
 }

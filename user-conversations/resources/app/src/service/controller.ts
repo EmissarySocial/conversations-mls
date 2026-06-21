@@ -444,11 +444,6 @@ export class Controller {
 		m.redraw()
 	}
 
-	page_group_leave = () => {
-		this.pageView = "GROUP-LEAVE"
-		m.redraw()
-	}
-
 	page_signout = () => {
 		this.stop("SIGN-OUT")
 	}

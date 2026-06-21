@@ -2,7 +2,8 @@ import m, { type Vnode } from "mithril"
 import { type Contact } from "../model/contact"
 
 import { ViewController } from "./controller"
-import { groupColor, type Group } from "../model/group"
+import { GroupFrame } from "./group-frame"
+import { type Group } from "../model/group"
 import { synthClick } from "./utils"
 
 type GroupMembersVnode = Vnode<GroupMembersArgs, GroupMembersState>
@@ -33,14 +34,7 @@ export class GroupMembers {
 			.filter(contact => contact.id != controller.actorId())
 
 		return (
-			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
-				<div id="conversation-header">
-					<div role="tablist" class="margin-none padding-none underlined">
-						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_messages()} onkeypress={synthClick}>{group.name || group.defaultName || "Messages"}</div>
-						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
-						<div role="tab" aria-selected="true">People ({contactStreams.length})</div>
-					</div>
-				</div>
+			<GroupFrame controller={controller} active="members">
 				<div id="conversation-messages" class="padding">
 					<div class="table">
 						{(group.stateId === "CLOSED") ? null :
@@ -86,7 +80,7 @@ export class GroupMembers {
 
 					</div>
 				</div>
-			</div>
+			</GroupFrame>
 		)
 	}
 
