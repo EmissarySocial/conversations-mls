@@ -285,6 +285,7 @@
 	border: 1px solid var(--gray20);
 	border-radius: calc(var(--rhythm) * 1.5);
 	box-shadow: 0 calc(var(--rhythm) * 0.5) calc(var(--rhythm) * 2) rgba(0, 0, 0, 0.18);
+	user-select: none;
 }
 
 /* Trigger-anchored placement: positioned just below the `.popup-anchor` it lives
@@ -339,13 +340,18 @@
 }
 
 /* A selectable row inside any `.popup` used as a menu (the filter menu, the
-   @mention autocomplete, and future menus). `.highlight` is the keyboard-navigation
-   selected state; it and :hover share the same gray so mouse and keyboard match. */
+   group menu, the @mention autocomplete, and future menus). The padding/radius
+   live here, NOT on an ambient `#app-sidebar [role=button]` rule, so a menu looks
+   identical wherever it appears (the sidebar filter menu used to borrow its
+   spacing from that rule, which is why menus outside the sidebar looked tighter).
+   `.highlight` is the keyboard-navigation selected state; it and :hover share the
+   same gray so mouse and keyboard match. */
 .popup-menu-item {
 	display: flex;
 	align-items: center;
 	margin: calc(var(--rhythm) * 0.5);
-	border-radius: var(--rhythm);
+	padding: 8px;
+	border-radius: 8px;
 	white-space: nowrap;
 	cursor: pointer;
 }
@@ -387,12 +393,6 @@
 
 .popup-menu-item[aria-disabled="true"]:hover {
 	background-color: transparent;
-}
-
-/* Higher specificity than the generic "#app-sidebar [role=button]" rule so the
-   item radius actually wins inside the sidebar's filter pop-up. */
-#conversations #app-sidebar .popup .popup-menu-item {
-	border-radius: var(--rhythm);
 }
 
 .popup-menu-icon {

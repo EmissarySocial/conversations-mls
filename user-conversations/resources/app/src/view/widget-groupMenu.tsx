@@ -41,7 +41,6 @@ export class GroupMenu {
 
 		return (
 			<div>
-				<div class="popup-menu-header">Status</div>
 				{this.viewStateItem(controller, group, close, "IMPORTANT", "Important")}
 				{this.viewStateItem(controller, group, close, "ACTIVE", "Active")}
 				{this.viewStateItem(controller, group, close, "ARCHIVED", "Archived")}

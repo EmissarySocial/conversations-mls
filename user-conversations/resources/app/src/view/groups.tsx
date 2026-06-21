@@ -78,6 +78,12 @@ export class Groups {
 
 	groupIcon(group: Group): JSX.Element {
 
+		// Important groups show a star in place of the type icon. The avatar's color
+		// (set by groupColor) still conveys the group's encryption status.
+		if (group.stateId == "IMPORTANT") {
+			return <i class="bi bi-star-fill"></i>
+		}
+
 		if (groupIsEncrypted(group)) {
 			return <i class="bi bi-lock-fill"></i>
 		}
@@ -97,7 +103,6 @@ export class Groups {
 		return <>
 			<div class="flex-row flex-align-center bold">
 				<span class="flex-grow ellipsis" style="min-width:0">{group.name || group.defaultName || ""}</span>
-				{(group.stateId == "IMPORTANT") && <i class="bi bi-star-fill" style="color:#f5b400"></i>}
 			</div>
 			<div class="text-xs text-light-gray ellipsis-multiline-2">{group.lastMessage || ""}</div>
 		</>
