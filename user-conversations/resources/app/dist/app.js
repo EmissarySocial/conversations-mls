@@ -27938,13 +27938,30 @@
 
   // src/view/modal.tsx
   var Modal = class {
+    // onEscape closes the modal when Escape is pressed. It is bound globally (not to
+    // the modal element) so it fires even when focus has left the modal — e.g. after
+    // clicking the underlay, or when the modal has no focusable element.
+    #onEscape = (event) => {
+      if (keyCode(event) == "Escape") {
+        this.#close();
+      }
+    };
+    // #close is the current modal's close callback, captured so the document-level
+    // Escape handler can reach it.
+    #close = () => {
+    };
     oncreate(vnode) {
+      this.#close = vnode.attrs.close;
+      globalThis.addEventListener("keydown", this.#onEscape);
       requestAnimationFrame(() => {
         document.getElementById("modal")?.classList.add("ready");
         const firstElement = vnode.dom.querySelector("[tabIndex]");
         firstElement?.focus();
         import_mithril3.default.redraw();
       });
+    }
+    onremove() {
+      globalThis.removeEventListener("keydown", this.#onEscape);
     }
     view(vnode) {
       return /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal", onkeydown: (event) => this.onkeydown(event, vnode) }, " ", /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal-underlay", onclick: vnode.attrs.close }), /* @__PURE__ */ (0, import_mithril3.default)("div", { id: "modal-window" }, vnode.children));
@@ -27969,11 +27986,6 @@
             event.stopPropagation();
             event.preventDefault();
           }
-          return;
-        }
-        // Close modal window
-        case "Escape": {
-          vnode.attrs.close();
           return;
         }
       }
