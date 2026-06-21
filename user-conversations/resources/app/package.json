@@ -8,6 +8,7 @@
 	"main": "app.js",
 	"scripts": {
 		"start": "esbuild src/app.tsx --bundle --outdir=./dist --jsx-factory=m --jsx-fragment='\"[\"' --watch",
+		"build": "esbuild src/app.tsx --bundle --outdir=./dist --jsx-factory=m --jsx-fragment='\"[\"' --minify --sourcemap --legal-comments=none",
 		"test": "vitest"
 	},
 	"dependencies": {
