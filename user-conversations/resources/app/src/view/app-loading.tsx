@@ -17,11 +17,11 @@ export class AppLoading {
 
 						<div class="flex-row flex-align-center padding-left">
 							<div class="bold text-lg margin-none flex-grow ellipsis" style="min-width:0">Loading...</div>
-							<div class="text-lg text-gray padding-none margin-none">
-								<i class="bi bi-filter-circle"></i>
+							<div class="popup-button" aria-disabled="true" aria-label="Filter conversations">
+								<i class="bi bi-filter"></i>
 							</div>
-							<div class="text-gray text-lg margin-none padding-xs">
-								<i class="bi bi-plus-circle-fill"></i>
+							<div class="popup-button primary" aria-disabled="true" aria-label="New conversation">
+								<i class="bi bi-plus-lg"></i>
 							</div>
 						</div>
 
@@ -31,7 +31,7 @@ export class AppLoading {
 
 						<hr class="margin-vertical-sm" />
 
-						<div class="flex-row flex-align-center padding-horizontal">
+						<div class="sidebar-item flex-row flex-align-center padding-horizontal">
 							<i class="bi bi-gear"></i>
 							<span>Settings</span>
 						</div>

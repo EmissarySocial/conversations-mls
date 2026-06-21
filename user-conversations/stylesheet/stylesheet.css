@@ -16,10 +16,12 @@
 		flex-direction: column;
 		overflow: visible;
 
-		/* The round `.popup-button` (filter / new-conversation triggers) styles
-		   itself; exclude it so this rule's squircle radius + padding don't win on
-		   specificity and distort it into a rounded square. */
-		[role="button"]:not(.popup-button) {
+		/* A clickable row in the sidebar (the conversation list items and the
+		   Settings link). Opt-in via the `.sidebar-item` class rather than the
+		   `[role=button]` attribute, so this padding/radius only lands on elements
+		   that want it — not on every accessibility-role button (e.g. the round
+		   `.popup-button` triggers) that happens to live in the sidebar. */
+		.sidebar-item {
 			padding: 8px;
 			border-radius: 8px;
 
@@ -293,6 +295,24 @@
 	background-color: var(--button-primary-background-hover);
 	border-color: var(--button-primary-background-hover);
 	color: var(--button-primary-color-hover);
+}
+
+/* Disabled (e.g. the placeholder buttons on the loading skeleton): grayed out and
+   non-interactive. Overrides the `.primary` blue so the new-conversation
+   placeholder reads as inactive rather than live. */
+.popup-button[aria-disabled="true"],
+.popup-button.primary[aria-disabled="true"] {
+	background-color: var(--gray05);
+	border-color: var(--gray20);
+	color: var(--gray30);
+	cursor: default;
+}
+
+.popup-button[aria-disabled="true"]:hover,
+.popup-button.primary[aria-disabled="true"]:hover {
+	background-color: var(--gray05);
+	border-color: var(--gray20);
+	color: var(--gray30);
 }
 
 /* `.popup` is chrome only — the visual card, with NO positioning. Position is the

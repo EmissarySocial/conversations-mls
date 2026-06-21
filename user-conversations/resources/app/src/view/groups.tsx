@@ -31,7 +31,7 @@ export class Groups {
 
 				<div class="conversations-scroll">
 					{controller.groups.map((group) => {
-						let cssClass = "flex-row flex-align-center padding padding-right-sm hover-trigger"
+						let cssClass = "sidebar-item flex-row flex-align-center padding padding-right-sm hover-trigger"
 
 						if (group.id == controller.selectedGroupId()) {
 							cssClass += " highlight"
@@ -55,7 +55,7 @@ export class Groups {
 
 				<hr class="margin-vertical-sm" />
 
-				<div class="flex-row flex-align-center padding-horizontal clickable" role="button" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
+				<div class="sidebar-item flex-row flex-align-center padding-horizontal clickable" role="button" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
 					<i class="bi bi-gear"></i>
 					<span>Settings</span>
 				</div>
