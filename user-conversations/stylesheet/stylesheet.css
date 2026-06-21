@@ -8,6 +8,7 @@
 		flex-shrink:0;
 		font-size: 16px;
 		background-color: var(--gray10);
+		padding: 4px 8px;
 
 		/* A flex column whose conversation list (not the whole sidebar) scrolls,
 		   so the filter pop-up can overflow horizontally into the message pane. */
@@ -260,8 +261,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 2em;
-	height: 2em;
+	width: 1.5em;
+	height: 1.5em;
 	border-radius: 50%;
 	border: solid 1px var(--gray30);
 	background-color: var(--white);
@@ -373,6 +374,7 @@
 .group-list-item-unread {
 	flex-shrink: 0;
 	margin-left: calc(var(--rhythm) * 0.5);
+	margin-right: calc(var(--rhythm) * -0.75);
 }
 
 /* A non-interactive section heading inside a `.popup` menu. */
