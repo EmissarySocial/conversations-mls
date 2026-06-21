@@ -29718,26 +29718,31 @@
       const isCurrent = index == vnode.state.index;
       switch (attachmentKind(attachment)) {
         case "image":
-          return /* @__PURE__ */ (0, import_mithril26.default)("img", { src: attachment.url, class: "attachment-media", alt: attachment.name });
-        // NOSONAR: typescript:S6853
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril26.default)("img", { src: attachment.url, class: "attachment-media", alt: attachment.name }), " ", this.drawDownloadButton(attachment, "attachment-download-overlay"));
         case "video":
-          return isCurrent ? /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true }) : /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-film" }));
+          return isCurrent ? /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-frame" }, /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true }), this.drawDownloadButton(attachment, "attachment-download-corner")) : /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-film" }));
         case "audio":
-          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true }));
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true }), this.drawDownloadButton(attachment, "margin-top"));
         default:
-          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-download" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "bold" }, attachment.name || "Download File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)), /* @__PURE__ */ (0, import_mithril26.default)(
-            "a",
-            {
-              href: attachment.url,
-              download: attachment.name || true,
-              class: "button margin-top",
-              target: "_blank",
-              rel: "noopener noreferrer"
-            },
-            /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-download" }),
-            " Download"
-          ));
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-download" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "bold" }, attachment.name || "Download File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)), this.drawDownloadButton(attachment, "margin-top"));
       }
+    }
+    // drawDownloadButton renders the "Download" link for an attachment. `extraClass`
+    // positions it for the surrounding layout (e.g. an overlay on an image, a corner
+    // badge on a video, or a plain button below an audio/file card).
+    drawDownloadButton(attachment, extraClass) {
+      return /* @__PURE__ */ (0, import_mithril26.default)(
+        "a",
+        {
+          href: attachment.url,
+          download: attachment.name || true,
+          class: "button " + extraClass,
+          target: "_blank",
+          rel: "noopener noreferrer"
+        },
+        /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-download" }),
+        " Download"
+      );
     }
     // goTo moves to the attachment at `index` (clamped; no wrapping) and pauses any
     // media that was playing on the slide being left behind.

@@ -701,6 +701,17 @@ button.pressed:focus,
 	}
 }
 
+/* The frame wraps a media item and collapses to its rendered size, giving the
+   download overlay a box to pin against that matches the visible media (not the
+   whole slide). It is itself bounded by the slide so the media's percentages
+   resolve correctly. */
+#attachment-viewer .attachment-frame {
+	position: relative;
+	display: flex;
+	max-width: 100%;
+	max-height: 100%;
+}
+
 /* Media grows to fill the slide up to its bounds while preserving aspect ratio.
    Using max-width/max-height (rather than a fixed 100% box with object-fit) makes
    the element box hug the image itself, so the rounded corners clip the visible
@@ -713,6 +724,35 @@ button.pressed:focus,
 	border-radius: 8px;
 	user-select: none;
 	-webkit-user-drag: none;
+}
+
+/* Image download button: semi-transparent, centered along the bottom edge of the
+   image, sitting above the place counter. */
+#attachment-viewer .attachment-download-overlay {
+	position: absolute;
+	bottom: 12px;
+	left: 50%;
+	transform: translateX(-50%);
+	opacity: 0.7;
+}
+
+#attachment-viewer .attachment-download-overlay:hover,
+#attachment-viewer .attachment-download-overlay:focus {
+	opacity: 1;
+}
+
+/* Video download button: a badge in the top-right corner, clear of the native
+   control bar at the bottom. */
+#attachment-viewer .attachment-download-corner {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	opacity: 0.7;
+}
+
+#attachment-viewer .attachment-download-corner:hover,
+#attachment-viewer .attachment-download-corner:focus {
+	opacity: 1;
 }
 
 /* Placeholder shown in off-screen video slides (the real player mounts only when

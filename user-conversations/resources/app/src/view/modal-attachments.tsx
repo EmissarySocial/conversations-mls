@@ -168,11 +168,21 @@ export class Attachments {
 		switch (attachmentKind(attachment)) {
 
 			case "image":
-				return <img src={attachment.url} class="attachment-media" alt={attachment.name} /> // NOSONAR: typescript:S6853
+				return (
+					<div class="attachment-frame">
+						<img src={attachment.url} class="attachment-media" alt={attachment.name} /> {/* NOSONAR: typescript:S6853 */}
+						{this.drawDownloadButton(attachment, "attachment-download-overlay")}
+					</div>
+				)
 
 			case "video":
 				return isCurrent
-					? <video src={attachment.url} class="attachment-media" controls></video>
+					? (
+						<div class="attachment-frame">
+							<video src={attachment.url} class="attachment-media" controls></video>
+							{this.drawDownloadButton(attachment, "attachment-download-corner")}
+						</div>
+					)
 					: <div class="attachment-media-placeholder"><i class="bi bi-film"></i></div>
 
 			case "audio":
@@ -181,6 +191,7 @@ export class Attachments {
 						<i class={"bi " + attachmentIcon(attachment)}></i>
 						<div class="margin-bottom">{attachment.name || "Audio"}</div>
 						{isCurrent && <audio src={attachment.url} controls></audio>}
+						{this.drawDownloadButton(attachment, "margin-top")}
 					</div>
 				)
 
@@ -190,15 +201,24 @@ export class Attachments {
 						<i class={"bi " + attachmentIcon(attachment)}></i>
 						<div class="bold">{attachment.name || "Download File"}</div>
 						{(attachment.size > 0) && <div class="text-sm text-gray">{formatFileSize(attachment.size)}</div>}
-						<a
-							href={attachment.url}
-							download={attachment.name || true}
-							class="button margin-top"
-							target="_blank"
-							rel="noopener noreferrer"><i class="bi bi-download"></i> Download</a>
+						{this.drawDownloadButton(attachment, "margin-top")}
 					</div>
 				)
 		}
+	}
+
+	// drawDownloadButton renders the "Download" link for an attachment. `extraClass`
+	// positions it for the surrounding layout (e.g. an overlay on an image, a corner
+	// badge on a video, or a plain button below an audio/file card).
+	drawDownloadButton(attachment: Attachment, extraClass: string): JSX.Element {
+		return (
+			<a
+				href={attachment.url}
+				download={attachment.name || true}
+				class={"button " + extraClass}
+				target="_blank"
+				rel="noopener noreferrer"><i class="bi bi-download"></i> Download</a>
+		)
 	}
 
 	// goTo moves to the attachment at `index` (clamped; no wrapping) and pauses any
