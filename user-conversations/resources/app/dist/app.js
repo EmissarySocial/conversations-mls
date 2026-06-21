@@ -28775,7 +28775,7 @@
   }
 
   // src/view/widget-message-create.tsx
-  var MAX_ATTACHMENT_BYTES = 1024 * 1024;
+  var MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
   var MESSAGE_INPUT_ID = "message-input";
   var WidgetMessageCreate = class {
     oninit(vnode) {
@@ -29624,28 +29624,33 @@
   // src/view/modal-attachments.tsx
   var import_mithril26 = __toESM(require_mithril(), 1);
   var SWIPE_THRESHOLD = 50;
+  var DRAG_SLOP = 8;
   var Attachments = class {
     oninit(vnode) {
       vnode.state.index = vnode.attrs.controller.modalAttachmentIndex;
-      vnode.state.touchStartX = null;
+      vnode.state.drag = null;
     }
     oncreate() {
       document.getElementById("modal-window")?.classList.add("huge");
     }
     view(vnode) {
       const attachments = vnode.attrs.controller.modalAttachments;
-      const current = attachments[vnode.state.index];
-      if (current == void 0) {
+      if (attachments.length == 0) {
         return /* @__PURE__ */ (0, import_mithril26.default)(Modal, { close: vnode.attrs.close });
       }
       const hasMultiple = attachments.length > 1;
+      const atStart = vnode.state.index <= 0;
+      const atEnd = vnode.state.index >= attachments.length - 1;
       return /* @__PURE__ */ (0, import_mithril26.default)(Modal, { close: vnode.attrs.close }, /* @__PURE__ */ (0, import_mithril26.default)(
         "div",
         {
           id: "attachment-viewer",
           onkeydown: (event) => this.onkeydown(vnode, event),
-          ontouchstart: (event) => this.ontouchstart(vnode, event),
-          ontouchend: (event) => this.ontouchend(vnode, event)
+          ondragstart: (event) => event.preventDefault(),
+          onpointerdown: (event) => this.onpointerdown(vnode, event),
+          onpointermove: (event) => this.onpointermove(vnode, event),
+          onpointerup: (event) => this.onpointerup(vnode, event),
+          onpointercancel: (event) => this.onpointercancel(vnode, event)
         },
         /* @__PURE__ */ (0, import_mithril26.default)(
           "button",
@@ -29665,11 +29670,12 @@
             class: "attachment-nav attachment-prev",
             "aria-label": "Previous attachment",
             tabIndex: "0",
+            disabled: atStart,
             onclick: () => this.previous(vnode)
           },
           /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-chevron-left" })
         ),
-        /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-stage" }, this.drawAttachment(current)),
+        /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-stage" }, /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-track", style: `transform:translateX(${-vnode.state.index * 100}%)` }, attachments.map((attachment, index) => /* @__PURE__ */ (0, import_mithril26.default)("div", { key: attachment.url, class: "attachment-slide" }, this.drawAttachment(vnode, attachment, index))))),
         hasMultiple && /* @__PURE__ */ (0, import_mithril26.default)(
           "button",
           {
@@ -29677,6 +29683,7 @@
             class: "attachment-nav attachment-next",
             "aria-label": "Next attachment",
             tabIndex: "0",
+            disabled: atEnd,
             onclick: () => this.next(vnode)
           },
           /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-chevron-right" })
@@ -29685,16 +29692,18 @@
       ));
     }
     // drawAttachment renders the body for a single attachment, choosing the player
-    // or download card that matches its kind.
-    drawAttachment(attachment) {
+    // or download card that matches its kind. Media is mounted only for the current
+    // slide (and never autoplays) so off-screen players do not load or play.
+    drawAttachment(vnode, attachment, index) {
+      const isCurrent = index == vnode.state.index;
       switch (attachmentKind(attachment)) {
         case "image":
           return /* @__PURE__ */ (0, import_mithril26.default)("img", { src: attachment.url, class: "attachment-media", alt: attachment.name });
         // NOSONAR: typescript:S6853
         case "video":
-          return /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true, autoplay: true });
+          return isCurrent ? /* @__PURE__ */ (0, import_mithril26.default)("video", { src: attachment.url, class: "attachment-media", controls: true }) : /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-media-placeholder" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-film" }));
         case "audio":
-          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true, autoplay: true }));
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true }));
         default:
           return /* @__PURE__ */ (0, import_mithril26.default)(
             "a",
@@ -29712,15 +29721,29 @@
           );
       }
     }
-    // previous moves to the prior attachment, wrapping to the end.
-    previous(vnode) {
+    // goTo moves to the attachment at `index` (clamped; no wrapping) and pauses any
+    // media that was playing on the slide being left behind.
+    goTo(vnode, index) {
       const count = vnode.attrs.controller.modalAttachments.length;
-      vnode.state.index = (vnode.state.index - 1 + count) % count;
+      const next = Math.max(0, Math.min(count - 1, index));
+      if (next == vnode.state.index) {
+        return;
+      }
+      this.pauseAllMedia();
+      vnode.state.index = next;
     }
-    // next moves to the following attachment, wrapping to the start.
+    // previous moves to the prior attachment.
+    previous(vnode) {
+      this.goTo(vnode, vnode.state.index - 1);
+    }
+    // next moves to the following attachment.
     next(vnode) {
-      const count = vnode.attrs.controller.modalAttachments.length;
-      vnode.state.index = (vnode.state.index + 1) % count;
+      this.goTo(vnode, vnode.state.index + 1);
+    }
+    // pauseAllMedia pauses every <video>/<audio> in the lightbox, used before
+    // navigating so a player never keeps running off-screen.
+    pauseAllMedia() {
+      document.querySelectorAll("#attachment-viewer video, #attachment-viewer audio").forEach((media) => media.pause());
     }
     // onkeydown maps the Left/Right arrow keys to attachment navigation.
     onkeydown(vnode, event) {
@@ -29734,21 +29757,43 @@
           this.next(vnode);
       }
     }
-    // ontouchstart records the starting X coordinate of a touch gesture.
-    ontouchstart(vnode, event) {
-      vnode.state.touchStartX = event.changedTouches[0]?.clientX ?? null;
-    }
-    // ontouchend completes a swipe gesture, advancing to the next or previous
-    // attachment when the horizontal travel exceeds SWIPE_THRESHOLD.
-    ontouchend(vnode, event) {
-      const startX = vnode.state.touchStartX;
-      vnode.state.touchStartX = null;
-      if (startX == null) {
+    // onpointerdown begins a drag gesture, recording its origin and whether it
+    // started on an interactive media element.
+    onpointerdown(vnode, event) {
+      if (event.pointerType == "mouse" && event.button != 0) {
         return;
       }
-      const endX = event.changedTouches[0]?.clientX ?? startX;
-      const deltaX = endX - startX;
-      if (Math.abs(deltaX) < SWIPE_THRESHOLD) {
+      const onMedia = event.target?.closest("video, audio, a, .attachment-download") != null;
+      vnode.state.drag = { startX: event.clientX, startY: event.clientY, onMedia, moved: false };
+    }
+    // onpointermove flags the gesture as a drag once it travels past DRAG_SLOP. A
+    // drag that began on playing media pauses it (so a swipe over a video stops it),
+    // while a stationary press is left alone for the native control to handle.
+    onpointermove(vnode, event) {
+      const drag = vnode.state.drag;
+      if (drag == null || drag.moved) {
+        return;
+      }
+      if (Math.abs(event.clientX - drag.startX) < DRAG_SLOP && Math.abs(event.clientY - drag.startY) < DRAG_SLOP) {
+        return;
+      }
+      drag.moved = true;
+      if (drag.onMedia) {
+        this.pauseAllMedia();
+      }
+    }
+    // onpointerup completes the gesture, navigating when the horizontal travel
+    // clears SWIPE_THRESHOLD and exceeds the vertical travel (so a vertical scroll
+    // is not read as a swipe).
+    onpointerup(vnode, event) {
+      const drag = vnode.state.drag;
+      vnode.state.drag = null;
+      if (drag == null) {
+        return;
+      }
+      const deltaX = event.clientX - drag.startX;
+      const deltaY = event.clientY - drag.startY;
+      if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) <= Math.abs(deltaY)) {
         return;
       }
       if (deltaX > 0) {
@@ -29757,6 +29802,11 @@
         this.next(vnode);
       }
       import_mithril26.default.redraw();
+    }
+    // onpointercancel abandons an in-progress gesture (e.g. the browser took over
+    // for a scroll).
+    onpointercancel(vnode, _event) {
+      vnode.state.drag = null;
     }
   };
 

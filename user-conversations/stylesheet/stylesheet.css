@@ -657,30 +657,68 @@ button.pressed:focus,
 	height: 100%;
 }
 
-/* The stage fills the dialog and centers its content on both axes, so anything
-   smaller than the dialog (an icon card, or media with a different aspect ratio)
-   sits centered in the leftover space. */
+/* The stage is the fixed clip window; the track inside it holds one full-width
+   slide per attachment and is translated horizontally to bring the current slide
+   into view. touch-action keeps vertical scrolling to the browser while we handle
+   horizontal swipes. */
 #attachment-viewer .attachment-stage {
 	flex-grow: 1;
 	min-width: 0;
 	min-height: 0;
 	width: 100%;
 	overflow: hidden;
+	touch-action: pan-y;
+}
+
+#attachment-viewer .attachment-track {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	transition: transform 240ms ease;
+}
+
+/* Each slide is exactly the stage width and centers its own content, so items of
+   any aspect ratio sit centered in the leftover space. */
+#attachment-viewer .attachment-slide {
+	flex: 0 0 100%;
+	width: 100%;
+	height: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-/* Media grows to fill the stage up to its bounds while preserving aspect ratio.
+/* Disable the slide animation for users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+	#attachment-viewer .attachment-track {
+		transition: none;
+	}
+}
+
+/* Media grows to fill the slide up to its bounds while preserving aspect ratio.
    Using max-width/max-height (rather than a fixed 100% box with object-fit) makes
    the element box hug the image itself, so the rounded corners clip the visible
-   image edges instead of an invisible letterboxed box. The stage's flex centering
+   image edges instead of an invisible letterboxed box. The slide's flex centering
    keeps it centered in the leftover space. */
 #attachment-viewer .attachment-media {
 	max-width: 100%;
 	max-height: 100%;
 	object-fit: contain;
 	border-radius: 8px;
+	user-select: none;
+	-webkit-user-drag: none;
+}
+
+/* Placeholder shown in off-screen video slides (the real player mounts only when
+   the slide becomes current, so it never loads or plays off-screen). */
+#attachment-viewer .attachment-media-placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	font-size: 80px;
+	color: var(--gray50);
 }
 
 #attachment-viewer .attachment-audio,
@@ -720,12 +758,18 @@ button.pressed:focus,
 	opacity: 0.85;
 }
 
-#attachment-viewer .attachment-nav:hover,
-#attachment-viewer .attachment-nav:focus,
+#attachment-viewer .attachment-nav:not(:disabled):hover,
+#attachment-viewer .attachment-nav:not(:disabled):focus,
 #attachment-viewer .attachment-close:hover,
 #attachment-viewer .attachment-close:focus {
 	opacity: 1;
 	border-color: var(--blue50);
+}
+
+/* Dim and disable a nav arrow at the start/end of the (non-wrapping) list. */
+#attachment-viewer .attachment-nav:disabled {
+	opacity: 0.3;
+	cursor: default;
 }
 
 #attachment-viewer .attachment-nav {

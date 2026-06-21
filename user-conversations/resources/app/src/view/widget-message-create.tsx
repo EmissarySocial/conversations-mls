@@ -8,7 +8,7 @@ import { formatFileSize, synthClick } from "./utils"
 // MAX_ATTACHMENT_BYTES is the largest file (in bytes) that may be embedded in a
 // message. Attachments are embedded as base64 "data:" URIs, so this limits the
 // original (pre-encoding) file size to keep messages a reasonable size.
-const MAX_ATTACHMENT_BYTES = 1024 * 1024
+const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024
 import { MentionPopup, type MentionPopupController } from "./widget-mention-popup"
 import { PickEmoji } from "./modal-pickEmoji"
 import { activeMentionToken, replaceMentionToken, type MentionToken } from "./mentionToken"
