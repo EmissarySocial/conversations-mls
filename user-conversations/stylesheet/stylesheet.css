@@ -16,6 +16,13 @@
 		flex-direction: column;
 		overflow: visible;
 
+		/* Raise the sidebar's stacking context above #conversation-details so the
+		   filter pop-up paints over the message pane's cards. (A `.card` there has
+		   container-type:inline-size, which makes it a stacking context; without
+		   this, the later-in-source details pane would paint over the popup.) */
+		position: relative;
+		z-index: 1;
+
 		/* A clickable row in the sidebar (the conversation list items and the
 		   Settings link). Opt-in via the `.sidebar-item` class rather than the
 		   `[role=button]` attribute, so this padding/radius only lands on elements
