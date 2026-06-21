@@ -1,7 +1,7 @@
 import m, { type Vnode } from "mithril"
 import { type Contact } from "../model/contact"
 
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
 

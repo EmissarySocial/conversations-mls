@@ -1,6 +1,6 @@
 import m, { type Vnode } from "mithril"
 import { Actor } from "../as/actor"
-import type { Controller } from "../service/controller"
+import type { ViewController as Controller } from "./controller"
 
 // MentionPopupController is the imperative handle a host (e.g. a message composer)
 // uses to drive the popup's keyboard navigation while focus stays in its own text

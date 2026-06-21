@@ -1,5 +1,5 @@
 import m from "mithril"
-import type { Controller } from "../service/controller"
+import type { ViewController as Controller } from "./controller"
 import { NewFilter, type Filter } from "../model/filter"
 import { WidgetFilterEdit, STATE_OPTIONS } from "./widget-filter-edit"
 import { haltEvent, synthClick } from "./utils"

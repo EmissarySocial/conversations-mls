@@ -1,5 +1,5 @@
 import m from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { groupIsEncrypted, type Group } from "../model/group"
 import { synthClick } from "./utils"
 import { FilterMenu } from "./widget-filterMenu"

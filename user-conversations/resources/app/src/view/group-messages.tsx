@@ -3,7 +3,7 @@ import type Stream from "mithril/stream"
 
 import dayjs from "dayjs"
 
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { WidgetMessageCreate } from "./widget-message-create"
 import { ViewMessage } from "./message"
 import relativeTime from "dayjs/plugin/relativeTime"

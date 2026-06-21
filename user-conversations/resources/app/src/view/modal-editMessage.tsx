@@ -1,6 +1,6 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { groupIsEncrypted } from "../model/group"
 import { htmlToText } from "../service/utils"
 import { Modal } from "./modal"

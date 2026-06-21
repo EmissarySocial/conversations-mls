@@ -1,6 +1,6 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { Modal } from "./modal"
 import { ActorSearch } from "./widget-actorSearch"
 import { Actor } from "../as/actor"

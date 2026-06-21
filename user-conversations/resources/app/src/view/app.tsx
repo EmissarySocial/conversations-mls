@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import type { Config } from "../model/config"
 import { Welcome } from "./welcome"
 import { Index } from "."

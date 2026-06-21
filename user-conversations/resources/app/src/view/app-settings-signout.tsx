@@ -1,5 +1,5 @@
 import m from "mithril"
-import type { Controller } from "../service/controller"
+import type { ViewController as Controller } from "./controller"
 
 type SignoutVnode = m.Vnode<SignoutArgs, SignoutState>
 

@@ -1,7 +1,7 @@
 import m from "mithril"
 import { type Vnode } from "mithril"
 import { type Group } from "../model/group"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { NewConversation } from "./modal-newConversation"
 import { Groups } from "./groups"
 import { GroupMessages } from "./group-messages"

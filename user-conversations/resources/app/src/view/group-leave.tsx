@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { type Group } from "../model/group"
 import { synthClick } from "./utils"
 

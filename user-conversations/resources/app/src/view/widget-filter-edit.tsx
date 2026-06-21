@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import type { Filter } from "../model/filter"
 import type { GroupState } from "../model/group"
 import { Modal } from "./modal"

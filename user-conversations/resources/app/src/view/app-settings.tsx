@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import type { Controller, SettingsTab } from "../service/controller"
+import type { ViewController as Controller, SettingsTab } from "./controller"
 import { synthClick } from "./utils"
 import { AppSettingsGeneral } from "./app-settings-general"
 import { AppSettingsFilters } from "./app-settings-filters"

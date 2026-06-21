@@ -1,6 +1,6 @@
 import m, { type Vnode } from "mithril"
 import { type Message } from "../model/message"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { type Contact } from "../model/contact"
 import dayjs from "dayjs"
 import type Stream from "mithril/stream"

@@ -10,11 +10,12 @@ import { Proxy } from "./service/proxy"
 
 // Views
 import { App } from "./view/app"
+import { ViewController } from "./view/controller"
 import { Contacts } from "./service/contacts"
 import { Host } from "./service/host"
 
-// Global controller instance
-let controller: Controller
+// Global controller instance (the view-layer façade)
+let controller: ViewController
 
 // startup initializes the application and mounts the Mithril components
 async function startup() {
@@ -43,8 +44,9 @@ async function startup() {
 	const directory = new Directory(delivery, proxy, actorId)
 	const receiver = new Receiver()
 
-	// Build the controller
-	controller = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host)
+	// Build the service-layer controller, then wrap it in the view-layer façade.
+	const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host)
+	controller = new ViewController(serviceController)
 	controller.start()
 
 	// Pass the controller to the App component and mount the main application

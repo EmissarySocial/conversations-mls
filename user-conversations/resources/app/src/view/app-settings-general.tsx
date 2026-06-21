@@ -1,5 +1,5 @@
 import m, { type Vnode } from "mithril"
-import type { Controller } from "../service/controller"
+import type { ViewController as Controller } from "./controller"
 import type { EmojiKey } from "../model/emoji"
 import { synthClick } from "./utils"
 import { SavedNotice } from "./widget-saved-notice"

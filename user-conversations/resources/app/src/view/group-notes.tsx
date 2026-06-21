@@ -1,7 +1,7 @@
 import m, { type Vnode } from "mithril"
 
 import { type Group } from "../model/group"
-import { Controller } from "../service/controller"
+import { ViewController as Controller } from "./controller"
 import { haltEvent, synthClick } from "./utils"
 
 type GroupNotesVnode = Vnode<GroupNotesArgs, GroupNotesState>
