@@ -186,15 +186,16 @@ export class ViewMessage {
 
 		return (
 			<div class="message-attachments flex-row flex-wrap">
-				{message.attachments.map((attachment, index) => this.drawAttachment(controller, message, attachment, index))}
+				{message.attachments.map((attachment, index) => this.drawAttachmentTile(controller, message, attachment, index))}
 			</div>
 		)
 	}
 
-	// drawAttachment renders a single attachment thumbnail. Downloadable-only files
-	// render as a download anchor so clicking them downloads directly; everything
-	// else opens the lightbox carousel (from which the file is still reachable).
-	drawAttachment(controller: ViewController, message: Message, attachment: Attachment, index: number): JSX.Element {
+	// drawAttachmentTile renders a single attachment thumbnail in the message bubble.
+	// Downloadable-only files render as a download anchor so clicking them downloads
+	// directly; everything else opens the lightbox carousel (from which the file is
+	// still reachable).
+	drawAttachmentTile(controller: ViewController, message: Message, attachment: Attachment, index: number): JSX.Element {
 
 		if (attachmentKind(attachment) == "file") {
 			return (

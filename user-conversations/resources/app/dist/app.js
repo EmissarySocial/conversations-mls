@@ -29354,12 +29354,13 @@
       if (message.attachments.length == 0) {
         return null;
       }
-      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => this.drawAttachment(controller2, message, attachment, index)));
+      return /* @__PURE__ */ (0, import_mithril14.default)("div", { class: "message-attachments flex-row flex-wrap" }, message.attachments.map((attachment, index) => this.drawAttachmentTile(controller2, message, attachment, index)));
     }
-    // drawAttachment renders a single attachment thumbnail. Downloadable-only files
-    // render as a download anchor so clicking them downloads directly; everything
-    // else opens the lightbox carousel (from which the file is still reachable).
-    drawAttachment(controller2, message, attachment, index) {
+    // drawAttachmentTile renders a single attachment thumbnail in the message bubble.
+    // Downloadable-only files render as a download anchor so clicking them downloads
+    // directly; everything else opens the lightbox carousel (from which the file is
+    // still reachable).
+    drawAttachmentTile(controller2, message, attachment, index) {
       if (attachmentKind(attachment) == "file") {
         return /* @__PURE__ */ (0, import_mithril14.default)(
           "a",
