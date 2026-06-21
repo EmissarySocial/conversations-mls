@@ -254,6 +254,25 @@
 	position: relative;
 }
 
+/* A round, subtle icon-only button used to trigger a pop-up (e.g. the
+   per-conversation "···" menu). */
+.popup-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2em;
+	height: 2em;
+	border-radius: 50%;
+	border: solid 1px var(--gray30);
+	background-color: var(--white);
+	color: var(--gray70);
+	cursor: pointer;
+}
+
+.popup-button:hover {
+	background-color: var(--gray10);
+}
+
 /* `.popup` is chrome only — the visual card, with NO positioning. Position is the
    caller's job: trigger-anchored pop-ups add `.popup-below`; the caret-anchored
    mention pop-up positions itself inline. Keeping positioning out of the base class
@@ -268,24 +287,55 @@
 	box-shadow: 0 calc(var(--rhythm) * 0.5) calc(var(--rhythm) * 2) rgba(0, 0, 0, 0.18);
 }
 
-/* Trigger-anchored placement: centered just below the `.popup-anchor` it lives in. */
+/* Trigger-anchored placement: positioned just below the `.popup-anchor` it lives
+   in. Horizontal placement is set by an alignment modifier (`.popup-align-*`). */
 .popup-below {
 	position: absolute;
 	top: calc(100% + var(--rhythm));
+}
+
+/* Centered under the trigger (the default). */
+.popup-align-center {
 	left: 50%;
 	transform: translateX(-50%);
+}
+
+/* Pinned to the trigger's left edge (card extends to the right). */
+.popup-align-left {
+	left: 0;
+}
+
+/* Pinned to the trigger's right edge (card extends to the left). Use this when
+   the trigger sits near the right edge of the screen. */
+.popup-align-right {
+	right: 0;
 }
 
 .popup-caret {
 	position: absolute;
 	top: calc(var(--rhythm) * -1);
-	left: 50%;
-	transform: translateX(-50%);
 	width: 0;
 	height: 0;
 	border-left: var(--rhythm) solid transparent;
 	border-right: var(--rhythm) solid transparent;
 	border-bottom: var(--rhythm) solid var(--white);
+}
+
+/* The caret tracks the trigger, not the card: centered for a centered card, and
+   one trigger-half-width (~1em) in from whichever edge the card is pinned to. */
+.popup-align-center .popup-caret {
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.popup-align-left .popup-caret {
+	left: 1em;
+	transform: translateX(-50%);
+}
+
+.popup-align-right .popup-caret {
+	right: 1em;
+	transform: translateX(50%);
 }
 
 /* A selectable row inside any `.popup` used as a menu (the filter menu, the
@@ -303,6 +353,40 @@
 .popup-menu-item.highlight,
 .popup-menu-item:hover {
 	background-color: var(--gray10);
+}
+
+/* Conversation list row: keep the unread dot pinned at the right edge. The label
+   column must be allowed to shrink (min-width:0) so its summary text ellipsizes
+   instead of overflowing and pushing the dot out of view; the dot itself never
+   shrinks and gets a little breathing room. */
+.group-list-item-body,
+.group-list-item-label {
+	min-width: 0;
+}
+
+.group-list-item-unread {
+	flex-shrink: 0;
+	margin-left: calc(var(--rhythm) * 0.5);
+}
+
+/* A non-interactive section heading inside a `.popup` menu. */
+.popup-menu-header {
+	margin: calc(var(--rhythm) * 0.5);
+	font-size: 0.75em;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--gray60);
+}
+
+/* A menu item for a not-yet-available action: dimmed, no pointer, no hover. */
+.popup-menu-item[aria-disabled="true"] {
+	cursor: default;
+	opacity: 0.5;
+}
+
+.popup-menu-item[aria-disabled="true"]:hover {
+	background-color: transparent;
 }
 
 /* Higher specificity than the generic "#app-sidebar [role=button]" rule so the

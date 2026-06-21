@@ -42,8 +42,8 @@ export class Groups {
 								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${this.groupColor(group)}`}>
 									{this.groupIcon(group)}
 								</div>
-								<div class="flex-row flex-grow nowrap pos-relative">
-									<div class="flex-grow">
+								<div class="flex-row flex-grow nowrap pos-relative group-list-item-body">
+									<div class="flex-grow group-list-item-label">
 										{this.groupLabel(group)}
 									</div>
 									{this.unreadMarker(vnode, group)}
@@ -120,7 +120,7 @@ export class Groups {
 		// unencrypted accent (#F2C94C), matching the rest of the app.
 		const color = groupIsEncrypted(group) ? "var(--blue50)" : "#F2C94C"
 
-		return <div class="text-xs" style={`color:${color};`}>
+		return <div class="text-xs group-list-item-unread" style={`color:${color};`}>
 			<i class="bi bi-circle-fill"></i>
 		</div>
 	}

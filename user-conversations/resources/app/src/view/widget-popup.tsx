@@ -3,6 +3,11 @@ import m from "mithril"
 type PopupVnode = m.Vnode<PopupArgs, PopupState>
 type PopupVnodeDOM = m.VnodeDOM<PopupArgs, PopupState>
 
+// PopupAlign controls how the popup card is positioned horizontally relative to
+// its trigger: centered under it (the default), or pinned to the trigger's left
+// or right edge (so a far-edge trigger doesn't push the card off-screen).
+type PopupAlign = "center" | "left" | "right"
+
 interface PopupArgs {
 	// trigger renders the element that toggles the popup. It receives a toggle
 	// callback and the current open state.
@@ -10,6 +15,9 @@ interface PopupArgs {
 	// content renders the popup body. It receives a close callback so the body
 	// can dismiss the popup (e.g. after the user makes a selection).
 	content: (close: () => void) => m.Children
+	// align positions the card horizontally relative to the trigger. Defaults to
+	// "center".
+	align?: PopupAlign
 }
 
 interface PopupState {
@@ -37,11 +45,12 @@ export class Popup {
 	}
 
 	view(vnode: PopupVnode) {
+		const alignClass = "popup-align-" + (vnode.attrs.align ?? "center")
 		return (
 			<div class="popup-anchor">
 				{vnode.attrs.trigger(() => this.toggle(vnode), vnode.state.isOpen)}
 				{vnode.state.isOpen &&
-					<div class="popup popup-below">
+					<div class={"popup popup-below " + alignClass}>
 						<div class="popup-caret"></div>
 						{vnode.attrs.content(() => this.close(vnode))}
 					</div>

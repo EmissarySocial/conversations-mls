@@ -83,6 +83,9 @@ export class GroupNotes {
 									<button type="submit" class="primary" tabindex="0">
 										Save Changes
 									</button>
+									<button type="button" tabindex="0" onclick={() => this.close(vnode)}>
+										Cancel
+									</button>
 								</div>
 							</div>
 						</div>

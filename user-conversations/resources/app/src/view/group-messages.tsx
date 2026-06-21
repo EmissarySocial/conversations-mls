@@ -8,8 +8,9 @@ import { WidgetMessageCreate } from "./widget-message-create"
 import { ViewMessage } from "./message"
 import relativeTime from "dayjs/plugin/relativeTime"
 import { type Contact } from "../model/contact"
-import { groupIsEncrypted, type Group, type EncryptedGroup, type GroupState } from "../model/group"
+import { groupIsEncrypted } from "../model/group"
 import { synthClick } from "./utils"
+import { GroupMenu } from "./widget-groupMenu"
 
 dayjs.extend(relativeTime)
 
@@ -42,23 +43,6 @@ export class GroupMessages {
 		}
 	}
 
-	// viewStateButton renders one of the group-status buttons (Important / Active /
-	// Archived). The button matching the group's current state appears selected;
-	// clicking an unselected button changes the group's state. The label is used as
-	// the accessible name for the icon-only button.
-	viewStateButton(controller: ViewController, group: Group | EncryptedGroup, state: GroupState, icon: string, label: string): m.Children {
-
-		const isSelected = (group.stateId == state)
-		const cssClass = "text-sm" + (isSelected ? " pressed" : "")
-		const iconClass = "bi bi-" + icon + (isSelected ? "-fill" : "")
-
-		return (
-			<button type="button" class={cssClass} title={label} aria-label={label} aria-pressed={isSelected ? "true" : "false"} onclick={() => controller.setSelectedGroupState(state)}>
-				<i class={iconClass}></i>
-			</button>
-		)
-	}
-
 	scrollToBottom(vnode: GroupMessagesVnode) {
 		vnode.state.previousMessageCount = vnode.attrs.controller.messages.length;
 
@@ -88,11 +72,7 @@ export class GroupMessages {
 						<div role="tab" tabIndex="0" onclick={() => vnode.attrs.controller.page_group_notes()} onkeypress={synthClick}>Notes</div>
 						<div role="tab" tabIndex="0" onclick={() => controller.page_group_members()} onkeypress={synthClick}>People ({group.members.length})</div>
 					</div>
-					<div class="button-group">
-						{this.viewStateButton(controller, group, "IMPORTANT", "star", "Important")}
-						{this.viewStateButton(controller, group, "ACTIVE", "chat", "Active")}
-						{this.viewStateButton(controller, group, "ARCHIVED", "archive", "Archived")}
-					</div>
+					<GroupMenu controller={controller} group={group} />
 				</div>
 				<div id="conversation-messages" class={classNames}>
 					<div class="flex-grow padding-sm padding-bottom-lg">
