@@ -24,17 +24,28 @@ interface AttachmentsState {
 	index: number
 	// drag holds the in-progress pointer gesture, or null when none is active.
 	drag: DragState | null
+	// suppressClick is true immediately after a drag, so the trailing click event
+	// (e.g. on a download link or the underlay) is swallowed rather than acted on.
+	suppressClick: boolean
 }
+
+// DragAxis is locked on the first significant movement of a gesture: "x" enables
+// horizontal swiping, "y" makes the gesture inert (vertical drags do nothing).
+type DragAxis = "" | "x" | "y"
 
 // DragState tracks a pointer gesture from press to release across the stage.
 interface DragState {
+	pointerId: number
 	startX: number
 	startY: number
-	// onMedia is true when the gesture began on a <video>/<audio>/<a>, so the
-	// native control keeps its click while a clear horizontal swipe still navigates.
+	// onMedia is true when the gesture began on a media control or link; such
+	// gestures are left to the native control (scrubbing) and never swipe.
 	onMedia: boolean
-	// moved is true once the pointer has traveled past DRAG_SLOP.
-	moved: boolean
+	// stageWidth is the clip-window width captured at drag start, used to convert
+	// the pixel delta into the track's percentage transform.
+	stageWidth: number
+	// axis is locked to "x" or "y" once the gesture clears DRAG_SLOP.
+	axis: DragAxis
 }
 
 // Attachments is the full-screen attachment lightbox. It shows the attachments as
@@ -45,11 +56,36 @@ export class Attachments {
 	oninit(vnode: AttachmentsVnode) {
 		vnode.state.index = vnode.attrs.controller.modalAttachmentIndex
 		vnode.state.drag = null
+		vnode.state.suppressClick = false
 	}
 
-	oncreate() {
+	// clickSuppressor swallows the synthetic click that a browser fires right after a
+	// drag, so a drag that ends over a link/button does not also activate it. Held as
+	// a field so it can be removed on teardown.
+	clickSuppressor = (event: MouseEvent) => {
+		if (this.#state?.suppressClick) {
+			event.stopPropagation()
+			event.preventDefault()
+			this.#state.suppressClick = false
+		}
+	}
+
+	// #state is a reference to the vnode state, captured so the capture-phase click
+	// listener (added imperatively) can read the suppressClick flag.
+	#state: AttachmentsState | null = null
+
+	oncreate(vnode: AttachmentsVnode) {
 		// The lightbox uses the global "huge" modal size for maximum viewing area
 		document.getElementById("modal-window")?.classList.add("huge")
+
+		// Suppress the post-drag click in the capture phase, before it reaches links
+		this.#state = vnode.state
+		document.getElementById("attachment-viewer")?.addEventListener("click", this.clickSuppressor, true)
+	}
+
+	onremove() {
+		document.getElementById("attachment-viewer")?.removeEventListener("click", this.clickSuppressor, true)
+		this.#state = null
 	}
 
 	view(vnode: AttachmentsVnode) {
@@ -150,17 +186,17 @@ export class Attachments {
 
 			default:
 				return (
-					<a
-						href={attachment.url}
-						download={attachment.name || true}
-						class="attachment-download"
-						target="_blank"
-						rel="noopener noreferrer">
+					<div class="attachment-download">
 						<i class={"bi " + attachmentIcon(attachment)}></i>
 						<div class="bold">{attachment.name || "Download File"}</div>
 						{(attachment.size > 0) && <div class="text-sm text-gray">{formatFileSize(attachment.size)}</div>}
-						<div class="button margin-top"><i class="bi bi-download"></i> Download</div>
-					</a>
+						<a
+							href={attachment.url}
+							download={attachment.name || true}
+							class="button margin-top"
+							target="_blank"
+							rel="noopener noreferrer"><i class="bi bi-download"></i> Download</a>
+					</div>
 				)
 		}
 	}
@@ -178,6 +214,36 @@ export class Attachments {
 
 		this.pauseAllMedia()
 		vnode.state.index = next
+	}
+
+	// stage returns the clip-window element (fixed width), used to size the track
+	// and convert pixel drags into percentage transforms.
+	stage(): HTMLElement | null {
+		return document.querySelector("#attachment-viewer .attachment-stage")
+	}
+
+	// track returns the sliding element that holds all the slides.
+	track(): HTMLElement | null {
+		return document.querySelector("#attachment-viewer .attachment-track")
+	}
+
+	// setTrackOffset writes the track transform imperatively during a drag so it
+	// follows the pointer at the browser's native frame rate, bypassing redraw.
+	// offsetPx is the live finger travel added to the resting position.
+	setTrackOffset(vnode: AttachmentsVnode, offsetPx: number) {
+		const track = this.track()
+		if (track != null) {
+			track.style.transform = `translateX(calc(${-vnode.state.index * 100}% + ${offsetPx}px))`
+		}
+	}
+
+	// restTrackOffset snaps the inline transform to the resting position for the
+	// current index (offset 0). Setting it explicitly — rather than clearing the
+	// inline style and waiting for the redraw — avoids a one-frame jump to
+	// translateX(0) (the first slide), which otherwise animates in as a false
+	// "wrap to the beginning".
+	restTrackOffset(vnode: AttachmentsVnode) {
+		this.setTrackOffset(vnode, 0)
 	}
 
 	// previous moves to the prior attachment.
@@ -213,8 +279,9 @@ export class Attachments {
 		}
 	}
 
-	// onpointerdown begins a drag gesture, recording its origin and whether it
-	// started on an interactive media element.
+	// onpointerdown begins a drag gesture, recording its origin and the stage width.
+	// Gestures that start on a media control or link are ignored so the native
+	// control (e.g. a video scrubber) keeps the pointer.
 	onpointerdown(vnode: AttachmentsVnode, event: PointerEvent) {
 
 		// RULE: Only the primary (left) mouse button starts a drag
@@ -222,41 +289,27 @@ export class Attachments {
 			return
 		}
 
-		const onMedia = (event.target as HTMLElement | null)?.closest("video, audio, a, .attachment-download") != null
+		// RULE: Drags starting on media controls or links are scrubbing/clicks, not swipes
+		if ((event.target as HTMLElement | null)?.closest("video, audio, a, button") != null) {
+			return
+		}
 
-		vnode.state.drag = { startX: event.clientX, startY: event.clientY, onMedia, moved: false }
+		vnode.state.drag = {
+			pointerId: event.pointerId,
+			startX: event.clientX,
+			startY: event.clientY,
+			onMedia: false,
+			stageWidth: this.stage()?.clientWidth ?? 0,
+			axis: "",
+		}
 	}
 
-	// onpointermove flags the gesture as a drag once it travels past DRAG_SLOP. A
-	// drag that began on playing media pauses it (so a swipe over a video stops it),
-	// while a stationary press is left alone for the native control to handle.
+	// onpointermove locks the gesture's axis on first significant movement, then —
+	// for a horizontal drag — moves the track with the pointer in real time (hard
+	// stopped at the first/last item). Vertical drags are inert.
 	onpointermove(vnode: AttachmentsVnode, event: PointerEvent) {
 
 		const drag = vnode.state.drag
-		if (drag == null || drag.moved) {
-			return
-		}
-
-		if (Math.abs(event.clientX - drag.startX) < DRAG_SLOP && Math.abs(event.clientY - drag.startY) < DRAG_SLOP) {
-			return
-		}
-
-		drag.moved = true
-
-		// A horizontal drag that started on a playing video/audio pauses it
-		if (drag.onMedia) {
-			this.pauseAllMedia()
-		}
-	}
-
-	// onpointerup completes the gesture, navigating when the horizontal travel
-	// clears SWIPE_THRESHOLD and exceeds the vertical travel (so a vertical scroll
-	// is not read as a swipe).
-	onpointerup(vnode: AttachmentsVnode, event: PointerEvent) {
-
-		const drag = vnode.state.drag
-		vnode.state.drag = null
-
 		if (drag == null) {
 			return
 		}
@@ -264,23 +317,101 @@ export class Attachments {
 		const deltaX = event.clientX - drag.startX
 		const deltaY = event.clientY - drag.startY
 
-		// RULE: A swipe must be clearly horizontal and past the threshold
-		if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) <= Math.abs(deltaY)) {
+		// Lock the axis once the gesture clears the slop radius
+		if (drag.axis == "") {
+			this.lockAxis(drag, deltaX, deltaY, event.currentTarget as HTMLElement)
+		}
+
+		// RULE: Vertical drags (and not-yet-locked gestures) do nothing
+		if (drag.axis != "x") {
 			return
 		}
 
-		if (deltaX > 0) {
-			this.previous(vnode)
-		} else {
-			this.next(vnode)
+		this.setTrackOffset(vnode, this.clampOffset(vnode, deltaX))
+	}
+
+	// lockAxis decides whether a gesture is a horizontal swipe or a vertical (inert)
+	// drag once it clears the slop radius. On locking horizontal it captures the
+	// pointer and disables the snap transition so the track follows the pointer.
+	lockAxis(drag: DragState, deltaX: number, deltaY: number, target: HTMLElement) {
+
+		if (Math.abs(deltaX) < DRAG_SLOP && Math.abs(deltaY) < DRAG_SLOP) {
+			return
 		}
 
+		drag.axis = (Math.abs(deltaX) > Math.abs(deltaY)) ? "x" : "y"
+
+		if (drag.axis == "x") {
+			this.track()?.classList.add("dragging")
+			try {
+				target.setPointerCapture(drag.pointerId)
+			} catch { /* capture is best-effort */ }
+		}
+	}
+
+	// clampOffset applies the hard stop: a drag cannot pull the track past the first
+	// or last item, so over-dragging at an edge produces no movement.
+	clampOffset(vnode: AttachmentsVnode, deltaX: number): number {
+
+		const count = vnode.attrs.controller.modalAttachments.length
+		const atStart = vnode.state.index <= 0
+		const atEnd = vnode.state.index >= count - 1
+
+		if ((deltaX > 0 && atStart) || (deltaX < 0 && atEnd)) {
+			return 0
+		}
+
+		return deltaX
+	}
+
+	// onpointerup completes the gesture: a horizontal drag past SWIPE_THRESHOLD
+	// commits to the neighbor, otherwise it snaps back. The trailing click is
+	// suppressed so a drag that ends over a link does not also activate it.
+	onpointerup(vnode: AttachmentsVnode, event: PointerEvent) {
+
+		const drag = vnode.state.drag
+		vnode.state.drag = null
+
+		if (drag?.axis != "x") {
+			return
+		}
+
+		const deltaX = event.clientX - drag.startX
+
+		// A real drag swallows the synthetic click that follows it
+		vnode.state.suppressClick = true
+
+		// RULE: Commit only on a clear horizontal swipe past the threshold (goTo
+		// clamps, so a swipe past the first/last item simply stays put).
+		if (Math.abs(deltaX) >= SWIPE_THRESHOLD) {
+			if (deltaX > 0) {
+				this.previous(vnode)
+			} else {
+				this.next(vnode)
+			}
+		}
+
+		// Re-enable the transition and snap the inline transform to the (possibly new)
+		// resting index. Setting the resting offset explicitly — and leaving it in
+		// place — avoids a flash at translateX(0) that would animate in as a false
+		// wrap to the first slide. A later redraw from arrow/key navigation rewrites
+		// the transform for the new index, so the inline value never goes stale.
+		this.track()?.classList.remove("dragging")
+		this.restTrackOffset(vnode)
 		m.redraw()
 	}
 
 	// onpointercancel abandons an in-progress gesture (e.g. the browser took over
-	// for a scroll).
+	// for a scroll), snapping the track back to rest.
 	onpointercancel(vnode: AttachmentsVnode, _event: PointerEvent) {
+
+		if (vnode.state.drag == null) {
+			return
+		}
+
 		vnode.state.drag = null
+		this.track()?.classList.remove("dragging")
+		this.restTrackOffset(vnode)
+		m.redraw()
 	}
 }

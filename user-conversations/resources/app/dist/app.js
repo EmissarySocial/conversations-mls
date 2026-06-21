@@ -29629,9 +29629,29 @@
     oninit(vnode) {
       vnode.state.index = vnode.attrs.controller.modalAttachmentIndex;
       vnode.state.drag = null;
+      vnode.state.suppressClick = false;
     }
-    oncreate() {
+    // clickSuppressor swallows the synthetic click that a browser fires right after a
+    // drag, so a drag that ends over a link/button does not also activate it. Held as
+    // a field so it can be removed on teardown.
+    clickSuppressor = (event) => {
+      if (this.#state?.suppressClick) {
+        event.stopPropagation();
+        event.preventDefault();
+        this.#state.suppressClick = false;
+      }
+    };
+    // #state is a reference to the vnode state, captured so the capture-phase click
+    // listener (added imperatively) can read the suppressClick flag.
+    #state = null;
+    oncreate(vnode) {
       document.getElementById("modal-window")?.classList.add("huge");
+      this.#state = vnode.state;
+      document.getElementById("attachment-viewer")?.addEventListener("click", this.clickSuppressor, true);
+    }
+    onremove() {
+      document.getElementById("attachment-viewer")?.removeEventListener("click", this.clickSuppressor, true);
+      this.#state = null;
     }
     view(vnode) {
       const attachments = vnode.attrs.controller.modalAttachments;
@@ -29705,20 +29725,18 @@
         case "audio":
           return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-audio" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "margin-bottom" }, attachment.name || "Audio"), isCurrent && /* @__PURE__ */ (0, import_mithril26.default)("audio", { src: attachment.url, controls: true }));
         default:
-          return /* @__PURE__ */ (0, import_mithril26.default)(
+          return /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "attachment-download" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }), /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "bold" }, attachment.name || "Download File"), attachment.size > 0 && /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)), /* @__PURE__ */ (0, import_mithril26.default)(
             "a",
             {
               href: attachment.url,
               download: attachment.name || true,
-              class: "attachment-download",
+              class: "button margin-top",
               target: "_blank",
               rel: "noopener noreferrer"
             },
-            /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi " + attachmentIcon(attachment) }),
-            /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "bold" }, attachment.name || "Download File"),
-            attachment.size > 0 && /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "text-sm text-gray" }, formatFileSize(attachment.size)),
-            /* @__PURE__ */ (0, import_mithril26.default)("div", { class: "button margin-top" }, /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-download" }), " Download")
-          );
+            /* @__PURE__ */ (0, import_mithril26.default)("i", { class: "bi bi-download" }),
+            " Download"
+          ));
       }
     }
     // goTo moves to the attachment at `index` (clamped; no wrapping) and pauses any
@@ -29731,6 +29749,32 @@
       }
       this.pauseAllMedia();
       vnode.state.index = next;
+    }
+    // stage returns the clip-window element (fixed width), used to size the track
+    // and convert pixel drags into percentage transforms.
+    stage() {
+      return document.querySelector("#attachment-viewer .attachment-stage");
+    }
+    // track returns the sliding element that holds all the slides.
+    track() {
+      return document.querySelector("#attachment-viewer .attachment-track");
+    }
+    // setTrackOffset writes the track transform imperatively during a drag so it
+    // follows the pointer at the browser's native frame rate, bypassing redraw.
+    // offsetPx is the live finger travel added to the resting position.
+    setTrackOffset(vnode, offsetPx) {
+      const track = this.track();
+      if (track != null) {
+        track.style.transform = `translateX(calc(${-vnode.state.index * 100}% + ${offsetPx}px))`;
+      }
+    }
+    // restTrackOffset snaps the inline transform to the resting position for the
+    // current index (offset 0). Setting it explicitly — rather than clearing the
+    // inline style and waiting for the redraw — avoids a one-frame jump to
+    // translateX(0) (the first slide), which otherwise animates in as a false
+    // "wrap to the beginning".
+    restTrackOffset(vnode) {
+      this.setTrackOffset(vnode, 0);
     }
     // previous moves to the prior attachment.
     previous(vnode) {
@@ -29757,56 +29801,102 @@
           this.next(vnode);
       }
     }
-    // onpointerdown begins a drag gesture, recording its origin and whether it
-    // started on an interactive media element.
+    // onpointerdown begins a drag gesture, recording its origin and the stage width.
+    // Gestures that start on a media control or link are ignored so the native
+    // control (e.g. a video scrubber) keeps the pointer.
     onpointerdown(vnode, event) {
       if (event.pointerType == "mouse" && event.button != 0) {
         return;
       }
-      const onMedia = event.target?.closest("video, audio, a, .attachment-download") != null;
-      vnode.state.drag = { startX: event.clientX, startY: event.clientY, onMedia, moved: false };
+      if (event.target?.closest("video, audio, a, button") != null) {
+        return;
+      }
+      vnode.state.drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        onMedia: false,
+        stageWidth: this.stage()?.clientWidth ?? 0,
+        axis: ""
+      };
     }
-    // onpointermove flags the gesture as a drag once it travels past DRAG_SLOP. A
-    // drag that began on playing media pauses it (so a swipe over a video stops it),
-    // while a stationary press is left alone for the native control to handle.
+    // onpointermove locks the gesture's axis on first significant movement, then —
+    // for a horizontal drag — moves the track with the pointer in real time (hard
+    // stopped at the first/last item). Vertical drags are inert.
     onpointermove(vnode, event) {
       const drag = vnode.state.drag;
-      if (drag == null || drag.moved) {
-        return;
-      }
-      if (Math.abs(event.clientX - drag.startX) < DRAG_SLOP && Math.abs(event.clientY - drag.startY) < DRAG_SLOP) {
-        return;
-      }
-      drag.moved = true;
-      if (drag.onMedia) {
-        this.pauseAllMedia();
-      }
-    }
-    // onpointerup completes the gesture, navigating when the horizontal travel
-    // clears SWIPE_THRESHOLD and exceeds the vertical travel (so a vertical scroll
-    // is not read as a swipe).
-    onpointerup(vnode, event) {
-      const drag = vnode.state.drag;
-      vnode.state.drag = null;
       if (drag == null) {
         return;
       }
       const deltaX = event.clientX - drag.startX;
       const deltaY = event.clientY - drag.startY;
-      if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      if (drag.axis == "") {
+        this.lockAxis(drag, deltaX, deltaY, event.currentTarget);
+      }
+      if (drag.axis != "x") {
         return;
       }
-      if (deltaX > 0) {
-        this.previous(vnode);
-      } else {
-        this.next(vnode);
+      this.setTrackOffset(vnode, this.clampOffset(vnode, deltaX));
+    }
+    // lockAxis decides whether a gesture is a horizontal swipe or a vertical (inert)
+    // drag once it clears the slop radius. On locking horizontal it captures the
+    // pointer and disables the snap transition so the track follows the pointer.
+    lockAxis(drag, deltaX, deltaY, target) {
+      if (Math.abs(deltaX) < DRAG_SLOP && Math.abs(deltaY) < DRAG_SLOP) {
+        return;
       }
+      drag.axis = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+      if (drag.axis == "x") {
+        this.track()?.classList.add("dragging");
+        try {
+          target.setPointerCapture(drag.pointerId);
+        } catch {
+        }
+      }
+    }
+    // clampOffset applies the hard stop: a drag cannot pull the track past the first
+    // or last item, so over-dragging at an edge produces no movement.
+    clampOffset(vnode, deltaX) {
+      const count = vnode.attrs.controller.modalAttachments.length;
+      const atStart = vnode.state.index <= 0;
+      const atEnd = vnode.state.index >= count - 1;
+      if (deltaX > 0 && atStart || deltaX < 0 && atEnd) {
+        return 0;
+      }
+      return deltaX;
+    }
+    // onpointerup completes the gesture: a horizontal drag past SWIPE_THRESHOLD
+    // commits to the neighbor, otherwise it snaps back. The trailing click is
+    // suppressed so a drag that ends over a link does not also activate it.
+    onpointerup(vnode, event) {
+      const drag = vnode.state.drag;
+      vnode.state.drag = null;
+      if (drag?.axis != "x") {
+        return;
+      }
+      const deltaX = event.clientX - drag.startX;
+      vnode.state.suppressClick = true;
+      if (Math.abs(deltaX) >= SWIPE_THRESHOLD) {
+        if (deltaX > 0) {
+          this.previous(vnode);
+        } else {
+          this.next(vnode);
+        }
+      }
+      this.track()?.classList.remove("dragging");
+      this.restTrackOffset(vnode);
       import_mithril26.default.redraw();
     }
     // onpointercancel abandons an in-progress gesture (e.g. the browser took over
-    // for a scroll).
+    // for a scroll), snapping the track back to rest.
     onpointercancel(vnode, _event) {
+      if (vnode.state.drag == null) {
+        return;
+      }
       vnode.state.drag = null;
+      this.track()?.classList.remove("dragging");
+      this.restTrackOffset(vnode);
+      import_mithril26.default.redraw();
     }
   };
 

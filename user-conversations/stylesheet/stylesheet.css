@@ -677,6 +677,12 @@ button.pressed:focus,
 	transition: transform 240ms ease;
 }
 
+/* While dragging, the track follows the pointer with no transition so it tracks
+   in real time; the transition returns on release to animate the snap. */
+#attachment-viewer .attachment-track.dragging {
+	transition: none;
+}
+
 /* Each slide is exactly the stage width and centers its own content, so items of
    any aspect ratio sit centered in the leftover space. */
 #attachment-viewer .attachment-slide {
@@ -731,6 +737,10 @@ button.pressed:focus,
 	text-align: center;
 	color: inherit;
 	text-decoration: none;
+
+	/* Don't let the card's label text be selected — a selection drag would fight
+	   the swipe gesture. */
+	user-select: none;
 }
 
 #attachment-viewer .attachment-audio > .bi,
