@@ -62,9 +62,11 @@ export class FilterMenu {
 		close()
 	}
 
-	// manage closes the pop-up and navigates to the settings "Filters" tab
+	// manage closes the pop-up and navigates to the settings "Filters" tab.
+	// page_settings() resets the tab to "GENERAL", so select "FILTERS" afterward.
 	manage(controller: ViewController, close: () => void) {
 		close()
 		controller.page_settings()
+		controller.settingsTab = "FILTERS"
 	}
 }
