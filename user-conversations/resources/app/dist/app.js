@@ -29860,8 +29860,8 @@
         this.#state.suppressClick = false;
       }
     };
-    // #state is a reference to the vnode state, captured so the capture-phase click
-    // listener (added imperatively) can read the suppressClick flag.
+    // #state mirrors vnode.state so the capture-phase listener (which has no vnode)
+    // can read suppressClick. Kept in sync by oncreate/onremove. Do not "simplify".
     #state = null;
     oncreate(vnode) {
       document.getElementById("modal-window")?.classList.add("huge");
@@ -30020,9 +30020,9 @@
           this.next(vnode);
       }
     }
-    // onpointerdown begins a drag gesture, recording its origin and the stage width.
-    // Gestures that start on a media control or link are ignored so the native
-    // control (e.g. a video scrubber) keeps the pointer.
+    // onpointerdown begins a drag gesture, recording its origin. Gestures that start
+    // on a media control or link are ignored so the native control (e.g. a video
+    // scrubber) keeps the pointer.
     onpointerdown(vnode, event) {
       if (event.pointerType == "mouse" && event.button != 0) {
         return;

@@ -65,15 +65,15 @@ export class Attachments {
 		}
 	}
 
-	// #state is a reference to the vnode state, captured so the capture-phase click
-	// listener (added imperatively) can read the suppressClick flag.
+	// #state mirrors vnode.state so the capture-phase listener (which has no vnode)
+	// can read suppressClick. Kept in sync by oncreate/onremove. Do not "simplify".
 	#state: AttachmentsState | null = null
 
 	oncreate(vnode: AttachmentsVnode) {
 		// The lightbox uses the global "huge" modal size for maximum viewing area
 		document.getElementById("modal-window")?.classList.add("huge")
 
-		// Suppress the post-drag click in the capture phase, before it reaches links
+		// Capture phase (mithril onclick is bubble-only) so we beat the click to the inner links/buttons.
 		this.#state = vnode.state
 		document.getElementById("attachment-viewer")?.addEventListener("click", this.clickSuppressor, true)
 	}
@@ -288,9 +288,9 @@ export class Attachments {
 		}
 	}
 
-	// onpointerdown begins a drag gesture, recording its origin and the stage width.
-	// Gestures that start on a media control or link are ignored so the native
-	// control (e.g. a video scrubber) keeps the pointer.
+	// onpointerdown begins a drag gesture, recording its origin. Gestures that start
+	// on a media control or link are ignored so the native control (e.g. a video
+	// scrubber) keeps the pointer.
 	onpointerdown(vnode: AttachmentsVnode, event: PointerEvent) {
 
 		// RULE: Only the primary (left) mouse button starts a drag
