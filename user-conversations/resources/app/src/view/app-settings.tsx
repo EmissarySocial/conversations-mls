@@ -1,5 +1,6 @@
 import m, { type Vnode } from "mithril"
 import type { ViewController, SettingsTab } from "./controller"
+import { isNarrow } from "./responsive"
 import { synthClick } from "./utils"
 import { AppSettingsGeneral } from "./app-settings-general"
 import { AppSettingsFilters } from "./app-settings-filters"
@@ -22,18 +23,37 @@ export class AppSettings {
 
 	view(vnode: AppSettingsVnode) {
 
+		const controller = vnode.attrs.controller
+
+		// Same responsive model as the conversations screen: on a narrow viewport mount
+		// only the tab LIST (no tab selected) or only the tab CONTENT (a tab selected);
+		// on a wide viewport mount both. Single-pane states are mounted alone, so there
+		// is no second pane to hide.
+		const narrow = isNarrow()
+		const showSidebar = !narrow || !controller.hasDetail
+		const showContent = !narrow || controller.hasDetail
+
 		return (
 			<div id="conversations">
-				<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical" style="width:30%">
-					{this.viewSidebar(vnode)}
-				</div>
-
-				<div class="app-content scroll-vertical flex-grow padding">
-					<div class="max-width-800">
-						{this.viewSection(vnode)}
-						<div class="padding-vertical-xl"></div>
+				{showSidebar &&
+					<div id="app-sidebar" class="table no-top-border flex-shrink-0 scroll-vertical">
+						{this.viewSidebar(vnode)}
 					</div>
-				</div>
+				}
+
+				{showContent &&
+					<div class="app-content scroll-vertical flex-grow padding">
+						<div class="max-width-800">
+							{narrow &&
+								<div class="clickable margin-bottom" role="button" tabindex="0" title="Back to settings" aria-label="Back to settings" onclick={() => controller.page_settings()} onkeypress={synthClick}>
+									<i class="bi bi-arrow-left text-lg"></i> Settings
+								</div>
+							}
+							{this.viewSection(vnode)}
+							<div class="padding-vertical-xl"></div>
+						</div>
+					</div>
+				}
 			</div>
 		)
 	}
@@ -90,15 +110,17 @@ export class AppSettings {
 
 		switch (controller.settingsTab) {
 
-			case "GENERAL":
-				return <AppSettingsGeneral controller={controller} />
+			case "FILTERS":
+				return <AppSettingsFilters controller={controller} />
 
 			case "SIGNOUT":
 				return <AppSettingsSignout controller={controller} />
 
-			case "FILTERS":
+			// GENERAL is also the default for the bare /settings route (settingsTab
+			// == ""), so the content pane is never blank on wide screens.
+			case "GENERAL":
 			default:
-				return <AppSettingsFilters controller={controller} />
+				return <AppSettingsGeneral controller={controller} />
 		}
 	}
 

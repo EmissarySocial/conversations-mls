@@ -14,6 +14,7 @@ import { MessageHistory } from "./modal-messageHistory"
 import { PickEmoji } from "./modal-pickEmoji"
 import { Attachments } from "./modal-attachments"
 import { GroupWelcome } from "./group-welcome"
+import { isNarrow } from "./responsive"
 
 type IndexVnode = Vnode<IndexAttrs, IndexState>
 
@@ -32,12 +33,26 @@ export class Index {
 	}
 
 	public view(vnode: IndexVnode) {
+
+		const controller = vnode.attrs.controller
+
+		// Responsive layout is decided HERE, not in CSS: on a narrow viewport we mount
+		// a single pane (the conversation list when nothing is open, otherwise the
+		// detail), so the other pane simply does not exist in the DOM. On a wide
+		// viewport we mount both, side by side. This makes the broken half-collapsed
+		// states impossible by construction (nothing to mis-show or override).
+		const narrow = isNarrow()
+		const showSidebar = !narrow || !controller.hasDetail
+		const showDetail = !narrow || controller.hasDetail
+
 		return (
 			<div id="conversations">
-				<div id="app-sidebar" class="table no-top-border flex-shrink-0" style="width:30%">
-					<Groups controller={vnode.attrs.controller}></Groups>
-				</div>
-				{this.viewDetails(vnode)}
+				{showSidebar &&
+					<div id="app-sidebar" class="table no-top-border flex-shrink-0">
+						<Groups controller={controller}></Groups>
+					</div>
+				}
+				{showDetail && this.viewDetails(vnode)}
 				{this.viewModals(vnode)}
 			</div>
 		)

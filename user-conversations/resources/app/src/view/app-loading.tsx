@@ -12,7 +12,7 @@ export class AppLoading {
 
 		return (
 			<div id="conversations">
-				<div id="app-sidebar" class="table no-top-border flex-shrink-0" style="width:30%">
+				<div id="app-sidebar" class="table no-top-border flex-shrink-0">
 					<div class="conversations-pane">
 
 						<div class="flex-row flex-align-center padding-left">

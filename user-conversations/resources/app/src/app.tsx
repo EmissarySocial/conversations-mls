@@ -11,6 +11,7 @@ import { Proxy } from "./service/proxy"
 // Views
 import { ViewController } from "./view/controller"
 import { buildRoutes } from "./view/routes"
+import { initResponsive } from "./view/responsive"
 import { Contacts } from "./service/contacts"
 import { Host } from "./service/host"
 
@@ -48,6 +49,10 @@ async function startup() {
 	const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host)
 	controller = new ViewController(serviceController)
 	controller.start()
+
+	// Install the resize listener that redraws when the viewport crosses the
+	// list/detail breakpoint (responsive layout is decided in Mithril, not CSS).
+	initResponsive()
 
 	// Mount the application with the URL router. The hashbang prefix ("#!") keeps the
 	// app's routing in the fragment so it never collides with Emissary's server-side

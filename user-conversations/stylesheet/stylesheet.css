@@ -6,6 +6,7 @@
 
 	#app-sidebar {
 		flex-shrink:0;
+		width: 30%;
 		font-size: 16px;
 		background-color: var(--gray10);
 		padding: 4px 8px;
@@ -220,6 +221,19 @@
 			}
 		}
 	}
+}
+
+/* Mobile mode (the SPA root gets `.is-mobile` at startup; see view/responsive.ts).
+   Which pane renders is decided in Mithril — only ONE is ever mounted — so there is
+   no @media block hiding a second pane. These rules just size that lone pane to fill
+   the screen and drop the sidebar's gray accent (no second pane to distinguish from).
+   Scoping under `.is-mobile #conversations` beats the global width utilities on
+   specificity, so no `!important` is needed. The max-width:none clears a 320px cap
+   the global theme's small-screen utilities otherwise impose. */
+.is-mobile #conversations #app-sidebar {
+	width: 100%;
+	max-width: none;
+	background-color: var(--white);
 }
 
 #reply-panel {

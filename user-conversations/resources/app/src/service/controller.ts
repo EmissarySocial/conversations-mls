@@ -752,7 +752,8 @@ export class Controller {
 
 		// Navigate to the new group's messages (URL-driven; the route resolver
 		// re-selects it, which is a no-op since it is already the current group).
-		m.route.set("/groups/:groupId", { groupId: group.id })
+		// The id rides in the ?id= query param (group ids can be slash-bearing URLs).
+		m.route.set("/groups", { id: group.id })
 	}
 
 	joinGroup = async (group: Group) => {

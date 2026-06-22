@@ -79,29 +79,57 @@ export class ViewController {
 	}
 	set pageView(value: string) { this.#controller.pageView = value }
 
+	// #routePath returns the route without its query string (m.route.get() includes
+	// the "?id=..." part).
+	#routePath(): string {
+		return (m.route.get() ?? "").split("?")[0] ?? ""
+	}
+
 	// #routePageView maps the current route to a pageView string (the values the
 	// view switch in app.tsx / index.tsx expects).
 	#routePageView(): string {
-		const route = m.route.get() ?? ""
-		if (route.startsWith("/settings")) {
+		const path = this.#routePath()
+		if (path.startsWith("/settings")) {
 			return "SETTINGS"
 		}
-		if (route.includes("/notes")) {
+		if (path == "/groups/notes") {
 			return "GROUP-NOTES"
 		}
-		if (route.includes("/people")) {
+		if (path == "/groups/people") {
 			return "GROUP-MEMBERS"
 		}
 		return "GROUP-MESSAGES"
 	}
 
 	// settingsTab is derived from the /settings/:tab route param (uppercased to match
-	// the SettingsTab union). Setting it navigates to the corresponding route.
+	// the SettingsTab union). On the bare /settings route (no tab) it returns "" so no
+	// tab appears selected — this is the mobile "list" state (the tab list, no detail).
+	// Setting it navigates to the corresponding tab route.
 	get settingsTab(): SettingsTab {
-		const tab = (m.route.param("tab") ?? "general").toUpperCase()
-		return tab as SettingsTab
+		const tab = m.route.param("tab")
+		if (tab == undefined) {
+			return "" as SettingsTab
+		}
+		return tab.toUpperCase() as SettingsTab
 	}
 	set settingsTab(value: SettingsTab) { m.route.set("/settings/:tab", { tab: value.toLowerCase() }) }
+
+	// hasDetail reports whether the current route is a "detail" screen (a specific
+	// conversation, or a specific settings tab) versus a "list" screen (the
+	// conversation list at /groups, or the settings tab list at /settings). The
+	// responsive layout uses this to collapse to a single pane on narrow screens:
+	// list-only when false, detail-only when true. Derived purely from the URL so it
+	// is correct immediately on navigation (no dependence on async group selection).
+	get hasDetail(): boolean {
+		const path = this.#routePath()
+		// A conversation is "open" when the id query param is present.
+		if (path.startsWith("/groups")) {
+			return (m.route.param("id") ?? "") != ""
+		}
+		// In settings, a specific tab (/settings/:tab) is the detail; bare /settings
+		// is the list.
+		return path.startsWith("/settings/")
+	}
 
 	get modalView(): string { return this.#controller.modalView }
 	set modalView(value: string) { this.#controller.modalView = value }
@@ -151,24 +179,36 @@ export class ViewController {
 	// route's :groupId param via routeSelectGroup, so these build group URLs from
 	// the currently-selected group.
 	page_index = () => m.route.set("/groups")
-	page_settings = () => m.route.set("/settings/:tab", { tab: "general" })
+	page_settings = () => m.route.set("/settings")
 	page_groups = () => m.route.set("/groups")
-	page_group_messages = () => m.route.set("/groups/:groupId", { groupId: this.selectedGroupId() })
-	page_group_members = () => m.route.set("/groups/:groupId/people", { groupId: this.selectedGroupId() })
-	page_group_notes = () => m.route.set("/groups/:groupId/notes", { groupId: this.selectedGroupId() })
+	page_group_messages = () => m.route.set("/groups", { id: this.selectedGroupId() })
+	page_group_members = () => m.route.set("/groups/people", { id: this.selectedGroupId() })
+	page_group_notes = () => m.route.set("/groups/notes", { id: this.selectedGroupId() })
 	page_signout = () => this.#controller.page_signout()
 
-	// routeSelectGroup selects the group named in the URL, but only when it differs
-	// from the current selection — so re-rendering the same route does not trigger a
-	// reload loop. An empty id clears the selection (the /groups index route).
+	// #requestedGroupId tracks the id whose selection is currently in flight, so that
+	// repeated render passes (which call routeSelectGroup) don't re-trigger the async
+	// selectGroup while it is still loading.
+	#requestedGroupId: string = ""
+
+	// routeSelectGroup selects the group named in the URL. It is called from the route
+	// resolver's render on every navigation/redraw, so it must be idempotent: it is a
+	// no-op when the requested id already matches the in-flight request or the settled
+	// selection. An empty id clears the selection (the /groups list route).
 	routeSelectGroup = (groupId: string) => {
-		if (groupId == this.selectedGroupId()) {
+
+		// Already selected (settled) or already loading (in flight): nothing to do.
+		if (groupId == this.selectedGroupId() || groupId == this.#requestedGroupId) {
 			return
 		}
+
+		this.#requestedGroupId = groupId
+
 		if (groupId == "") {
 			this.#controller.clearSelectedGroup()
 			return
 		}
+
 		this.#controller.selectGroup(groupId)
 	}
 
@@ -227,10 +267,11 @@ export class ViewController {
 	syncGroup = (group: Group) => this.#controller.syncGroup(group)
 	leaveGroup = (groupId: string) => this.#controller.leaveGroup(groupId)
 
-	// selectGroup navigates to the group's URL; the route resolver (routeSelectGroup)
-	// performs the actual selection + message load. Keeping selection URL-driven means
-	// the back button and deep links work, and there is one source of truth.
-	selectGroup = (groupId: string) => m.route.set("/groups/:groupId", { groupId })
+	// selectGroup navigates to the group's URL (id carried as the ?id= query param);
+	// the route resolver (routeSelectGroup) performs the actual selection + message
+	// load. Keeping selection URL-driven means the back button and deep links work,
+	// and there is one source of truth.
+	selectGroup = (groupId: string) => m.route.set("/groups", { id: groupId })
 	clearSelectedGroup = () => this.#controller.clearSelectedGroup()
 	reconcileSelectedGroup = () => this.#controller.reconcileSelectedGroup()
 	selectedGroupId = () => this.#controller.selectedGroupId()

@@ -16,27 +16,38 @@ import { App } from "./app"
 // to /groups/:groupId selects that group before the view renders.
 export function buildRoutes(controller: ViewController): m.RouteDefs {
 
-	// shell renders the App for a given route. onmatch syncs route params into
-	// controller state (group selection / settings tab) before rendering.
-	const shell = (onmatch?: (params: m.Params) => void): m.RouteResolver => ({
-		onmatch: (params: m.Params) => {
-			onmatch?.(params)
-			// Returning undefined keeps the same component mounted across routes,
-			// so the app shell is not torn down and rebuilt on every navigation.
-			return undefined
+	// shell renders the App for a route, syncing the selected group from the `id`
+	// query param into controller state on every render.
+	//
+	// The group id is carried as a QUERY PARAM (?id=...), not a path segment, because
+	// plaintext group ids are full URLs containing "/" — Mithril decodes path params
+	// before matching, so a slash-bearing value silently breaks a `:groupId` segment
+	// and drops it. Query params round-trip any string safely, and unify what were
+	// three near-identical group routes into one id-handling site.
+	//
+	// The sync runs in RENDER, not onmatch: Mithril only re-runs onmatch when the
+	// matched route KEY changes, and a query-only change (/groups → /groups?id=X)
+	// keeps the same key, so onmatch would not fire. render runs on every route and
+	// query change. routeSelectGroup is a no-op when the id is unchanged, so this is
+	// safe to call each render (no reload loop).
+	const shell = (): m.RouteResolver => ({
+		render: () => {
+			controller.routeSelectGroup(m.route.param("id") ?? "")
+			return <App controller={controller} />
 		},
-		render: () => <App controller={controller} />,
 	})
 
-	// groupId reads the (always-string) :groupId route param.
-	const groupId = (p: m.Params): string => (p["groupId"] as string | undefined) ?? ""
-
 	return {
-		"/groups": shell(() => controller.routeSelectGroup("")),
-		"/groups/:groupId": shell((p) => controller.routeSelectGroup(groupId(p))),
-		"/groups/:groupId/notes": shell((p) => controller.routeSelectGroup(groupId(p))),
-		"/groups/:groupId/people": shell((p) => controller.routeSelectGroup(groupId(p))),
-		"/settings": { onmatch: () => { m.route.set("/settings/:tab", { tab: "general" }) } },
+		// /groups (no ?id) is the list; /groups?id=<gid> opens that conversation.
+		// The slash-free sub-pages stay as path segments; the group id rides along in
+		// ?id= for each.
+		"/groups": shell(),
+		"/groups/notes": shell(),
+		"/groups/people": shell(),
+		// /settings is the "list" (tab list, mobile list screen); /settings/:tab is a
+		// specific tab (the detail). Settings tab ids are slash-free, so a path param
+		// is fine here.
+		"/settings": shell(),
 		"/settings/:tab": shell(),
 	}
 }

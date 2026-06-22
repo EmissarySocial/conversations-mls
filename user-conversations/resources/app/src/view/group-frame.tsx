@@ -3,6 +3,7 @@ import m, { type Vnode } from "mithril"
 import { ViewController } from "./controller"
 import { groupColor } from "../model/group"
 import { GroupMenu } from "./widget-groupMenu"
+import { isNarrow } from "./responsive"
 import { synthClick } from "./utils"
 
 // GroupTab identifies which tab is currently active in the group frame.
@@ -34,6 +35,11 @@ export class GroupFrame {
 		return (
 			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
 				<div id="conversation-header" class="flex-row flex-align-center">
+					{isNarrow() &&
+						<div class="clickable margin-right-sm" role="button" tabindex="0" title="Back to conversations" aria-label="Back to conversations" onclick={() => controller.page_index()} onkeypress={synthClick}>
+							<i class="bi bi-arrow-left text-lg"></i>
+						</div>
+					}
 					<div role="tablist" class="margin-none padding-none underlined flex-grow">
 						{this.tab(controller, active, "messages", groupName, () => controller.page_group_messages())}
 						{this.tab(controller, active, "notes", "Notes", () => controller.page_group_notes())}
