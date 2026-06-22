@@ -86,9 +86,17 @@ export class AppSettings {
 	// style and the selected tab uses the "-fill" variant.
 	viewTab(vnode: AppSettingsVnode, tab: SettingsTab, icon: string, label: string): JSX.Element {
 
-		const isSelected = (vnode.attrs.controller.settingsTab == tab)
+		const settingsTab = vnode.attrs.controller.settingsTab
 
-		let cssClass = "flex-row flex-align-center padding hover-trigger clickable"
+		// On a wide screen the content pane always shows something, and the bare
+		// /settings route (settingsTab == "") falls through to GENERAL in viewSection.
+		// Mirror that here so GENERAL highlights to match the content being shown. On a
+		// narrow screen the bare route is the tab-LIST state (no content pane), so we
+		// leave everything unhighlighted.
+		const defaultsToGeneral = (settingsTab as string) == "" && !isNarrow()
+		const isSelected = (settingsTab == tab) || (defaultsToGeneral && tab == "GENERAL")
+
+		let cssClass = "sidebar-item flex-row flex-align-center padding hover-trigger clickable"
 
 		if (isSelected) {
 			cssClass += " highlight"
