@@ -17,12 +17,23 @@
 		flex-direction: column;
 		overflow: visible;
 
-		/* Raise the sidebar's stacking context above #conversation-details so the
-		   filter pop-up paints over the message pane's cards. (A `.card` there has
-		   container-type:inline-size, which makes it a stacking context; without
-		   this, the later-in-source details pane would paint over the popup.) */
+		/* Give the sidebar its own stacking context so its filter pop-up paints over
+		   the message pane's cards. (A `.card` in #conversation-details has
+		   container-type:inline-size, making it a stacking context; without this the
+		   later-in-source details pane would paint over the popup.)
+
+		   z-index MUST be exactly 0 — don't raise it:
+		   - As a *positioned* element at 0, the sidebar still beats the
+		     *non-positioned* #conversation-details (positioned > non-positioned in the
+		     same stacking context), so the pop-up overflow keeps working. 0 is enough.
+		   - Any positive value lifts the sidebar into a tier that paints over #modal
+		     (z-index 1000), which renders as a sibling inside #conversations — that
+		     made dialogs appear *behind* the sidebar. Keeping it at 0 lets the modal
+		     win cleanly.
+		   (Fragile coupling: this relies on #conversation-details never gaining its
+		   own z-index. If it ever does, bump both together.) */
 		position: relative;
-		z-index: 1;
+		z-index: 0;
 
 		/* A clickable row in the sidebar (the conversation list items and the
 		   Settings link). Opt-in via the `.sidebar-item` class rather than the
@@ -32,6 +43,10 @@
 		.sidebar-item {
 			padding: 8px;
 			border-radius: 8px;
+
+			&:hover {
+				background-color: var(--gray15);
+			}
 
 			&.highlight {
 				background-color: var(--gray20);
