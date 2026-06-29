@@ -1,5 +1,5 @@
 // MLS functions and types
-import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage, unsafeTestingAuthenticationService } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -14,7 +14,8 @@ import { type Message, attachmentToDocument } from "../model/message"
 import { type ICodec, type IController, type IDatabase, type IDelivery, type IDirectory } from "./interfaces"
 
 import { uint8ArrayEqual, uint8ArraysContain, base64ToUint8Array } from "./utils"
-import { keyPackageIsExpired } from "./cryptography"
+import { keyPackageIsExpired, keyPackageIdentity } from "./cryptography"
+import { CredentialBindings } from "./credentialBindings"
 import { algorithms, CIPHER_X25519_AES128 } from "./algorithms"
 
 // MLS service encrypts/decrypts messages using the MLS protocol.
@@ -31,6 +32,10 @@ export class CodecMls implements ICodec {
 	#publicKeyPackage: KeyPackage
 	#privateKeyPackage: PrivateKeyPackage
 	#actor: Actor
+
+	// #authService answers ts-mls's validateCredential() hook from a local cache of
+	// identity↔key bindings (no network). See AGENTS.md and CredentialBindings.
+	readonly #authService: CredentialBindings = new CredentialBindings()
 
 	constructor(
 		controller: IController,
@@ -54,6 +59,9 @@ export class CodecMls implements ICodec {
 		this.#generatorId = generatorId
 		this.#publicKeyPackage = publicKeyPackage
 		this.#privateKeyPackage = privateKeyPackage
+
+		// Register our own identity↔key binding so ts-mls can validate our own leaf.
+		this.#authService.register(publicKeyPackage.leafNode.signaturePublicKey, actor.id())
 	}
 
 	stop = () => {
@@ -133,6 +141,17 @@ export class CodecMls implements ICodec {
 		return result
 	}
 
+	// #registerGroupBindings records the identity↔key binding for every leaf in a group's ratchet
+	// tree. ts-mls validates a sender's leaf credential DURING processMessage(), so this must run
+	// BEFORE processing any inbound message — otherwise the binding would not yet be on record and
+	// the (legitimate) sender would be rejected. The bindings originate from KeyPackages that were
+	// KP2-validated when each member was added, so the tree is a trustworthy source.
+	#registerGroupBindings(group: EncryptedGroup): void {
+		for (const leaf of getGroupMembers(group.clientState)) {
+			this.#authService.registerLeaf(leaf)
+		}
+	}
+
 	// #getGroupSignatures retrieves all KeyPackage signatures from the group state.
 	#getGroupSignatures(group: EncryptedGroup): Uint8Array<ArrayBufferLike>[] {
 		const leafNodes = getGroupMembers(group.clientState)
@@ -149,6 +168,13 @@ export class CodecMls implements ICodec {
 		const signatures = this.#getGroupSignatures(group)
 
 		let keyPackages = await this.#directory.getKeyPackages(newMembers)
+
+		// Register each fetched member's identity↔key binding. getKeyPackages has already verified
+		// (KP2) that each package's credential identity matches the actor it was fetched under, so
+		// these bindings are trustworthy and let ts-mls validate these members' leaves.
+		for (const keyPackage of keyPackages) {
+			this.#authService.register(keyPackage.leafNode.signaturePublicKey, keyPackageIdentity(keyPackage))
+		}
 
 		// Filter out the KeyPackage for THIS device
 		keyPackages = keyPackages.filter(keyPackage => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature))
@@ -452,13 +478,15 @@ export class CodecMls implements ICodec {
 
 		try {
 
-			// Try to join the new group
-			clientState = await joinGroup({
+			// Try to join the new group. ts-mls validates the entire (encrypted) ratchet tree
+			// during this call, before we can see it, so run under bootstrap (trust-on-first-use):
+			// the Welcome's authenticity is established by the private-key match checked below.
+			clientState = await this.#authService.withBootstrap(() => joinGroup({
 				context: this.#context(),
 				welcome: message.welcome,
 				keyPackage: this.#publicKeyPackage,
 				privateKeys: this.#privateKeyPackage,
-			})
+			}))
 
 		} catch (error) {
 			// Errors mean that the private keys probably don't match, so
@@ -595,6 +623,10 @@ export class CodecMls implements ICodec {
 		if (group.stateId == "CLOSED") {
 			return undefined
 		}
+
+		// Register every member's identity↔key binding from the group's ratchet tree BEFORE
+		// processMessage validates the sender's leaf credential (see #registerGroupBindings).
+		this.#registerGroupBindings(group)
 
 		const _this = this // NOSONAR: typescript:S7740 (this is required to make the callback work correctly... IDK man.)
 
@@ -792,6 +824,10 @@ export class CodecMls implements ICodec {
 		// Store the results.
 		this.#publicKeyPackage = keyPackage.publicKeyPackage
 		this.#privateKeyPackage = keyPackage.privateKeyPackage
+
+		// Register the rotated key's binding. MLS may still validate our PREVIOUS leaf key for an
+		// existing group, so register() keeps the old binding too — it never removes, only adds.
+		this.#authService.register(keyPackage.publicKeyPackage.leafNode.signaturePublicKey, this.#actor.id())
 	}
 
 
@@ -803,8 +839,7 @@ export class CodecMls implements ICodec {
 	#context(): MlsContext {
 		return {
 			cipherSuite: this.#cipherSuite,
-			// authService: this.#authService,
-			authService: unsafeTestingAuthenticationService,
+			authService: this.#authService,
 		}
 	}
 }

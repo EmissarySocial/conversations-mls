@@ -17723,13 +17723,6 @@
     return provider.getCiphersuiteImpl(ciphersuites[cs]);
   }
 
-  // node_modules/ts-mls/dist/src/authenticationService.js
-  var unsafeTestingAuthenticationService = {
-    async validateCredential(_credential, _signaturePublicKey) {
-      return true;
-    }
-  };
-
   // node_modules/ts-mls/dist/src/message.js
   var mlsPublicMessageEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, publicMessageEncoder], (msg) => [msg.version, msg.wireformat, msg.publicMessage]);
   var mlsWelcomeEncoder = contramapBufferEncoders([protocolVersionEncoder, wireformatEncoder, welcomeEncoder], (wm) => [wm.version, wm.wireformat, wm.welcome]);
@@ -25247,6 +25240,78 @@
   var import_mithril = __toESM(require_mithril(), 1);
   var import_stream2 = __toESM(require_stream2(), 1);
 
+  // src/service/credentialBindings.ts
+  var CredentialBindings = class {
+    // Map of base64(signaturePublicKey) → actor identity.
+    #bindings = /* @__PURE__ */ new Map();
+    // When true, validateCredential trusts-on-first-use: it records the asserted identity for an
+    // unknown key and accepts it, instead of rejecting. This is needed ONLY while joining a group
+    // from a Welcome message, where ts-mls validates the entire (encrypted) ratchet tree during
+    // the joinGroup() call — so we cannot have pre-registered those leaves. The Welcome's
+    // authenticity is established separately (it was encrypted for THIS device). Outside of a
+    // join, this stays false and validation is strict.
+    #bootstrap = false;
+    // register records that `identity` is the actor bound to `signaturePublicKey`. A later
+    // re-registration with a DIFFERENT identity for the same key is rejected and logged — keys
+    // are per-leaf and must not be reassigned to a new identity.
+    register(signaturePublicKey, identity) {
+      if (identity == "") {
+        return;
+      }
+      const key = uint8ArrayToBase64(signaturePublicKey);
+      const existing = this.#bindings.get(key);
+      if (existing != void 0 && existing != identity) {
+        console.warn("CredentialBindings: refusing to rebind a signature key to a new identity", existing, "->", identity);
+        return;
+      }
+      this.#bindings.set(key, identity);
+    }
+    // registerLeaf records the binding carried by a single ratchet-tree / KeyPackage leaf node
+    // (a {credential, signaturePublicKey} pair). Non-basic credentials carry no actor identity
+    // and are ignored.
+    registerLeaf(leaf) {
+      if (leaf.credential.credentialType != defaultCredentialTypes.basic) {
+        return;
+      }
+      const identity = new TextDecoder().decode(leaf.credential.identity);
+      this.register(leaf.signaturePublicKey, identity);
+    }
+    // withBootstrap runs `fn` with trust-on-first-use enabled (see #bootstrap), restoring strict
+    // validation afterward even if `fn` throws. Wrap the joinGroup() call in this.
+    async withBootstrap(fn2) {
+      this.#bootstrap = true;
+      try {
+        return await fn2();
+      } finally {
+        this.#bootstrap = false;
+      }
+    }
+    // validateCredential is the ts-mls hook. It returns TRUE iff the credential is a basic
+    // credential whose asserted identity matches the identity we have on record for this
+    // (already-signature-verified) signature key. During a bootstrap join, an unknown key is
+    // recorded and accepted instead (trust-on-first-use); a CONFLICTING known binding is always
+    // rejected, even during bootstrap.
+    async validateCredential(credential, signaturePublicKey) {
+      if (credential.credentialType != defaultCredentialTypes.basic) {
+        return false;
+      }
+      const asserted = new TextDecoder().decode(credential.identity);
+      if (asserted == "") {
+        return false;
+      }
+      const bound = this.#bindings.get(uint8ArrayToBase64(signaturePublicKey));
+      if (bound == void 0) {
+        if (this.#bootstrap) {
+          this.register(signaturePublicKey, asserted);
+          return true;
+        }
+        console.warn("CredentialBindings: no binding on record for signature key asserting identity", asserted);
+        return false;
+      }
+      return bound == asserted;
+    }
+  };
+
   // src/service/codecMls.ts
   var CodecMls = class {
     #controller;
@@ -25258,6 +25323,9 @@
     #publicKeyPackage;
     #privateKeyPackage;
     #actor;
+    // #authService answers ts-mls's validateCredential() hook from a local cache of
+    // identity↔key bindings (no network). See AGENTS.md and CredentialBindings.
+    #authService = new CredentialBindings();
     constructor(controller2, database, delivery, directory, cipherSuite, publicKeyPackage, privateKeyPackage, actor, generatorId) {
       this.#controller = controller2;
       this.#database = database;
@@ -25268,6 +25336,7 @@
       this.#generatorId = generatorId;
       this.#publicKeyPackage = publicKeyPackage;
       this.#privateKeyPackage = privateKeyPackage;
+      this.#authService.register(publicKeyPackage.leafNode.signaturePublicKey, actor.id());
     }
     stop = () => {
       this.#publicKeyPackage = null;
@@ -25314,6 +25383,16 @@
       const result = [...new Set(members)];
       return result;
     }
+    // #registerGroupBindings records the identity↔key binding for every leaf in a group's ratchet
+    // tree. ts-mls validates a sender's leaf credential DURING processMessage(), so this must run
+    // BEFORE processing any inbound message — otherwise the binding would not yet be on record and
+    // the (legitimate) sender would be rejected. The bindings originate from KeyPackages that were
+    // KP2-validated when each member was added, so the tree is a trustworthy source.
+    #registerGroupBindings(group) {
+      for (const leaf of getGroupMembers(group.clientState)) {
+        this.#authService.registerLeaf(leaf);
+      }
+    }
     // #getGroupSignatures retrieves all KeyPackage signatures from the group state.
     #getGroupSignatures(group) {
       const leafNodes = getGroupMembers(group.clientState);
@@ -25326,6 +25405,9 @@
       const currentMembers = group.members;
       const signatures = this.#getGroupSignatures(group);
       let keyPackages = await this.#directory.getKeyPackages(newMembers);
+      for (const keyPackage of keyPackages) {
+        this.#authService.register(keyPackage.leafNode.signaturePublicKey, keyPackageIdentity(keyPackage));
+      }
       keyPackages = keyPackages.filter((keyPackage) => !uint8ArrayEqual(keyPackage.signature, this.#publicKeyPackage.signature));
       keyPackages = keyPackages.filter((keyPackage) => !uint8ArraysContain(signatures, keyPackage.signature));
       keyPackages = keyPackages.filter((keyPackage) => !keyPackageIsExpired(keyPackage));
@@ -25524,12 +25606,12 @@
     async #receiveActivity_Welcome(activity, message) {
       let clientState;
       try {
-        clientState = await joinGroup({
+        clientState = await this.#authService.withBootstrap(() => joinGroup({
           context: this.#context(),
           welcome: message.welcome,
           keyPackage: this.#publicKeyPackage,
           privateKeys: this.#privateKeyPackage
-        });
+        }));
       } catch (error) {
         console.error("Unable to process welcome message", error);
         return;
@@ -25611,6 +25693,7 @@
       if (group.stateId == "CLOSED") {
         return void 0;
       }
+      this.#registerGroupBindings(group);
       const _this = this;
       let decodedMessage;
       decodedMessage = await processMessage({
@@ -25722,6 +25805,7 @@
       const keyPackage = await this.#controller.createOrUpdateKeyPackage();
       this.#publicKeyPackage = keyPackage.publicKeyPackage;
       this.#privateKeyPackage = keyPackage.privateKeyPackage;
+      this.#authService.register(keyPackage.publicKeyPackage.leafNode.signaturePublicKey, this.#actor.id());
     }
     //////////////////////////////////////////
     // Helper Methods
@@ -25730,8 +25814,7 @@
     #context() {
       return {
         cipherSuite: this.#cipherSuite,
-        // authService: this.#authService,
-        authService: unsafeTestingAuthenticationService
+        authService: this.#authService
       };
     }
   };
