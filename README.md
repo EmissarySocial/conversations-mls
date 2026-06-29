@@ -1,6 +1,6 @@
-# MLS Messaging for Emissary
+# 💬 MLS Messaging for Emissary
 
-This package defines an end-to-end encrypted messenger for [Emissary](https://emissary.dev), the Social Web Toolkit.  It implements the [Messaging Layer Security in ActivityPub](https://swicg.github.io/activitypub-e2ee/mls) specification from the [Social Web Foundation](https://socialwebfoundation.org), which is an implementation of the Messaging Layer Security (MLS) protocol designed specifically for ActivityPub applications.
+This package defines an end-to-end encrypted messenger for [Emissary](https://emissary.dev), the Social Web Toolkit. It implements the [Messaging Layer Security in ActivityPub](https://swicg.github.io/activitypub-e2ee/mls) specification from the [Social Web Foundation](https://socialwebfoundation.org), which is an implementation of the Messaging Layer Security (MLS) protocol designed specifically for ActivityPub applications.
 
 
 ## Overview
@@ -16,14 +16,15 @@ More information on this project is posted on:
 
 ## Installation
 
-This package can be [installed on any Emissary server](https://emissary.dev/packages) just like any other template package.  Open the Emissary [setup console](https://emissary.dev/setup-console) and navigate to the **Packages** section to add this template to your Emissary server.
+This package can be [installed on any Emissary server](https://emissary.dev/packages) just like any other template package. Open the Emissary [setup console](https://emissary.dev/setup-console) and navigate to the **Packages** section to add this template to your Emissary server.
 
-To install directly from Git, add a `GIT` connector and use the address of this repository: `https://github.com/EmissarySocial/conversations-mls`).
+To install directly from Git, add a `GIT` connector and use the address of this repository: `https://github.com/EmissarySocial/conversations-mls`.
 
 Alternatively, you can download the repository files and install them directly from your local file system.
 
 
 ## License
-This software is licensed under the GNU AGPL software license.  Please see LICENSE.txt for details.
+
+This software is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0). See [LICENSE](LICENSE) for the full text.
 
 &copy; Copyright 2026 [Social Web Foundation](https://socialwebfoundation.org)

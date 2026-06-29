@@ -653,6 +653,18 @@ export class CodecMls implements ICodec {
 		console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type())
 		console.log(result.toObject())
 
+		// SECURITY: Bind the decrypted activity's actor (C) to the outer ActivityPub
+		// attributedTo (A). These two attacker-authored identities MUST agree, which —
+		// combined with HTTP-signature verification of A on the inbound envelope — prevents
+		// a sender from attributing a message to a different actor.
+		//
+		// NOTE: The ideal check also binds both to (B) the MLS leaf credential identity of
+		// the cryptographically-authenticated sender. ts-mls does not currently expose the
+		// sender leaf index on application-message results, so B is deferred. See AGENTS.md.
+		if (!senderIdentityMatches(result.actorId(), document.attributedToId())) {
+			throw new Error("CodecMls.receiveActivity: sender mismatch - decrypted actor '" + result.actorId() + "' does not match envelope attributedTo '" + document.attributedToId() + "'")
+		}
+
 		// Send Acknowledge message for certain kinds of activities. This is awaited so
 		// its group save (advancing MLS state) completes before the controller updates
 		// the group's lastMessage — otherwise a late-landing acknowledgement save would
@@ -968,6 +980,24 @@ export function encodeText(text: string) {
 // decodeText is a shorthand for using the ts-mls TextDecoder.
 export function decodeText(bytes: Uint8Array) {
 	return new TextDecoder().decode(bytes)
+}
+
+// senderIdentityMatches reports whether the actor (C) named inside a decrypted MLS
+// application message matches the actor (A) named in the outer ActivityPub envelope's
+// "attributedTo". Both values are attacker-authored, so they MUST agree before a message
+// is trusted; the envelope identity (A) is independently authenticated by HTTP signatures.
+// An empty identity on either side is treated as a non-match (never trusted).
+//
+// NOTE: This does not yet bind to (B) the MLS leaf credential identity of the
+// cryptographically-authenticated sender — that check is deferred pending ts-mls support.
+// See AGENTS.md.
+export function senderIdentityMatches(decryptedActorId: string, envelopeAttributedToId: string): boolean {
+
+	if (decryptedActorId == "" || envelopeAttributedToId == "") {
+		return false
+	}
+
+	return decryptedActorId == envelopeAttributedToId
 }
 
 // addClientState is a shorthand to map a Group -> EncryptedGroup

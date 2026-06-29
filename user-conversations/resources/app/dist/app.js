@@ -25624,6 +25624,9 @@
       result.setContext(group.id);
       console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type());
       console.log(result.toObject());
+      if (!senderIdentityMatches(result.actorId(), document2.attributedToId())) {
+        throw new Error("CodecMls.receiveActivity: sender mismatch - decrypted actor '" + result.actorId() + "' does not match envelope attributedTo '" + document2.attributedToId() + "'");
+      }
       await this.#maybeSendAcknowledgement(group, result);
       return result;
     }
@@ -25762,6 +25765,12 @@
   }
   function decodeText(bytes) {
     return new TextDecoder().decode(bytes);
+  }
+  function senderIdentityMatches(decryptedActorId, envelopeAttributedToId) {
+    if (decryptedActorId == "" || envelopeAttributedToId == "") {
+      return false;
+    }
+    return decryptedActorId == envelopeAttributedToId;
   }
   function addClientState(group, clientState) {
     return {
