@@ -25059,6 +25059,10 @@
             if (keyPackageIsExpired(keyPackage)) {
               continue;
             }
+            if (keyPackageIdentity(keyPackage) != actorId) {
+              console.warn("getKeyPackages: KeyPackage credential identity does not match requested actor; dropping.", actorId);
+              continue;
+            }
             result.push(keyPackage);
           } catch (error) {
             console.error("getKeyPackages: Failed to decode KeyPackage document:", document2.toObject(), error);
@@ -25087,6 +25091,10 @@
       const documents = collection.rangeDocuments();
       for await (const document2 of documents) {
         if (!keyPackageIsSupported(document2)) {
+          continue;
+        }
+        if (document2.attributedToId() != actorId) {
+          console.warn("getKeyPackagesByActor: document attributedTo does not match requested actor; skipping.", actorId);
           continue;
         }
         yield document2;

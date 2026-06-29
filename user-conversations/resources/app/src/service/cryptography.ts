@@ -198,8 +198,10 @@ export function shouldRefreshKeyPackage(document: Document): boolean {
 	return result
 }
 
-// keyPackageIdentity returns a human-readable identifier for a KeyPackage based on its credential identity (the actor ID)
-function keyPackageIdentity(keyPackage: KeyPackage): string {
+// keyPackageIdentity returns the actor ID asserted by a KeyPackage's credential, or ""
+// when the credential is missing or is not a "basic" credential. Callers use this to bind
+// a fetched KeyPackage to the actor it claims to belong to.
+export function keyPackageIdentity(keyPackage: KeyPackage): string {
 
 	// RULE: A malformed KeyPackage may be missing its leafNode/credential entirely
 	if (keyPackage?.leafNode?.credential == undefined) {

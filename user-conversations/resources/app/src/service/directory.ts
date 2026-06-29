@@ -12,7 +12,7 @@ import { NewAPKeyPackage } from "../model/ap-keypackage"
 // ActivityPub objects
 import { Actor } from "../as/actor"
 import { newId } from "./utils"
-import { decodeKeyPackage, keyPackageIsExpired, keyPackageIsSupported } from "./cryptography"
+import { decodeKeyPackage, keyPackageIdentity, keyPackageIsExpired, keyPackageIsSupported } from "./cryptography"
 import type { IDelivery, IDirectory, IProxy } from "./interfaces"
 
 export class Directory implements IDirectory {
@@ -66,6 +66,16 @@ export class Directory implements IDirectory {
 						continue
 					}
 
+					// SECURITY: The KeyPackage's credential identity MUST match the actor it was
+					// fetched under. The credential identity is what getGroupMembers() and the
+					// MLS authentication service trust as "who this key belongs to" — without this
+					// bind, a hostile instance could serve a KeyPackage at its own actor URL while
+					// claiming another actor's identity, forging group membership / sender identity.
+					if (keyPackageIdentity(keyPackage) != actorId) {
+						console.warn("getKeyPackages: KeyPackage credential identity does not match requested actor; dropping.", actorId)
+						continue
+					}
+
 					result.push(keyPackage)
 
 				} catch (error) {
@@ -106,6 +116,15 @@ export class Directory implements IDirectory {
 
 			// RULE: Do not yield KeyPackages if we do not recognize the format
 			if (!keyPackageIsSupported(document)) {
+				continue
+			}
+
+			// SECURITY (defense in depth): the document's ActivityPub "attributedTo" MUST match
+			// the actor we requested. This catches a mismatched envelope one layer before the
+			// credential-identity bind in getKeyPackages(); both the envelope and the MLS
+			// credential must independently agree with the requested actor.
+			if (document.attributedToId() != actorId) {
+				console.warn("getKeyPackagesByActor: document attributedTo does not match requested actor; skipping.", actorId)
 				continue
 			}
 
