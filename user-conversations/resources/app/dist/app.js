@@ -20319,7 +20319,7 @@
     // https://www.w3.org/TR/activitystreams-vocabulary/#dfn-actor
     actor = async () => {
       const actor = this.get("as", PropertyActor);
-      return loadActor(actor);
+      return loadActor(actor, this.getProxyUrl());
     };
     // content returns the string value of the "content" property.
     // Rarely used in activities, except for "Like" activities with emoji content.

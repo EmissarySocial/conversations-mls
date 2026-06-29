@@ -31,7 +31,10 @@ export class Activity extends ASObject {
 	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-actor
 	actor = async () => {
 		const actor = this.get("as", vocab.PropertyActor)
-		return loadActor(actor)
+		// Forward the proxy URL (like every sibling accessor) so that resolving an attacker-
+		// supplied actor URL goes through the server-side SSRF-guarded proxy rather than a
+		// direct browser fetch.
+		return loadActor(actor, this.getProxyUrl())
 	}
 
 	// content returns the string value of the "content" property.
