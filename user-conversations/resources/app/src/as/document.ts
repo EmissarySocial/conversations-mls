@@ -122,14 +122,40 @@ export class Document extends ASObject {
 	}
 }
 
+// ATTACHMENT_URL_SCHEMES is the allowlist of URL schemes that are safe to bind into
+// an href/src in the UI. Inbound attachment URLs are attacker-controlled, so anything
+// outside this list (notably "javascript:" and "vbscript:") is rejected at parse time.
+const ATTACHMENT_URL_SCHEMES = new Set(["https:", "http:", "data:", "blob:"])
+
+// isSafeAttachmentURL reports whether an attachment URL uses an allowlisted scheme.
+// Untrusted attachment URLs flow straight into <a href> / <img|video|audio src>, none
+// of which pass through HTML sanitization, so this is the guard that keeps a hostile
+// federated peer from delivering a "javascript:" (or similar) URL into those sinks.
+// An unparseable or empty URL is treated as unsafe.
+export function isSafeAttachmentURL(url: string): boolean {
+
+	if (url == "") {
+		return false
+	}
+
+	try {
+		// A base is required so scheme-relative / relative URLs resolve; the scheme of the
+		// result is what we check. (location.origin is "http(s):", an allowlisted scheme.)
+		const scheme = new URL(url, globalThis.location?.origin ?? "https://localhost").protocol
+		return ATTACHMENT_URL_SCHEMES.has(scheme)
+	} catch {
+		return false
+	}
+}
+
 // parseAttachment normalizes a single raw "attachment" value into an Attachment.
 // It accepts an ActivityStreams object ({type, url, mediaType, name, ...}) or a
-// bare URL string, and returns undefined when no usable URL can be found.
+// bare URL string, and returns undefined when no usable (safe) URL can be found.
 function parseAttachment(value: any): Attachment | undefined {
 
 	// Legacy form: the attachment is just a URL (or "data:" URI) string
 	if (typeof value == "string") {
-		return value == "" ? undefined : { url: value, mediaType: "", name: "", size: 0 }
+		return isSafeAttachmentURL(value) ? { url: value, mediaType: "", name: "", size: 0 } : undefined
 	}
 
 	// Modern form: the attachment is an ActivityStreams object
@@ -137,7 +163,8 @@ function parseAttachment(value: any): Attachment | undefined {
 
 		const url = toString(value[vocab.PropertyUrl] ?? value[vocab.PropertyHref])
 
-		if (url == "") {
+		// RULE: Drop attachments whose URL is missing or uses an unsafe scheme.
+		if (!isSafeAttachmentURL(url)) {
 			return undefined
 		}
 
