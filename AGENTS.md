@@ -43,3 +43,17 @@ wasteful but not dangerous (such a message is never stored).
 A sender-identity mismatch is a **permanent** failure, not a transient one. When the retry
 logic is reworked, make identity mismatches a hard-drop (no retry). Audit the throw sites in
 `#receiveActivity_PublicPrivateMessage` at that time.
+
+## Attachment URLs (untrusted → href/src)
+
+Inbound attachment URLs are attacker-controlled and do **not** pass through HTML
+sanitization (unlike message `content`, which DOMPurify cleans) — they bind directly into
+`<a href>` / `<img|video|audio src>`. The scheme allowlist lives at the parse boundary in
+`as/document.ts` → `isSafeAttachmentURL()`, called from `parseAttachment()` (the sole place
+inbound attachments become typed `Attachment` objects). Disallowed-scheme attachments are
+dropped at ingestion, so no `javascript:`/`vbscript:` URL ever reaches a sink.
+
+Keep this guard in the parser, not in callers: locally-created attachments (file picker,
+`data:` URIs) and legacy DB rehydration do not pass through `parseAttachment`, and a future
+new caller of `Document.attachments()` must not be able to reintroduce the gap. Allowed
+schemes: `https:`, `http:`, `data:`, `blob:`.

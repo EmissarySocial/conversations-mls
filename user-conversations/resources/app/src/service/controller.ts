@@ -49,10 +49,10 @@ export class Controller {
 	readonly #webfinger: IWebFinger
 
 	#actor: Actor
-	#codecMls?: CodecMls
+	#codecMls: CodecMls | undefined
 	#allowPlaintextMessages: boolean
 	#allowEncryptedMessages: boolean
-	#encryptionKey?: CryptoKey
+	#encryptionKey: CryptoKey | undefined
 
 	config: Config
 	groups: Group[]
@@ -344,7 +344,15 @@ export class Controller {
 	// a "log out" feature, but does not remove encrypted data from the device.
 	stop = (message: string) => {
 
+		// SECURITY: Release all key material from BOTH sessionStorage and memory. Removing only
+		// the sessionStorage copy left the unwrapped (and extractable) CryptoKey — and the MLS
+		// codec's private keys / client state — live in the JS heap until the tab closed, so the
+		// data was still decryptable after "Sign Out" despite the UI promising otherwise. Drop
+		// the in-memory references so a passcode is required again. (A true heap flush still needs
+		// a page reload; page_signout() does that for the explicit user-initiated sign-out.)
 		globalThis.sessionStorage.removeItem("key")
+		this.#encryptionKey = undefined
+		this.#codecMls = undefined
 
 		this.#database.stop()
 		this.#delivery.stop()
@@ -359,14 +367,23 @@ export class Controller {
 	// eraseDevice removes all locally stored data and reloads the application.
 	eraseDevice = async () => {
 
-		// Remove the KeyPackage from the server
-		const keyPackage = await this.#database.loadKeyPackage()
-		if (keyPackage != undefined) {
-			await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL)
+		// Remove the KeyPackage from the server. This is best-effort: a network/server failure
+		// MUST NOT abort the local wipe below. Previously an unguarded await here meant that
+		// erasing while offline (or against a down server) rejected before any local data or key
+		// was cleared, leaving everything on the device despite the user confirming the erase.
+		try {
+			const keyPackage = await this.#database.loadKeyPackage()
+			if (keyPackage != undefined) {
+				await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL)
+			}
+		} catch (error) {
+			console.error("eraseDevice: failed to delete server KeyPackage (continuing with local erase)", error)
 		}
 
-		// Erase the session key from sessionStorage
+		// Erase the encryption key from sessionStorage AND memory (so the unwrapped, extractable
+		// key cannot survive in the heap during the brief window before reload).
 		globalThis.sessionStorage.removeItem("key")
+		this.#encryptionKey = undefined
 
 		// Erase all local data
 		this.#database.erase()
@@ -420,7 +437,18 @@ export class Controller {
 	}
 
 	page_signout = () => {
+
+		// Release key material and stop all services.
 		this.stop("SIGN-OUT")
+
+		// SECURITY: Reload to flush the JS heap. stop() drops our references to the encryption
+		// key and MLS codec, but JavaScript cannot guarantee that the extractable CryptoKey and
+		// any derived secrets are wiped from memory. A reload discards the whole heap and forces
+		// start() back through the SIGN-IN gate — the only airtight "passcode required again"
+		// guarantee, matching what eraseDevice() relies on. (Involuntary stop() paths such as
+		// SESSION-EXPIRED / SERVER-DOWN intentionally do NOT reload, so they keep the AppStopped
+		// screen rather than thrashing.)
+		globalThis.document.location.reload()
 	}
 
 	//////////////////////////////////////////

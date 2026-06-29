@@ -20076,13 +20076,25 @@
       return this.getString("mls", "mediaType");
     };
   };
+  var ATTACHMENT_URL_SCHEMES = /* @__PURE__ */ new Set(["https:", "http:", "data:", "blob:"]);
+  function isSafeAttachmentURL(url) {
+    if (url == "") {
+      return false;
+    }
+    try {
+      const scheme = new URL(url, globalThis.location?.origin ?? "https://localhost").protocol;
+      return ATTACHMENT_URL_SCHEMES.has(scheme);
+    } catch {
+      return false;
+    }
+  }
   function parseAttachment(value) {
     if (typeof value == "string") {
-      return value == "" ? void 0 : { url: value, mediaType: "", name: "", size: 0 };
+      return isSafeAttachmentURL(value) ? { url: value, mediaType: "", name: "", size: 0 } : void 0;
     }
     if (value != null && typeof value == "object") {
       const url = toString(value[PropertyUrl] ?? value[PropertyHref]);
-      if (url == "") {
+      if (!isSafeAttachmentURL(url)) {
         return void 0;
       }
       const attachment = {
@@ -26628,6 +26640,8 @@
     // a "log out" feature, but does not remove encrypted data from the device.
     stop = (message) => {
       globalThis.sessionStorage.removeItem("key");
+      this.#encryptionKey = void 0;
+      this.#codecMls = void 0;
       this.#database.stop();
       this.#delivery.stop();
       this.#receiver.stop();
@@ -26638,11 +26652,16 @@
     };
     // eraseDevice removes all locally stored data and reloads the application.
     eraseDevice = async () => {
-      const keyPackage = await this.#database.loadKeyPackage();
-      if (keyPackage != void 0) {
-        await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL);
+      try {
+        const keyPackage = await this.#database.loadKeyPackage();
+        if (keyPackage != void 0) {
+          await this.#directory.deleteKeyPackage(keyPackage.keyPackageURL);
+        }
+      } catch (error) {
+        console.error("eraseDevice: failed to delete server KeyPackage (continuing with local erase)", error);
       }
       globalThis.sessionStorage.removeItem("key");
+      this.#encryptionKey = void 0;
       this.#database.erase();
       globalThis.document.location.reload();
     };
@@ -26683,6 +26702,7 @@
     };
     page_signout = () => {
       this.stop("SIGN-OUT");
+      globalThis.document.location.reload();
     };
     //////////////////////////////////////////
     // Modal Dialogs
