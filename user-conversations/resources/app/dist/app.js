@@ -17826,8 +17826,11 @@
     }
     // setReaction adds a unique reaction from the specified actor
     setReaction(actorId, reaction) {
+      if (reaction == "__proto__" || reaction == "constructor" || reaction == "prototype") {
+        return false;
+      }
       this.removeReaction(actorId);
-      if (this.reactions[reaction] == void 0) {
+      if (!Object.hasOwn(this.reactions, reaction)) {
         this.reactions[reaction] = [];
       }
       this.reactions[reaction].push(actorId);
@@ -20294,8 +20297,13 @@
         username = username.substring(1);
       }
       username = username.split("@")[0];
-      const url = new URL(this.id());
-      return `@${username}@${url.hostname}`;
+      let hostname = "";
+      try {
+        hostname = new URL(this.id()).hostname;
+      } catch {
+        hostname = "";
+      }
+      return `@${username}@${hostname}`;
     };
   };
 
@@ -25278,7 +25286,17 @@
     }
     // withBootstrap runs `fn` with trust-on-first-use enabled (see #bootstrap), restoring strict
     // validation afterward even if `fn` throws. Wrap the joinGroup() call in this.
+    //
+    // CAUTION: #bootstrap is an instance flag that spans `fn`'s `await`. While it is set, ANY
+    // validateCredential on this instance trusts-on-first-use — so no OTHER MLS operation may run
+    // on this codec during the window, or it could accept an unknown key it should reject. The
+    // reentrancy guard below makes an overlapping bootstrap fail loudly instead of silently
+    // widening the trust window; the caller is responsible for not interleaving other codec ops
+    // (the receive path that drives joins is serialized by the receiver's poll lock).
     async withBootstrap(fn2) {
+      if (this.#bootstrap) {
+        throw new Error("CredentialBindings.withBootstrap: already bootstrapping (concurrent join not allowed)");
+      }
       this.#bootstrap = true;
       try {
         return await fn2();
@@ -26121,6 +26139,10 @@
       }
       const user = parts[0];
       const host = parts[1];
+      if (!isResolvableWebFingerHost(host)) {
+        this.#cache.set(normalized, "");
+        return "";
+      }
       const cached = this.#cache.get(normalized);
       if (cached != void 0) {
         return cached;
@@ -26152,6 +26174,10 @@
       return selfLink?.href ?? "";
     }
   };
+  var FQDN_PATTERN = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+  function isResolvableWebFingerHost(host) {
+    return FQDN_PATTERN.test(host);
+  }
 
   // src/service/emojikeys.ts
   async function emojiKey(signature) {
