@@ -93,4 +93,30 @@ describe("WebFinger.resolveActorURL", () => {
 
 		expect(requested.length).toBe(1)
 	})
+
+	test("rejects non-FQDN / internal / IP-literal hosts WITHOUT issuing a request", async () => {
+		const { requested } = mockFetch(() => ({ jrd: { links: [SELF_LINK] } }))
+		const webfinger = new WebFinger()
+
+		// IP literals (v4), ports, single-label hostnames, and trailing-dot hosts must never be
+		// fetched. (Internal *TLDs* like ".internal" are a 2-label FQDN we don't special-case;
+		// the high-value targets — IPs/ports/single-label/loopback-name — are what's blocked.)
+		expect(await webfinger.resolveActorURL("@a@127.0.0.1")).toBe("")
+		expect(await webfinger.resolveActorURL("@a@169.254.169.254")).toBe("")
+		expect(await webfinger.resolveActorURL("@a@localhost")).toBe("")
+		expect(await webfinger.resolveActorURL("@a@internal")).toBe("")
+		expect(await webfinger.resolveActorURL("@a@example.social:8080")).toBe("")
+		expect(await webfinger.resolveActorURL("@a@host.")).toBe("")
+
+		// Not a single request was made for any of them.
+		expect(requested.length).toBe(0)
+	})
+
+	test("still resolves a normal multi-label FQDN host", async () => {
+		const { requested } = mockFetch(() => ({ jrd: { links: [SELF_LINK] } }))
+		const url = await new WebFinger().resolveActorURL("@alice@mastodon.example.social")
+
+		expect(url).toBe("https://example.social/users/alice")
+		expect(requested.length).toBe(1)
+	})
 })

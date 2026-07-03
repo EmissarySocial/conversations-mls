@@ -403,17 +403,19 @@ describe("Actor — computedUsername()", () => {
 		expect(a.computedUsername()).toBe("@bob@social.example.org")
 	})
 
-	it("throws when id is not a valid URL", () => {
+	it("degrades to an empty hostname when id is not a valid URL", () => {
+		// A malformed remote actor id must not throw (it would break member/contact rendering);
+		// fall back to a handle with an empty hostname instead.
 		const a = makeActor({
 			preferredUsername: "alice",
 			id: "not-a-url",
 		})
-		expect(() => a.computedUsername()).toThrow()
+		expect(a.computedUsername()).toBe("@alice@")
 	})
 
-	it("throws when id is absent", () => {
+	it("degrades to an empty hostname when id is absent", () => {
 		const a = makeActor({ preferredUsername: "alice" })
-		expect(() => a.computedUsername()).toThrow()
+		expect(a.computedUsername()).toBe("@alice@")
 	})
 })
 
