@@ -29,6 +29,16 @@ export class WebFinger implements IWebFinger {
 		const user = parts[0]!
 		const host = parts[1]!
 
+		// RULE: Only resolve plain fully-qualified domain handles. The host comes from
+		// (attacker-influenced) message/mention text and is fetched directly from the browser
+		// (not via the SSRF-guarded proxy), so reject anything that could target an internal
+		// service: IP literals, ports, and non-FQDN / internal hostnames. This limits the
+		// handle-controlled-host request-forgery surface.
+		if (!isResolvableWebFingerHost(host)) {
+			this.#cache.set(normalized, "")
+			return ""
+		}
+
 		// Return the cached result (including a cached "not found")
 		const cached = this.#cache.get(normalized)
 		if (cached != undefined) {
@@ -71,4 +81,16 @@ export class WebFinger implements IWebFinger {
 
 		return (selfLink?.href as string) ?? ""
 	}
+}
+
+// A plain fully-qualified domain name: two or more dot-separated labels of letters, digits, and
+// hyphens, with a non-numeric (so not an IP-literal) final label. No ports, no colons, no
+// userinfo, no IPv6 brackets.
+const FQDN_PATTERN = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/
+
+// isResolvableWebFingerHost reports whether `host` is safe to use as the target of a direct
+// (non-proxied) WebFinger request. It accepts only plain FQDNs, rejecting IP-literals, ports,
+// and single-label / internal hostnames that could point at an internal service.
+function isResolvableWebFingerHost(host: string): boolean {
+	return FQDN_PATTERN.test(host)
 }
