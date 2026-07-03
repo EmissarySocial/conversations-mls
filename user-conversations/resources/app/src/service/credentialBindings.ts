@@ -60,7 +60,19 @@ export class CredentialBindings implements AuthenticationService {
 
 	// withBootstrap runs `fn` with trust-on-first-use enabled (see #bootstrap), restoring strict
 	// validation afterward even if `fn` throws. Wrap the joinGroup() call in this.
+	//
+	// CAUTION: #bootstrap is an instance flag that spans `fn`'s `await`. While it is set, ANY
+	// validateCredential on this instance trusts-on-first-use — so no OTHER MLS operation may run
+	// on this codec during the window, or it could accept an unknown key it should reject. The
+	// reentrancy guard below makes an overlapping bootstrap fail loudly instead of silently
+	// widening the trust window; the caller is responsible for not interleaving other codec ops
+	// (the receive path that drives joins is serialized by the receiver's poll lock).
 	async withBootstrap<T>(fn: () => Promise<T>): Promise<T> {
+
+		if (this.#bootstrap) {
+			throw new Error("CredentialBindings.withBootstrap: already bootstrapping (concurrent join not allowed)")
+		}
+
 		this.#bootstrap = true
 		try {
 			return await fn()
