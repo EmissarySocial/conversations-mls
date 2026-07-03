@@ -100,27 +100,27 @@ export class Welcome {
 		)
 	}
 
-	setClientName = (vnode: WelcomeVnode, event: Event) => {
+	setClientName(vnode: WelcomeVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.clientName = target.value
 	}
 
-	setPasscode = (vnode: WelcomeVnode, event: Event) => {
+	setPasscode(vnode: WelcomeVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.passcode = target.value
 	}
 
-	setHideOnBlur = (vnode: WelcomeVnode, event: Event) => {
+	setHideOnBlur(vnode: WelcomeVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.isHideOnBlur = target.checked
 	}
 
-	setEncryptedMessages = (vnode: WelcomeVnode, event: Event) => {
+	setEncryptedMessages(vnode: WelcomeVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 		vnode.state.isEncryptedMessages = target.checked
 	}
 
-	setDesktopNotifications = async (vnode: WelcomeVnode, event: Event) => {
+	async setDesktopNotifications(vnode: WelcomeVnode, event: Event) {
 		const target = event.target as HTMLInputElement
 
 		if (target.checked) {

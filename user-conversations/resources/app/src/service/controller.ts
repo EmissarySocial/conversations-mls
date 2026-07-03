@@ -131,7 +131,7 @@ export class Controller {
 
 	// loadConfig retrieves the configuration from the
 	// database and starts the MLS service (if encryption keys are present)
-	readonly start = async () => {
+	async start() {
 
 		// Load configuration from the database
 		this.config = await this.#database.loadConfig()
@@ -245,7 +245,7 @@ export class Controller {
 	}
 
 	// startupConfiguration is called when the user submits their options from the initial welcome screen
-	startupConfiguration = async (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
+	async startupConfiguration(clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) {
 
 		// Set up the initial configuration
 		this.config.ready = true
@@ -294,7 +294,7 @@ export class Controller {
 	}
 
 	// saveConfiguration is called when the user submits their options from the initial welcome screen
-	saveConfiguration = async (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) => {
+	async saveConfiguration(clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) {
 
 		this.config.ready = true
 		this.config.generatorName = clientName
@@ -307,12 +307,12 @@ export class Controller {
 
 	// saveConfig persists the current in-memory config to the database. Used by the
 	// settings screen for auto-saving individual changes after mutating this.config.
-	saveConfig = async () => {
+	async saveConfig() {
 		await this.#database.saveConfig(this.config)
 	}
 
 	// signIn uses the provided passcode to extract the encryption key from the configuration value.
-	signIn = async (passcode: string): Promise<boolean> => {
+	async signIn(passcode: string): Promise<boolean> {
 
 		try {
 
@@ -342,7 +342,7 @@ export class Controller {
 
 	// stop halts all services and listeners and clears local memory. It is like
 	// a "log out" feature, but does not remove encrypted data from the device.
-	stop = (message: string) => {
+	stop(message: string) {
 
 		// SECURITY: Release all key material from BOTH sessionStorage and memory. Removing only
 		// the sessionStorage copy left the unwrapped (and extractable) CryptoKey — and the MLS
@@ -365,7 +365,7 @@ export class Controller {
 	}
 
 	// eraseDevice removes all locally stored data and reloads the application.
-	eraseDevice = async () => {
+	async eraseDevice() {
 
 		// Remove the KeyPackage from the server. This is best-effort: a network/server failure
 		// MUST NOT abort the local wipe below. Previously an unguarded await here meant that
@@ -397,14 +397,14 @@ export class Controller {
 	// Window Focus/Blur
 	//////////////////////////////////////////
 
-	onFocusWindow = () => {
+	onFocusWindow() {
 		this.isWindowFocused = true
 		if (this.config.isHideOnBlur) {
 			m.redraw()
 		}
 	}
 
-	onBlurWindow = () => {
+	onBlurWindow() {
 		this.isWindowFocused = false
 		if (this.config.isHideOnBlur) {
 			m.redraw()
@@ -423,20 +423,20 @@ export class Controller {
 
 	// selectedFilterName returns the display name of the currently selected
 	// conversation filter (empty string if none is selected).
-	selectedFilterName = (): string => {
+	selectedFilterName(): string {
 		return this.filters.find((filter) => filter.id == this.config.selectedFilterId)?.name ?? ""
 	}
 
 	// setConversationFilter records the currently selected conversation filter,
 	// persists it, and reloads the conversation list to match the new filter.
-	setConversationFilter = async (filterId: string) => {
+	async setConversationFilter(filterId: string) {
 		this.config.selectedFilterId = filterId
 		await this.#database.saveConfig(this.config)
 		await this.loadGroups()
 		m.redraw()
 	}
 
-	page_signout = () => {
+	page_signout() {
 
 		// Release key material and stop all services.
 		this.stop("SIGN-OUT")
@@ -455,19 +455,19 @@ export class Controller {
 	// Modal Dialogs
 	//////////////////////////////////////////
 
-	modal_addGroupMember = () => {
+	modal_addGroupMember() {
 		this.modalView = "ADD-GROUP-MEMBER"
 	}
 
-	modal_close = () => {
+	modal_close() {
 		this.modalView = ""
 	}
 
-	modal_newConversation = () => {
+	modal_newConversation() {
 		this.modalView = "NEW-CONVERSATION"
 	}
 
-	modal_editMessage = async (messageId: string) => {
+	async modal_editMessage(messageId: string) {
 
 		const message = await this.loadMessage(messageId)
 
@@ -488,7 +488,7 @@ export class Controller {
 
 	// modal_attachments opens the attachment lightbox for the given message,
 	// starting at the attachment at `index`.
-	modal_attachments = (message: Message, index: number) => {
+	modal_attachments(message: Message, index: number) {
 
 		// RULE: Do nothing if the message has no attachments
 		if (message.attachments.length == 0) {
@@ -501,7 +501,7 @@ export class Controller {
 		m.redraw()
 	}
 
-	modal_messageHistory = async (messageId: string) => {
+	async modal_messageHistory(messageId: string) {
 
 		const message = await this.loadMessage(messageId)
 
@@ -513,12 +513,12 @@ export class Controller {
 		this.modalView = "MESSAGE-HISTORY"
 	}
 
-	modal_startReaction = async (message: Message) => {
+	async modal_startReaction(message: Message) {
 		this.message = message
 		this.modalView = "MESSAGE-START-REACTION"
 	}
 
-	modal_startReaction_callback = async (emoji: Emoji) => {
+	async modal_startReaction_callback(emoji: Emoji) {
 
 		// Close the modal dialog
 		this.modalView = ""
@@ -544,15 +544,15 @@ export class Controller {
 	// Host Connectors
 	//////////////////////////////////////////
 
-	host_actor = (actorId: string) => {
+	host_actor(actorId: string) {
 		this.#host.viewActor(actorId)
 	}
 
-	host_block = (actorId: string) => {
+	host_block(actorId: string) {
 		this.#host.viewBlockActor(actorId)
 	}
 
-	host_keyPackages = () => {
+	host_keyPackages() {
 		this.#host.viewKeyPackages()
 	}
 
@@ -560,11 +560,11 @@ export class Controller {
 	// Property Getters
 	//////////////////////////////////////////
 
-	actorId = (): string => {
+	actorId(): string {
 		return this.#actor.id()
 	}
 
-	actorIcon = (): string => {
+	actorIcon(): string {
 		return this.#actor.icon()
 	}
 
@@ -580,7 +580,7 @@ export class Controller {
 		return this.config.lastMessageId
 	}
 
-	useEncryptedMessages = (): boolean => {
+	useEncryptedMessages(): boolean {
 
 		// this is set when the USER chooses to send encrypted messages
 		if (!this.config.isEncryptedMessages) {
@@ -601,7 +601,7 @@ export class Controller {
 
 
 	// #validateKeyPackages checks all KeyPackages owned by the current actor and removes any that have expired.
-	readonly #validateKeyPackages = async (): Promise<void> => {
+	async #validateKeyPackages(): Promise<void> {
 
 		// RULE: Only validate KeyPackages if the server supports encrypted messages.
 		if (!this.useEncryptedMessages()) {
@@ -653,7 +653,7 @@ export class Controller {
 	// createOrUpdateKeyPackage creates a new KeyPackage and POSTs it
 	// to the server to replaces the current one. If there is no
 	// existing KeyPackage, then the new one is created
-	createOrUpdateKeyPackage = async (): Promise<DBKeyPackage> => {
+	async createOrUpdateKeyPackage(): Promise<DBKeyPackage> {
 
 		// RULE: Require server support for encrypted messages
 		if (!this.#allowEncryptedMessages) {
@@ -698,13 +698,13 @@ export class Controller {
 	// loadKeyPackage reads the current Actor's KeyPackage from the local
 	// database, or returns undefined if none exists. Unlike loadOrCreateKeyPackage,
 	// it never creates a new KeyPackage.
-	loadKeyPackage = (): Promise<DBKeyPackage | undefined> => {
+	loadKeyPackage(): Promise<DBKeyPackage | undefined> {
 		return this.#database.loadKeyPackage()
 	}
 
 	// loadOrCreateKeyPackage tries to load the KeyPackage for the
 	// current Actor. If none exists, then a new one is created and returned
-	loadOrCreateKeyPackage = async (): Promise<DBKeyPackage> => {
+	async loadOrCreateKeyPackage(): Promise<DBKeyPackage> {
 
 		// RULE: Require server support for encrypted messages
 		if (!this.#allowEncryptedMessages) {
@@ -724,7 +724,7 @@ export class Controller {
 	}
 
 	// loadActorKeyPackages loads the KeyPackages for the specified actor
-	loadActorKeyPackages = async (actorId: string): Promise<KeyPackage[]> => {
+	async loadActorKeyPackages(actorId: string): Promise<KeyPackage[]> {
 
 		// RULE: Require server support for encrypted messages
 		if (!this.#allowEncryptedMessages) {
@@ -739,7 +739,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// createGroup creates a new group and initial message
-	createGroup = async (recipients: string[], initialMessage: string, encrypted: boolean) => {
+	async createGroup(recipients: string[], initialMessage: string, encrypted: boolean) {
 
 		// Add "me" to the members list
 		recipients.push(this.actorId())
@@ -784,7 +784,7 @@ export class Controller {
 		m.route.set("/groups", { id: group.id })
 	}
 
-	joinGroup = async (group: Group) => {
+	async joinGroup(group: Group) {
 
 		if (group.stateId != "WELCOME") {
 			console.error("Can only join groups that are in the WELCOME state")
@@ -800,7 +800,7 @@ export class Controller {
 
 	// loadGroups retrieves the groups matching the currently selected filter from
 	// the database. When no filter is selected, every group is loaded.
-	loadGroups = async () => {
+	async loadGroups() {
 
 		// Load groups from the database, limited to the selected filter's tags and states
 		const filter = this.filters.find((f) => f.id == this.config.selectedFilterId)
@@ -816,19 +816,19 @@ export class Controller {
 	}
 
 	// loadFilters retrieves all conversation filters from the database
-	loadFilters = async () => {
+	async loadFilters() {
 		this.filters = await this.#database.allFilters()
 	}
 
 	// saveFilter persists a conversation filter to the database
-	saveFilter = async (filter: Filter) => {
+	async saveFilter(filter: Filter) {
 		await this.#database.saveFilter(filter)
 	}
 
 	// deleteFilter removes a conversation filter from the database. If the deleted
 	// filter was the selected one, the selection falls back to the first remaining
 	// filter (as if no filter were selected).
-	deleteFilter = async (filterId: string) => {
+	async deleteFilter(filterId: string) {
 		await this.#database.deleteFilter(filterId)
 
 		if (this.config.selectedFilterId == filterId) {
@@ -838,7 +838,7 @@ export class Controller {
 		}
 	}
 
-	saveGroupAndSync = async (group: Group) => {
+	async saveGroupAndSync(group: Group) {
 
 		// Save the group in the database
 		await this.saveGroup(group)
@@ -848,7 +848,7 @@ export class Controller {
 	}
 
 	// saveGroup saves the specified group to the database
-	saveGroup = async (group: Group) => {
+	async saveGroup(group: Group) {
 
 		// Calculate the default group name based on the members of the group
 		group.defaultName = await this.#calcGroupDefaultName(group)
@@ -860,7 +860,7 @@ export class Controller {
 		await this.loadGroups()
 	}
 
-	syncGroup = async (group: Group) => {
+	async syncGroup(group: Group) {
 
 		// Send a "Group:Update" activity to my other devices
 		const activity = new Activity({
@@ -886,7 +886,7 @@ export class Controller {
 	}
 
 	// leaveGroup leaves/deletes the specified group from the database
-	leaveGroup = async (groupId: string) => {
+	async leaveGroup(groupId: string) {
 
 		// Guarantee dependency
 		if (this.#database == undefined) {
@@ -927,7 +927,7 @@ export class Controller {
 	// selectGroup displays the group with the specified ID and reloads its messages.
 	// The group is loaded directly from the database, so it is displayed even when
 	// it is not present in the (filtered) sidebar list.
-	selectGroup = async (groupId: string) => {
+	async selectGroup(groupId: string) {
 
 		// Load the requested group from the database (not just the filtered list),
 		// so the selection survives even when the active filter excludes it.
@@ -959,7 +959,7 @@ export class Controller {
 
 	// clearSelectedGroup resets the displayed group to an empty placeholder. The
 	// placeholder uses an empty ID so selectedGroupId() reports "nothing selected".
-	clearSelectedGroup = () => {
+	clearSelectedGroup() {
 		const placeholder = NewGroup("PLAINTEXT")
 		placeholder.id = ""
 		this.groupStream(placeholder)
@@ -970,7 +970,7 @@ export class Controller {
 	// is (re)loaded. The currently displayed group is left in place when it still
 	// exists, so the active filter never changes what conversation is shown. Only
 	// when nothing is selected yet does it fall back to the first group in the list.
-	reconcileSelectedGroup = async () => {
+	async reconcileSelectedGroup() {
 
 		// If a real group is already displayed and still exists, leave it alone.
 		const currentId = this.selectedGroupId()
@@ -991,12 +991,12 @@ export class Controller {
 		await this.selectGroup(first.id)
 	}
 
-	selectedGroupId = () => {
+	selectedGroupId() {
 		return this.groupStream().id
 	}
 
 	// getFirstMessageInGroup returns the content of the first received message in a group
-	getFirstMessageInGroup = async (groupId: string): Promise<string> => {
+	async getFirstMessageInGroup(groupId: string): Promise<string> {
 		const message = await this.#database.getFirstMessageInGroup(groupId)
 		return message?.content ?? ""
 	}
@@ -1018,7 +1018,7 @@ export class Controller {
 	// setSelectedGroupState changes the currently displayed group's state, persists
 	// it (syncing to other devices), and redraws. Changing the state may move the
 	// group in or out of the active filter's sidebar list.
-	setSelectedGroupState = async (stateId: GroupState) => {
+	async setSelectedGroupState(stateId: GroupState) {
 
 		const group = this.groupStream()
 
@@ -1038,7 +1038,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// addGroupMember adds a new actorId to the currently selected group
-	addGroupMembers = async (actorIds: string[]) => {
+	async addGroupMembers(actorIds: string[]) {
 
 		// Read the current value of the "selected group"
 		const group = this.groupStream()
@@ -1068,7 +1068,7 @@ export class Controller {
 		return group
 	}
 
-	removeGroupMember = async (actorId: string) => {
+	async removeGroupMember(actorId: string) {
 
 		const group = this.groupStream()
 
@@ -1092,17 +1092,17 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// loadMessages retrieves all messages for the currently selected group and updates the "messages" stream
-	loadMessages = async () => {
+	async loadMessages() {
 		this.messages = await this.#database.allMessages(this.selectedGroupId())
 		m.redraw()
 	}
 
 	// loadMessage retrieves a single message
-	loadMessage = async (messageId: string) => {
+	async loadMessage(messageId: string) {
 		return await this.#database.loadMessage(messageId)
 	}
 
-	startReply = (message: Message) => {
+	startReply(message: Message) {
 		this.inReplyTo = message
 		m.redraw()
 		globalThis.requestAnimationFrame(() => {
@@ -1110,13 +1110,13 @@ export class Controller {
 		})
 	}
 
-	removeReply = () => {
+	removeReply() {
 		this.inReplyTo = undefined
 		m.redraw()
 	}
 
 	// sendMessage sends a message (text and/or attachments) to the selected group.
-	sendMessage = async (content: string, attachments: Attachment[] = []) => {
+	async sendMessage(content: string, attachments: Attachment[] = []) {
 
 		console.log("sendMessage called with content:", content)
 
@@ -1181,7 +1181,7 @@ export class Controller {
 		await this.saveGroup(group)
 	}
 
-	updateMessage = async (message: Message) => {
+	async updateMessage(message: Message) {
 
 		const group = this.groupStream()
 
@@ -1225,12 +1225,12 @@ export class Controller {
 	}
 
 	// clearMessage resets the "message" stream to an empty state for composing new messages
-	clearMessage = () => {
+	clearMessage() {
 		this.message = NewMessage()
 	}
 
 	// deleteMessage removes a message (sent by the current actor) from the current group
-	deleteMessage = async (messageId: string) => {
+	async deleteMessage(messageId: string) {
 
 		// Load the message from the data store
 		const message = await this.loadMessage(messageId)
@@ -1271,7 +1271,7 @@ export class Controller {
 	}
 
 	// reactToMessage adds a "reaction" from the current actor to the specified message
-	reactToMessage = async (messageId: string, content: string = "❤️") => {
+	async reactToMessage(messageId: string, content: string = "❤️") {
 
 		// Load the message from the database
 		const group = this.groupStream()
@@ -1311,7 +1311,7 @@ export class Controller {
 	}
 
 	// undoReaction removes a "reaction" from the specified message
-	undoReaction = async (messageId: string) => {
+	async undoReaction(messageId: string) {
 
 		// Undo Mark the message as "liked" in the database
 		const message = await this.loadMessage(messageId)
@@ -1363,7 +1363,7 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// getContactStream returns a Contact stream for the specified actorId
-	getContactStream = (actorId: string): Stream<Contact> => {
+	getContactStream(actorId: string): Stream<Contact> {
 		return this.#contacts.getContactStream(actorId)
 	}
 
@@ -1374,7 +1374,7 @@ export class Controller {
 
 	// sendActivity sends an activity to the Actor's outbox.
 	// Returns the server-assigned URL for the created object, or "" if none was returned.
-	readonly #sendActivity = async (group: Group, activity: Activity): Promise<string> => {
+	async #sendActivity(group: Group, activity: Activity): Promise<string> {
 
 		// Apply the "instrument" property to the activity to identify that it came from this client.
 		activity.set(vocab.PropertyInstrument, this.config.generatorId)
@@ -1428,7 +1428,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
-	readonly #receiveActivity_Internal = async (activity: Activity): Promise<void> => {
+	async #receiveActivity_Internal(activity: Activity): Promise<void> {
 
 		// NOTE: each handler is `return await`ed (not bare `return`) so that a rejected
 		// handler promise rejects THIS method's promise, letting the caller's
@@ -1467,7 +1467,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Acknowledge processes "Acknowledge" activities
-	readonly #receiveActivity_Acknowledge = async (activity: Activity) => {
+	async #receiveActivity_Acknowledge(activity: Activity) {
 
 		// Find the message referred in the activity
 		let message = await this.#database.loadMessage(activity.objectId())
@@ -1491,7 +1491,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
-	readonly #receiveActivity_Create = async (activity: Activity) => {
+	async #receiveActivity_Create(activity: Activity) {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1573,7 +1573,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Create_KeyPackage will alert the user that a new KeyPackage has been created on one of their other devices.
-	readonly #receiveActivity_Create_KeyPackage = async (activity: Activity) => {
+	async #receiveActivity_Create_KeyPackage(activity: Activity) {
 
 		// RULE: Do not worry about other people's KeyPackages.
 		if (activity.actorId() != this.actorId()) {
@@ -1584,10 +1584,10 @@ export class Controller {
 		console.log("Received KeyPackage activity:", activity.toObject())
 	}
 
-	readonly #receiveActivity_Failure = async (activity: Activity) => {
+	async #receiveActivity_Failure(activity: Activity) {
 	}
 
-	readonly #receiveActivity_Delete = async (activity: Activity) => {
+	async #receiveActivity_Delete(activity: Activity) {
 
 		// Find the message referred in the activity
 		const message = await this.#database.loadMessage(activity.objectId())
@@ -1609,7 +1609,7 @@ export class Controller {
 		await this.loadMessages()
 	}
 
-	readonly #receiveActivity_Leave = async (activity: Activity) => {
+	async #receiveActivity_Leave(activity: Activity) {
 
 		// RULE: Only listen to "Leave" activities from myself.
 		if (activity.actorId() != this.actorId()) {
@@ -1623,7 +1623,7 @@ export class Controller {
 		this.loadGroups()
 	}
 
-	readonly #receiveActivity_Like = async (activity: Activity) => {
+	async #receiveActivity_Like(activity: Activity) {
 
 		const message = await this.#database.loadMessage(activity.objectId())
 
@@ -1646,7 +1646,7 @@ export class Controller {
 		}
 	}
 
-	readonly #receiveActivity_Undo = async (activity: Activity) => {
+	async #receiveActivity_Undo(activity: Activity) {
 
 		const originalLike = await activity.objectAsActivity()
 
@@ -1676,7 +1676,7 @@ export class Controller {
 		}
 	}
 
-	readonly #receiveActivity_Update = async (activity: Activity) => {
+	async #receiveActivity_Update(activity: Activity) {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1719,7 +1719,7 @@ export class Controller {
 	}
 
 	// receiveActivity_UpdateContext processes an incoming "Update" activity that contains a group definition update.
-	readonly #receiveActivity_UpdateContext = async (activity: Activity, document: Document) => {
+	async #receiveActivity_UpdateContext(activity: Activity, document: Document) {
 
 		// RULE: only accept this message from myself. Other people cannot change my group definitions
 		if (activity.actorId() != this.#actorId) {
@@ -1747,7 +1747,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Unknown processes unrecognized activities, attempting to treat them as an implicit "Create"
-	readonly #receiveActivity_Unknown = async (activity: Activity) => {
+	async #receiveActivity_Unknown(activity: Activity) {
 
 		// RULE: Only allow implicit Create for "Document" values
 		if (activity.notDocument()) {
@@ -1776,17 +1776,17 @@ export class Controller {
 	//////////////////////////////////////////
 
 	// getCodecForActivity returns the appropriate codec for the specified activity based on whether the activity's object is encrypted or not.
-	readonly #getCodecForActivity = (activity: Activity): ICodec => {
+	#getCodecForActivity(activity: Activity): ICodec {
 		return this.#getCodec(activity.isMlsActivity())
 	}
 
 	// getCodecForGroup returns the appropriate codec for the specified group based on whether the group is encrypted or not.
-	readonly #getCodecForGroup = (group: Group): ICodec => {
+	#getCodecForGroup(group: Group): ICodec {
 		return this.#getCodec(groupIsEncrypted(group))
 	}
 
 	// getCodec returns the appropriate codec (Plaintext or MLS) based on the "encrypted" parameter.
-	readonly #getCodec = (encrypted: boolean): ICodec => {
+	#getCodec(encrypted: boolean): ICodec {
 		if (encrypted) {
 			if (this.#codecMls == undefined) {
 				throw new Error("No codec available for encrypted messages. Either MLS has not initialized properly, or your permissions have changed on the server.")
@@ -1808,7 +1808,7 @@ export class Controller {
 
 	// calcGroupName is a mithril.Stream combiner that returns an intelligent name for the group based on its 
 	// internal state and member list.
-	readonly #calcGroupDefaultName = async (group: Group): Promise<string> => {
+	async #calcGroupDefaultName(group: Group): Promise<string> {
 
 		// Exclude the current user, so the default name shows only the OTHER members
 		const otherMembers = group.members.filter(actorId => actorId != this.actorId())

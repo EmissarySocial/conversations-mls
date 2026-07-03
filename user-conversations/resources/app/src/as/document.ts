@@ -13,13 +13,13 @@ export class Document extends ASObject {
 	// Property accessors
 
 	// attributedTo returns the value of the "attributedTo" property
-	attributedTo = async () => {
+	async attributedTo() {
 		const attributedTo = this.get("as", vocab.PropertyAttributedTo)
 		return loadActor(attributedTo, this.getProxyUrl())
 	}
 
 	// attributedToId returns the string/id value of the "attributedTo" property
-	attributedToId = () => {
+	attributedToId() {
 		return this.getString("as", vocab.PropertyAttributedTo)
 	}
 
@@ -27,7 +27,7 @@ export class Document extends ASObject {
 	// accepts the modern ActivityStreams form (Document/Image/Video/Audio objects
 	// carrying url/mediaType/name) as well as legacy bare-string values, and always
 	// returns an array even when a single attachment is present.
-	attachments = (): Attachment[] => {
+	attachments(): Attachment[] {
 
 		return this.getArray("as", vocab.PropertyAttachment)
 			.map(value => parseAttachment(value))
@@ -35,39 +35,39 @@ export class Document extends ASObject {
 	}
 
 	// content returns the value of the "content" property
-	content = () => {
+	content() {
 		return this.getString("as", vocab.PropertyContent)
 	}
 
-	context = () => {
+	context() {
 		return this.getString("as", vocab.PropertyContext)
 	}
 
-	generator = () => {
+	generator() {
 		return this.getString("as", vocab.PropertyGenerator)
 	}
 
 	// icon returns the value of the "icon" property
-	icon = () => {
+	icon() {
 		return this.getString("as", vocab.PropertyIcon)
 	}
 
 	// inReplyTo returns the string/id value of the "inReplyTo" property
-	inReplyToId = () => {
+	inReplyToId() {
 		return this.getString("as", vocab.PropertyInReplyTo)
 	}
 
 	// inReplyTo returns the value of the "inReplyTo" property
-	inReplyTo = () => {
+	inReplyTo() {
 		return loadDocument(this.inReplyToId(), this.getProxyUrl())
 	}
 
 	// name returns the value of the "name" property
-	name = () => {
+	name() {
 		return this.getString("as", vocab.PropertyName)
 	}
 
-	published = () => {
+	published() {
 		try {
 			const value = this.getString("as", vocab.PropertyPublished)
 			return Temporal.Instant.from(value)
@@ -78,12 +78,12 @@ export class Document extends ASObject {
 	}
 
 	// summary returns the value of the "summary" property
-	summary = () => {
+	summary() {
 		return this.getString("as", vocab.PropertySummary)
 	}
 
 	// to returns the value of the "to" property
-	to = async () => {
+	async to() {
 		const result = this.getArray("as", vocab.PropertyTo)
 		return Promise.all(result.map(async (actor: any) => loadActor(actor, this.getProxyUrl())))
 	}
@@ -91,16 +91,16 @@ export class Document extends ASObject {
 	///////////////////////////////////
 	// MLS-specific properties
 
-	ciphersuite = () => {
+	ciphersuite() {
 		return this.getString("mls", "ciphersuite")
 	}
 
-	encoding = () => {
+	encoding() {
 		return this.getString("mls", "encoding")
 	}
 
 	// isMlsDocument returns TRUE if this document matches the requirements for being an MLS message
-	isMlsDocument = () => {
+	isMlsDocument() {
 
 		if (this.mediaType() != vocab.MediaTypeMLSMessage) {
 			return false
@@ -117,7 +117,7 @@ export class Document extends ASObject {
 		return true
 	}
 
-	mediaType = () => {
+	mediaType() {
 		return this.getString("mls", "mediaType")
 	}
 }

@@ -28,16 +28,16 @@ export class Directory implements IDirectory {
 		this.#proxy = proxy
 	}
 
-	stop = () => {
+	stop() {
 		this.#actorId = ""
 	}
 
-	setActor = (actor: Actor) => {
+	setActor(actor: Actor) {
 		this.#actorId = actor.id()
 	}
 
 	// getKeyPackage loads the KeyPackages published by a single actor
-	getKeyPackages = async (actorIds: string[]): Promise<KeyPackage[]> => {
+	async getKeyPackages(actorIds: string[]): Promise<KeyPackage[]> {
 
 		let result: KeyPackage[] = []
 
@@ -90,17 +90,17 @@ export class Directory implements IDirectory {
 
 	// createKeyPackage sends the provided KeyPackage to the server as a new ActivityPub `Create` activity.
 	// It returns the ID of the newly created KeyPackage or throws an error on failure.
-	createKeyPackage = async (dbKeyPackage: DBKeyPackage): Promise<[string, string]> => {
+	async createKeyPackage(dbKeyPackage: DBKeyPackage): Promise<[string, string]> {
 		return await this.#createObject(NewAPKeyPackage(dbKeyPackage))
 	}
 
 	// updateKeyPackage sends the provided KeyPackage to the server as an ActivityPub `Update` activity.
-	updateKeyPackage = async (dbKeyPackage: DBKeyPackage): Promise<void> => {
+	async updateKeyPackage(dbKeyPackage: DBKeyPackage): Promise<void> {
 		await this.#updateObject(NewAPKeyPackage(dbKeyPackage))
 	}
 
 	// deleteKeyPackage removes a single KeyPackage from the server
-	deleteKeyPackage = async (keyPackageId: string) => {
+	async deleteKeyPackage(keyPackageId: string) {
 		return await this.#deleteObject(keyPackageId)
 	}
 
@@ -138,7 +138,7 @@ export class Directory implements IDirectory {
 
 	// createObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	readonly #createObject = async <T>(object: T): Promise<[string, string]> => {
+	async #createObject<T>(object: T): Promise<[string, string]> {
 
 		const activityId = newId()
 		const result = await this.#delivery.sendActivity(new Activity({
@@ -159,7 +159,7 @@ export class Directory implements IDirectory {
 
 	// updateObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	readonly #updateObject = async <T>(object: T): Promise<string> => {
+	async #updateObject<T>(object: T): Promise<string> {
 		return await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeUpdate,
@@ -171,7 +171,7 @@ export class Directory implements IDirectory {
 
 	// deleteObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
-	readonly #deleteObject = async <T>(object: T): Promise<void> => {
+	async #deleteObject<T>(object: T): Promise<void> {
 		await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeDelete,

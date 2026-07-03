@@ -121,11 +121,11 @@ export class Database implements IDatabase {
 		this.#onchange = () => { }
 	}
 
-	stop = () => {
+	stop() {
 		this.#db.close()
 	}
 
-	erase = () => {
+	erase() {
 
 		this.#db.close()
 		let req = globalThis.indexedDB.deleteDatabase(this.#db.name)
@@ -144,7 +144,7 @@ export class Database implements IDatabase {
 	}
 
 	// setChange allows the caller to provide a redraw function that will be called after database operations
-	onchange = (callback: callbackFunction) => {
+	onchange(callback: callbackFunction) {
 		this.#onchange = callback
 	}
 
@@ -153,7 +153,7 @@ export class Database implements IDatabase {
 	/////////////////////////////////////////////
 
 	// loadConfig retrieves the config record from the database
-	loadConfig = async () => {
+	async loadConfig() {
 		const result = await this.#db.get("config", ConfigID)
 		if (result != undefined) {
 			return result
@@ -162,7 +162,7 @@ export class Database implements IDatabase {
 	}
 
 	// saveConfig saves the config record to the database
-	saveConfig = async (config: Config) => {
+	async saveConfig(config: Config) {
 		config.id = ConfigID
 		config.ready = true
 		await this.#db.put("config", config)
@@ -182,7 +182,7 @@ export class Database implements IDatabase {
 	}
 
 	// loadGroup retrieves a group from the database
-	loadGroup = async (groupID: string): Promise<Group | EncryptedGroup | undefined> => {
+	async loadGroup(groupID: string): Promise<Group | EncryptedGroup | undefined> {
 
 		// Load the group record
 		const group = await this.#db.get("group", groupID)
@@ -195,7 +195,7 @@ export class Database implements IDatabase {
 	}
 
 	// saveGroup saves a group to the database
-	saveGroup = async (group: Group) => {
+	async saveGroup(group: Group) {
 
 		// RULE: Group must have an ID
 		if (group.id == undefined || group.id == "") {
@@ -246,13 +246,13 @@ export class Database implements IDatabase {
 	// searchGroups returns the stored groups matching the given tags and stateIds,
 	// sorted with IMPORTANT groups first. See filterAndSortGroups for the filtering
 	// and sorting rules (including the WELCOME-always-included behavior).
-	searchGroups = async (tags: string[], stateIds: GroupState[] = []): Promise<Group[]> => {
+	async searchGroups(tags: string[], stateIds: GroupState[] = []): Promise<Group[]> {
 		const groups = await this.#db.getAll("group")
 		return filterAndSortGroups(groups, tags, stateIds)
 	}
 
 	// deleteGroup removes a group from the database
-	deleteGroup = async (groupId: string) => {
+	async deleteGroup(groupId: string) {
 
 		// List all messages in the group
 		const messages = await this.#db.getAllKeysFromIndex("message", "groupId", groupId)
@@ -273,18 +273,18 @@ export class Database implements IDatabase {
 
 	// allFilters returns all conversation filters, sorted by their sort field
 	// ascending, then by name ascending to break ties
-	allFilters = async (): Promise<Filter[]> => {
+	async allFilters(): Promise<Filter[]> {
 		const filters = await this.#db.getAll("filter")
 		return filters.sort((a, b) => (a.sort - b.sort) || a.name.localeCompare(b.name))
 	}
 
 	// loadFilter retrieves a single filter from the database
-	loadFilter = async (filterId: string): Promise<Filter | undefined> => {
+	async loadFilter(filterId: string): Promise<Filter | undefined> {
 		return await this.#db.get("filter", filterId)
 	}
 
 	// saveFilter saves a filter to the database
-	saveFilter = async (filter: Filter) => {
+	async saveFilter(filter: Filter) {
 
 		// RULE: Filter must have an ID
 		if (filter.id == undefined || filter.id == "") {
@@ -296,7 +296,7 @@ export class Database implements IDatabase {
 	}
 
 	// deleteFilter removes a filter from the database
-	deleteFilter = async (filterId: string) => {
+	async deleteFilter(filterId: string) {
 
 		// RULE: locked (built-in) filters cannot be deleted
 		const filter = await this.#db.get("filter", filterId)
@@ -313,12 +313,12 @@ export class Database implements IDatabase {
 	/////////////////////////////////////////////
 
 	// loadKeyPackage retrieves the KeyPackage for the current user
-	loadKeyPackage = async () => {
+	async loadKeyPackage() {
 		return await this.#db.get("keyPackage", "self")
 	}
 
 	// saveKeyPackage saves the KeyPackage to the database, recomputing the signature and emojiKey.
-	saveKeyPackage = async (record: DBKeyPackage) => {
+	async saveKeyPackage(record: DBKeyPackage) {
 
 		// Save it to the database
 		await this.#db.put("keyPackage", record)
@@ -327,7 +327,7 @@ export class Database implements IDatabase {
 		return record
 	}
 
-	deleteKeyPackage = async () => {
+	async deleteKeyPackage() {
 		await this.#db.delete("keyPackage", "self")
 	}
 
@@ -336,7 +336,7 @@ export class Database implements IDatabase {
 	/////////////////////////////////////////////
 
 	// allMessages returns all messages in the specified group, sorted by createDate ascending
-	allMessages = async (groupId: string) => {
+	async allMessages(groupId: string) {
 
 		// Retrieve the messages from the database
 		let messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
@@ -349,7 +349,7 @@ export class Database implements IDatabase {
 	}
 
 	// getFirstMessageInGroup returns the earliest received message in a group
-	getFirstMessageInGroup = async (groupId: string): Promise<Message | undefined> => {
+	async getFirstMessageInGroup(groupId: string): Promise<Message | undefined> {
 		const messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
 		const received = messageData
 			.filter(data => data.type === "RECEIVED")
@@ -361,7 +361,7 @@ export class Database implements IDatabase {
 	}
 
 	// loadMessage retrieves a message from the database
-	loadMessage = async (messageID: string) => {
+	async loadMessage(messageID: string) {
 		const data = await this.#db.get("message", messageID)
 		if (data == undefined) {
 			throw new Error("Message not found: " + messageID)
@@ -370,19 +370,19 @@ export class Database implements IDatabase {
 	}
 
 	// saveMessage saves a message to the database (this action is idempotent)
-	saveMessage = async (message: Message) => {
+	async saveMessage(message: Message) {
 		await this.#db.put("message", message)
 		this.#onchange()
 	}
 
 	// deleteMessage removes a message from the database
-	deleteMessage = async (messageId: string) => {
+	async deleteMessage(messageId: string) {
 		await this.#db.delete("message", messageId)
 		this.#onchange()
 	}
 
 	// deleteMessagesByGroup removes all messages that belong to a group
-	deleteMessagesByGroup = async (groupId: string) => {
+	async deleteMessagesByGroup(groupId: string) {
 
 		// List all messages in the group
 		const messages = await this.#db.getAllKeysFromIndex("message", "groupId", groupId)
@@ -396,7 +396,7 @@ export class Database implements IDatabase {
 	}
 
 	// likeMessage adds a "like" from the specified actor to the specified message
-	likeMessage = async (actorId: string, messageId: string, content: string) => {
+	async likeMessage(actorId: string, messageId: string, content: string) {
 
 		// Retrieve the message from the database
 		let message = await this.loadMessage(messageId)
@@ -415,7 +415,7 @@ export class Database implements IDatabase {
 		return message
 	}
 
-	undoLikeMessage = async (actorId: string, messageId: string) => {
+	async undoLikeMessage(actorId: string, messageId: string) {
 
 		// Retrieve the message from the database
 		let message = await this.loadMessage(messageId)

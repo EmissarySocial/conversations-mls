@@ -150,25 +150,23 @@ export class ViewController {
 	// Lifecycle & configuration
 	//////////////////////////////////////////
 
-	start = () => this.#controller.start()
+	start() { return this.#controller.start() }
 
-	startupConfiguration = (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) =>
-		this.#controller.startupConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur)
+	startupConfiguration(clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) { return this.#controller.startupConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) }
 
-	saveConfiguration = (clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) =>
-		this.#controller.saveConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur)
+	saveConfiguration(clientName: string, passcode: string, isEncryptedMessages: boolean, isDesktopNotifications: boolean, isHideOnBlur: boolean) { return this.#controller.saveConfiguration(clientName, passcode, isEncryptedMessages, isDesktopNotifications, isHideOnBlur) }
 
-	saveConfig = () => this.#controller.saveConfig()
+	saveConfig() { return this.#controller.saveConfig() }
 
-	signIn = (passcode: string): Promise<boolean> => this.#controller.signIn(passcode)
+	signIn(passcode: string): Promise<boolean> { return this.#controller.signIn(passcode) }
 
-	stop = (message: string) => this.#controller.stop(message)
+	stop(message: string) { this.#controller.stop(message) }
 
-	eraseDevice = () => this.#controller.eraseDevice()
+	eraseDevice() { return this.#controller.eraseDevice() }
 
-	onFocusWindow = () => this.#controller.onFocusWindow()
+	onFocusWindow() { this.#controller.onFocusWindow() }
 
-	onBlurWindow = () => this.#controller.onBlurWindow()
+	onBlurWindow() { this.#controller.onBlurWindow() }
 
 	//////////////////////////////////////////
 	// Page & modal navigation
@@ -178,13 +176,13 @@ export class ViewController {
 	// settingsTab read it back (see above). The selected group id comes from the
 	// route's :groupId param via routeSelectGroup, so these build group URLs from
 	// the currently-selected group.
-	page_index = () => m.route.set("/groups")
-	page_settings = () => m.route.set("/settings")
-	page_groups = () => m.route.set("/groups")
-	page_group_messages = () => m.route.set("/groups", { id: this.selectedGroupId() })
-	page_group_members = () => m.route.set("/groups/people", { id: this.selectedGroupId() })
-	page_group_notes = () => m.route.set("/groups/notes", { id: this.selectedGroupId() })
-	page_signout = () => this.#controller.page_signout()
+	page_index() { m.route.set("/groups") }
+	page_settings() { m.route.set("/settings") }
+	page_groups() { m.route.set("/groups") }
+	page_group_messages() { m.route.set("/groups", { id: this.selectedGroupId() }) }
+	page_group_members() { m.route.set("/groups/people", { id: this.selectedGroupId() }) }
+	page_group_notes() { m.route.set("/groups/notes", { id: this.selectedGroupId() }) }
+	page_signout() { this.#controller.page_signout() }
 
 	// #requestedGroupId tracks the id whose selection is currently in flight, so that
 	// repeated render passes (which call routeSelectGroup) don't re-trigger the async
@@ -195,7 +193,7 @@ export class ViewController {
 	// resolver's render on every navigation/redraw, so it must be idempotent: it is a
 	// no-op when the requested id already matches the in-flight request or the settled
 	// selection. An empty id clears the selection (the /groups list route).
-	routeSelectGroup = (groupId: string) => {
+	routeSelectGroup(groupId: string) {
 
 		// Already selected (settled) or already loading (in flight): nothing to do.
 		if (groupId == this.selectedGroupId() || groupId == this.#requestedGroupId) {
@@ -212,96 +210,95 @@ export class ViewController {
 		this.#controller.selectGroup(groupId)
 	}
 
-	modal_addGroupMember = () => this.#controller.modal_addGroupMember()
-	modal_close = () => this.#controller.modal_close()
-	modal_newConversation = () => this.#controller.modal_newConversation()
-	modal_editMessage = (messageId: string) => this.#controller.modal_editMessage(messageId)
-	modal_messageHistory = (messageId: string) => this.#controller.modal_messageHistory(messageId)
-	modal_startReaction = (message: Message) => this.#controller.modal_startReaction(message)
+	modal_addGroupMember() { this.#controller.modal_addGroupMember() }
+	modal_close() { this.#controller.modal_close() }
+	modal_newConversation() { this.#controller.modal_newConversation() }
+	modal_editMessage(messageId: string) { return this.#controller.modal_editMessage(messageId) }
+	modal_messageHistory(messageId: string) { return this.#controller.modal_messageHistory(messageId) }
+	modal_startReaction(message: Message) { return this.#controller.modal_startReaction(message) }
 	modal_startReaction_callback = (emoji: Emoji) => this.#controller.modal_startReaction_callback(emoji)
-	modal_attachments = (message: Message, index: number) => this.#controller.modal_attachments(message, index)
+	modal_attachments(message: Message, index: number) { this.#controller.modal_attachments(message, index) }
 
 	//////////////////////////////////////////
 	// Host integration
 	//////////////////////////////////////////
 
-	host_actor = (actorId: string) => this.#controller.host_actor(actorId)
-	host_block = (actorId: string) => this.#controller.host_block(actorId)
-	host_keyPackages = () => this.#controller.host_keyPackages()
+	host_actor(actorId: string) { this.#controller.host_actor(actorId) }
+	host_block(actorId: string) { this.#controller.host_block(actorId) }
+	host_keyPackages() { this.#controller.host_keyPackages() }
 
 	//////////////////////////////////////////
 	// Actor & account
 	//////////////////////////////////////////
 
-	actorId = (): string => this.#controller.actorId()
-	actorIcon = (): string => this.#controller.actorIcon()
-	lastMessage = (messageId?: string): Promise<string> => this.#controller.lastMessage(messageId)
-	useEncryptedMessages = (): boolean => this.#controller.useEncryptedMessages()
+	actorId(): string { return this.#controller.actorId() }
+	actorIcon(): string { return this.#controller.actorIcon() }
+	lastMessage(messageId?: string): Promise<string> { return this.#controller.lastMessage(messageId) }
+	useEncryptedMessages(): boolean { return this.#controller.useEncryptedMessages() }
 
 	//////////////////////////////////////////
 	// KeyPackages
 	//////////////////////////////////////////
 
-	createOrUpdateKeyPackage = (): Promise<DBKeyPackage> => this.#controller.createOrUpdateKeyPackage()
-	loadKeyPackage = (): Promise<DBKeyPackage | undefined> => this.#controller.loadKeyPackage()
-	loadOrCreateKeyPackage = (): Promise<DBKeyPackage> => this.#controller.loadOrCreateKeyPackage()
-	loadActorKeyPackages = (actorId: string): Promise<KeyPackage[]> => this.#controller.loadActorKeyPackages(actorId)
+	createOrUpdateKeyPackage(): Promise<DBKeyPackage> { return this.#controller.createOrUpdateKeyPackage() }
+	loadKeyPackage(): Promise<DBKeyPackage | undefined> { return this.#controller.loadKeyPackage() }
+	loadOrCreateKeyPackage(): Promise<DBKeyPackage> { return this.#controller.loadOrCreateKeyPackage() }
+	loadActorKeyPackages(actorId: string): Promise<KeyPackage[]> { return this.#controller.loadActorKeyPackages(actorId) }
 
 	//////////////////////////////////////////
 	// Groups
 	//////////////////////////////////////////
 
-	createGroup = (recipients: string[], initialMessage: string, encrypted: boolean) =>
-		this.#controller.createGroup(recipients, initialMessage, encrypted)
+	createGroup(recipients: string[], initialMessage: string, encrypted: boolean) { return this.#controller.createGroup(recipients, initialMessage, encrypted) }
 
-	joinGroup = (group: Group) => this.#controller.joinGroup(group)
-	loadGroups = () => this.#controller.loadGroups()
-	loadFilters = () => this.#controller.loadFilters()
-	saveFilter = (filter: Filter) => this.#controller.saveFilter(filter)
-	deleteFilter = (filterId: string) => this.#controller.deleteFilter(filterId)
-	selectedFilterName = (): string => this.#controller.selectedFilterName()
-	setConversationFilter = (filterId: string) => this.#controller.setConversationFilter(filterId)
+	joinGroup(group: Group) { return this.#controller.joinGroup(group) }
+	loadGroups() { return this.#controller.loadGroups() }
+	loadFilters() { return this.#controller.loadFilters() }
+	saveFilter(filter: Filter) { return this.#controller.saveFilter(filter) }
+	deleteFilter(filterId: string) { return this.#controller.deleteFilter(filterId) }
+	selectedFilterName(): string { return this.#controller.selectedFilterName() }
+	setConversationFilter(filterId: string) { return this.#controller.setConversationFilter(filterId) }
 
-	saveGroupAndSync = (group: Group) => this.#controller.saveGroupAndSync(group)
-	saveGroup = (group: Group) => this.#controller.saveGroup(group)
-	syncGroup = (group: Group) => this.#controller.syncGroup(group)
-	leaveGroup = (groupId: string) => this.#controller.leaveGroup(groupId)
+	saveGroupAndSync(group: Group) { return this.#controller.saveGroupAndSync(group) }
+	saveGroup(group: Group) { return this.#controller.saveGroup(group) }
+	syncGroup(group: Group) { return this.#controller.syncGroup(group) }
+	leaveGroup(groupId: string) { return this.#controller.leaveGroup(groupId) }
 
 	// selectGroup navigates to the group's URL (id carried as the ?id= query param);
 	// the route resolver (routeSelectGroup) performs the actual selection + message
 	// load. Keeping selection URL-driven means the back button and deep links work,
 	// and there is one source of truth.
-	selectGroup = (groupId: string) => m.route.set("/groups", { id: groupId })
-	clearSelectedGroup = () => this.#controller.clearSelectedGroup()
-	reconcileSelectedGroup = () => this.#controller.reconcileSelectedGroup()
-	selectedGroupId = () => this.#controller.selectedGroupId()
-	getFirstMessageInGroup = (groupId: string): Promise<string> => this.#controller.getFirstMessageInGroup(groupId)
+	selectGroup(groupId: string) { m.route.set("/groups", { id: groupId }) }
+	clearSelectedGroup() { this.#controller.clearSelectedGroup() }
+	reconcileSelectedGroup() { return this.#controller.reconcileSelectedGroup() }
+	selectedGroupId() { return this.#controller.selectedGroupId() }
+	getFirstMessageInGroup(groupId: string): Promise<string> { return this.#controller.getFirstMessageInGroup(groupId) }
 
-	setGroupState = (group: Group, stateId: string) => this.#controller.setGroupState(group, stateId)
-	setSelectedGroupState = (stateId: GroupState) => this.#controller.setSelectedGroupState(stateId)
+	setGroupState(group: Group, stateId: string) { this.#controller.setGroupState(group, stateId) }
+	setSelectedGroupState(stateId: GroupState) { return this.#controller.setSelectedGroupState(stateId) }
 
-	addGroupMembers = (actorIds: string[]) => this.#controller.addGroupMembers(actorIds)
-	removeGroupMember = (actorId: string) => this.#controller.removeGroupMember(actorId)
+	addGroupMembers(actorIds: string[]) { return this.#controller.addGroupMembers(actorIds) }
+	removeGroupMember(actorId: string) { return this.#controller.removeGroupMember(actorId) }
 
 	//////////////////////////////////////////
 	// Messages
 	//////////////////////////////////////////
 
-	loadMessages = () => this.#controller.loadMessages()
-	loadMessage = (messageId: string) => this.#controller.loadMessage(messageId)
-	startReply = (message: Message) => this.#controller.startReply(message)
-	removeReply = () => this.#controller.removeReply()
-	sendMessage = (content: string, attachments: Attachment[] = []) => this.#controller.sendMessage(content, attachments)
-	updateMessage = (message: Message) => this.#controller.updateMessage(message)
-	clearMessage = () => this.#controller.clearMessage()
-	deleteMessage = (messageId: string) => this.#controller.deleteMessage(messageId)
-	reactToMessage = (messageId: string, content: string = "❤️") => this.#controller.reactToMessage(messageId, content)
-	undoReaction = (messageId: string) => this.#controller.undoReaction(messageId)
+	loadMessages() { return this.#controller.loadMessages() }
+	loadMessage(messageId: string) { return this.#controller.loadMessage(messageId) }
+	startReply(message: Message) { this.#controller.startReply(message) }
+	removeReply() { this.#controller.removeReply() }
+	sendMessage(content: string, attachments: Attachment[] = []) { return this.#controller.sendMessage(content, attachments) }
+	updateMessage(message: Message) { return this.#controller.updateMessage(message) }
+	clearMessage() { this.#controller.clearMessage() }
+	deleteMessage(messageId: string) { return this.#controller.deleteMessage(messageId) }
+	reactToMessage(messageId: string, content: string = "❤️") { return this.#controller.reactToMessage(messageId, content) }
+	undoReaction(messageId: string) { return this.#controller.undoReaction(messageId) }
 
 	//////////////////////////////////////////
 	// Contacts & inbound activities
 	//////////////////////////////////////////
 
-	getContactStream = (actorId: string): Stream<Contact> => this.#controller.getContactStream(actorId)
-	receiveActivity = (activity: Activity, retryCount: number = 0): Promise<void> => this.#controller.receiveActivity(activity, retryCount)
+	getContactStream(actorId: string): Stream<Contact> { return this.#controller.getContactStream(actorId) }
+	receiveActivity(activity: Activity, retryCount: number = 0): Promise<void> { return this.#controller.receiveActivity(activity, retryCount) }
 }

@@ -11,54 +11,54 @@ export class Actor extends ASObject {
 	// Property accessors
 
 	// icon returns the value of the "icon" property
-	icon = () => {
+	icon() {
 		return this.getString("as", vocab.PropertyIcon)
 	}
 
 	// id returns the value of the "id" property
-	id = () => {
+	id() {
 		return this.getString("as", vocab.PropertyId)
 	}
 
 	// name returns the value of the "name" property
-	name = () => {
+	name() {
 		return this.getString("as", vocab.PropertyName)
 	}
 
-	outbox = () => {
+	outbox() {
 		return this.getString("as", vocab.PropertyOutbox)
 	}
 
-	preferredUsername = () => {
+	preferredUsername() {
 		return this.getString("as", vocab.PropertyPreferredUsername)
 	}
 
-	proxyUrl = () => {
+	proxyUrl() {
 		const endpoints = this.getMap("as", vocab.PropertyEndpoints)
 		const result = toString(endpoints[vocab.PropertyProxyUrl])
 		return result
 	}
 
-	summary = () => {
+	summary() {
 		return this.getString("as", vocab.PropertySummary)
 	}
 
-	type = () => {
+	type() {
 		return this.getString("as", vocab.PropertyType)
 	}
 
-	usernameOrId = () => {
+	usernameOrId() {
 		return this.preferredUsername() || this.id()
 	}
 
 	///////////////////////////////////
 	// MLS-specific properties
 
-	mlsMessages = (): string => {
+	mlsMessages(): string {
 		return this.getString("mls", vocab.PropertyMlsMessages)
 	}
 
-	mlsKeyPackages = (): Promise<Collection> => {
+	mlsKeyPackages(): Promise<Collection> {
 		const value = this.get("mls", vocab.PropertyMlsKeyPackages)
 		console.log("mlsKeyPackages", value)
 		return loadCollection(value, this.getProxyUrl())
@@ -71,7 +71,7 @@ export class Actor extends ASObject {
 	// that returns BOTH encrypted and unencrypted messages. 
 	// This is preferred over messages because it allows the client to receive 
 	// direct messages that are not encrypted with MLS.
-	emissaryMessages = (): string => {
+	emissaryMessages(): string {
 		return toString(this.getWithNamespace("emissary", "messages"))
 	}
 
@@ -80,7 +80,7 @@ export class Actor extends ASObject {
 	// the standard messages collection (if Emissary-specific collection is not supported).
 	// The boolean return value indicates whether the returned URL is for the
 	// Emissary-specific collection (true) or the standard messages collection (false).
-	messages = () => {
+	messages() {
 
 		// Default to "no support". If nothing else is found, then this server doesn't support this messages API.
 		let result = { url: "", plaintext: false, ciphertext: false }
@@ -109,7 +109,7 @@ export class Actor extends ASObject {
 
 	///////////////////////////////////
 	// Computed Properties
-	computedUsername = () => {
+	computedUsername() {
 
 		// Get JUST the username (and not potential "@" or domain)
 		let username = this.preferredUsername()
@@ -118,10 +118,17 @@ export class Actor extends ASObject {
 		}
 		username = username.split("@")[0]!
 
-		// Get the domain from the actor's ID URL
-		const url = new URL(this.id())
+		// Get the domain from the actor's ID URL. The id comes from a remote (attacker-controlled)
+		// actor document, so guard against a malformed/missing URL rather than letting new URL()
+		// throw and break member/contact rendering.
+		let hostname = ""
+		try {
+			hostname = new URL(this.id()).hostname
+		} catch {
+			hostname = ""
+		}
 
 		// Combine as a nice looking Fediverse handle
-		return `@${username}@${url.hostname}`
+		return `@${username}@${hostname}`
 	}
 }

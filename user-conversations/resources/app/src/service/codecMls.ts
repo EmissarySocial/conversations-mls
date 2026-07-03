@@ -64,7 +64,7 @@ export class CodecMls implements ICodec {
 		this.#authService.register(publicKeyPackage.leafNode.signaturePublicKey, actor.id())
 	}
 
-	stop = () => {
+	stop() {
 		this.#publicKeyPackage = null as any
 		this.#privateKeyPackage = null as any
 		this.#actor = null as any
