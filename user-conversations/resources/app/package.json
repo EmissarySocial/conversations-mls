@@ -9,6 +9,8 @@
 	"scripts": {
 		"start": "esbuild src/app.tsx --bundle --outdir=./dist --jsx-factory=m --jsx-fragment='\"[\"' --watch",
 		"build": "esbuild src/app.tsx --bundle --outdir=./dist --jsx-factory=m --jsx-fragment='\"[\"' --minify --sourcemap --legal-comments=none",
+		"typecheck": "tsc --noEmit",
+		"lint": "eslint . --max-warnings=0",
 		"test": "vitest"
 	},
 	"dependencies": {
@@ -25,8 +27,12 @@
 	"devDependencies": {
 		"@types/mithril": "^2.2.7",
 		"@vitest/coverage-v8": "^4.1.8",
+		"@vitest/eslint-plugin": "^1.6.20",
 		"esbuild": "^0.27.1",
+		"eslint": "^10.6.0",
 		"jsdom": "^29.1.1",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.62.1",
 		"vitest": "^4.0"
 	}
 }
