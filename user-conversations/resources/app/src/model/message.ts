@@ -61,9 +61,17 @@ export class Message {
 	// setReaction adds a unique reaction from the specified actor
 	setReaction(actorId: string, reaction: string): boolean {
 
+		// RULE: Reject prototype-polluting keys. The reaction string is attacker-controlled (it
+		// arrives in an inbound "Like"); "__proto__"/"constructor"/"prototype" would either
+		// resolve to an inherited member (so the `undefined` check below fails and `.push` throws)
+		// or write through the prototype chain. Treat them as invalid reactions.
+		if (reaction == "__proto__" || reaction == "constructor" || reaction == "prototype") {
+			return false
+		}
+
 		this.removeReaction(actorId)
 
-		if (this.reactions[reaction] == undefined) {
+		if (!Object.hasOwn(this.reactions, reaction)) {
 			this.reactions[reaction] = []
 		}
 
