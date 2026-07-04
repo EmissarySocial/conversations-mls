@@ -1217,8 +1217,10 @@ export class Controller {
 			object: object,
 		})
 
-		// Send the activity
-		this.#sendActivity(group, activity)
+		// Send the activity to all group members before persisting locally, so a
+		// delivery/encode failure surfaces instead of leaving the edit saved locally
+		// but never propagated.
+		await this.#sendActivity(group, activity)
 
 		// Update the message in the database, and reload to refresh the UX
 		await this.#database.saveMessage(message)
@@ -1264,7 +1266,10 @@ export class Controller {
 			"object": message.id,
 		})
 
-		this.#sendActivity(group, activity)
+		// Send the delete to all group members before removing it locally, so a
+		// delivery failure surfaces instead of leaving the message deleted here but
+		// still present for everyone else.
+		await this.#sendActivity(group, activity)
 
 		// Delete the message
 		await this.#database.deleteMessage(messageId)
@@ -1307,8 +1312,9 @@ export class Controller {
 			object: message.id,
 		})
 
-		// Send the activity to the outbox
-		this.#sendActivity(group, activity)
+		// Send the activity to all group members. Awaited so a delivery failure
+		// rejects reactToMessage rather than becoming an unhandled rejection.
+		await this.#sendActivity(group, activity)
 	}
 
 	// undoReaction removes a "reaction" from the specified message
@@ -1354,8 +1360,9 @@ export class Controller {
 			}
 		})
 
-		// (asynchronously) send the activity to the outbox
-		this.#sendActivity(group, activity)
+		// Send the activity to all group members. Awaited so a delivery failure
+		// rejects undoReaction rather than becoming an unhandled rejection.
+		await this.#sendActivity(group, activity)
 	}
 
 
@@ -1665,9 +1672,11 @@ export class Controller {
 			return
 		}
 
-		// Remove the reaction, then (asynchronously) save the message to the database
+		// Remove the reaction, then save the message to the database. Awaited so the
+		// write commits (and any failure stays within #receiveActivity's retry path)
+		// before this handler returns.
 		message.removeReaction(activity.actorId())
-		this.#database.saveMessage(message)
+		await this.#database.saveMessage(message)
 
 		// (If this we're looking at this group right now, then Reload messages to refresh the UX
 		if (message.groupId == this.selectedGroupId()) {

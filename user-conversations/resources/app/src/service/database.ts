@@ -208,8 +208,10 @@ export class Database implements IDatabase {
 		const { added, removed } = diffArrays(previousMembers, group.members)
 
 		// Add a status message to the conversation for
-		// each new member that was added.
-		added.forEach(member => {
+		// each new member that was added. Awaited so the writes commit (and errors
+		// surface) before the group itself is saved below; a forEach would drop these
+		// promises and let saveGroup resolve with the writes still in flight.
+		for (const member of added) {
 
 			const statusMessage = NewMessage({
 				id: newId(),
@@ -218,12 +220,12 @@ export class Database implements IDatabase {
 				sender: member,
 			})
 
-			this.saveMessage(statusMessage)
-		})
+			await this.saveMessage(statusMessage)
+		}
 
-		// Add a status message to the conversation for 
+		// Add a status message to the conversation for
 		// each member that was removed.
-		removed.forEach(member => {
+		for (const member of removed) {
 
 			const statusMessage = NewMessage({
 				id: newId(),
@@ -232,8 +234,8 @@ export class Database implements IDatabase {
 				sender: member,
 			})
 
-			this.saveMessage(statusMessage)
-		})
+			await this.saveMessage(statusMessage)
+		}
 
 		// RULE: Truncate lastMessage to 100 characters for display purposes
 		group.lastMessage = group.lastMessage.slice(0, 100)

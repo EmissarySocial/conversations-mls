@@ -24578,24 +24578,24 @@
       const previousGroup = await this.loadGroup(group.id);
       const previousMembers = previousGroup?.members || [];
       const { added, removed } = diffArrays(previousMembers, group.members);
-      added.forEach((member) => {
+      for (const member of added) {
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
           type: "ADD-ACTOR",
           sender: member
         });
-        this.saveMessage(statusMessage);
-      });
-      removed.forEach((member) => {
+        await this.saveMessage(statusMessage);
+      }
+      for (const member of removed) {
         const statusMessage = NewMessage({
           id: newId2(),
           groupId: group.id,
           type: "REMOVE-ACTOR",
           sender: member
         });
-        this.saveMessage(statusMessage);
-      });
+        await this.saveMessage(statusMessage);
+      }
       group.lastMessage = group.lastMessage.slice(0, 100);
       await this.#db.put("group", group);
       this.#onchange();
@@ -27248,7 +27248,7 @@
         to: group.members,
         object
       });
-      this.#sendActivity(group, activity);
+      await this.#sendActivity(group, activity);
       await this.#database.saveMessage(message);
       await this.loadMessages();
     }
@@ -27277,7 +27277,7 @@
         "type": ActivityTypeDelete,
         "object": message.id
       });
-      this.#sendActivity(group, activity);
+      await this.#sendActivity(group, activity);
       await this.#database.deleteMessage(messageId);
       await this.loadMessages();
     }
@@ -27306,7 +27306,7 @@
         to: group.members,
         object: message.id
       });
-      this.#sendActivity(group, activity);
+      await this.#sendActivity(group, activity);
     }
     // undoReaction removes a "reaction" from the specified message
     async undoReaction(messageId) {
@@ -27336,7 +27336,7 @@
           object: messageId
         }
       });
-      this.#sendActivity(group, activity);
+      await this.#sendActivity(group, activity);
     }
     //////////////////////////////////////////
     // Contacts
@@ -27535,7 +27535,7 @@
         return;
       }
       message.removeReaction(activity.actorId());
-      this.#database.saveMessage(message);
+      await this.#database.saveMessage(message);
       if (message.groupId == this.selectedGroupId()) {
         this.loadMessages();
       }
