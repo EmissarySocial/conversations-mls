@@ -1,9 +1,5 @@
 import { test, expect, describe } from 'vitest'
 
-// The as/* layer reads a global Temporal; install the polyfill for the test env.
-import { Temporal } from "@js-temporal/polyfill"
-;(globalThis as any).Temporal ??= Temporal
-
 import { Document } from "../as/document"
 import {
 	generateAESKey,

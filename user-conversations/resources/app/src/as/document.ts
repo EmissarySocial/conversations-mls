@@ -1,3 +1,5 @@
+import { Temporal } from "@js-temporal/polyfill"
+
 import { ASObject } from "./object"
 import { loadActor, loadDocument } from "./loaders"
 import { type Attachment } from "../model/message"

@@ -190,7 +190,7 @@ export function shouldRefreshKeyPackage(document: Document): boolean {
 	}
 
 	// Expiration date is 48 hours after the date that the KeyPackage was published
-	const expiration = document.published().add({ hours: 48 }) as Temporal.Instant
+	const expiration = document.published().add({ hours: 48 })
 
 	// If the current time is AFTER the expiration date, the KeyPackage should be refreshed
 	const result = (Temporal.Instant.compare(Temporal.Now.instant(), expiration) > 0)

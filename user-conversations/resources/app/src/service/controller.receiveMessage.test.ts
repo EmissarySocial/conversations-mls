@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 import { expect, test, afterEach, vi } from 'vitest'
 
-import { Temporal } from "@js-temporal/polyfill"
-;(globalThis as any).Temporal ??= Temporal
-
 import { Activity } from "../as/activity"
 import * as vocab from "../as/vocab"
 import { makeController, FakeDatabase } from "./testHarness"

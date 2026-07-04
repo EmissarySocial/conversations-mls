@@ -2,6 +2,9 @@
 import m from "mithril"
 import Stream from "mithril/stream"
 
+// Temporal
+import { Temporal } from "@js-temporal/polyfill"
+
 // ts-mls
 import { type KeyPackage } from "ts-mls"
 

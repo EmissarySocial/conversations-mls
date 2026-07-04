@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 import { test, expect, describe, beforeEach } from 'vitest'
 
-import { Temporal } from "@js-temporal/polyfill"
-;(globalThis as any).Temporal ??= Temporal
-
 import { Controller } from "./controller"
 import { FakeDatabase, makeController } from "./testHarness"
 import { NewGroup, type Group, type GroupState } from "../model/group"

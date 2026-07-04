@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
 import { test, expect, describe, beforeEach } from 'vitest'
 
-import { Temporal } from "@js-temporal/polyfill"
-;(globalThis as any).Temporal ??= Temporal
-
 import m from "mithril"
 
 import { ViewController } from "./controller"

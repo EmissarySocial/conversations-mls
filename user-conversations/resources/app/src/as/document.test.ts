@@ -1,7 +1,6 @@
 import { test, expect, describe } from 'vitest'
 
 import { Temporal } from "@js-temporal/polyfill"
-;(globalThis as any).Temporal ??= Temporal
 
 import { Document } from "./document"
 import { attachmentToDocument } from "../model/message"
