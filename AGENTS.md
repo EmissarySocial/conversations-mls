@@ -72,7 +72,8 @@ from fetched (KP2-validated) KeyPackages in `addGroupMembers`, from the ratchet 
 `#registerGroupBindings` before each `processMessage`, and for self at construction / on rotation.
 Joining from a Welcome runs under `withBootstrap` (trust-on-first-use; the Welcome's authenticity
 is established by the private-key match) because ts-mls validates the encrypted tree during the
-`joinGroup` call. The old `service/authService.ts` is the rolled-back version — kept for now.
+`joinGroup` call. The rolled-back network-lookup version (`service/authService.ts`,
+`ActivityPubAuthenticationService`) has been deleted — do not reintroduce it.
 
 ## Plaintext-group membership authorization (KNOWN GAP — deferred)
 
