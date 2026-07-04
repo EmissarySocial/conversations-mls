@@ -262,7 +262,6 @@ export class CodecPlaintext implements ICodec {
 		activity.setContext(group.id)
 
 		// Done.
-		console.log("Plaintext.receiveActivity_CreateOrUpdateGroup:", group, activity)
 		return activity
 	}
 

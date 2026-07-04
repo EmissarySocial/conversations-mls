@@ -17,14 +17,12 @@ export class ActivityPubAuthenticationService implements AuthenticationService {
 
 		// Only CredentialBasic carries an actor identity; reject all other types
 		if (credential.credentialType !== defaultCredentialTypes.basic) {
-			console.log(`AuthenticationService: FALSE: Invalid credential type: ${credential.credentialType}`)
 			return false
 		}
 
 		const actorId = new TextDecoder().decode((credential as CredentialBasic).identity)
 
 		if (!actorId) {
-			console.log(`AuthenticationService: FALSE: Invalid actor ID: ${actorId}`)
 			return false
 		}
 
@@ -34,7 +32,6 @@ export class ActivityPubAuthenticationService implements AuthenticationService {
 		// Accept if any published KeyPackage carries the asserted signature key
 		const result = keyPackages.some(kp => uint8ArrayEqual(kp.leafNode.signaturePublicKey, signaturePublicKey))
 
-		console.log(`AuthenticationService: Validated credential for actor ${actorId}. Result: ${result}`, keyPackages)
 		return result
 	}
 }

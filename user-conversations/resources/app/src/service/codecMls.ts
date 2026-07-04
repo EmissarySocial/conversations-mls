@@ -1,5 +1,5 @@
 // MLS functions and types
-import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsGroupInfo, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -383,7 +383,6 @@ export class CodecMls implements ICodec {
 	// #sendMlsMessage is a private method that sends an MLS message via the user's ActivityPub outbox
 	async #sendMlsMessage(group: EncryptedGroup, type: string, recipients: string[], message: MlsMessage) {
 
-		console.log("#sendMlsMessage", type, recipients)
 
 		// If there are no recipients to send to, just return early
 		if (recipients.length === 0) {
@@ -428,7 +427,6 @@ export class CodecMls implements ICodec {
 	// undefined is returned.
 	async receiveActivity(activity: Activity): Promise<Activity | undefined> {
 
-		console.log("CodecMls.receiveActivity called with activity:", activity.toObject())
 
 		// Expect the object to be embedded in the Activity (as MLS+ActivityPub requires)
 		const object = activity.objectAsDocument()
@@ -450,8 +448,9 @@ export class CodecMls implements ICodec {
 		// Execute the appropriate handler
 		switch (mlsMessage.wireformat) {
 
+			// A GroupInfo message requires no further action from the controller.
 			case wireformats.mls_group_info:
-				return await this.#receiveActivity_GroupInfo(object, mlsMessage)
+				return undefined
 
 			case wireformats.mls_key_package:
 				return undefined
@@ -526,52 +525,6 @@ export class CodecMls implements ICodec {
 		await this.#cycleKeyPackages()
 	}
 
-	// decodeMessage_GroupInfo processes MLS "GroupInfo" messages that add this user to a new group.
-	async #receiveActivity_GroupInfo(document: Document, message: MlsGroupInfo): Promise<undefined> {
-
-		// ===== DIAGNOSTIC DUMP: print ALL available data from this GroupInfo message =====
-		console.group("===== GroupInfo message received =====")
-
-		// The raw ActivityPub document that carried this message
-		console.log("document (ActivityPub):", document.toObject())
-		console.log("document attributedTo:", document.attributedToId())
-
-		// Top-level MLS message envelope
-		console.log("mlsMessage.wireformat:", message.wireformat)
-		console.log("mlsMessage.version:", (message as any).version)
-
-		// The fully-expanded GroupInfo structure (Uint8Arrays -> hex, BigInts -> string)
-		console.log("groupInfo (deep dump):", JSON.stringify(dumpValue(message), null, 2))
-
-		// Convenience: decode the human-readable groupId
-		try {
-			console.log("groupId (decoded text):", decodeText(message.groupInfo.groupContext.groupId))
-		} catch (err) {
-			console.warn("Could not decode groupId as text:", err)
-		}
-
-		// Convenience: pull out the GroupContext fields individually
-		const ctx = message.groupInfo.groupContext
-		console.log("groupContext.epoch:", ctx.epoch)
-		console.log("groupContext.cipherSuite:", ctx.cipherSuite)
-		console.log("groupContext.protocolVersion:", (ctx as any).version ?? (ctx as any).protocolVersion)
-		console.log("groupContext.treeHash (hex):", toHex((ctx as any).treeHash))
-		console.log("groupContext.confirmedTranscriptHash (hex):", toHex((ctx as any).confirmedTranscriptHash))
-		console.log("groupContext.extensions:", dumpValue((ctx as any).extensions))
-
-		// Convenience: extensions / signer / signature on the GroupInfo itself
-		console.log("groupInfo.extensions:", dumpValue((message.groupInfo as any).extensions))
-		console.log("groupInfo.signer (leaf index):", (message.groupInfo as any).signer)
-		console.log("groupInfo.signature (hex):", toHex((message.groupInfo as any).signature))
-
-		console.groupEnd()
-		// ===== END DIAGNOSTIC DUMP =====
-
-		// Returning `undefined` means that the controller won't take
-		// any additional actions to process this message.
-		return undefined
-	}
-
 	// decodeMessage_PrivateMessage processes incoming MLS "Private Messages" that contain encrypted
 	// application messages for this user.  These messages are decrypted and then processes as
 	// ActivityStreams messages.
@@ -579,7 +532,6 @@ export class CodecMls implements ICodec {
 
 		let groupId: string
 
-		console.log("CodecMls.#receiveActivity_PublicPrivateMessage called with document:", document.toObject(), "mlsMessage:", mlsMessage)
 
 		switch (mlsMessage.wireformat) {
 
@@ -596,7 +548,6 @@ export class CodecMls implements ICodec {
 				return undefined
 		}
 
-		console.log("Decoded groupId: ", groupId)
 
 		// Load the group from the database so we can get the current client state for decryption
 		const group = await this.#database.loadGroup(groupId)
@@ -605,7 +556,6 @@ export class CodecMls implements ICodec {
 			throw new Error("Received message for unknown group: " + groupId + ". This should be retried.")
 		}
 
-		console.log("Loaded group from database: ", group)
 
 		// RULE: Cannot receive encrypted messages for unencrypted groups
 		if (!groupIsEncrypted(group)) {
@@ -674,7 +624,6 @@ export class CodecMls implements ICodec {
 
 		// Otherwise, this IS an application message, so return the decrypted JSON-LD to the controller.
 		const plaintext = decodeText(decodedMessage.message)
-		console.log(plaintext)
 
 		// Create a result object
 		const result = new Activity().fromJSON(plaintext)
@@ -682,8 +631,6 @@ export class CodecMls implements ICodec {
 		// Force the context to be the group ID so malicious clients
 		// can't spoof this and trick the controller into sending messages to the wrong group.
 		result.setContext(group.id)
-		console.log("CodecMls.receiveActivity: Decrypted message for group", group.id, "from sender", result.actorId(), "with type", result.type())
-		console.log(result.toObject())
 
 		// SECURITY: Bind the decrypted activity's actor (C) to the outer ActivityPub
 		// attributedTo (A). These two attacker-authored identities MUST agree, which —
@@ -965,46 +912,6 @@ type incomingCommit = {
 	kind: "commit";
 	senderLeafIndex: LeafIndex | undefined;
 	proposals: ProposalWithSender[];
-}
-
-// toHex converts a Uint8Array to a hex string for logging. Returns undefined for non-arrays.
-export function toHex(bytes: Uint8Array | undefined): string | undefined {
-	if (bytes == undefined) {
-		return undefined
-	}
-	return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("")
-}
-
-// dumpValue recursively converts a value into a JSON-safe structure for logging.
-// Uint8Arrays become hex strings, BigInts become strings, and everything else is
-// walked recursively so that console.log / JSON.stringify can render the full message.
-export function dumpValue(value: any): any {
-
-	if (value == undefined) {
-		return value
-	}
-
-	if (value instanceof Uint8Array) {
-		return { __type: "Uint8Array", length: value.length, hex: toHex(value) }
-	}
-
-	if (typeof value === "bigint") {
-		return value.toString()
-	}
-
-	if (Array.isArray(value)) {
-		return value.map(dumpValue)
-	}
-
-	if (typeof value === "object") {
-		const result: Record<string, any> = {}
-		for (const key of Object.keys(value)) {
-			result[key] = dumpValue(value[key])
-		}
-		return result
-	}
-
-	return value
 }
 
 // encodeText is a shorthand for using the ts-mls TextEncoder

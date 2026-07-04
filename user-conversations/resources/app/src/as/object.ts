@@ -49,7 +49,6 @@ export class ASObject {
 	// #fromProxy retrieves a JSON document from the specified URL via the proxy server and parses it into the JSONLD struct
 	async #fromProxy(url: string): Promise<this> {
 
-		console.log("fromProxy:", url)
 
 		// Send a request to the proxy server
 		const response = await fetch(this.#proxyUrl, {
@@ -75,7 +74,6 @@ export class ASObject {
 	// fromUrl retrieves a JSON document from the specified URL and parses it into the JSONLD struct
 	async fromUrl(url: string): Promise<this> {
 
-		console.log("fromUrl:", url)
 
 		// If we have a proxy URL, then use it to fetch the document
 		if (this.#proxyUrl != "") {

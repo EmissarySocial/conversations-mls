@@ -1118,7 +1118,6 @@ export class Controller {
 	// sendMessage sends a message (text and/or attachments) to the selected group.
 	async sendMessage(content: string, attachments: Attachment[] = []) {
 
-		console.log("sendMessage called with content:", content)
 
 		// Get the currently selected group
 		const group = this.groupStream()
@@ -1152,7 +1151,6 @@ export class Controller {
 			object: object,
 		})
 
-		console.log("Constructed activity:", activity.toObject())
 
 		// Send the activity and capture the server-assigned ID
 		const serverId = await this.#sendActivity(group, activity)
@@ -1393,7 +1391,6 @@ export class Controller {
 
 	receiveActivity = async (activity: Activity, retryCount: number = 0): Promise<void> => {
 
-		console.log("controller.receiveActivity called with activity:", activity.toObject(), "retryCount:", retryCount)
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(activity)
@@ -1581,7 +1578,6 @@ export class Controller {
 		}
 
 		// Here is where we'll do the work.... later.
-		console.log("Received KeyPackage activity:", activity.toObject())
 	}
 
 	async #receiveActivity_Failure(activity: Activity) {
@@ -1757,8 +1753,6 @@ export class Controller {
 		// Populate a Document from this, since that's what it is
 		let document = new Document(activity.toObject())
 
-		console.log("Implicit Create")
-		console.log(document.toObject())
 
 		// Process this like an implicit "Create" activity. Use the RAW recipient ids
 		// (not resolved Actors) so we don't trigger a network fetch per recipient.

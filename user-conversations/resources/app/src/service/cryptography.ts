@@ -246,8 +246,8 @@ export function decodeKeyPackage(document: Document): KeyPackage {
 		if (keyPackage != undefined) {
 			return keyPackage
 		}
-	} catch (e) {
-		console.debug("decodeKeyPackage: Unable to decode KeyPackage in raw format", e)
+	} catch {
+		// Decode failed for the raw format; fall through to the framed-format attempt below.
 	}
 
 	// Fallback: try MLS framed format
@@ -256,8 +256,8 @@ export function decodeKeyPackage(document: Document): KeyPackage {
 		if (mlsMessage?.wireformat === wireformats.mls_key_package) {
 			return mlsMessage.keyPackage
 		}
-	} catch (e) {
-		console.debug("decodeKeyPackage: Unable to decode KeyPackage in framed format", e)
+	} catch {
+		// Decode failed for the framed format too; fall through to the error below.
 	}
 
 	// Abject Failure. Return from Teutonberg Forest.

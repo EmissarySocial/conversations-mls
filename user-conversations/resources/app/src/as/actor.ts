@@ -60,7 +60,6 @@ export class Actor extends ASObject {
 
 	mlsKeyPackages(): Promise<Collection> {
 		const value = this.get("mls", vocab.PropertyMlsKeyPackages)
-		console.log("mlsKeyPackages", value)
 		return loadCollection(value, this.getProxyUrl())
 	}
 
