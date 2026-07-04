@@ -17830,10 +17830,12 @@
         return false;
       }
       this.removeReaction(actorId);
-      if (!Object.hasOwn(this.reactions, reaction)) {
-        this.reactions[reaction] = [];
+      let actors = this.reactions[reaction];
+      if (actors == void 0) {
+        actors = [];
+        this.reactions[reaction] = actors;
       }
-      this.reactions[reaction].push(actorId);
+      actors.push(actorId);
       return true;
     }
     // removeReaction removes a reaction from the specified actor, regardless of the reaction type.

@@ -71,11 +71,17 @@ export class Message {
 
 		this.removeReaction(actorId)
 
-		if (!Object.hasOwn(this.reactions, reaction)) {
-			this.reactions[reaction] = []
+		// Ensure a bucket exists for this reaction, then record the actor. Reading into a
+		// local lets the compiler carry the not-undefined narrowing to the push (a repeated
+		// this.reactions[reaction] index would re-widen to string[] | undefined).
+		let actors = this.reactions[reaction]
+
+		if (actors == undefined) {
+			actors = []
+			this.reactions[reaction] = actors
 		}
 
-		this.reactions[reaction].push(actorId)
+		actors.push(actorId)
 		return true
 	}
 
