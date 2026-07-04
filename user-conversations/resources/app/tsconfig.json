@@ -44,7 +44,16 @@
 		"isolatedModules": true,
 		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
-		"skipLibCheck": false,
+
+		// Trust dependency declaration files instead of compiling them. This is a
+		// browser app that deliberately omits @types/node ("types": [] above), so
+		// vite/vitest's .d.ts files reference Node globals (Buffer, node:http, NodeJS.*)
+		// that we intentionally do not expose. Separately, @js-temporal/polyfill v0.5.1
+		// predates TypeScript's native Temporal lib types and its Intl.DateTimeFormat
+		// augmentation cannot satisfy the newer built-in signatures. Neither is fixable
+		// in our source; skipLibCheck skips only .d.ts files, so our own code stays
+		// fully type-checked against those libraries.
+		"skipLibCheck": true,
 
 		"esModuleInterop": true
 	},
