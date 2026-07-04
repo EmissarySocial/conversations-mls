@@ -106,7 +106,7 @@ export async function newKeyPackage(actorId: string): Promise<{ publicPackage: K
 	}
 
 	// Make an extra-long lifetime for this KeyPackage
-	let lifetime = defaultLifetime()
+	const lifetime = defaultLifetime()
 	const now = BigInt(Math.floor(Date.now() / 1000)) // current time in seconds
 	lifetime.notAfter = now + (12n * 30n * 24n * 60n * 60n) // plus 12 months in seconds
 

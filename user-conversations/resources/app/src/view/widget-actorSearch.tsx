@@ -52,7 +52,7 @@ export class ActorSearch {
 								<span class="flex-row flex-align-center">
 									<img src={actor.icon()} alt="" class="circle" style="height:1em;" />
 									<span class="bold">{actor.name()}</span>
-									<i class="margin-left-sm clickable bi bi-x-lg" role="button" tabindex="0" onclick={() => this.removeActor(vnode, index)} onkeydown={(event: KeyboardEvent) => { if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index) }}></i>
+									<i class="margin-left-sm clickable bi bi-x-lg" role="button" tabindex="0" onclick={() => { this.removeActor(vnode, index); }} onkeydown={(event: KeyboardEvent) => { if (event.key === "Enter" || event.key === " ") this.removeActor(vnode, index) }}></i>
 								</span>
 							</span>
 						)
@@ -74,7 +74,7 @@ export class ActorSearch {
 							this.oninput(event, vnode)
 						}}
 						onfocus={() => this.loadOptions(vnode)}
-						onblur={() => this.onblur(vnode)}></input>
+						onblur={() => { this.onblur(vnode); }}></input>
 				</div>
 				{vnode.state.actors.length ? (
 					<div class="options" style={`position:${vnode.attrs.position || "absolute"};`}>
@@ -85,7 +85,7 @@ export class ActorSearch {
 									role="menuitem"
 									tabIndex="0"
 									class="flex-row padding-xs"
-									onmousedown={() => this.selectActor(vnode, index)}
+									onmousedown={() => { this.selectActor(vnode, index); }}
 									aria-selected={index == vnode.state.highlightedOption ? "true" : null}>
 									<div class="width-32" aria-hidden="true">
 										<img src={actor.icon()} alt="" class="width-32 circle" />
@@ -169,7 +169,7 @@ export class ActorSearch {
 		m.redraw()
 
 		try {
-			const actors: Object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
+			const actors: object[] = await m.request(vnode.attrs.endpoint + "?q=" + vnode.state.search)
 
 			// Ignore a stale response that a newer request has already superseded;
 			// otherwise it would clobber the current results and desync the highlight.

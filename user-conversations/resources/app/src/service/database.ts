@@ -128,7 +128,7 @@ export class Database implements IDatabase {
 	erase() {
 
 		this.#db.close()
-		let req = globalThis.indexedDB.deleteDatabase(this.#db.name)
+		const req = globalThis.indexedDB.deleteDatabase(this.#db.name)
 
 		req.onsuccess = (_event) => {
 			this.#host.reload()
@@ -339,7 +339,7 @@ export class Database implements IDatabase {
 	async allMessages(groupId: string) {
 
 		// Retrieve the messages from the database
-		let messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
+		const messageData = await this.#db.getAllFromIndex("message", "groupId", groupId)
 
 		// Sort by createDate ascending
 		messageData.sort((a, b) => a.createDate - b.createDate)
@@ -357,7 +357,7 @@ export class Database implements IDatabase {
 		if (received.length === 0) {
 			return undefined
 		}
-		return NewMessage(received[0]!)
+		return NewMessage(received[0])
 	}
 
 	// loadMessage retrieves a message from the database
@@ -399,7 +399,7 @@ export class Database implements IDatabase {
 	async likeMessage(actorId: string, messageId: string, content: string) {
 
 		// Retrieve the message from the database
-		let message = await this.loadMessage(messageId)
+		const message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {
@@ -418,7 +418,7 @@ export class Database implements IDatabase {
 	async undoLikeMessage(actorId: string, messageId: string) {
 
 		// Retrieve the message from the database
-		let message = await this.loadMessage(messageId)
+		const message = await this.loadMessage(messageId)
 
 		// RULE: If the message doesn't exist, then exit
 		if (message == undefined) {

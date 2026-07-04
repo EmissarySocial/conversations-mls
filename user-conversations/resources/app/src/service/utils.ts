@@ -209,8 +209,8 @@ export async function formatMessageContent(text: string, resolveMention?: Mentio
 
 // rangeToArray consumes all values from a generator and returns them as an array
 export function rangeToArray<T>(generator: Generator<T>): T[] {
-	let result = []
-	for (let value of generator) {
+	const result = []
+	for (const value of generator) {
 		result.push(value)
 	}
 	return result

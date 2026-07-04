@@ -22,7 +22,7 @@ export class Groups {
 				<div class="flex-row flex-align-center padding-left">
 					<div class="bold text-lg margin-none flex-grow ellipsis" style="min-width:0">{controller.selectedFilterName()}</div>
 					<FilterMenu controller={controller} />
-					<div class="popup-button primary" role="button" tabindex="0" title="New conversation" aria-label="New conversation" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>
+					<div class="popup-button primary" role="button" tabindex="0" title="New conversation" aria-label="New conversation" onclick={() => { controller.modal_newConversation(); }} onkeypress={synthClick}>
 						<i class="bi bi-plus-lg"></i>
 					</div>
 				</div>
@@ -38,7 +38,7 @@ export class Groups {
 						}
 
 						return (
-							<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => controller.selectGroup(group.id)} onkeypress={synthClick}>
+							<div key={group.id} class={cssClass} role="button" tabIndex="0" onclick={() => { controller.selectGroup(group.id); }} onkeypress={synthClick}>
 								<div class="width-48 circle flex-center" style={`color:var(--white); background-color:${groupColor(group)}`}>
 									{this.groupIcon(group)}
 								</div>
@@ -55,7 +55,7 @@ export class Groups {
 
 				<hr class="margin-vertical-sm" />
 
-				<div class="sidebar-item flex-row flex-align-center padding-horizontal clickable" role="button" tabIndex="0" onclick={() => controller.page_settings()} onkeypress={synthClick}>
+				<div class="sidebar-item flex-row flex-align-center padding-horizontal clickable" role="button" tabIndex="0" onclick={() => { controller.page_settings(); }} onkeypress={synthClick}>
 					<i class="bi bi-gear"></i>
 					<span>Settings</span>
 				</div>

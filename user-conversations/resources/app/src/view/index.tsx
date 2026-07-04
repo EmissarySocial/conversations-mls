@@ -99,22 +99,22 @@ export class Index {
 		switch (modalView) {
 
 			case "ADD-GROUP-MEMBER":
-				return <AddGroupMember controller={controller} close={() => this.closeModal(vnode)} />
+				return <AddGroupMember controller={controller} close={() => { this.closeModal(vnode); }} />
 
 			case "EDIT-MESSAGE":
-				return <EditMessage controller={controller} close={() => this.closeModal(vnode)} />
+				return <EditMessage controller={controller} close={() => { this.closeModal(vnode); }} />
 
 			case "MESSAGE-START-REACTION":
-				return <PickEmoji onselect={controller.modal_startReaction_callback} close={() => this.closeModal(vnode)} />
+				return <PickEmoji onselect={controller.modal_startReaction_callback} close={() => { this.closeModal(vnode); }} />
 
 			case "MESSAGE-HISTORY":
-				return <MessageHistory controller={controller} close={() => this.closeModal(vnode)} />
+				return <MessageHistory controller={controller} close={() => { this.closeModal(vnode); }} />
 
 			case "NEW-CONVERSATION":
-				return <NewConversation controller={controller} close={() => this.closeModal(vnode)} />
+				return <NewConversation controller={controller} close={() => { this.closeModal(vnode); }} />
 
 			case "ATTACHMENTS":
-				return <Attachments controller={controller} close={() => this.closeModal(vnode)} />
+				return <Attachments controller={controller} close={() => { this.closeModal(vnode); }} />
 
 		}
 

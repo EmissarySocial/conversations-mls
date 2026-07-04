@@ -101,12 +101,12 @@ export class Attachments {
 				    lightbox; the actual controls are the native <button> arrows within it. */}
 				<div
 					id="attachment-viewer"
-					onkeydown={(event: KeyboardEvent) => this.onkeydown(vnode, event)}
-					ondragstart={(event: DragEvent) => event.preventDefault()}
-					onpointerdown={(event: PointerEvent) => this.onpointerdown(vnode, event)}
-					onpointermove={(event: PointerEvent) => this.onpointermove(vnode, event)}
-					onpointerup={(event: PointerEvent) => this.onpointerup(vnode, event)}
-					onpointercancel={(event: PointerEvent) => this.onpointercancel(vnode, event)}>
+					onkeydown={(event: KeyboardEvent) => { this.onkeydown(vnode, event); }}
+					ondragstart={(event: DragEvent) => { event.preventDefault(); }}
+					onpointerdown={(event: PointerEvent) => { this.onpointerdown(vnode, event); }}
+					onpointermove={(event: PointerEvent) => { this.onpointermove(vnode, event); }}
+					onpointerup={(event: PointerEvent) => { this.onpointerup(vnode, event); }}
+					onpointercancel={(event: PointerEvent) => { this.onpointercancel(vnode, event); }}>
 
 					<button
 						type="button"
@@ -122,7 +122,7 @@ export class Attachments {
 							aria-label="Previous attachment"
 							tabIndex="0"
 							disabled={atStart}
-							onclick={() => this.previous(vnode)}><i class="bi bi-chevron-left"></i></button>
+							onclick={() => { this.previous(vnode); }}><i class="bi bi-chevron-left"></i></button>
 					}
 
 					<div class="attachment-stage">
@@ -142,7 +142,7 @@ export class Attachments {
 							aria-label="Next attachment"
 							tabIndex="0"
 							disabled={atEnd}
-							onclick={() => this.next(vnode)}><i class="bi bi-chevron-right"></i></button>
+							onclick={() => { this.next(vnode); }}><i class="bi bi-chevron-right"></i></button>
 					}
 
 					{hasMultiple &&
@@ -269,7 +269,7 @@ export class Attachments {
 	// navigating so a player never keeps running off-screen.
 	pauseAllMedia() {
 		document.querySelectorAll<HTMLMediaElement>("#attachment-viewer video, #attachment-viewer audio")
-			.forEach(media => media.pause())
+			.forEach(media => { media.pause(); })
 	}
 
 	// onkeydown maps the Left/Right arrow keys to attachment navigation.

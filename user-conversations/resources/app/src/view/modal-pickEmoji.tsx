@@ -47,7 +47,7 @@ export class PickEmoji {
 
 	view(vnode: PickEmojiVnode) {
 
-		let emojiGroups = vnode.state.emojiGroups()
+		const emojiGroups = vnode.state.emojiGroups()
 
 		if (!vnode.state.emojiGroups.end()) {
 			return (
@@ -99,7 +99,7 @@ export class PickEmoji {
 					placeholder="Search..."
 					class="margin-bottom"
 					value={vnode.state.searchQuery}
-					oninput={(event: Event) => this.filterEmojis(vnode, event)}>
+					oninput={(event: Event) => { this.filterEmojis(vnode, event); }}>
 				</input>
 
 				<div id="emoji-picker">
@@ -112,7 +112,7 @@ export class PickEmoji {
 									class="link margin-left-xs"
 									role="button"
 									tabIndex="0"
-									onclick={() => this.clearRecentEmojis(vnode)}
+									onclick={() => { this.clearRecentEmojis(vnode); }}
 									onkeyup={synthClick}>clear</span>
 							</div>
 							<div class="emoji-grid">
@@ -123,7 +123,7 @@ export class PickEmoji {
 										title={emoji.name}
 										role="button"
 										tabIndex="0"
-										onclick={() => this.select(vnode, emoji)}
+										onclick={() => { this.select(vnode, emoji); }}
 										onkeyup={synthClick}>{emoji.emoji}</div>
 								))}
 							</div>
@@ -141,7 +141,7 @@ export class PickEmoji {
 										title={emoji.name}
 										role="button"
 										tabIndex="0"
-										onclick={() => this.select(vnode, emoji)}
+										onclick={() => { this.select(vnode, emoji); }}
 										onkeyup={synthClick}
 									>{emoji.emoji}</div>
 								))}

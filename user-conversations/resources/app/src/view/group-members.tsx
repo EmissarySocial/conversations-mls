@@ -38,7 +38,7 @@ export class GroupMembers {
 				<div id="conversation-messages" class="padding">
 					<div class="table">
 						{(group.stateId === "CLOSED") ? null :
-							<div role="link" tabIndex="0" class="flex-row" onclick={() => vnode.attrs.controller.modal_addGroupMember()} onkeypress={synthClick}>
+							<div role="link" tabIndex="0" class="flex-row" onclick={() => { vnode.attrs.controller.modal_addGroupMember(); }} onkeypress={synthClick}>
 								<div>
 									<span class="circle width-48 flex-center text-white text-xl margin-none" style="background-color:var(--focus-color)"><i class="bi bi-plus"></i></span>
 								</div>
@@ -54,10 +54,10 @@ export class GroupMembers {
 							return (
 
 								<div key={contact.id} class="flex-row" role="button">
-									<div role="link" tabIndex="0" onclick={() => controller.host_actor(contact.id)} onkeypress={synthClick}>
+									<div role="link" tabIndex="0" onclick={() => { controller.host_actor(contact.id); }} onkeypress={synthClick}>
 										<img src={contact.icon} class="circle width-48" alt="" />
 									</div>
-									<div class="flex-grow padding-left-sm" role="link" tabIndex="0" onclick={() => controller.host_actor(contact.id)} onkeypress={synthClick}>
+									<div class="flex-grow padding-left-sm" role="link" tabIndex="0" onclick={() => { controller.host_actor(contact.id); }} onkeypress={synthClick}>
 										<div class="bold">{contact.name}</div>
 										<div class="text-gray">{contact.username}</div>
 									</div>

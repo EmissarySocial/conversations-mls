@@ -91,8 +91,8 @@ export function blurhashBackgroundStyle(blurhash: string | undefined): string {
 function loadImage(url: string): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		const image = new Image()
-		image.onload = () => resolve(image)
-		image.onerror = () => reject(new Error("Unable to load image for blurhash"))
+		image.onload = () => { resolve(image); }
+		image.onerror = () => { reject(new Error("Unable to load image for blurhash")); }
 		image.src = url
 	})
 }

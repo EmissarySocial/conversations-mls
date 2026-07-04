@@ -192,7 +192,7 @@ export class Controller {
 		// Wire additional data into each dependency
 		this.#receiver.setActor(this.#actor)
 		this.#delivery.setActor(this.#actor)
-		this.#delivery.setSignout(() => this.stop("SESSION-EXPIRED"))
+		this.#delivery.setSignout(() => { this.stop("SESSION-EXPIRED"); })
 		this.#directory.setActor(this.#actor)
 
 		// Initialize MLS (if supported by the server)
@@ -228,7 +228,7 @@ export class Controller {
 		}
 
 		// Start the realtime message receiver
-		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => this.stop("SESSION-EXPIRED"))
+		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => { this.stop("SESSION-EXPIRED"); })
 
 		// Wire UX redraws into database updates. Filters load first because
 		// loadGroups() limits the result to the selected filter's tags and states.
@@ -770,7 +770,7 @@ export class Controller {
 
 		// Use the codec to generate a new Group record.
 		const codec = this.#getCodec(encrypted)
-		let group = await codec.createGroup(recipients)
+		const group = await codec.createGroup(recipients)
 
 		// Since we're creating this group, it becomes active immediately (no WELCOME step)
 		this.setGroupState(group, "ACTIVE")
@@ -1413,7 +1413,7 @@ export class Controller {
 			// Step 2. Process the activity after it has been decoded and verified by the codec.
 			// `return await` (not bare `return`) so a handler rejection is caught by the catch
 			// below — a bare return of a rejected promise would escape this try/catch.
-			return await this.#receiveActivity_Internal(decodedActivity)
+			await this.#receiveActivity_Internal(decodedActivity); return;
 
 		} catch (error) {
 
@@ -1437,32 +1437,32 @@ export class Controller {
 		switch (activity.type()) {
 
 			case vocab.ActivityTypeAcknowledge:
-				return await this.#receiveActivity_Acknowledge(activity)
+				{ await this.#receiveActivity_Acknowledge(activity); return; }
 
 			case vocab.ActivityTypeCreate:
-				return await this.#receiveActivity_Create(activity)
+				{ await this.#receiveActivity_Create(activity); return; }
 
 			case vocab.ActivityTypeDelete:
-				return await this.#receiveActivity_Delete(activity)
+				{ await this.#receiveActivity_Delete(activity); return; }
 
 			case vocab.ActivityTypeFailure:
-				return await this.#receiveActivity_Failure(activity)
+				{ await this.#receiveActivity_Failure(activity); return; }
 
 			case vocab.ActivityTypeLeave:
-				return await this.#receiveActivity_Leave(activity)
+				{ await this.#receiveActivity_Leave(activity); return; }
 
 			case vocab.ActivityTypeLike:
-				return await this.#receiveActivity_Like(activity)
+				{ await this.#receiveActivity_Like(activity); return; }
 
 			case vocab.ActivityTypeUndo:
-				return await this.#receiveActivity_Undo(activity)
+				{ await this.#receiveActivity_Undo(activity); return; }
 
 			case vocab.ActivityTypeUpdate:
-				return await this.#receiveActivity_Update(activity)
+				{ await this.#receiveActivity_Update(activity); return; }
 
 			// implicit Create
 			default:
-				return await this.#receiveActivity_Unknown(activity)
+				{ await this.#receiveActivity_Unknown(activity); return; }
 		}
 	}
 
@@ -1470,7 +1470,7 @@ export class Controller {
 	async #receiveActivity_Acknowledge(activity: Activity) {
 
 		// Find the message referred in the activity
-		let message = await this.#database.loadMessage(activity.objectId())
+		const message = await this.#database.loadMessage(activity.objectId())
 
 		// RULE: Verify that the message exists before trying to delete it
 		if (message == undefined) {
@@ -1682,7 +1682,7 @@ export class Controller {
 
 		// Special case for updating Emissary "context" types (group definitions)
 		if (object.type() == vocab.ObjectTypeEmissaryContext) {
-			return await this.#receiveActivity_UpdateContext(activity, object)
+			await this.#receiveActivity_UpdateContext(activity, object); return;
 		}
 
 		// RULE: only the original sender can update a message
@@ -1754,7 +1754,7 @@ export class Controller {
 		}
 
 		// Populate a Document from this, since that's what it is
-		let document = new Document(activity.toObject())
+		const document = new Document(activity.toObject())
 
 
 		// Process this like an implicit "Create" activity. Use the RAW recipient ids

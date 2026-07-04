@@ -42,14 +42,14 @@ export class AppSignIn {
 						:
 						<form onsubmit={(event: SubmitEvent) => this.submit(vnode, event)}>
 							<div class="margin-vertical flex-row">
-								<input id="passcode" type="password" class="flex-grow" hint="Conversation Passcode" oninput={(event: Event) => this.setPasscode(vnode, event)} value={vnode.state.passcode} autocomplete="off" />
+								<input id="passcode" type="password" class="flex-grow" hint="Conversation Passcode" oninput={(event: Event) => { this.setPasscode(vnode, event); }} value={vnode.state.passcode} autocomplete="off" />
 								<button type="submit" class="primary" tabIndex="0"><i class="bi bi-arrow-right"></i></button>
 							</div>
 						</form>
 					}
 					{vnode.state.message && <p class="text-red margin-vertical">{vnode.state.message}</p>}
 					<p class="margin-vertical">To view private conversations on this device, you need to enter the passcode you used when you first set up Conversations.</p>
-					<p class="margin-vertical">You can <span class="link" role="link" tabIndex="0" onclick={() => this.reset(vnode)} onkeypress={synthClick}>reset your passcode</span> if you don't remember it, but all encrypted messages will be lost.</p>
+					<p class="margin-vertical">You can <span class="link" role="link" tabIndex="0" onclick={() => { this.reset(vnode); }} onkeypress={synthClick}>reset your passcode</span> if you don't remember it, but all encrypted messages will be lost.</p>
 				</div>
 			</div>
 		)

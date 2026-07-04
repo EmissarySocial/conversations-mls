@@ -30,7 +30,7 @@ export class AppSettingsSignout {
 						</div>
 					</div>
 
-					<button class="text-red" onclick={() => controller.page_signout()}>Sign Out</button>
+					<button class="text-red" onclick={() => { controller.page_signout(); }}>Sign Out</button>
 				</div>
 
 				<div class="card padding margin-top">
@@ -44,7 +44,7 @@ export class AppSettingsSignout {
 						</div>
 					</div>
 
-					<button class="text-red" onclick={() => this.eraseDevice(vnode)}>Erase Device</button>
+					<button class="text-red" onclick={() => { this.eraseDevice(vnode); }}>Erase Device</button>
 				</div>
 			</div>
 		)

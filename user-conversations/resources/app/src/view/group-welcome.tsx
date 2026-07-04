@@ -54,7 +54,7 @@ export class GroupWelcome {
 						{/* Creator identity */}
 						<img src={creator?.icon} class="width-96 circle margin-none" alt="" />
 						<div class="text-xl margin-none">{creator?.name}</div>
-						<div class="text-gray link margin-bottom" onclick={() => this.clickUsername(vnode)} onkeyup={synthClick} role="button" tabindex="0">{creator?.username} <i class="margin-left-xs bi bi-arrow-up-right-square"></i></div>
+						<div class="text-gray link margin-bottom" onclick={() => { this.clickUsername(vnode); }} onkeyup={synthClick} role="button" tabindex="0">{creator?.username} <i class="margin-left-xs bi bi-arrow-up-right-square"></i></div>
 
 						{/* Invitation description */}
 						<div class="text-lg">
@@ -80,9 +80,9 @@ export class GroupWelcome {
 							<div class="margin-bottom"><i>{creator?.name}</i> says... {this.firstMessagePreview(vnode.state.firstMessage)}</div>
 
 							<div class="margin-top-xl flex-row flex-align-center">
-								<button class="primary" onclick={() => this.clickAccept(vnode)}>Accept</button>
-								<button class="text-red" onclick={() => this.clickIgnore(vnode)}>Ignore</button>
-								<button class="text-red" onclick={() => this.clickBlock(vnode)}>Block</button>
+								<button class="primary" onclick={() => { this.clickAccept(vnode); }}>Accept</button>
+								<button class="text-red" onclick={() => { this.clickIgnore(vnode); }}>Ignore</button>
+								<button class="text-red" onclick={() => { this.clickBlock(vnode); }}>Block</button>
 							</div>
 						</div>
 					</div>

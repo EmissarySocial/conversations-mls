@@ -46,7 +46,7 @@ export class EditMessage {
 						</div>
 						<div class="layout-elements">
 							<div class="layout-element">
-								<textarea rows="8" tabindex="0" class={textareaClass} value={vnode.state.content} oninput={(event: Event) => this.setMessage(vnode, event)}></textarea>
+								<textarea rows="8" tabindex="0" class={textareaClass} value={vnode.state.content} oninput={(event: Event) => { this.setMessage(vnode, event); }}></textarea>
 								<div class="text-sm text-gray">Changes will be sent to all participants, but some apps may not display edits.</div>
 							</div>
 						</div>
@@ -57,7 +57,7 @@ export class EditMessage {
 							<button onclick={vnode.attrs.close} tabIndex="0">Close</button>
 						</div>
 						<div>
-							<span class="text-red" role="button" tabIndex="0" onclick={() => this.delete(vnode)} onkeypress={synthClick}>Delete</span>
+							<span class="text-red" role="button" tabIndex="0" onclick={() => { this.delete(vnode); }} onkeypress={synthClick}>Delete</span>
 						</div>
 					</div>
 				</form>
@@ -85,7 +85,7 @@ export class EditMessage {
 
 		// Save the message (and send Updates to participants)
 		await controller.updateMessage(message)
-		return this.close(vnode)
+		this.close(vnode);
 	}
 
 

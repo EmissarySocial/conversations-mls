@@ -147,7 +147,7 @@ function makeNoopProxy(): IProxy {
 		Actor: async () => { throw new Error("not implemented in test") },
 		Document: async () => { throw new Error("not implemented in test") },
 		Collection: async () => { throw new Error("not implemented in test") },
-	} as unknown as IProxy
+	}
 }
 
 function makeNoopReceiver(): IReceiver {

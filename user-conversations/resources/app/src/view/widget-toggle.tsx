@@ -52,8 +52,8 @@ export class Toggle {
 				aria-checked={value ? "true" : "false"}
 				aria-disabled={disabled ? "true" : "false"}
 				value={value ? "true" : "false"}
-				onclick={() => this.activate(vnode)}
-				onkeydown={(event: KeyboardEvent) => this.onKeydown(vnode, event)}>
+				onclick={() => { this.activate(vnode); }}
+				onkeydown={(event: KeyboardEvent) => { this.onKeydown(vnode, event); }}>
 				<span class="toggle"><span class="marker"></span></span>
 				{(label != undefined) && <label>{label}</label>}
 			</span>

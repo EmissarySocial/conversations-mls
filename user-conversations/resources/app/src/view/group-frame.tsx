@@ -15,7 +15,7 @@ interface GroupFrameArgs {
 	active: GroupTab
 }
 
-type GroupFrameVnode = Vnode<GroupFrameArgs, {}>
+type GroupFrameVnode = Vnode<GroupFrameArgs>
 
 // GroupFrame is the shared chrome for the per-conversation pages (messages, notes,
 // people, leave). It owns the `#conversation-details` root — including the group's
@@ -36,14 +36,14 @@ export class GroupFrame {
 			<div id="conversation-details" style={{ "--focus-color": groupColor(group) }}>
 				<div id="conversation-header" class="flex-row flex-align-center">
 					{isNarrow() &&
-						<div class="clickable margin-right-sm" role="button" tabindex="0" title="Back to conversations" aria-label="Back to conversations" onclick={() => controller.page_index()} onkeypress={synthClick}>
+						<div class="clickable margin-right-sm" role="button" tabindex="0" title="Back to conversations" aria-label="Back to conversations" onclick={() => { controller.page_index(); }} onkeypress={synthClick}>
 							<i class="bi bi-arrow-left text-lg"></i>
 						</div>
 					}
 					<div role="tablist" class="margin-none padding-none underlined flex-grow">
-						{this.tab(controller, active, "messages", groupName, () => controller.page_group_messages())}
-						{this.tab(controller, active, "notes", "Notes", () => controller.page_group_notes())}
-						{this.tab(controller, active, "members", "People (" + group.members.length + ")", () => controller.page_group_members())}
+						{this.tab(controller, active, "messages", groupName, () => { controller.page_group_messages(); })}
+						{this.tab(controller, active, "notes", "Notes", () => { controller.page_group_notes(); })}
+						{this.tab(controller, active, "members", "People (" + group.members.length + ")", () => { controller.page_group_members(); })}
 						{(active == "leave") && <div role="tab" aria-selected="true">Leave</div>}
 					</div>
 					<GroupMenu controller={controller} group={group} />

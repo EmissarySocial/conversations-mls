@@ -59,7 +59,7 @@ export class AppSettingsFilters {
 				<div class="text-lg bold margin-bottom">Filters</div>
 
 				<div class="table filter-list">
-					<div class="flex-row flex-align-center clickable link" role="button" tabIndex="0" onclick={() => this.addFilter(vnode)} onkeypress={synthClick}>
+					<div class="flex-row flex-align-center clickable link" role="button" tabIndex="0" onclick={() => { this.addFilter(vnode); }} onkeypress={synthClick}>
 						<div class="flex-grow"><i class="bi bi-plus"></i> Add a Filter</div>
 					</div>
 
@@ -74,7 +74,7 @@ export class AppSettingsFilters {
 					<WidgetFilterEdit
 						controller={vnode.attrs.controller}
 						filter={vnode.state.editFilter}
-						close={() => this.closeEdit(vnode)} />
+						close={() => { this.closeEdit(vnode); }} />
 				}
 			</div>
 		)
@@ -116,7 +116,7 @@ export class AppSettingsFilters {
 		// Locked filters are not editable: render the row without link affordances.
 		const linkAttrs = filter.locked
 			? {}
-			: { role: "button", tabIndex: "0", onclick: () => this.openEdit(vnode, filter), onkeypress: synthClick }
+			: { role: "button", tabIndex: "0", onclick: () => { this.openEdit(vnode, filter); }, onkeypress: synthClick }
 
 		return (
 			<div key={filter.id} class={cssClass} {...linkAttrs}>
@@ -125,11 +125,11 @@ export class AppSettingsFilters {
 					role="button"
 					tabIndex="0"
 					aria-label={`Reorder ${filter.name}. Press up or down arrow to move.`}
-					onpointerdown={(event: PointerEvent) => this.onGripDown(event, vnode, filter)}
-					onkeydown={(event: KeyboardEvent) => this.onGripKey(event, vnode, filter)}
-					onclick={(event: MouseEvent) => event.stopPropagation()}
-					oncreate={(grip: m.VnodeDOM) => this.maybeFocus(grip, vnode, filter)}
-					onupdate={(grip: m.VnodeDOM) => this.maybeFocus(grip, vnode, filter)}>
+					onpointerdown={(event: PointerEvent) => { this.onGripDown(event, vnode, filter); }}
+					onkeydown={(event: KeyboardEvent) => { this.onGripKey(event, vnode, filter); }}
+					onclick={(event: MouseEvent) => { event.stopPropagation(); }}
+					oncreate={(grip: m.VnodeDOM) => { this.maybeFocus(grip, vnode, filter); }}
+					onupdate={(grip: m.VnodeDOM) => { this.maybeFocus(grip, vnode, filter); }}>
 					<i class="bi bi-grip-vertical"></i>
 				</div>
 				<div class="flex-grow">
@@ -138,7 +138,7 @@ export class AppSettingsFilters {
 				</div>
 				<div class="align-right">
 					{(filters.length > 1) && !filter.locked &&
-						<button type="button" class="text-xs" onclick={(event: MouseEvent) => this.deleteFilter(event, vnode, filter)}>Remove</button>
+						<button type="button" class="text-xs" onclick={(event: MouseEvent) => { this.deleteFilter(event, vnode, filter); }}>Remove</button>
 					}
 				</div>
 			</div>
@@ -208,9 +208,9 @@ export class AppSettingsFilters {
 		// Show the "grabbing" cursor everywhere for the duration of the drag
 		document.body.classList.add("filter-dragging")
 
-		vnode.state.moveHandler = (e: PointerEvent) => this.onMove(e, vnode)
-		vnode.state.upHandler = (e: PointerEvent) => this.onUp(e, vnode)
-		vnode.state.cancelHandler = () => this.onCancel(vnode)
+		vnode.state.moveHandler = (e: PointerEvent) => { this.onMove(e, vnode); }
+		vnode.state.upHandler = (e: PointerEvent) => { this.onUp(e, vnode); }
+		vnode.state.cancelHandler = () => { this.onCancel(vnode); }
 		document.addEventListener("pointermove", vnode.state.moveHandler)
 		document.addEventListener("pointerup", vnode.state.upHandler)
 		document.addEventListener("pointercancel", vnode.state.cancelHandler)
@@ -379,7 +379,7 @@ export class AppSettingsFilters {
 		vnode.state.dropIndex = this.computeDropIndex(vnode, vnode.state.pointerY ?? 0)
 		m.redraw()
 
-		vnode.state.scrollRAF = requestAnimationFrame(() => this.autoScrollTick(vnode))
+		vnode.state.scrollRAF = requestAnimationFrame(() => { this.autoScrollTick(vnode); })
 	}
 
 	/////////////////////////////////////////////

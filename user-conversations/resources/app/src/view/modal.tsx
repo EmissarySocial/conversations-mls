@@ -5,7 +5,7 @@ interface ModalAttrs {
 	close: () => void
 }
 
-type ModalVnode = VnodeDOM<ModalAttrs, {}>
+type ModalVnode = VnodeDOM<ModalAttrs>
 
 // Adapted from: https://mithril-by-examples.js.org/examples/modal-2/#modal.js
 export class Modal {
@@ -44,7 +44,7 @@ export class Modal {
 
 	view(vnode: ModalVnode) {
 		return (
-			<div id="modal" onkeydown={(event: KeyboardEvent) => this.onkeydown(event, vnode)}> {/* NOSONAR: This is for visible pop-ups only. Keyboard accessibility is handled separately. */}
+			<div id="modal" onkeydown={(event: KeyboardEvent) => { this.onkeydown(event, vnode); }}> {/* NOSONAR: This is for visible pop-ups only. Keyboard accessibility is handled separately. */}
 				<div id="modal-underlay" onclick={vnode.attrs.close}>{/* NOSONAR */}</div>
 				<div id="modal-window">{vnode.children}</div>
 			</div>

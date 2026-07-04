@@ -121,7 +121,7 @@ export class ViewMessage {
 				return (
 					<div key={vnode.attrs.key} class="message status">
 						<div>
-							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>
+							<span class="link" role="button" tabIndex="0" onclick={() => { controller.host_actor(message.sender); }} onkeypress={synthClick}>
 								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" alt="" />
 								{contact.name}
 							</span> {" "}
@@ -138,7 +138,7 @@ export class ViewMessage {
 				return (
 					<div class="message status">
 						<div>
-							<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>
+							<span class="link" role="button" tabIndex="0" onclick={() => { controller.host_actor(message.sender); }} onkeypress={synthClick}>
 								<img src={contact.icon} class="circle margin-right-xs" style="height:1em;" alt="" />
 								{contact.name}
 							</span> {" "}
@@ -152,7 +152,7 @@ export class ViewMessage {
 
 				return (
 					<div class="message status">
-						<span class="link" role="button" tabIndex="0" onclick={() => controller.host_actor(message.sender)} onkeypress={synthClick}>{senderName}</span> {" "}
+						<span class="link" role="button" tabIndex="0" onclick={() => { controller.host_actor(message.sender); }} onkeypress={synthClick}>{senderName}</span> {" "}
 						ADDED a new device
 					</div>
 				)
@@ -170,7 +170,7 @@ export class ViewMessage {
 			{this.drawAttachments(controller, message)}
 			{/* NOSONAR S6848/S1082: the interactive elements are the native <a> mentions
 			    inside the trusted HTML; this is a delegation layer that also handles keyboard. */}
-			<div class="padding-xs message-content" onclick={(event: MouseEvent) => this.onContentClick(controller, event)} onkeydown={(event: KeyboardEvent) => this.onContentKeydown(controller, event)}>{m.trust(message.content)}</div>
+			<div class="padding-xs message-content" onclick={(event: MouseEvent) => { this.onContentClick(controller, event); }} onkeydown={(event: KeyboardEvent) => { this.onContentKeydown(controller, event); }}>{m.trust(message.content)}</div>
 		</>
 
 	}
@@ -219,7 +219,7 @@ export class ViewMessage {
 				class="message-attachment"
 				aria-label={"View attachment " + (attachment.name || (index + 1))}
 				tabIndex="0"
-				onclick={() => controller.modal_attachments(message, index)}>
+				onclick={() => { controller.modal_attachments(message, index); }}>
 				{this.drawThumbnail(attachment)}
 			</button>
 		)
@@ -317,7 +317,7 @@ export class ViewMessage {
 					{isSentByMe ||
 						<button tabIndex="0" onclick={() => controller.modal_startReaction(message)}><i class="bi bi-emoji-smile"></i> Like</button>
 					}
-					<button tabIndex="0" onclick={() => controller.startReply(message)}><i class="bi bi-reply"></i> Reply</button>
+					<button tabIndex="0" onclick={() => { controller.startReply(message); }}><i class="bi bi-reply"></i> Reply</button>
 
 					{isSentByMe &&
 						<button tabIndex="0" onclick={() => controller.modal_editMessage(message.id)}><i class="bi bi-pencil-square"></i> Edit</button>

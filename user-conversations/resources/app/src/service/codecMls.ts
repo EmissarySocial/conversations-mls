@@ -77,7 +77,7 @@ export class CodecMls implements ICodec {
 	// createGroup is an encoder hook that is called when an encrypted group is created.
 	async createGroup(newMembers: string[]): Promise<Group> {
 
-		let group = NewGroup("MLS")
+		const group = NewGroup("MLS")
 
 		// Fetch KeyPackages for the new members and negotiate the best shared cipher suite.
 		// const keyPackages = await this.#directory.getKeyPackages(newMembers)
@@ -153,7 +153,7 @@ export class CodecMls implements ICodec {
 	}
 
 	// #getGroupSignatures retrieves all KeyPackage signatures from the group state.
-	#getGroupSignatures(group: EncryptedGroup): Uint8Array<ArrayBufferLike>[] {
+	#getGroupSignatures(group: EncryptedGroup): Uint8Array[] {
 		const leafNodes = getGroupMembers(group.clientState)
 		const keyPackages = leafNodes.map(leafNode => leafNode.signature)
 		return keyPackages.filter(keyPackage => keyPackage !== undefined)
@@ -283,7 +283,7 @@ export class CodecMls implements ICodec {
 	async removeGroupMember(group: EncryptedGroup, actorId: string): Promise<void> {
 
 		// inspect each node in the group's ratchetTree
-		let proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
+		const proposals = group.clientState.ratchetTree.map((node, ratchetIndex) => {
 
 			// Skip undefined nodes
 			if (node == undefined) {
@@ -515,7 +515,7 @@ export class CodecMls implements ICodec {
 		group.id = groupId
 		group.createdById = activity.actorId()
 
-		let encryptedGroup = addClientState(group, clientState)
+		const encryptedGroup = addClientState(group, clientState)
 		encryptedGroup.members = this.getGroupMembers(encryptedGroup)
 
 		// Save the group to the database
@@ -699,7 +699,7 @@ export class CodecMls implements ICodec {
 	async #processMessageCallback_RemoveProposal(groupId: string, proposal: ProposalRemove) {
 
 		// Load the group from the database
-		let group = await this.#database.loadGroup(groupId)
+		const group = await this.#database.loadGroup(groupId)
 
 		if (group == undefined) {
 			console.error("mls.#processMessageCallback_RemoveProposal: Unable to load group for remove proposal", groupId)

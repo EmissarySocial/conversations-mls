@@ -115,7 +115,7 @@ export class MentionPopup implements MentionPopupController {
 						role="menuitem"
 						tabIndex="-1"
 						class={"popup-menu-item padding-xs" + (index == vnode.state.highlighted ? " highlight" : "")}
-						onmousedown={(event: MouseEvent) => this.onItemMousedown(vnode, index, event)}
+						onmousedown={(event: MouseEvent) => { this.onItemMousedown(vnode, index, event); }}
 						aria-selected={index == vnode.state.highlighted ? "true" : null}>
 						<div class="width-32 flex-shrink-0" aria-hidden="true">
 							<img src={actor.icon()} alt="" class="width-32 circle" />

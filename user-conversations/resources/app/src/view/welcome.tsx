@@ -51,7 +51,7 @@ export class Welcome {
 								<div class="layout-elements">
 									<div class="layout-element">
 										<label for="clientName">Device Name</label> {/* NOSONAR: "for" works fine in Mithril */}
-										<input id="clientName" type="text" tabIndex="0" value={vnode.state.clientName} oninput={(event: Event) => this.setClientName(vnode, event)} autofocus required />
+										<input id="clientName" type="text" tabIndex="0" value={vnode.state.clientName} oninput={(event: Event) => { this.setClientName(vnode, event); }} autofocus required />
 										<div class="text-xs text-gray margin-right-xs">
 											You can have conversations on multiple devices. Choose a unique name for this one.
 										</div>
@@ -59,21 +59,21 @@ export class Welcome {
 
 									<div class="layout-element">
 										<label for="passcode">Device Passcode</label> {/* NOSONAR: "for" works fine in Mithril */}
-										<input id="passcode" type="password" tabIndex="0" value={vnode.state.passcode} oninput={(event: Event) => this.setPasscode(vnode, event)} required autocomplete="off" />
+										<input id="passcode" type="password" tabIndex="0" value={vnode.state.passcode} oninput={(event: Event) => { this.setPasscode(vnode, event); }} required autocomplete="off" />
 										<div class="text-xs text-gray margin-right-xs">
 											Choose a simple but unique passcode you'll remember. If you lose this passcode, your encrypted messages cannot be recovered.
 										</div>
 									</div>
 
 									<div class="layout-element flex-row">
-										<input type="checkbox" tabIndex="0" id="isEncryptedMessages" checked={vnode.state.isEncryptedMessages} onchange={(event: Event) => this.setEncryptedMessages(vnode, event)} style="height:1em; width:1em;" />
+										<input type="checkbox" tabIndex="0" id="isEncryptedMessages" checked={vnode.state.isEncryptedMessages} onchange={(event: Event) => { this.setEncryptedMessages(vnode, event); }} style="height:1em; width:1em;" />
 										<label for="isEncryptedMessages"> {/* NOSONAR: "for" works fine in Mithril */}
 											<div>Send Encrypted Messages When Possible</div>
 										</label>
 									</div>
 
 									<div class="layout-element flex-row">
-										<input type="checkbox" tabIndex="0" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => this.setHideOnBlur(vnode, event)} style="height:1em; width:1em;" />
+										<input type="checkbox" tabIndex="0" id="isHideOnBlur" checked={vnode.state.isHideOnBlur} onchange={(event: Event) => { this.setHideOnBlur(vnode, event); }} style="height:1em; width:1em;" />
 										<label for="isHideOnBlur"> {/* NOSONAR: "for" works fine in Mithril */}
 											<div>Hide Conversations When You Leave This Window</div>
 										</label>

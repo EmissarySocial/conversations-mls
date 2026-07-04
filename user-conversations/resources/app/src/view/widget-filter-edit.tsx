@@ -52,12 +52,12 @@ export class WidgetFilterEdit {
 
 							<div class="layout-element">
 								<label for="filterName">Filter Name</label> {/* NOSONAR: "for" works fine in Mithril */}
-								<input id="filterName" type="text" tabIndex="0" value={vnode.state.name} oninput={(event: Event) => this.setName(vnode, event)} />
+								<input id="filterName" type="text" tabIndex="0" value={vnode.state.name} oninput={(event: Event) => { this.setName(vnode, event); }} />
 							</div>
 
 							<div class="layout-element">
 								<label for="filterTags">Tags</label> {/* NOSONAR: "for" works fine in Mithril */}
-								<input id="filterTags" type="text" placeholder="#add #hashtags #here" value={vnode.state.tags} oninput={(event: Event) => this.setTags(vnode, event)} />
+								<input id="filterTags" type="text" placeholder="#add #hashtags #here" value={vnode.state.tags} oninput={(event: Event) => { this.setTags(vnode, event); }} />
 							</div>
 
 							<div class="layout-element">
@@ -68,7 +68,7 @@ export class WidgetFilterEdit {
 											id={"state-" + option.state}
 											type="checkbox"
 											checked={vnode.state.states.includes(option.state)}
-											onchange={() => this.toggleState(vnode, option.state)} />
+											onchange={() => { this.toggleState(vnode, option.state); }} />
 										<span>{option.label}</span>
 									</label>
 								))}

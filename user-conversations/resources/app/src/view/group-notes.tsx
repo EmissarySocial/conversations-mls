@@ -41,7 +41,7 @@ export class GroupNotes {
 											id="idGroupName"
 											type="text"
 											value={vnode.state.group.name}
-											oninput={(event: Event) => this.setName(vnode, event)}
+											oninput={(event: Event) => { this.setName(vnode, event); }}
 										/>
 										<div class="text-xs text-gray">(PRIVATE) helps you organize conversations. If empty, member list is displayed.</div>
 									</div>
@@ -51,7 +51,7 @@ export class GroupNotes {
 											id="idGroupNotes"
 											value={vnode.state.group.summary}
 											rows="8"
-											oninput={(event: Event) => this.setSummary(vnode, event)}
+											oninput={(event: Event) => { this.setSummary(vnode, event); }}
 										/>
 										<div class="text-xs text-gray">(PRIVATE) Notes about this conversation. Not shared with other group members.</div>
 									</div>
@@ -65,7 +65,7 @@ export class GroupNotes {
 											type="text"
 											placeholder="#add #hashtags #here"
 											value={vnode.state.tags}
-											oninput={(event: Event) => this.setTags(vnode, event)}
+											oninput={(event: Event) => { this.setTags(vnode, event); }}
 										/>
 										<div class="text-xs text-gray">(PRIVATE) Organizes conversations using conversation filters.</div>
 									</div>
@@ -76,7 +76,7 @@ export class GroupNotes {
 									<button type="submit" class="primary" tabindex="0">
 										Save Changes
 									</button>
-									<button type="button" tabindex="0" onclick={() => this.close(vnode)}>
+									<button type="button" tabindex="0" onclick={() => { this.close(vnode); }}>
 										Cancel
 									</button>
 								</div>
@@ -111,7 +111,7 @@ export class GroupNotes {
 			<select
 				id="idGroupState"
 				value={vnode.state.group.stateId}
-				oninput={(event: Event) => this.setState(vnode, event)}>
+				oninput={(event: Event) => { this.setState(vnode, event); }}>
 
 				<option value="IMPORTANT">Important</option>
 				<option value="ACTIVE">Active</option>
@@ -166,7 +166,7 @@ export class GroupNotes {
 		await vnode.attrs.controller.saveGroupAndSync(vnode.state.group)
 
 		// Success. Close the modal dialog and redraw the screen
-		return this.close(vnode)
+		this.close(vnode);
 	}
 
 	async delete(vnode: GroupNotesVnode) {

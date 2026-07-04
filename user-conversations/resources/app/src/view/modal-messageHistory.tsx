@@ -36,7 +36,7 @@ export class MessageHistory {
 					))}
 					<div key={message.content}>{message.history.length + 1}. {message.content}</div>
 				</div>
-				<button onclick={() => this.close(vnode)} tabIndex="0">Close</button>
+				<button onclick={() => { this.close(vnode); }} tabIndex="0">Close</button>
 			</Modal>
 		)
 	}

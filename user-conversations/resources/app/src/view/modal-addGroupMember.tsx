@@ -53,7 +53,7 @@ export class AddGroupMember {
 									value={vnode.state.actors}
 									endpoint="/.api/actors"
 									position="relative"
-									onselect={(actors: Actor[], canBeEncrypted: boolean) => this.selectActors(vnode, actors, canBeEncrypted)} >
+									onselect={(actors: Actor[], canBeEncrypted: boolean) => { this.selectActors(vnode, actors, canBeEncrypted); }} >
 								</ActorSearch>
 							</div>
 						</div>
@@ -119,7 +119,7 @@ export class AddGroupMember {
 
 		// Create a new conversation and send plaintext message
 		await controller.addGroupMembers(participants)
-		return this.close(vnode)
+		this.close(vnode);
 	}
 
 	close(vnode: AddGroupMemberVnode) {

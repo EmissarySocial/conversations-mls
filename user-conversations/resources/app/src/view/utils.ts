@@ -34,7 +34,7 @@ export function keyCode(evt: KeyboardEvent): string {
 }
 
 export function getFocusElements(node: Element): [HTMLInputElement | undefined, HTMLInputElement | undefined] {
-	const focusElements = node.querySelectorAll("[tabIndex]") as NodeListOf<HTMLInputElement>
+	const focusElements = node.querySelectorAll<HTMLInputElement>("[tabIndex]")
 
 	if (focusElements.length == 0) {
 		return [undefined, undefined]

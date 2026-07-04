@@ -95,14 +95,14 @@ export class AppSettingsGeneral {
 						<Toggle
 							value={vnode.state.isSoundNotifications}
 							text="Play Sound for New Messages"
-							onchange={(next: boolean) => this.setSoundNotifications(vnode, next)} />
+							onchange={(next: boolean) => { this.setSoundNotifications(vnode, next); }} />
 					</div>
 
 					<div class="layout-element flex-row">
 						<Toggle
 							value={vnode.state.isHideOnBlur}
 							text="Hide When Window Loses Focus"
-							onchange={(next: boolean) => this.setHideOnBlur(vnode, next)} />
+							onchange={(next: boolean) => { this.setHideOnBlur(vnode, next); }} />
 					</div>
 
 				</div>
@@ -124,7 +124,7 @@ export class AppSettingsGeneral {
 							<Toggle
 								value={vnode.state.isEncryptedMessages}
 								text="Send Encrypted Messages When Possible"
-								onchange={(next: boolean) => this.setEncryptedMessages(vnode, next)} />
+								onchange={(next: boolean) => { this.setEncryptedMessages(vnode, next); }} />
 						</div>
 
 					</div>
@@ -148,7 +148,7 @@ export class AppSettingsGeneral {
 					When you join a conversation from a new device, you can prove that your encryption keys match by comparing this EmojiKey.
 					EmojiKey change frequently, so make sure you're comparing the most recent one.
 					{" "}
-					<span role="link" class="link" tabIndex="0" onclick={() => controller.host_keyPackages()} onkeypress={synthClick}>View all registered devices &rarr;</span>
+					<span role="link" class="link" tabIndex="0" onclick={() => { controller.host_keyPackages(); }} onkeypress={synthClick}>View all registered devices &rarr;</span>
 				</div>
 
 				<div class="flex-row">

@@ -166,7 +166,7 @@ export class Activity extends ASObject {
 	async calcGroupId(): Promise<string> {
 
 		// First, try to find the context/groupId from the activity itself
-		let groupId = this.context()
+		const groupId = this.context()
 
 		if (groupId != "") {
 			return groupId

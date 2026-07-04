@@ -48,11 +48,11 @@ export class NewConversation {
 									name="actorIds"
 									value={vnode.state.actors}
 									endpoint="/.api/actors"
-									onselect={(actors: Actor[], canBeEncrypted: boolean) => this.selectActors(vnode, actors, canBeEncrypted)}></ActorSearch>
+									onselect={(actors: Actor[], canBeEncrypted: boolean) => { this.selectActors(vnode, actors, canBeEncrypted); }}></ActorSearch>
 							</div>
 							<div class="layout-element">
 								<label for="message">Message</label> {/* NOSONAR: "for" works fine in Mithril */}
-								<textarea id="message" rows="8" onchange={(event: Event) => this.setPlaintext(vnode, event)}></textarea>
+								<textarea id="message" rows="8" onchange={(event: Event) => { this.setPlaintext(vnode, event); }}></textarea>
 								{
 									(vnode.state.canBeEncrypted &&
 										<label for="wantEncryption">
@@ -60,7 +60,7 @@ export class NewConversation {
 												id="wantEncryption"
 												type="checkbox"
 												checked={vnode.state.wantEncryption}
-												onchange={(event: Event) => this.setWantEncryption(vnode, event)}>
+												onchange={(event: Event) => { this.setWantEncryption(vnode, event); }}>
 											</input>
 											<span>Use Encrypted Messaging</span>
 										</label>
@@ -188,7 +188,7 @@ export class NewConversation {
 
 		// Create a new group and send an encrypted message
 		await controller.createGroup(participants, vnode.state.content, this.isEncrypted(vnode))
-		return this.close(vnode)
+		this.close(vnode);
 	}
 
 	isEncrypted(vnode: NewConversationVnode): boolean {

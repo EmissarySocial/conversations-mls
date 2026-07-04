@@ -44,7 +44,7 @@ export class Contacts {
 	getContactStream(id: string): Stream<Contact> {
 
 		// Create an empty contact
-		let result = Stream(NewContact(id))
+		const result = Stream(NewContact(id))
 
 		// If the contact exists and is fresh, return it as a stream
 		const cachedValue = this.#contacts.get(id)

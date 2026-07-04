@@ -39,7 +39,7 @@ export class Directory implements IDirectory {
 	// getKeyPackage loads the KeyPackages published by a single actor
 	async getKeyPackages(actorIds: string[]): Promise<KeyPackage[]> {
 
-		let result: KeyPackage[] = []
+		const result: KeyPackage[] = []
 
 		for (const actorId of actorIds) {
 
@@ -101,7 +101,7 @@ export class Directory implements IDirectory {
 
 	// deleteKeyPackage removes a single KeyPackage from the server
 	async deleteKeyPackage(keyPackageId: string) {
-		return await this.#deleteObject(keyPackageId)
+		await this.#deleteObject(keyPackageId);
 	}
 
 	// getKeyPackagesByActor is an async generator that yields all KeyPackage documents for a specific actor.

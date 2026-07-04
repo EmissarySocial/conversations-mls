@@ -47,12 +47,12 @@ export class GroupMenu {
 
 				<hr class="margin-vertical-sm" />
 
-				<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => this.markUnread(controller, group, close)} onkeypress={synthClick}>
+				<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => { this.markUnread(controller, group, close); }} onkeypress={synthClick}>
 					<span class="popup-menu-icon"><i class="bi bi-app-indicator"></i></span>
 					<span>Mark Unread</span>
 				</div>
 
-				<div class="popup-menu-item clickable text-red" role="button" tabIndex="0" onclick={() => this.leave(controller, group, close)} onkeypress={synthClick}>
+				<div class="popup-menu-item clickable text-red" role="button" tabIndex="0" onclick={() => { this.leave(controller, group, close); }} onkeypress={synthClick}>
 					<span class="popup-menu-icon"><i class="bi bi-x-lg"></i></span>
 					<span>Leave Group</span>
 				</div>
@@ -67,7 +67,7 @@ export class GroupMenu {
 		const isSelected = (group.stateId == state)
 
 		return (
-			<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => this.selectState(controller, close, state)} onkeypress={synthClick}>
+			<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => { this.selectState(controller, close, state); }} onkeypress={synthClick}>
 				<span class="popup-menu-icon">{isSelected ? <i class="bi bi-check"></i> : null}</span>
 				<span>{label}</span>
 			</div>

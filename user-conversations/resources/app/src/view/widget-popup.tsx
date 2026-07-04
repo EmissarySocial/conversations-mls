@@ -48,11 +48,11 @@ export class Popup {
 		const alignClass = "popup-align-" + (vnode.attrs.align ?? "center")
 		return (
 			<div class="popup-anchor">
-				{vnode.attrs.trigger(() => this.toggle(vnode), vnode.state.isOpen)}
+				{vnode.attrs.trigger(() => { this.toggle(vnode); }, vnode.state.isOpen)}
 				{vnode.state.isOpen &&
 					<div class={"popup popup-below " + alignClass}>
 						<div class="popup-caret"></div>
-						{vnode.attrs.content(() => this.close(vnode))}
+						{vnode.attrs.content(() => { this.close(vnode); })}
 					</div>
 				}
 			</div>

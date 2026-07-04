@@ -62,7 +62,7 @@ afterEach(() => {
 describe("loadOptions", () => {
 
 	test("populates results and auto-highlights the first row", async () => {
-		vi.spyOn(m, "request").mockResolvedValue([ALICE, ALAN] as any)
+		vi.spyOn(m, "request").mockResolvedValue([ALICE, ALAN])
 
 		const vnode = makeVnode()
 		widget.oninit(vnode)
@@ -75,7 +75,7 @@ describe("loadOptions", () => {
 	})
 
 	test("clears results immediately for an empty search (no request)", async () => {
-		const request = vi.spyOn(m, "request").mockResolvedValue([] as any)
+		const request = vi.spyOn(m, "request").mockResolvedValue([])
 
 		const vnode = makeVnode()
 		widget.oninit(vnode)
@@ -91,7 +91,7 @@ describe("loadOptions", () => {
 
 	test("de-duplicates results returned with the same id", async () => {
 		// Endpoint returns ALICE twice plus BOB
-		vi.spyOn(m, "request").mockResolvedValue([ALICE, ALICE, BOB] as any)
+		vi.spyOn(m, "request").mockResolvedValue([ALICE, ALICE, BOB])
 
 		const vnode = makeVnode()
 		widget.oninit(vnode)
@@ -103,7 +103,7 @@ describe("loadOptions", () => {
 	})
 
 	test("leaves no highlight when the search returns nothing", async () => {
-		vi.spyOn(m, "request").mockResolvedValue([] as any)
+		vi.spyOn(m, "request").mockResolvedValue([])
 
 		const vnode = makeVnode()
 		widget.oninit(vnode)
@@ -122,8 +122,8 @@ describe("loadOptions", () => {
 		const firstResponse = new Promise(resolve => { resolveFirst = resolve })
 
 		vi.spyOn(m, "request")
-			.mockReturnValueOnce(firstResponse as any)      // request #1 (stale)
-			.mockResolvedValueOnce([BOB] as any)            // request #2 (newest)
+			.mockReturnValueOnce(firstResponse)      // request #1 (stale)
+			.mockResolvedValueOnce([BOB])            // request #2 (newest)
 
 		const vnode = makeVnode()
 		widget.oninit(vnode)

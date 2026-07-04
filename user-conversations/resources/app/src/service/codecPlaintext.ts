@@ -49,7 +49,7 @@ export class CodecPlaintext implements ICodec {
 	// getGroup loads a group from the database or creates a new one if it doesn't exist
 	async getGroup(groupId: string): Promise<Group> {
 
-		let group = await this.#database.loadGroup(groupId)
+		const group = await this.#database.loadGroup(groupId)
 
 		// If the group already exists, then validate and return
 		if (group != undefined) {
@@ -134,7 +134,7 @@ export class CodecPlaintext implements ICodec {
 		}
 
 		// Get the "object" of the activity 
-		let object = activity.objectAsMap()
+		const object = activity.objectAsMap()
 
 		if (object[vocab.PropertyType] != vocab.ObjectTypeNote) {
 			return
@@ -335,7 +335,7 @@ export class CodecPlaintext implements ICodec {
 	async #createGroup(groupId: string, newMembers: string[]): Promise<Group> {
 
 		// Create a group record for this device
-		let plaintextGroup = NewGroup("PLAINTEXT")
+		const plaintextGroup = NewGroup("PLAINTEXT")
 		plaintextGroup.id = groupId
 		plaintextGroup.members = newMembers
 

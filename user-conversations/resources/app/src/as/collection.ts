@@ -15,7 +15,7 @@ export class Collection extends ASObject {
 
 	// items returns the value of the "items" or "orderedItems" property, depending on the type of object (Collection or OrderedCollection)
 	items() {
-		let result = []
+		const result = []
 
 		switch (this.type()) {
 			case "Collection":
@@ -85,7 +85,7 @@ export class Collection extends ASObject {
 		while (pageUrl) {
 
 			try {
-				let page = await loadCollection(pageUrl, this.getProxyUrl())
+				const page = await loadCollection(pageUrl, this.getProxyUrl())
 
 				for (const item of page.items()) {
 					yield item

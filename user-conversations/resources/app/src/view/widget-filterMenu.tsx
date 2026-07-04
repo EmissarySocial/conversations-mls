@@ -40,7 +40,7 @@ export class FilterMenu {
 		return (
 			<div>
 				{controller.filters.map(filter => (
-					<div key={filter.id} class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => this.select(controller, close, filter.id)} onkeypress={synthClick}>
+					<div key={filter.id} class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => { this.select(controller, close, filter.id); }} onkeypress={synthClick}>
 						<span class="popup-menu-icon">{(filter.id == selectedId) ? <i class="bi bi-check"></i> : null}</span>
 						<span>{filter.name}</span>
 					</div>
@@ -48,7 +48,7 @@ export class FilterMenu {
 
 				<hr class="margin-vertical-sm" />
 
-				<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => this.manage(controller, close)} onkeypress={synthClick}>
+				<div class="popup-menu-item clickable" role="button" tabIndex="0" onclick={() => { this.manage(controller, close); }} onkeypress={synthClick}>
 					<span class="popup-menu-icon"><i class="bi bi-gear"></i></span>
 					<span>Manage Filters</span>
 				</div>

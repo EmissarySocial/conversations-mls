@@ -4,7 +4,7 @@ import { type EmojiKey } from "../model/emoji";
 
 
 // emojiKey: Uint8Array (raw key bytes) or hex string
-export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<[string, EmojiKey[]]> {
+export async function emojiKey(signature: Uint8Array): Promise<[string, EmojiKey[]]> {
 	const checksum = await crypto.subtle.digest('SHA-256', signature.slice(0))
 	const checksumHash = new Uint8Array(checksum);
 
@@ -14,7 +14,7 @@ export async function emojiKey(signature: Uint8Array<ArrayBufferLike>): Promise<
 
 	const base64 = uint8ArrayToBase64(checksumHash)
 
-	let result: EmojiKey[] = new Array(5)
+	const result: EmojiKey[] = new Array(5)
 
 	for (let i = 0; i < 5; i++) {
 		const first = checksumHash[i * 2] // First byte

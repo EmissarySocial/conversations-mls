@@ -82,7 +82,7 @@ export class Actor extends ASObject {
 	messages() {
 
 		// Default to "no support". If nothing else is found, then this server doesn't support this messages API.
-		let result = { url: "", plaintext: false, ciphertext: false }
+		const result = { url: "", plaintext: false, ciphertext: false }
 
 		// First, check to see if an MLS-only endpoint is available. If so, 
 		// then this account can send/receive encrypted messages

@@ -68,7 +68,7 @@ export class WidgetMessageCreate {
 		if (group.stateId === "CLOSED") {
 			return <div class="card padding-vertical-xl padding-horizontal align-center bg-stripes">
 				This conversation is closed. You can no longer send messages here.
-				But you can <span class="link" role="button" tabIndex="0" onclick={() => controller.modal_newConversation()} onkeypress={synthClick}>start a new conversation</span>.
+				But you can <span class="link" role="button" tabIndex="0" onclick={() => { controller.modal_newConversation(); }} onkeypress={synthClick}>start a new conversation</span>.
 			</div>
 		}
 
@@ -99,18 +99,18 @@ export class WidgetMessageCreate {
 								id={MESSAGE_INPUT_ID}
 								value={vnode.state.message}
 								style="border:none; min-height:1em; field-sizing:content; resize:none;"
-								oninput={(e: Event) => this.oninput(vnode, e)}
-								onkeydown={(e: KeyboardEvent) => this.onkeydown(vnode, e)}
-								onkeyup={(e: KeyboardEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
-								onclick={(e: MouseEvent) => this.syncMention(vnode, e.target as HTMLTextAreaElement)}
-								onblur={() => this.closeMention(vnode)}></textarea>
+								oninput={(e: Event) => { this.oninput(vnode, e); }}
+								onkeydown={(e: KeyboardEvent) => { this.onkeydown(vnode, e); }}
+								onkeyup={(e: KeyboardEvent) => { this.syncMention(vnode, e.target as HTMLTextAreaElement); }}
+								onclick={(e: MouseEvent) => { this.syncMention(vnode, e.target as HTMLTextAreaElement); }}
+								onblur={() => { this.closeMention(vnode); }}></textarea>
 
 							{this.drawMentionPopup(vnode)}
 
 							{vnode.state.showEmojiPicker &&
 								<PickEmoji
-									onselect={(emoji: Emoji) => this.insertEmoji(vnode, emoji.emoji)}
-									close={() => this.closeEmojiPicker(vnode)} />
+									onselect={(emoji: Emoji) => { this.insertEmoji(vnode, emoji.emoji); }}
+									close={() => { this.closeEmojiPicker(vnode); }} />
 							}
 
 							{this.hasContent(vnode) &&
@@ -120,14 +120,14 @@ export class WidgetMessageCreate {
 									tabIndex="0"
 									aria-label="Send Message"
 									title="Send"
-									onclick={() => this.sendMessage(vnode)}
+									onclick={() => { this.sendMessage(vnode); }}
 									style="font-size:16px;"><i class="bi bi-arrow-up"></i></button>
 							}
 
 							<button
 								tabIndex="0"
 								title="Insert Emoji"
-								onclick={() => this.openEmojiPicker(vnode)}
+								onclick={() => { this.openEmojiPicker(vnode); }}
 								style="font-size:16px;"><i class="bi bi-emoji-smile"></i></button>
 
 							{/* NOSONAR: typescript:S6853 */} <label
@@ -146,8 +146,8 @@ export class WidgetMessageCreate {
 					id="fileInput"
 					multiple
 					style="display:none;"
-					onchange={(e: Event) => this.addFiles(vnode, e)}
-					oncancel={() => this.focusInput()}>
+					onchange={(e: Event) => { this.addFiles(vnode, e); }}
+					oncancel={() => { this.focusInput(); }}>
 				</input>
 			</div>
 		</>
@@ -162,7 +162,7 @@ export class WidgetMessageCreate {
 
 		return (
 			<div id="reply-panel" oncreate={() => document.getElementById("message-input")}>
-				<div><i class="bi bi-x-circle-fill clickable" role="button" tabIndex="0" onclick={() => vnode.attrs.controller.removeReply()} onkeypress={synthClick}></i></div>
+				<div><i class="bi bi-x-circle-fill clickable" role="button" tabIndex="0" onclick={() => { vnode.attrs.controller.removeReply(); }} onkeypress={synthClick}></i></div>
 				<div class="margin-horizontal-sm bold">Replying To:</div>
 				<div class="flex-grow">{vnode.attrs.inReplyTo.content}</div>
 			</div>
@@ -252,7 +252,7 @@ export class WidgetMessageCreate {
 				query={mention.token.query}
 				left={mention.left}
 				bottom={mention.bottom}
-				onselect={(handle: string) => this.insertMention(vnode, handle)}
+				onselect={(handle: string) => { this.insertMention(vnode, handle); }}
 				onready={(popup: MentionPopupController) => { vnode.state.mentionPopup = popup }} />
 		)
 	}
@@ -392,7 +392,7 @@ export class WidgetMessageCreate {
 							class="pending-attachment-remove"
 							aria-label="Remove attachment"
 							tabIndex="0"
-							onclick={() => this.removePending(vnode, index)}><i class="bi bi-x-circle-fill"></i></button>
+							onclick={() => { this.removePending(vnode, index); }}><i class="bi bi-x-circle-fill"></i></button>
 						<div class="pending-attachment-name text-sm text-gray">{attachment.name}</div>
 					</div>
 				))}
