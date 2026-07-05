@@ -227,19 +227,19 @@ export class Controller {
 			}
 		}
 
-		// Start the realtime message receiver
-		this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => { this.stop("SESSION-EXPIRED"); })
+		// Start the realtime message receiver (runs in the background)
+		void this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => { this.stop("SESSION-EXPIRED"); })
 
 		// Wire UX redraws into database updates. Filters load first because
 		// loadGroups() limits the result to the selected filter's tags and states.
-		this.#database.onchange(async () => {
+		this.#database.onchange(() => { void (async () => {
 			await this.loadFilters()
 			await this.loadGroups()
 			await this.loadMessages()
-		})
+		})() })
 
 		// Refresh Data for the UX (filters before groups, see above)
-		this.loadFilters().then(() => this.loadGroups())
+		void this.loadFilters().then(() => this.loadGroups())
 
 		// Gates passed: hand control to the URL router. "READY" tells the view facade's
 		// pageView getter to derive the page from the route instead of this state.
@@ -798,7 +798,7 @@ export class Controller {
 		await this.saveGroup(group)
 		m.redraw()
 
-		this.syncGroup(group)
+		void this.syncGroup(group)
 	}
 
 	// loadGroups retrieves the groups matching the currently selected filter from
@@ -847,7 +847,7 @@ export class Controller {
 		await this.saveGroup(group)
 
 		// Synchronize with the server
-		this.syncGroup(group)
+		void this.syncGroup(group)
 	}
 
 	// saveGroup saves the specified group to the database
@@ -885,7 +885,7 @@ export class Controller {
 		})
 
 		// Asynchronously send a private message to my other devices
-		this.#sendActivity(group, activity)
+		void this.#sendActivity(group, activity)
 	}
 
 	// leaveGroup leaves/deletes the specified group from the database
@@ -949,7 +949,7 @@ export class Controller {
 		if (group.unread) {
 			group.unread = false
 			await this.saveGroup(group)
-			this.syncGroup(group) // (run async)
+			void this.syncGroup(group) // (run async)
 		}
 
 		await this.loadMessages()
@@ -1298,7 +1298,7 @@ export class Controller {
 		await this.#database.saveMessage(message)
 
 		// Reload messages to refresh the UX
-		this.loadMessages()
+		void this.loadMessages()
 
 		// Send a "like" activity to the actor's outbox
 		const activity = new Activity({
@@ -1344,7 +1344,7 @@ export class Controller {
 		await this.#database.saveMessage(message)
 
 		// (async ok) Reload messages to refresh the UX
-		this.loadMessages()
+		void this.loadMessages()
 
 		// (async ok) Send an "undo" activity to the actor's outbox
 		const activity = new Activity({
@@ -1494,7 +1494,7 @@ export class Controller {
 		await this.#database.saveMessage(message)
 
 		// Refresh the UX
-		this.loadMessages()
+		void this.loadMessages()
 	}
 
 	// #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
@@ -1626,7 +1626,7 @@ export class Controller {
 		await this.#database.deleteGroup(activity.objectId())
 
 		// Refresh the group list to update the UX
-		this.loadGroups()
+		void this.loadGroups()
 	}
 
 	async #receiveActivity_Like(activity: Activity) {
@@ -1648,7 +1648,7 @@ export class Controller {
 
 		// Reload messages to refresh the UX
 		if (message.groupId == this.selectedGroupId()) {
-			this.loadMessages()
+			void this.loadMessages()
 		}
 	}
 
@@ -1680,7 +1680,7 @@ export class Controller {
 
 		// (If this we're looking at this group right now, then Reload messages to refresh the UX
 		if (message.groupId == this.selectedGroupId()) {
-			this.loadMessages()
+			void this.loadMessages()
 		}
 	}
 

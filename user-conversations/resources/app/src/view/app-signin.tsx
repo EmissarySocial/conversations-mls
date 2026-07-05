@@ -84,7 +84,7 @@ export class AppSignIn {
 			return
 		}
 
-		vnode.attrs.controller.eraseDevice()
+		void vnode.attrs.controller.eraseDevice()
 	}
 }
 

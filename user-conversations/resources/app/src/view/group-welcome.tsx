@@ -135,7 +135,7 @@ export class GroupWelcome {
 	clickAccept(vnode: GroupWelcomeVnode) {
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
-		controller.joinGroup(group)
+		void controller.joinGroup(group)
 	}
 
 	// clickIgnore removes the group invitation without blocking the sender
@@ -147,7 +147,7 @@ export class GroupWelcome {
 		const controller = vnode.attrs.controller
 		const group = controller.groupStream()
 
-		controller.leaveGroup(group.id)
+		void controller.leaveGroup(group.id)
 	}
 
 	// clickBlock blocks the creator and removes the group invitation

@@ -76,20 +76,20 @@ export class GroupMenu {
 
 	// selectState changes the group's state and closes the pop-up
 	selectState(controller: ViewController, close: () => void, state: GroupState) {
-		controller.setSelectedGroupState(state)
+		void controller.setSelectedGroupState(state)
 		close()
 	}
 
 	// markUnread flags the group as unread, persists it, and closes the pop-up
 	markUnread(controller: ViewController, group: Group | EncryptedGroup, close: () => void) {
 		group.unread = true
-		controller.saveGroupAndSync(group)
+		void controller.saveGroupAndSync(group)
 		close()
 	}
 
 	// leave hands off to the existing leave-group flow and closes the pop-up
 	leave(controller: ViewController, group: Group | EncryptedGroup, close: () => void) {
 		close()
-		controller.leaveGroup(group.id)
+		void controller.leaveGroup(group.id)
 	}
 }

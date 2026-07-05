@@ -60,6 +60,11 @@ type callbackFunction = () => void
 
 export async function NewIndexedDB(actorId: string): Promise<IDBPDatabase<Schema>> {
 	return await openDB<Schema>(actorId, 3, {
+		// idb's openDB awaits an async upgrade callback within the upgrade
+		// transaction, so returning a Promise here is correct and required
+		// (migrateAttachments below must be awaited). no-misused-promises
+		// cannot see idb's contract, hence the scoped disable.
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async upgrade(db, oldVersion, _newVersion, transaction) {
 
 			if (oldVersion < 1) {

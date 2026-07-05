@@ -368,7 +368,7 @@ export class WidgetMessageCreate {
 			return
 		}
 
-		vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending)
+		void vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending)
 		vnode.state.message = ""
 		vnode.state.mention = null
 		vnode.state.pending = []
@@ -449,7 +449,7 @@ export class WidgetMessageCreate {
 				// For images, compute a BlurHash placeholder in the background and attach
 				// it once ready (the attachment is already shown; this just enriches it).
 				if (attachmentKind(attachment) == "image") {
-					encodeBlurhash(attachment.url).then(blurhash => {
+					void encodeBlurhash(attachment.url).then(blurhash => {
 						if (blurhash != "") {
 							attachment.blurhash = blurhash
 							m.redraw()

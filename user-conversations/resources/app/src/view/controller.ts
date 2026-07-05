@@ -207,7 +207,7 @@ export class ViewController {
 			return
 		}
 
-		this.#controller.selectGroup(groupId)
+		void this.#controller.selectGroup(groupId)
 	}
 
 	modal_addGroupMember() { this.#controller.modal_addGroupMember() }

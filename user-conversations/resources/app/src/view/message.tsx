@@ -390,15 +390,15 @@ export class ViewMessage {
 	}
 
 	sendReaction(vnode: ViewMessageVnode, content: string) {
-		vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content)
+		void vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content)
 	}
 
 	copy(vnode: ViewMessageVnode) {
-		navigator.clipboard.writeText(vnode.attrs.message.content)
+		void navigator.clipboard.writeText(vnode.attrs.message.content)
 		alert("Message copied to clipboard")
 	}
 
 	edit(vnode: ViewMessageVnode) {
-		vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id)
+		void vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id)
 	}
 }

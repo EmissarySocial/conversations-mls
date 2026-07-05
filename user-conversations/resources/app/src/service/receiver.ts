@@ -45,7 +45,7 @@ export class Receiver implements IReceiver {
 		this.#onSignout = onSignout
 
 		// Poll the server on start
-		this.#poll()
+		void this.#poll()
 
 		// If possible, listen for server-sent-events (SSE) from the server
 		const collection = await new Collection().fromUrl(this.#messagesUrl)
@@ -54,7 +54,7 @@ export class Receiver implements IReceiver {
 		if (sseEndpoint != "") {
 			this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true })
 			this.#eventSource.onmessage = () => {
-				this.#poll()
+				void this.#poll()
 			}
 		}
 	}
@@ -123,7 +123,7 @@ export class Receiver implements IReceiver {
 		// Re-run poll if we received any messages while we were polling
 		if (this.#pollAgain) {
 			this.#pollAgain = false
-			this.#poll()
+			void this.#poll()
 		}
 	}
 

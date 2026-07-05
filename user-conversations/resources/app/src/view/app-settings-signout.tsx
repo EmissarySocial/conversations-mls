@@ -56,6 +56,6 @@ export class AppSettingsSignout {
 			return
 		}
 
-		vnode.attrs.controller.eraseDevice()
+		void vnode.attrs.controller.eraseDevice()
 	}
 }

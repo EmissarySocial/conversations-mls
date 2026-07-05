@@ -48,7 +48,7 @@ async function startup() {
 	// Build the service-layer controller, then wrap it in the view-layer façade.
 	const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host)
 	controller = new ViewController(serviceController)
-	controller.start()
+	void controller.start()
 
 	// Install the resize listener that redraws when the viewport crosses the
 	// list/detail breakpoint (responsive layout is decided in Mithril, not CSS).
@@ -60,15 +60,15 @@ async function startup() {
 	m.route.prefix = "#!"
 	m.route(root, "/groups", buildRoutes(controller))
 
-	window.addEventListener("focus", async () => {
+	window.addEventListener("focus", () => {
 		controller.onFocusWindow()
 	})
 
-	window.addEventListener("blur", async () => {
+	window.addEventListener("blur", () => {
 		controller.onBlurWindow()
 	})
 
 }
 
 // 3..2..1.. Go!
-startup() // NOSONAR: typescript:S7758 - cannot use `await` on this because we're in an IIFE
+void startup() // NOSONAR: typescript:S7758 - cannot use `await` on this because we're in an IIFE

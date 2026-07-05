@@ -58,7 +58,7 @@ export class FilterMenu {
 
 	// select applies the chosen filter and closes the pop-up
 	select(controller: ViewController, close: () => void, filterId: string) {
-		controller.setConversationFilter(filterId)
+		void controller.setConversationFilter(filterId)
 		close()
 	}
 

@@ -154,7 +154,7 @@ export class MentionPopup implements MentionPopupController {
 
 		vnode.state.searchTimeout = setTimeout(() => {
 			delete vnode.state.searchTimeout
-			this.runSearch(vnode, query)
+			void this.runSearch(vnode, query)
 		}, SEARCH_DEBOUNCE_MS)
 	}
 

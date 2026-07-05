@@ -24475,6 +24475,11 @@
   // src/service/database.ts
   async function NewIndexedDB(actorId) {
     return await openDB(actorId, 3, {
+      // idb's openDB awaits an async upgrade callback within the upgrade
+      // transaction, so returning a Promise here is correct and required
+      // (migrateAttachments below must be awaited). no-misused-promises
+      // cannot see idb's contract, hence the scoped disable.
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       async upgrade(db, oldVersion, _newVersion, transaction) {
         if (oldVersion < 1) {
           db.createObjectStore("config", { keyPath: "id" });
@@ -25185,13 +25190,13 @@
       this.#lastMessage = lastMessage;
       this.#generatorId = generatorId;
       this.#onSignout = onSignout;
-      this.#poll();
+      void this.#poll();
       const collection = await new Collection().fromUrl(this.#messagesUrl);
       const sseEndpoint = collection.eventStream();
       if (sseEndpoint != "") {
         this.#eventSource = new EventSource(sseEndpoint, { withCredentials: true });
         this.#eventSource.onmessage = () => {
-          this.#poll();
+          void this.#poll();
         };
       }
     }
@@ -25234,7 +25239,7 @@
       }
       if (this.#pollAgain) {
         this.#pollAgain = false;
-        this.#poll();
+        void this.#poll();
       }
     }
   };
@@ -25447,7 +25452,7 @@
       group.members = this.getGroupMembers(group);
       await this.#database.saveGroup(group);
       if (commitResult.welcome != void 0) {
-        this.#sendMlsMessage(
+        void this.#sendMlsMessage(
           group,
           ObjectTypeMlsWelcome,
           newMembers,
@@ -25455,7 +25460,7 @@
         );
       }
       if (currentMembers.length > 0) {
-        this.#sendMlsMessage(
+        void this.#sendMlsMessage(
           group,
           ObjectTypeMlsPrivateMessage,
           currentMembers,
@@ -25478,7 +25483,7 @@
           remove: { removed: ownLeafIndex }
         }
       });
-      this.#sendMlsMessage(
+      void this.#sendMlsMessage(
         group,
         ObjectTypeMlsGroupInfo,
         group.members,
@@ -25734,7 +25739,7 @@
         const myLeafIndex = group.clientState.privatePath.leafIndex;
         const waitMs = myLeafIndex * 1e3;
         globalThis.setTimeout(() => {
-          this.#processMessageCallback_RemoveProposal(group.id, proposal);
+          void this.#processMessageCallback_RemoveProposal(group.id, proposal);
         }, waitMs);
       }
       return "reject";
@@ -26616,15 +26621,17 @@
           return;
         }
       }
-      this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => {
+      void this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => {
         this.stop("SESSION-EXPIRED");
       });
-      this.#database.onchange(async () => {
-        await this.loadFilters();
-        await this.loadGroups();
-        await this.loadMessages();
+      this.#database.onchange(() => {
+        void (async () => {
+          await this.loadFilters();
+          await this.loadGroups();
+          await this.loadMessages();
+        })();
       });
-      this.loadFilters().then(() => this.loadGroups());
+      void this.loadFilters().then(() => this.loadGroups());
       this.pageView = "READY";
       import_mithril.default.redraw();
     }
@@ -26980,7 +26987,7 @@
       this.setGroupState(group, "ACTIVE");
       await this.saveGroup(group);
       import_mithril.default.redraw();
-      this.syncGroup(group);
+      void this.syncGroup(group);
     }
     // loadGroups retrieves the groups matching the currently selected filter from
     // the database. When no filter is selected, every group is loaded.
@@ -27014,7 +27021,7 @@
     }
     async saveGroupAndSync(group) {
       await this.saveGroup(group);
-      this.syncGroup(group);
+      void this.syncGroup(group);
     }
     // saveGroup saves the specified group to the database
     async saveGroup(group) {
@@ -27040,7 +27047,7 @@
           "unread": group.unread
         }
       });
-      this.#sendActivity(group, activity);
+      void this.#sendActivity(group, activity);
     }
     // leaveGroup leaves/deletes the specified group from the database
     async leaveGroup(groupId) {
@@ -27080,7 +27087,7 @@
       if (group.unread) {
         group.unread = false;
         await this.saveGroup(group);
-        this.syncGroup(group);
+        void this.syncGroup(group);
       }
       await this.loadMessages();
       this.inReplyTo = void 0;
@@ -27297,7 +27304,7 @@
       }
       message.setReaction(this.actorId(), content);
       await this.#database.saveMessage(message);
-      this.loadMessages();
+      void this.loadMessages();
       const activity = new Activity({
         "@context": ContextActivityStreams,
         context: group.id,
@@ -27325,7 +27332,7 @@
         return;
       }
       await this.#database.saveMessage(message);
-      this.loadMessages();
+      void this.loadMessages();
       const activity = new Activity({
         "@context": ContextActivityStreams,
         id: newId2(),
@@ -27432,7 +27439,7 @@
       }
       message.received.push(activity.actorId());
       await this.#database.saveMessage(message);
-      this.loadMessages();
+      void this.loadMessages();
     }
     // #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
     async #receiveActivity_Create(activity) {
@@ -27509,7 +27516,7 @@
         return;
       }
       await this.#database.deleteGroup(activity.objectId());
-      this.loadGroups();
+      void this.loadGroups();
     }
     async #receiveActivity_Like(activity) {
       const message = await this.#database.loadMessage(activity.objectId());
@@ -27521,7 +27528,7 @@
       message.setReaction(activity.actorId(), content);
       await this.#database.saveMessage(message);
       if (message.groupId == this.selectedGroupId()) {
-        this.loadMessages();
+        void this.loadMessages();
       }
     }
     async #receiveActivity_Undo(activity) {
@@ -27539,7 +27546,7 @@
       message.removeReaction(activity.actorId());
       await this.#database.saveMessage(message);
       if (message.groupId == this.selectedGroupId()) {
-        this.loadMessages();
+        void this.loadMessages();
       }
     }
     async #receiveActivity_Update(activity) {
@@ -27892,7 +27899,7 @@
         this.#controller.clearSelectedGroup();
         return;
       }
-      this.#controller.selectGroup(groupId);
+      void this.#controller.selectGroup(groupId);
     }
     modal_addGroupMember() {
       this.#controller.modal_addGroupMember();
@@ -28337,13 +28344,13 @@
           value: vnode.state.search,
           tabindex: "0",
           onkeydown: (event) => {
-            this.onkeydown(event, vnode);
+            void this.onkeydown(event, vnode);
           },
           onkeypress: (event) => {
-            this.onkeypress(event, vnode);
+            void this.onkeypress(event, vnode);
           },
           oninput: (event) => {
-            this.oninput(event, vnode);
+            void this.oninput(event, vnode);
           },
           onfocus: () => this.loadOptions(vnode),
           onblur: () => {
@@ -28410,7 +28417,7 @@
     async oninput(event, vnode) {
       const target = event.target;
       vnode.state.search = target.value;
-      this.loadOptions(vnode);
+      void this.loadOptions(vnode);
     }
     async loadOptions(vnode) {
       if (vnode.state.search == "") {
@@ -28475,7 +28482,7 @@
       vnode.state.search = "";
       vnode.state.highlightedOption = -1;
       this.notifyParent(vnode);
-      this.loadKeyPackages(vnode, selected);
+      void this.loadKeyPackages(vnode, selected);
     }
     // loadKeyPackages maintains a cache that counts the KeyPackages for each actor
     async loadKeyPackages(vnode, actor) {
@@ -28724,7 +28731,7 @@
     }
     // select applies the chosen filter and closes the pop-up
     select(controller2, close, filterId) {
-      controller2.setConversationFilter(filterId);
+      void controller2.setConversationFilter(filterId);
       close();
     }
     // manage closes the pop-up and navigates to the settings "Filters" tab.
@@ -29050,7 +29057,7 @@
       }
       vnode.state.searchTimeout = setTimeout(() => {
         delete vnode.state.searchTimeout;
-        this.runSearch(vnode, query);
+        void this.runSearch(vnode, query);
       }, SEARCH_DEBOUNCE_MS);
     }
     // clearPendingSearch cancels any debounce timer awaiting a server request.
@@ -29601,7 +29608,7 @@
       if (!this.hasContent(vnode)) {
         return;
       }
-      vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending);
+      void vnode.attrs.controller.sendMessage(vnode.state.message, vnode.state.pending);
       vnode.state.message = "";
       vnode.state.mention = null;
       vnode.state.pending = [];
@@ -29660,7 +29667,7 @@
           vnode.state.pending.push(attachment);
           import_mithril14.default.redraw();
           if (attachmentKind(attachment) == "image") {
-            encodeBlurhash(attachment.url).then((blurhash) => {
+            void encodeBlurhash(attachment.url).then((blurhash) => {
               if (blurhash != "") {
                 attachment.blurhash = blurhash;
                 import_mithril14.default.redraw();
@@ -29876,14 +29883,14 @@
       return /* @__PURE__ */ (0, import_mithril15.default)("div", { class: "margin-top margin-horizontal-sm text-sm text-light-gray" }, vnode.attrs.showDate);
     }
     sendReaction(vnode, content) {
-      vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content);
+      void vnode.attrs.controller.reactToMessage(vnode.attrs.message.id, content);
     }
     copy(vnode) {
-      navigator.clipboard.writeText(vnode.attrs.message.content);
+      void navigator.clipboard.writeText(vnode.attrs.message.content);
       alert("Message copied to clipboard");
     }
     edit(vnode) {
-      vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id);
+      void vnode.attrs.controller.modal_editMessage(vnode.attrs.message.id);
     }
   };
 
@@ -29925,19 +29932,19 @@
     }
     // selectState changes the group's state and closes the pop-up
     selectState(controller2, close, state) {
-      controller2.setSelectedGroupState(state);
+      void controller2.setSelectedGroupState(state);
       close();
     }
     // markUnread flags the group as unread, persists it, and closes the pop-up
     markUnread(controller2, group, close) {
       group.unread = true;
-      controller2.saveGroupAndSync(group);
+      void controller2.saveGroupAndSync(group);
       close();
     }
     // leave hands off to the existing leave-group flow and closes the pop-up
     leave(controller2, group, close) {
       close();
-      controller2.leaveGroup(group.id);
+      void controller2.leaveGroup(group.id);
     }
   };
 
@@ -30284,7 +30291,7 @@
         throw new Error("No message selected for deletion");
       }
       if (confirm("Are you sure you want to delete this message?")) {
-        vnode.attrs.controller.deleteMessage(message.id);
+        void vnode.attrs.controller.deleteMessage(message.id);
         vnode.attrs.controller.modal_close();
       }
     }
@@ -30676,7 +30683,7 @@
     clickAccept(vnode) {
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
-      controller2.joinGroup(group);
+      void controller2.joinGroup(group);
     }
     // clickIgnore removes the group invitation without blocking the sender
     clickIgnore(vnode) {
@@ -30685,7 +30692,7 @@
       }
       const controller2 = vnode.attrs.controller;
       const group = controller2.groupStream();
-      controller2.leaveGroup(group.id);
+      void controller2.leaveGroup(group.id);
     }
     // clickBlock blocks the creator and removes the group invitation
     clickBlock(vnode) {
@@ -30947,7 +30954,7 @@
       controller2.config.isSoundNotifications = vnode.state.isSoundNotifications;
       controller2.config.isHideOnBlur = vnode.state.isHideOnBlur;
       controller2.config.isEncryptedMessages = vnode.state.isEncryptedMessages;
-      controller2.saveConfig();
+      void controller2.saveConfig();
       vnode.state.saved = true;
       if (vnode.state.savedTimeout != void 0) {
         clearTimeout(vnode.state.savedTimeout);
@@ -31332,7 +31339,7 @@
       const filters = vnode.attrs.controller.filters;
       filters.forEach((filter, index) => {
         filter.sort = index + 1;
-        vnode.attrs.controller.saveFilter(filter);
+        void vnode.attrs.controller.saveFilter(filter);
       });
     }
     // announce updates the aria-live region for screen readers
@@ -31365,7 +31372,7 @@
       if (!confirm(`Delete the filter "${filter.name}"?`)) {
         return;
       }
-      vnode.attrs.controller.deleteFilter(filter.id);
+      void vnode.attrs.controller.deleteFilter(filter.id);
     }
     // closeEdit dismisses the edit dialog
     closeEdit(vnode) {
@@ -31388,7 +31395,7 @@
       if (!confirm("Encrypted messages on this device will be lost forever. Are you sure you want to erase this device?")) {
         return;
       }
-      vnode.attrs.controller.eraseDevice();
+      void vnode.attrs.controller.eraseDevice();
     }
   };
 
@@ -31517,7 +31524,7 @@
       if (!confirm("Resetting your passcode will remove all encrypted conversations from this device. Are you sure you want to continue?")) {
         return;
       }
-      vnode.attrs.controller.eraseDevice();
+      void vnode.attrs.controller.eraseDevice();
     }
   };
 
@@ -31682,18 +31689,18 @@
     const receiver = new Receiver();
     const serviceController = new Controller(actorId, contacts, database, delivery, directory, proxy, receiver, host);
     controller = new ViewController(serviceController);
-    controller.start();
+    void controller.start();
     initResponsive();
     import_mithril46.default.route.prefix = "#!";
     import_mithril46.default.route(root2, "/groups", buildRoutes(controller));
-    window.addEventListener("focus", async () => {
+    window.addEventListener("focus", () => {
       controller.onFocusWindow();
     });
-    window.addEventListener("blur", async () => {
+    window.addEventListener("blur", () => {
       controller.onBlurWindow();
     });
   }
-  startup();
+  void startup();
 })();
 /*! Bundled license information:
 

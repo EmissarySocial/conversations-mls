@@ -223,7 +223,7 @@ export class CodecMls implements ICodec {
 
 		// (async) Send welcome to new members
 		if (commitResult.welcome != undefined) {
-			this.#sendMlsMessage(
+			void this.#sendMlsMessage(
 				group,
 				vocab.ObjectTypeMlsWelcome,
 				newMembers,
@@ -233,7 +233,7 @@ export class CodecMls implements ICodec {
 
 		// (async) Send commit to existing members
 		if (currentMembers.length > 0) {
-			this.#sendMlsMessage(
+			void this.#sendMlsMessage(
 				group,
 				vocab.ObjectTypeMlsPrivateMessage,
 				currentMembers,
@@ -270,7 +270,7 @@ export class CodecMls implements ICodec {
 		})
 
 		// Send a message to the group members
-		this.#sendMlsMessage(
+		void this.#sendMlsMessage(
 			group,
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
@@ -686,7 +686,7 @@ export class CodecMls implements ICodec {
 			const waitMs = myLeafIndex * 1000 // Reduce collisions by waiting 0ms, 1000ms, 2000ms, 3000ms... 
 
 			globalThis.setTimeout(() => {
-				this.#processMessageCallback_RemoveProposal(group.id, proposal)
+				void this.#processMessageCallback_RemoveProposal(group.id, proposal)
 			}, waitMs)
 		}
 

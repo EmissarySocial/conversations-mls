@@ -204,7 +204,7 @@ export class AppSettingsGeneral {
 		controller.config.isSoundNotifications = vnode.state.isSoundNotifications
 		controller.config.isHideOnBlur = vnode.state.isHideOnBlur
 		controller.config.isEncryptedMessages = vnode.state.isEncryptedMessages
-		controller.saveConfig()
+		void controller.saveConfig()
 
 		// Show the "Changes saved" confirmation and hide it again after two seconds
 		vnode.state.saved = true

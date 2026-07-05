@@ -438,7 +438,7 @@ export class AppSettingsFilters {
 		const filters = vnode.attrs.controller.filters
 		filters.forEach((filter, index) => {
 			filter.sort = index + 1
-			vnode.attrs.controller.saveFilter(filter)
+			void vnode.attrs.controller.saveFilter(filter)
 		})
 	}
 
@@ -485,7 +485,7 @@ export class AppSettingsFilters {
 			return
 		}
 
-		vnode.attrs.controller.deleteFilter(filter.id)
+		void vnode.attrs.controller.deleteFilter(filter.id)
 	}
 
 	// closeEdit dismisses the edit dialog

@@ -206,7 +206,7 @@ test('receiving a message from someone else marks the (unselected) group unread'
 	const other = NewGroup("PLAINTEXT")
 	other.id = "https://example.test/groups/other"
 	database.groups.set(other.id, other)
-	controller.selectGroup(other.id)
+	await controller.selectGroup(other.id)
 
 	await controller.receiveActivity(makeCreateActivity("msg-unread", "ping"))
 

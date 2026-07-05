@@ -153,7 +153,7 @@ function makeNoopProxy(): IProxy {
 function makeNoopReceiver(): IReceiver {
 	return {
 		setActor: () => { },
-		start: () => { },
+		start: () => Promise.resolve(),
 		stop: () => { },
 	}
 }

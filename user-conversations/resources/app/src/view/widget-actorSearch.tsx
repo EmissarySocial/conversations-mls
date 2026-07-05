@@ -65,13 +65,13 @@ export class ActorSearch {
 						value={vnode.state.search}
 						tabindex="0"
 						onkeydown={(event: KeyboardEvent) => {
-							this.onkeydown(event, vnode)
+							void this.onkeydown(event, vnode)
 						}}
 						onkeypress={(event: KeyboardEvent) => {
-							this.onkeypress(event, vnode)
+							void this.onkeypress(event, vnode)
 						}}
 						oninput={(event: KeyboardEvent) => {
-							this.oninput(event, vnode)
+							void this.oninput(event, vnode)
 						}}
 						onfocus={() => this.loadOptions(vnode)}
 						onblur={() => { this.onblur(vnode); }}></input>
@@ -154,7 +154,7 @@ export class ActorSearch {
 	async oninput(event: KeyboardEvent, vnode: ActorSearchVnode) {
 		const target = event.target as HTMLInputElement
 		vnode.state.search = target.value
-		this.loadOptions(vnode)
+		void this.loadOptions(vnode)
 	}
 
 	async loadOptions(vnode: ActorSearchVnode) {
@@ -239,7 +239,7 @@ export class ActorSearch {
 		this.notifyParent(vnode)
 
 		// Load KeyPackages AFTER selecting the actor from the search results
-		this.loadKeyPackages(vnode, selected)
+		void this.loadKeyPackages(vnode, selected)
 	}
 
 	// loadKeyPackages maintains a cache that counts the KeyPackages for each actor

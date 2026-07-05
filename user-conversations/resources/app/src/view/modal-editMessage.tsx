@@ -98,7 +98,7 @@ export class EditMessage {
 		}
 
 		if (confirm("Are you sure you want to delete this message?")) {
-			vnode.attrs.controller.deleteMessage(message.id)
+			void vnode.attrs.controller.deleteMessage(message.id)
 			vnode.attrs.controller.modal_close()
 		}
 	}
