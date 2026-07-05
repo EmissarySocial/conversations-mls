@@ -103,3 +103,41 @@ bootstrapping and cross-tool interop. The eventual fix must distinguish **new-co
 bootstrapping** (first contact → allowed) from **posting into / joining an EXISTING group**
 (sender must already be a member → otherwise reject or quarantine), and be validated against real
 federated peers (Mastodon, Bonfire, etc.) before turning it on.
+
+## Known lint debt (`npm run lint`)
+
+`tsc --noEmit` is clean and the async-correctness rules (`no-floating-promises`,
+`no-misused-promises`) are at zero. But `eslint . --max-warnings=0` still reports ~473 findings of
+pre-existing debt, exposed when the `strictTypeChecked` config landed (2026-07-03). The lint script
+is **not** wired to CI or a pre-commit hook, so this debt is invisible unless you run it by hand.
+Before spending effort here, know which findings are actionable and which are traps:
+
+- **`no-unsafe-*` (~166) + `no-explicit-any` (~68)** — one problem: `any` from untyped JSON
+  disabling downstream checks. Concentrated in the **`as/*` ActivityPub parsing layer**, where
+  untrusted federated JSON enters. This is the **only remaining cluster where a real bug could
+  hide**, and the only one worth a focused pass. Fixing it properly means writing real AS2 types
+  (a project, not a sweep) — doing so hardens the remote-input boundary.
+
+- **`no-unnecessary-condition` (~36)** — already triaged; do NOT blanket-"fix" these. Two kinds:
+  (a) **defensive guards on the crypto/KeyPackage boundary** (`cryptography.ts` `keyPackageIsExpired`/
+  `keyPackageIdentity`, `codecMls` lifetime `?.`) that are redundant against `ts-mls`'s declared
+  types but intentionally kept as defense-in-depth — **leave them**; (b) **guards where the library
+  type lies** (Mithril `route.param()`/`route.get()` typed non-null but returning `undefined`; DOM
+  `getElementById(...)!` / `querySelector(...) as` casts stripping a real `null`; `Stream<Contact>`
+  understating unresolved `undefined`) — these guards are CORRECT and **deleting them reintroduces
+  crashes**. (`widget-actorSearch.tsx` `loadActorKeyPackages` has one dead-first-clause logic
+  confusion whose behavior is salvaged by the live second clause — cosmetic.)
+
+- **`no-non-null-assertion` (~81, but ~58 in tests)** — the test `!`s (`saved!.content` after
+  `expect(saved).toBeDefined()`) are a normal idiom; ignore. The ~23 in `src` each deserve a glance
+  (a wrong `!` is a real crash) but most are fine.
+
+- **Everything else** (`require-await` ~57, `restrict-template-expressions` ~19, `no-unused-vars`
+  ~18, `no-empty-object-type` ~14, and the tail) is **stylistic/mechanical, near-zero bug value**.
+  If the goal is a green gate rather than bug-hunting, consider demoting the noisy stylistic rules
+  (e.g. `require-await`) to `warn` instead of grinding them to zero.
+
+**Bottom line:** the bug-hunting is done — the async tier, a `loadMessage` throws-vs-undefined
+contract bug, and two crypto assertion-drops were all fixed. What remains is debt that fails as
+"the compiler can't help you here," not "this crashes today." The `as/*` `any` cluster is the one
+place to look if resuming.
