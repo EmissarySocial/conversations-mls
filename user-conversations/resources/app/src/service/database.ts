@@ -367,11 +367,13 @@ export class Database implements IDatabase {
 		return NewMessage(received[0])
 	}
 
-	// loadMessage retrieves a message from the database
-	async loadMessage(messageID: string) {
+	// loadMessage retrieves a message from the database, or undefined if no message
+	// exists for the given id. (Matches loadGroup/loadKeyPackage; callers guard on
+	// undefined to skip activities that reference a message this device never received.)
+	async loadMessage(messageID: string): Promise<Message | undefined> {
 		const data = await this.#db.get("message", messageID)
 		if (data == undefined) {
-			throw new Error("Message not found: " + messageID)
+			return undefined
 		}
 		return NewMessage(data)
 	}

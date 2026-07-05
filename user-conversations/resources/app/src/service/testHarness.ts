@@ -73,8 +73,8 @@ export class FakeDatabase implements IDatabase {
 	async getFirstMessageInGroup(groupId: string): Promise<Message | undefined> {
 		return [...this.messages.values()].find(message => message.groupId == groupId)
 	}
-	async loadMessage(messageId: string): Promise<Message> {
-		return this.messages.get(messageId) as Message
+	async loadMessage(messageId: string): Promise<Message | undefined> {
+		return this.messages.get(messageId)
 	}
 	async saveMessage(message: Message): Promise<void> {
 		this.messages.set(message.id, message)
