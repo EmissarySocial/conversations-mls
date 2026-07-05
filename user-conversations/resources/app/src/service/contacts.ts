@@ -66,6 +66,8 @@ export class Contacts {
 			this.#contacts.set(id, contact)
 			result(contact)
 			m.redraw()
+		}).catch((error: unknown) => {
+			console.error("Failed to refresh contact from URL:", id, error)
 		})
 
 		return result

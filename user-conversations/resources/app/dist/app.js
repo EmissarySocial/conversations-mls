@@ -25769,12 +25769,14 @@
       });
       commitResult.consumed.forEach(zeroOutUint8Array);
       group.clientState = commitResult.newState;
-      this.#sendMlsMessage(
+      void this.#sendMlsMessage(
         group,
         ObjectTypeMlsGroupInfo,
         group.members,
         commitResult.commit
-      );
+      ).catch((error) => {
+        console.error("Failed to send MLS commit to group members:", group.id, error);
+      });
       group.members = this.getGroupMembers(group);
       await this.#database.saveGroup(group);
     }
@@ -29122,6 +29124,8 @@
         vnode.state.emojiGroups(emojis);
         vnode.state.emojiGroups.end(true);
         import_mithril13.default.redraw();
+      }).catch((error) => {
+        console.error("Failed to load emoji list:", error);
       });
     }
     // Focus the search input when the modal opens
@@ -30617,6 +30621,8 @@
       vnode.attrs.controller.getFirstMessageInGroup(group.id).then((content) => {
         vnode.state.firstMessage = htmlToText(content);
         import_mithril29.default.redraw();
+      }).catch((error) => {
+        console.error("Failed to load first message for group:", group.id, error);
       });
     }
     // view renders the welcome screen shown when the user receives a new group invitation
@@ -30846,6 +30852,8 @@
       vnode.attrs.controller.loadKeyPackage().then((keyPackage) => {
         vnode.state.emojiKey = keyPackage?.emojiKey ?? [];
         import_mithril35.default.redraw();
+      }).catch((error) => {
+        console.error("Failed to load KeyPackage for EmojiKey:", error);
       });
     }
     onremove(vnode) {
@@ -31619,6 +31627,8 @@
         this.#contacts.set(id, contact);
         result(contact);
         import_mithril45.default.redraw();
+      }).catch((error) => {
+        console.error("Failed to refresh contact from URL:", id, error);
       });
       return result;
     }

@@ -33,6 +33,9 @@ export class PickEmoji {
 				vnode.state.emojiGroups.end(true)
 				m.redraw()
 			})
+			.catch((error: unknown) => {
+				console.error("Failed to load emoji list:", error)
+			})
 	}
 
 	// Focus the search input when the modal opens

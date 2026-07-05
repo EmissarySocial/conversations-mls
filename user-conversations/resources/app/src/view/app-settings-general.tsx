@@ -43,6 +43,8 @@ export class AppSettingsGeneral {
 		vnode.attrs.controller.loadKeyPackage().then(keyPackage => {
 			vnode.state.emojiKey = keyPackage?.emojiKey ?? []
 			m.redraw()
+		}).catch((error: unknown) => {
+			console.error("Failed to load KeyPackage for EmojiKey:", error)
 		})
 	}
 

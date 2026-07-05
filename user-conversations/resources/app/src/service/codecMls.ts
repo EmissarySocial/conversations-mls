@@ -743,13 +743,16 @@ export class CodecMls implements ICodec {
 		// Update the group with new state and new list of members
 		group.clientState = commitResult.newState
 
-		// (async) Send commit to all members
-		this.#sendMlsMessage(
+		// (async) Send commit to all members. Detached on purpose, but the rejection
+		// is logged rather than left unhandled; the durable group state is saved below.
+		void this.#sendMlsMessage(
 			group,
 			vocab.ObjectTypeMlsGroupInfo,
 			group.members,
 			commitResult.commit,
-		)
+		).catch((error: unknown) => {
+			console.error("Failed to send MLS commit to group members:", group.id, error)
+		})
 
 		// Recalculate the NEW list of members
 		group.members = this.getGroupMembers(group)

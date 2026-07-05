@@ -24,6 +24,8 @@ export class GroupWelcome {
 		vnode.attrs.controller.getFirstMessageInGroup(group.id).then(content => {
 			vnode.state.firstMessage = htmlToText(content)
 			m.redraw()
+		}).catch((error: unknown) => {
+			console.error("Failed to load first message for group:", group.id, error)
 		})
 	}
 
