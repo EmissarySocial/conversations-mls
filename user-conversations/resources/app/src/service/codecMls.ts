@@ -1,5 +1,5 @@
 // MLS functions and types
-import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type NodeLeaf, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
+import { bytesToBase64, nodeTypes, type DefaultProposal, type IncomingMessageAction, type LeafIndex, type ProposalRemove, type ProposalWithSender, createProposal, defaultCredentialTypes, createApplicationMessage, createCommit, createGroup, decode, defaultProposalTypes, encode, getGroupMembers, joinGroup, mlsMessageDecoder, mlsMessageEncoder, processMessage, wireformats, zeroOutUint8Array, type CiphersuiteImpl, type ClientState, type CredentialBasic, type KeyPackage, type MlsContext, type MlsMessage, type MlsPublicMessage, type MlsPrivateMessage, type MlsWelcomeMessage, type Proposal, type PrivateKeyPackage } from "ts-mls"
 
 // ActivityPub Types
 import { Actor } from "../as/actor"
@@ -434,7 +434,7 @@ export class CodecMls implements ICodec {
 		// Parse the message content
 		const message = object.content()
 		const uintArray = base64ToUint8Array(message)
-		const mlsMessage = decode(mlsMessageDecoder, uintArray)!
+		const mlsMessage = decode(mlsMessageDecoder, uintArray)
 
 		// Require that the we have a valid decoded message before proceeding
 		if (mlsMessage == undefined) {
@@ -714,9 +714,10 @@ export class CodecMls implements ICodec {
 
 		const leafIndex = proposal.remove.removed
 
-		// Exit if the sender has already been removed from the group
+		// Exit if the sender has already been removed from the group (the ratchet tree
+		// is sparse, so a removed leaf's slot is undefined).
 		const ratchetTreeIndex = leafIndex * 2
-		const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex] as NodeLeaf
+		const deviceToRemove = group.clientState.ratchetTree[ratchetTreeIndex]
 
 		if (deviceToRemove == undefined) {
 			return
