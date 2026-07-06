@@ -1569,6 +1569,13 @@ export class Controller {
 		// Persist all of the group changes in a single save
 		await this.saveGroup(group)
 
+		// RULE: If this is the group currently displayed, refresh the in-memory stream so
+		// that send-time state (e.g. lastMessageId used for inReplyTo threading) is not
+		// stale. saveGroup/loadGroups deliberately leaves the selected stream in place.
+		if (groupId == this.selectedGroupId()) {
+			this.groupStream(group)
+		}
+
 		// Notifications trigger once no other statements might fail/throw
 		if (sentByOther) {
 

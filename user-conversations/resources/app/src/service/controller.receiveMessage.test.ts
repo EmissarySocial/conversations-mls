@@ -226,6 +226,25 @@ test('receiving a message records lastMessage (as text) and lastMessageId', asyn
 	expect(group!.lastMessage).toBe("Hello world")
 })
 
+test('receiving a message into the selected group refreshes the in-memory stream', async () => {
+
+	const database = new FakeDatabase()
+	const { controller } = makeController({ database })
+
+	// Seed and select the group that will receive the message.
+	const group = NewGroup("PLAINTEXT")
+	group.id = GROUP_ID
+	database.groups.set(GROUP_ID, group)
+	await controller.selectGroup(GROUP_ID)
+
+	await controller.receiveActivity(makeCreateActivity("msg-stream", "hello"))
+
+	// RULE: The selected group's in-memory stream must reflect the new lastMessageId,
+	// otherwise a subsequent reply threads against stale state (inReplyTo goes empty).
+	expect(controller.groupStream().id).toBe(GROUP_ID)
+	expect(controller.groupStream().lastMessageId).toBe("msg-stream")
+})
+
 test('receiving a message does not duplicate the sender already in the member list', async () => {
 
 	const database = new FakeDatabase()

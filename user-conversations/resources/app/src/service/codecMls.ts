@@ -334,7 +334,7 @@ export class CodecMls implements ICodec {
 	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
 	async encodeMessage(group: EncryptedGroup, message: Message): Promise<{}> {
 
-		return {
+		const object: Record<string, unknown> = {
 			id: message.id,
 			attributedTo: message.sender,
 			type: vocab.ObjectTypeNote,
@@ -342,9 +342,16 @@ export class CodecMls implements ICodec {
 			context: group.id,
 			content: message.content,
 			attachment: message.attachments.map(attachment => attachmentToDocument(attachment)),
-			inReplyTo: message.inReplyTo,
 			published: new Date().toISOString(),
 		}
+
+		// RULE: Only emit "inReplyTo" when there is something to thread against. An empty
+		// string is not a valid reference and confuses receiving servers (e.g. Mastodon).
+		if (message.inReplyTo != "") {
+			object.inReplyTo = message.inReplyTo
+		}
+
+		return object
 	}
 
 	// sendActivity encodes an Activity as an MLS message and sends it to all group members.

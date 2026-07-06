@@ -93,16 +93,27 @@ export class CodecPlaintext implements ICodec {
 	// encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
 	async encodeMessage(group: Group, message: Message): Promise<{}> {
 
-		return {
+		// Thread against the explicit reply target, falling back to the group's most
+		// recent message so that untargeted replies still land in the conversation.
+		const inReplyTo = message.inReplyTo || group.lastMessageId
+
+		const object: Record<string, unknown> = {
 			attributedTo: message.sender,
 			type: vocab.ObjectTypeNote,
-			inReplyTo: message.inReplyTo || group.lastMessageId,
 			to: group.members,
 			context: group.id,
 			content: message.content,
 			attachment: message.attachments.map(attachment => attachmentToDocument(attachment)),
 			published: new Date().toISOString(),
 		}
+
+		// RULE: Only emit "inReplyTo" when there is something to thread against. An empty
+		// string is not a valid reference and confuses receiving servers (e.g. Mastodon).
+		if (inReplyTo != "") {
+			object.inReplyTo = inReplyTo
+		}
+
+		return object
 	}
 
 	// sendActivity sends the provided activity to the group via the delivery service.
@@ -245,6 +256,14 @@ export class CodecPlaintext implements ICodec {
 		// If we don't have a createdById for this group, then set it to the Actor who sent this Activity
 		if (group.createdById == "") {
 			group.createdById = activity.actorId()
+		}
+
+		// RULE: A group I created is never a pending invitation to myself. When my own
+		// activity is the one establishing/updating this group, promote it out of the
+		// default WELCOME state so I don't see a "welcome" invite to my own group. (An
+		// invite from someone else keeps its WELCOME state until I explicitly join.)
+		if ((group.createdById == this.#actorId) && (group.stateId == "WELCOME")) {
+			group.stateId = "ACTIVE"
 		}
 
 		// If we need to add new members to the group, then save the changes. Skip this

@@ -155,6 +155,21 @@ describe("encodeMessage", () => {
 		// Falls back to the group's lastMessageId when the message has no inReplyTo
 		expect(object.inReplyTo).toBe("https://example.test/messages/prev")
 	})
+
+	test("omits inReplyTo when there is nothing to thread against", async () => {
+		const group = NewGroup("PLAINTEXT")
+		group.id = GROUP_ID
+		group.members = [ME, ALICE]
+		// No lastMessageId (brand-new group) and no explicit reply target.
+		group.lastMessageId = ""
+
+		const message = NewMessage({ id: "m1", groupId: GROUP_ID, sender: ME, content: "<p>hi</p>" })
+
+		const object = await codec.encodeMessage(group, message) as Record<string, any>
+
+		// RULE: An empty-string inReplyTo is not a valid reference; the field must be absent.
+		expect("inReplyTo" in object).toBe(false)
+	})
 })
 
 describe("sendActivity", () => {
@@ -332,6 +347,40 @@ describe("receiveActivity — Create/Update", () => {
 
 		const reloaded = await database.loadGroup(GROUP_ID)
 		expect(reloaded!.createdById).toBe(ME)
+	})
+
+	test("promotes a group I created out of WELCOME (my own echoed message is not an invite to myself)", async () => {
+		// My own Create echoes back to me as a recipient. The group is created/loaded in
+		// the default WELCOME state; because I am the creator, it must become ACTIVE so I
+		// do not see a "welcome" invitation to my own group.
+		const activity = new Activity({
+			type: vocab.ActivityTypeCreate,
+			actor: ME,
+			context: GROUP_ID,
+			to: [ME],
+			object: {
+				id: "https://example.test/messages/mine",
+				type: vocab.ObjectTypeNote,
+				attributedTo: ME,
+				context: GROUP_ID,
+				content: "hello",
+			},
+		})
+
+		await codec.receiveActivity(activity)
+
+		const group = await database.loadGroup(GROUP_ID)
+		expect(group!.createdById).toBe(ME)
+		expect(group!.stateId).toBe("ACTIVE")
+	})
+
+	test("leaves a group created by someone else in the WELCOME state (a real invitation)", async () => {
+		// An invite from another actor must stay WELCOME until I explicitly join.
+		await codec.receiveActivity(createActivity("hello", GROUP_ID))
+
+		const group = await database.loadGroup(GROUP_ID)
+		expect(group!.createdById).toBe(ALICE)
+		expect(group!.stateId).toBe("WELCOME")
 	})
 
 	test("does not duplicate members when the activity names an actor more than once", async () => {

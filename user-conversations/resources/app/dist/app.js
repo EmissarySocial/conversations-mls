@@ -25526,7 +25526,7 @@
     //////////////////////////////////////////
     // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
     async encodeMessage(group, message) {
-      return {
+      const object = {
         id: message.id,
         attributedTo: message.sender,
         type: ObjectTypeNote,
@@ -25534,9 +25534,12 @@
         context: group.id,
         content: message.content,
         attachment: message.attachments.map((attachment) => attachmentToDocument(attachment)),
-        inReplyTo: message.inReplyTo,
         published: (/* @__PURE__ */ new Date()).toISOString()
       };
+      if (message.inReplyTo != "") {
+        object.inReplyTo = message.inReplyTo;
+      }
+      return object;
     }
     // sendActivity encodes an Activity as an MLS message and sends it to all group members.
     // Returns "" because the server-assigned ID belongs to the MLS envelope, not the inner message.
@@ -25906,16 +25909,20 @@
     //////////////////////////////////////////
     // encodeMessage encrypts the provided message and returns the encrypted ActivityPub object.
     async encodeMessage(group, message) {
-      return {
+      const inReplyTo = message.inReplyTo || group.lastMessageId;
+      const object = {
         attributedTo: message.sender,
         type: ObjectTypeNote,
-        inReplyTo: message.inReplyTo || group.lastMessageId,
         to: group.members,
         context: group.id,
         content: message.content,
         attachment: message.attachments.map((attachment) => attachmentToDocument(attachment)),
         published: (/* @__PURE__ */ new Date()).toISOString()
       };
+      if (inReplyTo != "") {
+        object.inReplyTo = inReplyTo;
+      }
+      return object;
     }
     // sendActivity sends the provided activity to the group via the delivery service.
     // Returns the server-assigned URL for the created object, or "" if none was returned.
@@ -26007,6 +26014,9 @@
       }
       if (group.createdById == "") {
         group.createdById = activity.actorId();
+      }
+      if (group.createdById == this.#actorId && group.stateId == "WELCOME") {
+        group.stateId = "ACTIVE";
       }
       const newMembers = this.#findNewGroupMembers(group, activity);
       if (newMembers.length > 0) {
@@ -27488,6 +27498,9 @@
         group.updateDate = qi.Now.instant().epochMilliseconds;
       }
       await this.saveGroup(group);
+      if (groupId == this.selectedGroupId()) {
+        this.groupStream(group);
+      }
       if (sentByOther) {
         if (this.config.isDesktopNotifications && !this.isWindowFocused) {
           this.#host.notify(message.sender, message.content);
