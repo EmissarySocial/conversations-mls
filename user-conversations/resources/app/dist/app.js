@@ -25718,6 +25718,8 @@
       const result = new Activity().fromJSON(plaintext);
       result.setContext(group.id);
       if (!senderIdentityMatches(result.actorId(), document2.attributedToId())) {
+        console.log("CodecMls.receiveActivity");
+        console.log(result, document2);
         throw new Error("CodecMls.receiveActivity: sender mismatch - decrypted actor '" + result.actorId() + "' does not match envelope attributedTo '" + document2.attributedToId() + "'");
       }
       await this.#maybeSendAcknowledgement(group, result);

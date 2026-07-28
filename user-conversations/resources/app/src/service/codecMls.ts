@@ -648,6 +648,8 @@ export class CodecMls implements ICodec {
 		// the cryptographically-authenticated sender. ts-mls does not currently expose the
 		// sender leaf index on application-message results, so B is deferred. See AGENTS.md.
 		if (!senderIdentityMatches(result.actorId(), document.attributedToId())) {
+			console.log("CodecMls.receiveActivity")
+			console.log(result, document)
 			throw new Error("CodecMls.receiveActivity: sender mismatch - decrypted actor '" + result.actorId() + "' does not match envelope attributedTo '" + document.attributedToId() + "'")
 		}
 
