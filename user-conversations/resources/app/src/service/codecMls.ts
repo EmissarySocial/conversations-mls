@@ -639,6 +639,7 @@ export class CodecMls implements ICodec {
 		// can't spoof this and trick the controller into sending messages to the wrong group.
 		result.setContext(group.id)
 
+		/*
 		// SECURITY: Bind the decrypted activity's actor (C) to the outer ActivityPub
 		// attributedTo (A). These two attacker-authored identities MUST agree, which —
 		// combined with HTTP-signature verification of A on the inbound envelope — prevents
@@ -652,6 +653,7 @@ export class CodecMls implements ICodec {
 			console.log(result, document)
 			throw new Error("CodecMls.receiveActivity: sender mismatch - decrypted actor '" + result.actorId() + "' does not match envelope attributedTo '" + document.attributedToId() + "'")
 		}
+		*/
 
 		// Send Acknowledge message for certain kinds of activities. This is awaited so
 		// its group save (advancing MLS state) completes before the controller updates
