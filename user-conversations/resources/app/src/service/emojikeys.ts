@@ -1,11 +1,23 @@
+/*
+ * EmojiKeys are the human-friendly fingerprints that let users verify encryption
+ * keys by eye: SHA-256 the input, then map the digest's first ten bytes into five
+ * emojis (two bytes each, big-endian, modulo the table size).
+ *
+ * INTEROP: the algorithm and the 350-entry table below are a wire-level contract
+ * shared verbatim with Bonfire (tauri-plugin-openmls, `signature_key_to_emoji_fingerprint`)
+ * and mirrored by Emissary's display-only `tools/emojikey` package. Never change
+ * one copy alone.
+ */
+import { type KeyPackage } from "ts-mls";
+
 import { uint8ArrayToBase64 } from "./utils";
 import { type EmojiKey } from "../model/emoji";
 
+/** emojiKey hashes the input bytes and returns the digest (base64) with its five-emoji fingerprint */
+export async function emojiKey(input: Uint8Array): Promise<[string, EmojiKey[]]> {
 
-
-// emojiKey: Uint8Array (raw key bytes) or hex string
-export async function emojiKey(signature: Uint8Array): Promise<[string, EmojiKey[]]> {
-	const checksum = await crypto.subtle.digest('SHA-256', signature.slice(0))
+	// Hash the input; the emojis always render the SHA-256 digest, never the raw input
+	const checksum = await crypto.subtle.digest('SHA-256', input.slice(0))
 	const checksumHash = new Uint8Array(checksum);
 
 	if (checksumHash.length != 32) {
@@ -14,7 +26,8 @@ export async function emojiKey(signature: Uint8Array): Promise<[string, EmojiKey
 
 	const base64 = uint8ArrayToBase64(checksumHash)
 
-	const result: EmojiKey[] = new Array(5)
+	// Map the first ten digest bytes into five emojis
+	const result: EmojiKey[] = new Array<EmojiKey>(5)
 
 	for (let i = 0; i < 5; i++) {
 		const first = checksumHash[i * 2] // First byte
@@ -25,6 +38,21 @@ export async function emojiKey(signature: Uint8Array): Promise<[string, EmojiKey
 	}
 
 	return [base64, result];
+}
+
+/** keyPackageEmojiKey returns the emoji fingerprint that identifies a KeyPackage's owner */
+export async function keyPackageEmojiKey(keyPackage: KeyPackage): Promise<[string, EmojiKey[]]> {
+
+	// INTEROP: the fingerprint input is the leaf node's raw signature public key — NOT the
+	// KeyPackage's `signature` field. The signature public key is the only value peers can
+	// recover for an existing group member (the ratchet tree keeps the leaf's signature key,
+	// not the original KeyPackage signature), and it is the value Bonfire fingerprints.
+	return emojiKey(keyPackage.leafNode.signaturePublicKey)
+}
+
+/** emojiKeySummary flattens an EmojiKey into the plain emoji string published as the ActivityStreams `summary` */
+export function emojiKeySummary(emojis: EmojiKey[]): string {
+	return emojis.map(emoji => emoji[0]).join("")
 }
 
 const emojiSet: EmojiKey[] = [

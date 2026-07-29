@@ -214,6 +214,10 @@ without every member racing to commit.
   `Directory`. They expire and are cycled (`#cycleKeyPackages`) after use; a Welcome consumes
   one. Multiple **devices** = multiple key packages for the same actor; each device joins
   groups independently and a Welcome is only valid for the device whose private key matches.
+- **EmojiKeys** are the human-friendly fingerprints of a device's MLS signature public key
+  (`service/emojikeys.ts`), published as each KeyPackage's ActivityStreams `summary`. The
+  algorithm and emoji table are an interop contract shared with Bonfire, so users on either
+  platform compare the same five emojis (details in the repo-root `AGENTS.md`).
 - **Group lifecycle states** (`GroupState`): `WELCOME → IMPORTANT / ACTIVE → ARCHIVED →
   CLOSED`. Notable rules: WELCOME groups always surface regardless of filter; a new message
   in an `ARCHIVED` group revives it to `ACTIVE`. State transitions were deliberately

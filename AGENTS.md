@@ -75,6 +75,26 @@ is established by the private-key match) because ts-mls validates the encrypted 
 `joinGroup` call. The rolled-back network-lookup version (`service/authService.ts`,
 `ActivityPubAuthenticationService`) has been deleted — do not reintroduce it.
 
+## EmojiKey fingerprints (interop contract with Bonfire)
+
+**The fingerprint input is the leaf node's signature public key — never the KeyPackage
+`signature` field.** `service/emojikeys.ts` → `keyPackageEmojiKey()` is the only sanctioned way
+to fingerprint a KeyPackage. Feeding `publicPackage.signature` is the historical trap: it
+fingerprints a single-use artifact, cannot be recovered from a group's ratchet tree (which keeps
+the leaf's signature *key*, not the original KeyPackage signature), and disagrees with every
+other implementation.
+
+The algorithm (SHA-256 → 5 × big-endian u16 % 350) and the 350-entry emoji table are shared
+**verbatim** with Bonfire (`bonfire-networks/tauri-plugin-openmls` →
+`signature_key_to_emoji_fingerprint`) and mirrored by Emissary's display-only `tools/emojikey`
+Go package — never change one copy alone. `emojikeys.test.ts` pins the contract with the vectors
+from Bonfire's doctests plus a live KeyPackage fixture that both platforms fingerprint
+identically.
+
+**`#validateKeyPackages` republishes any own KeyPackage whose published `summary` differs from
+the locally derived fingerprint.** This looks removable but is load-bearing: it is how stale
+summaries (older clients, algorithm/input changes, tampering) self-heal on app start.
+
 ## Plaintext-group membership authorization (KNOWN GAP — deferred)
 
 The **plaintext** (unencrypted) receive path does not authorize inbound activities against group

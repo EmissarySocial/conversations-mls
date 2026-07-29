@@ -11,7 +11,7 @@ export type DBKeyPackage = {
 	generatorId: string
 	generatorName: string
 	actorId: string
-	signature: string
+	checksum: string // base64 SHA-256 of the leaf signature public key; emojiKey renders its first ten bytes
 	emojiKey: EmojiKey[]
 	createDate: number
 }

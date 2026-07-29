@@ -324,7 +324,7 @@ export class Database implements IDatabase {
 		return await this.#db.get("keyPackage", "self")
 	}
 
-	// saveKeyPackage saves the KeyPackage to the database, recomputing the signature and emojiKey.
+	// saveKeyPackage saves the KeyPackage to the database
 	async saveKeyPackage(record: DBKeyPackage) {
 
 		// Save it to the database

@@ -1,6 +1,7 @@
 import { bytesToBase64, encode, keyPackageEncoder } from "ts-mls"
 
 import { CIPHER_X25519_AES128, cipherSuiteName } from "../service/algorithms"
+import { emojiKeySummary } from "../service/emojikeys"
 import type { DBKeyPackage } from "./db-keypackage"
 
 // https://swicg.github.io/activitypub-e2ee/mls#KeyPackage
@@ -37,8 +38,8 @@ export function NewAPKeyPackage(dbKeyPackage: DBKeyPackage): APKeyPackage {
 		mediaType: "message/mls",
 		encoding: "base64",
 		content: keyPackageAsBase64,
-		name: dbKeyPackage.signature,
-		summary: dbKeyPackage.emojiKey.map(emoji => emoji[0]).join(""),
+		name: dbKeyPackage.checksum,
+		summary: emojiKeySummary(dbKeyPackage.emojiKey),
 		generator: {
 			id: dbKeyPackage.generatorId,
 			type: "Application",

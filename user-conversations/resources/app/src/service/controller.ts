@@ -232,11 +232,13 @@ export class Controller {
 
 		// Wire UX redraws into database updates. Filters load first because
 		// loadGroups() limits the result to the selected filter's tags and states.
-		this.#database.onchange(() => { void (async () => {
-			await this.loadFilters()
-			await this.loadGroups()
-			await this.loadMessages()
-		})() })
+		this.#database.onchange(() => {
+			void (async () => {
+				await this.loadFilters()
+				await this.loadGroups()
+				await this.loadMessages()
+			})()
+		})
 
 		// Refresh Data for the UX (filters before groups, see above)
 		void this.loadFilters().then(() => this.loadGroups())
