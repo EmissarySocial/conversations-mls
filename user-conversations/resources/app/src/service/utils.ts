@@ -263,7 +263,7 @@ export function uint8ArrayToBase64(bytes: Uint8Array): string {
 
 // newId generates a new unique identifier in the form of a URI with a UUID
 export function newId(): string {
-	return "uri:uuid:" + crypto.randomUUID()
+	return "urn:uuid:" + crypto.randomUUID()
 }
 
 // uint8ArrayEqual returns TRUE if two Uint8Arrays contain the same values.

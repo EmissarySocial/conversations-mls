@@ -100,6 +100,13 @@ export interface IDatabase {
 	onchange(handler: () => void): void
 }
 
+// DeliveryResult carries the server-assigned identifiers returned by a C2S outbox POST.
+// Either value is "" when the server did not supply the corresponding header.
+export type DeliveryResult = {
+	objectUrl: string   // "Location" header — the canonical URL of the created object
+	activityUrl: string // "X-Activity-Id" header — the canonical URL of the created activity
+}
+
 // IDelivery wraps all of the methods that the MLS service
 // uses to send messages.
 export interface IDelivery {
@@ -112,7 +119,7 @@ export interface IDelivery {
 	setSignout(onSignout: () => void): void
 
 	// sendActivity sends a raw ActivityStream activity to the server for delivery.
-	sendActivity(activity: Activity): Promise<string>
+	sendActivity(activity: Activity): Promise<DeliveryResult>
 }
 
 // IDirectory wraps all of the methods that the MLS service

@@ -35,7 +35,7 @@ export type EncryptedGroup = Group & {
 export function NewGroup(codec: GroupCodec): Group {
 
 	return {
-		id: "uri:uuid:" + crypto.randomUUID(),
+		id: "urn:uuid:" + crypto.randomUUID(),
 		stateId: "WELCOME",
 		codec: codec,
 		name: "",

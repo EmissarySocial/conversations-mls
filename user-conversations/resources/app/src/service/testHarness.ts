@@ -8,7 +8,7 @@ import Stream from "mithril/stream"
 
 import { Controller } from "./controller"
 import type {
-	IContacts, IDatabase, IDelivery, IDirectory, IHost, IProxy, IReceiver,
+	DeliveryResult, IContacts, IDatabase, IDelivery, IDirectory, IHost, IProxy, IReceiver,
 } from "./interfaces"
 
 import { type Config, NewConfig } from "../model/config"
@@ -114,7 +114,7 @@ function makeNoopDelivery(): IDelivery {
 		stop: () => { },
 		setActor: () => { },
 		setSignout: () => { },
-		sendActivity: async (): Promise<string> => "",
+		sendActivity: (): Promise<DeliveryResult> => Promise.resolve({ objectUrl: "", activityUrl: "" }),
 	}
 }
 

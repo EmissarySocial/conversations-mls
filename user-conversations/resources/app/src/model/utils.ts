@@ -1,5 +1,5 @@
 export function newId() {
-	return "uri:uuid:" + crypto.randomUUID()
+	return "urn:uuid:" + crypto.randomUUID()
 }
 
 // uniqueStrings returns a copy of the given array with duplicate values removed,

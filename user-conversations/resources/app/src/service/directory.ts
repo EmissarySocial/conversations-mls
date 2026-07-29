@@ -136,8 +136,8 @@ export class Directory implements IDirectory {
 	 * ActivityPub Methods
 	 ******************************************/
 
-	// createObject POSTs an ActivityPub object to the user's outbox
-	// and returns the Location header from the response
+	// createObject POSTs an ActivityPub object to the user's outbox and returns the
+	// created [activity URL, object URL] from the response headers.
 	async #createObject<T>(object: T): Promise<[string, string]> {
 
 		const activityId = newId()
@@ -150,23 +150,28 @@ export class Directory implements IDirectory {
 			object: object,
 		}))
 
-		if (result == "") {
+		if (result.objectUrl == "") {
 			throw new Error("Server MUST return an id for the created object.")
 		}
 
-		return [activityId, result]
+		// RULE: Prefer the server-assigned activity id — the server replaces client ids
+		// (ActivityPub §6.1), and inbox cursors seeded with this value only match when it
+		// is the id the server will serve back. The client id is a legacy-server fallback.
+		return [result.activityUrl || activityId, result.objectUrl]
 	}
 
 	// updateObject POSTs an ActivityPub object to the user's outbox
 	// and returns the Location header from the response
 	async #updateObject<T>(object: T): Promise<string> {
-		return await this.#delivery.sendActivity(new Activity({
+		const result = await this.#delivery.sendActivity(new Activity({
 			"@context": "https://www.w3.org/ns/activitystreams",
 			type: vocab.ActivityTypeUpdate,
 			id: newId(),
 			actor: this.#actorId,
 			object: object,
 		}))
+
+		return result.objectUrl
 	}
 
 	// deleteObject POSTs an ActivityPub object to the user's outbox

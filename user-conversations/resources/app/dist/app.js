@@ -10310,7 +10310,7 @@
 
   // src/model/utils.ts
   function newId() {
-    return "uri:uuid:" + crypto.randomUUID();
+    return "urn:uuid:" + crypto.randomUUID();
   }
   function uniqueStrings(values) {
     return [...new Set(values)];
@@ -17761,7 +17761,7 @@
   // src/model/group.ts
   function NewGroup(codec) {
     return {
-      id: "uri:uuid:" + crypto.randomUUID(),
+      id: "urn:uuid:" + crypto.randomUUID(),
       stateId: "WELCOME",
       codec,
       name: "",
@@ -19508,7 +19508,7 @@
     return globalThis.btoa(binaryString);
   }
   function newId2() {
-    return "uri:uuid:" + crypto.randomUUID();
+    return "urn:uuid:" + crypto.randomUUID();
   }
   function uint8ArrayEqual(a2, b2) {
     if (a2.length != b2.length) {
@@ -24754,7 +24754,8 @@
     setSignout(onSignout) {
       this.#onSignout = onSignout;
     }
-    // sendActivity sends an activity to the Actor's outbox
+    // sendActivity sends an activity to the Actor's outbox and returns the
+    // server-assigned object and activity URLs from the response headers.
     async sendActivity(activity) {
       if (this.#outboxUrl == "") {
         throw new Error("Outbox URL not set. Cannot send activity.");
@@ -24771,7 +24772,10 @@
         }
         throw new HttpError(response.status, `Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`);
       }
-      return response.headers.get("Location") || "";
+      return {
+        objectUrl: response.headers.get("Location") || "",
+        activityUrl: response.headers.get("X-Activity-Id") || ""
+      };
     }
   };
 
@@ -25108,8 +25112,8 @@
     /******************************************
      * ActivityPub Methods
      ******************************************/
-    // createObject POSTs an ActivityPub object to the user's outbox
-    // and returns the Location header from the response
+    // createObject POSTs an ActivityPub object to the user's outbox and returns the
+    // created [activity URL, object URL] from the response headers.
     async #createObject(object) {
       const activityId = newId2();
       const result = await this.#delivery.sendActivity(new Activity({
@@ -25120,21 +25124,22 @@
         to: [this.#actorId],
         object
       }));
-      if (result == "") {
+      if (result.objectUrl == "") {
         throw new Error("Server MUST return an id for the created object.");
       }
-      return [activityId, result];
+      return [result.activityUrl || activityId, result.objectUrl];
     }
     // updateObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
     async #updateObject(object) {
-      return await this.#delivery.sendActivity(new Activity({
+      const result = await this.#delivery.sendActivity(new Activity({
         "@context": "https://www.w3.org/ns/activitystreams",
         type: ActivityTypeUpdate,
         id: newId2(),
         actor: this.#actorId,
         object
       }));
+      return result.objectUrl;
     }
     // deleteObject POSTs an ActivityPub object to the user's outbox
     // and returns the Location header from the response
@@ -25875,7 +25880,7 @@
           name: "Conversation"
         }
       });
-      const groupId = await this.#delivery.sendActivity(createGroupActivity);
+      const groupId = (await this.#delivery.sendActivity(createGroupActivity)).objectUrl;
       return this.#createGroup(groupId, newMembers);
     }
     // getGroup loads a group from the database or creates a new one if it doesn't exist
@@ -25935,7 +25940,7 @@
       if (activity.recipients().length == 0) {
         activity.set("to", group.members);
       }
-      return await this.#delivery.sendActivity(activity);
+      return (await this.#delivery.sendActivity(activity)).objectUrl;
     }
     // addMentions formats an Activity to include a "Mention" tag for each group member.
     #addMentions(activity, members) {

@@ -1,7 +1,7 @@
 import { Activity } from "../as/activity"
 import type { Actor } from "../as/actor"
 import { HttpError } from "../as/object"
-import type { IDelivery } from "./interfaces"
+import type { DeliveryResult, IDelivery } from "./interfaces"
 
 // Delivery service sends messages via ActivityPub
 export class Delivery implements IDelivery {
@@ -26,8 +26,9 @@ export class Delivery implements IDelivery {
 		this.#onSignout = onSignout
 	}
 
-	// sendActivity sends an activity to the Actor's outbox
-	async sendActivity(activity: Activity): Promise<string> {
+	// sendActivity sends an activity to the Actor's outbox and returns the
+	// server-assigned object and activity URLs from the response headers.
+	async sendActivity(activity: Activity): Promise<DeliveryResult> {
 
 		// Guarantee that we have a valid outbox URL
 		if (this.#outboxUrl == "") {
@@ -49,6 +50,9 @@ export class Delivery implements IDelivery {
 			throw new HttpError(response.status, `Unable to POST ${this.#outboxUrl}: ${response.status} ${response.statusText}`)
 		}
 
-		return response.headers.get("Location") || ""
+		return {
+			objectUrl: response.headers.get("Location") || "",
+			activityUrl: response.headers.get("X-Activity-Id") || "",
+		}
 	}
 }

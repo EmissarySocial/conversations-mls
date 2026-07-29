@@ -40,7 +40,7 @@ export class CodecPlaintext implements ICodec {
 		})
 
 		// Send the activity and receive the group's ID
-		const groupId = await this.#delivery.sendActivity(createGroupActivity)
+		const groupId = (await this.#delivery.sendActivity(createGroupActivity)).objectUrl
 
 		// Create a new plaintext group
 		return this.#createGroup(groupId, newMembers)
@@ -131,7 +131,7 @@ export class CodecPlaintext implements ICodec {
 		}
 
 		// Send the activity via the delivery service and return the server-assigned ID
-		return await this.#delivery.sendActivity(activity)
+		return (await this.#delivery.sendActivity(activity)).objectUrl
 	}
 
 	// addMentions formats an Activity to include a "Mention" tag for each group member.

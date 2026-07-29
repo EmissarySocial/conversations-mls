@@ -6,7 +6,7 @@ import { CodecPlaintext } from "./codecPlaintext"
 import { FakeDatabase } from "./testHarness"
 import { NewGroup, type Group } from "../model/group"
 import { NewMessage } from "../model/message"
-import type { IDelivery } from "./interfaces"
+import type { DeliveryResult, IDelivery } from "./interfaces"
 
 const ME = "https://example.test/users/me"
 const ALICE = "https://alice.test/users/alice"
@@ -20,9 +20,9 @@ class RecordingDelivery implements IDelivery {
 	stop(): void { /* no-op */ }
 	setActor(): void { /* no-op */ }
 	setSignout(): void { /* no-op */ }
-	async sendActivity(activity: Activity): Promise<string> {
+	sendActivity(activity: Activity): Promise<DeliveryResult> {
 		this.sent.push(activity)
-		return this.serverId
+		return Promise.resolve({ objectUrl: this.serverId, activityUrl: "" })
 	}
 }
 
