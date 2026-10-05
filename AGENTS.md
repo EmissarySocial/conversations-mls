@@ -92,7 +92,7 @@ from Bonfire's doctests plus a live KeyPackage fixture that both platforms finge
 identically.
 
 **`#validateKeyPackages` republishes any own KeyPackage whose published `summary` differs from
-the locally derived fingerprint.** This looks removable but is load-bearing: it is how stale
+the locally derived fingerprint.** This looks removable but is important: it is how stale
 summaries (older clients, algorithm/input changes, tampering) self-heal on app start.
 
 ## Plaintext-group membership authorization (KNOWN GAP — deferred)
@@ -161,3 +161,19 @@ Before spending effort here, know which findings are actionable and which are tr
 contract bug, and two crypto assertion-drops were all fixed. What remains is debt that fails as
 "the compiler can't help you here," not "this crashes today." The `as/*` `any` cluster is the one
 place to look if resuming.
+
+## The app's stylesheet shares a global namespace with Emissary's theme
+
+The SPA renders inside Emissary's global theme, so `user-conversations/stylesheet/stylesheet.css` and `theme-global/stylesheet/*.css` occupy one namespace. Several class names are global utilities or Mastodon-semantic markup and must never be redefined with a bare selector: `.ellipsis` (the global truncation utility), and `.invisible`, `.mention`, `.hashtag` (Mastodon content classes that also appear in `SANITIZE_ALLOWED_CLASSES` in `service/utils.ts`, so inbound remote HTML can carry them). `.popup` was already split into chrome versus positioning (`.popup-below`) to escape the same trap.
+
+A local bare rule silently collides everywhere the class is used. A local `.ellipsis::after { content: "…" }`, added for Mastodon link truncation, appended a literal ellipsis to every group label — which already used the global truncation utility — so labels rendered as nothing but "…". The rule was not even doing its job, since linkify emits `class="invisible"` for overflow. **Scope local rules to a container (`.message-content .invisible`) or use an app-specific name, and grep `theme-global/stylesheet/*.css` for any class before writing a bare rule for it.** Related: a flex item needs `min-width: 0` for truncation to engage at all, because the default is `auto`.
+
+## Eight arrow/function properties are deliberate — do not convert them
+
+The 2026-07-03 sweep converted 233 arrow functions to class methods and kept eight, because their call sites need a bound or reassignable function value. `Controller.receiveActivity` and `Controller.lastMessage` are passed by reference into `receiver.start(...)`. `ViewController.modal_startReaction_callback` is passed as a JSX attribute. `Modal.#onEscape` and `Attachments.clickSuppressor` need stable identity for `removeEventListener`. `Modal.#close`, `Delivery.#onSignout`, and `FakeDatabase.#onchangeHandler` are reassignable callback fields, not methods. Converting any of them breaks `this` or listener removal, and the linter's `unbound-method` rule catches only the first group.
+
+## Never use a bare `git stash` round-trip in this repo
+
+`stash@{0}` holds a stale Tower auto-stash predating the `mls.ts` → `codecMls.ts` rename. If a `git stash` push saves nothing, the matching pop applies that old stash instead and conflicts across roughly eight files. Use `git stash push -m "<name>"`, confirm it actually saved, and pop by that exact ref — or use a separate worktree. A conflicted pop does not lose the entry; recover with `git checkout HEAD -- <paths>`.
+
+Two related surprises: the esbuild watcher (`npm start`) rewrites `dist/app.js` as an unminified dev build on any source change, so a dirty `dist/app.js` is usually not a real change — restore source files first and `dist/app.js` last. And a suddenly-clean tree can mean the repo owner committed your working-tree changes from Tower mid-session; check `git log -1` before assuming edits vanished.

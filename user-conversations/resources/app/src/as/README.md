@@ -6,7 +6,7 @@ extend it. See the [app README](../../README.md) §3 for context.
 
 ## What matters here
 
-- **`convert.ts` is the load-bearing file — read it before debugging any "why is this field
+- **`convert.ts` is the important file — read it before debugging any "why is this field
   wrong?" bug.** AP values are maddeningly polymorphic: a single property may be a string id,
   an embedded object, an array of either, or absent. `toString` / `toInteger` / `toArray` /
   `toMap` coerce all of that into predictable shapes. Most "the data looks wrong" issues are a

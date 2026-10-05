@@ -18,7 +18,7 @@ the orchestrating `Controller` and the injectable services it coordinates. See t
 - **`ICodec.receiveActivity()` returning `undefined` is a meaningful signal**, not an
   error or empty result: it means *"no-op, already fully handled"* (e.g. an MLS Welcome). Don't
   treat `undefined` as a failure path. See [app README](../../README.md) §7.
-- **The inbound `receiveActivity` retry + `return await` rule is load-bearing.** Handlers are
+- **The inbound `receiveActivity` retry + `return await` rule is important.** Handlers are
   dispatched with `return await this.#handler(...)`, never bare `return`, so a rejected handler
   is caught by the retry loop (every 2s, up to 1 min — absorbs out-of-order delivery). A bare
   `return` of a rejected promise escapes the `try/catch` and silently disables retries. This is

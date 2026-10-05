@@ -191,7 +191,7 @@ into an AP `Document` (`mediaType: message/mls`), and hands it to `Delivery` for
 > **Subtle control-flow rule (don't "simplify" it):** handlers are dispatched with
 > `return await this.#handler(...)`, *not* bare `return`. A bare `return` of a rejected
 > promise from inside a `try` escapes the enclosing `try/catch`, so the retry logic would
-> silently never fire. The `await` is load-bearing. This is documented inline in
+> silently never fire. The `await` is important. This is documented inline in
 > `controller.ts` and must be preserved.
 
 ### MLS Message Dispatch (`CodecMls.receiveActivity`)
