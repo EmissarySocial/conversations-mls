@@ -154,9 +154,8 @@ export class Directory implements IDirectory {
 			throw new Error("Server MUST return an id for the created object.")
 		}
 
-		// RULE: Prefer the server-assigned activity id — the server replaces client ids
-		// (ActivityPub §6.1), and inbox cursors seeded with this value only match when it
-		// is the id the server will serve back. The client id is a legacy-server fallback.
+		// RULE: Prefer the server-assigned activity id, because the server replaces client
+		// ids (ActivityPub §6.1). The client id is a legacy-server fallback.
 		return [result.activityUrl || activityId, result.objectUrl]
 	}
 

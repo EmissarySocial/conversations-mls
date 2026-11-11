@@ -228,7 +228,12 @@ export class Controller {
 		}
 
 		// Start the realtime message receiver (runs in the background)
-		void this.#receiver.start(this.config.generatorId, this.receiveActivity, this.lastMessage, () => { this.stop("SESSION-EXPIRED"); })
+		void this.#receiver.start(
+			this.config.generatorId,
+			(activity, isHistory) => this.receiveActivity(activity, 0, isHistory),
+			this.lastMessage,
+			() => { this.stop("SESSION-EXPIRED"); },
+		)
 
 		// Wire UX redraws into database updates. Filters load first because
 		// loadGroups() limits the result to the selected filter's tags and states.
@@ -698,10 +703,10 @@ export class Controller {
 			createDate: Date.now(),
 		}
 
+		// RULE: Publishing a KeyPackage never moves the inbox cursor (see AGENTS.md)
 		if (existing == undefined) {
-			const [activityId, keyPackageURL] = await this.#directory.createKeyPackage(dbKeyPackage)
+			const [, keyPackageURL] = await this.#directory.createKeyPackage(dbKeyPackage)
 			dbKeyPackage.keyPackageURL = keyPackageURL
-			await this.lastMessage(activityId)
 		} else {
 			await this.#directory.updateKeyPackage(dbKeyPackage)
 		}
@@ -1411,8 +1416,9 @@ export class Controller {
 	// Receiving Activities
 	//////////////////////////////////////////
 
-	receiveActivity = async (activity: Activity, retryCount: number = 0): Promise<void> => {
-
+	// receiveActivity decodes and processes one inbox activity. isHistory is TRUE for
+	// an activity replayed from the start of the inbox, which is never retried.
+	receiveActivity = async (activity: Activity, retryCount: number = 0, isHistory: boolean = false): Promise<void> => {
 
 		// Find the codec for this activity
 		const codec = this.#getCodecForActivity(activity)
@@ -1432,9 +1438,15 @@ export class Controller {
 			// Step 2. Process the activity after it has been decoded and verified by the codec.
 			// `return await` (not bare `return`) so a handler rejection is caught by the catch
 			// below — a bare return of a rejected promise would escape this try/catch.
-			await this.#receiveActivity_Internal(decodedActivity); return;
+			await this.#receiveActivity_Internal(decodedActivity, isHistory); return;
 
 		} catch (error) {
+
+			// RULE: History that fails is dropped at once, because an old message that this
+			// device cannot decrypt today will not become readable by waiting (see AGENTS.md)
+			if (isHistory) {
+				return
+			}
 
 			// retry every 2 seconds for up to 1 minute
 			if (retryCount < 30) {
@@ -1447,7 +1459,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Internal processes a received activity after it has been decoded and verified by the codec.
-	async #receiveActivity_Internal(activity: Activity): Promise<void> {
+	async #receiveActivity_Internal(activity: Activity, isHistory: boolean): Promise<void> {
 
 		// NOTE: each handler is `return await`ed (not bare `return`) so that a rejected
 		// handler promise rejects THIS method's promise, letting the caller's
@@ -1459,7 +1471,7 @@ export class Controller {
 				{ await this.#receiveActivity_Acknowledge(activity); return; }
 
 			case vocab.ActivityTypeCreate:
-				{ await this.#receiveActivity_Create(activity); return; }
+				{ await this.#receiveActivity_Create(activity, isHistory); return; }
 
 			case vocab.ActivityTypeDelete:
 				{ await this.#receiveActivity_Delete(activity); return; }
@@ -1481,7 +1493,7 @@ export class Controller {
 
 			// implicit Create
 			default:
-				{ await this.#receiveActivity_Unknown(activity); return; }
+				{ await this.#receiveActivity_Unknown(activity, isHistory); return; }
 		}
 	}
 
@@ -1510,7 +1522,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Create processes "Create" activities, which represent new messages sent by group members.
-	async #receiveActivity_Create(activity: Activity) {
+	async #receiveActivity_Create(activity: Activity, isHistory: boolean) {
 
 		// Decode the object embedded in the activity.
 		const object = await activity.object()
@@ -1586,6 +1598,11 @@ export class Controller {
 		// stale. saveGroup/loadGroups deliberately leaves the selected stream in place.
 		if (groupId == this.selectedGroupId()) {
 			this.groupStream(group)
+		}
+
+		// RULE: Replayed history never raises a desktop notification
+		if (isHistory) {
+			return
 		}
 
 		// Notifications trigger once no other statements might fail/throw
@@ -1774,7 +1791,7 @@ export class Controller {
 	}
 
 	// #receiveActivity_Unknown processes unrecognized activities, attempting to treat them as an implicit "Create"
-	async #receiveActivity_Unknown(activity: Activity) {
+	async #receiveActivity_Unknown(activity: Activity, isHistory: boolean) {
 
 		// RULE: Only allow implicit Create for "Document" values
 		if (activity.notDocument()) {
@@ -1793,7 +1810,7 @@ export class Controller {
 			actor: document.attributedToId(),
 			to: document.getArray("as", vocab.PropertyTo),
 			object: document.toObject(),
-		}))
+		}), isHistory)
 	}
 
 	//////////////////////////////////////////

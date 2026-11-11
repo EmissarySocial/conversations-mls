@@ -124,6 +124,17 @@ bootstrapping** (first contact → allowed) from **posting into / joining an EXI
 (sender must already be a member → otherwise reject or quarantine), and be validated against real
 federated peers (Mastodon, Bonfire, etc.) before turning it on.
 
+## The inbox cursor is moved only by the poll loop
+
+`config.lastMessageId` is the `?after=` cursor the Receiver sends to the server. Only `Receiver.#poll` may advance it, and only to an activity it has read. Until 2026-11-10 `createOrUpdateKeyPackage` also set it, to the id of the KeyPackage it had just published, so that a new device would not chew through ciphertext it could never read. That skipped far more than ciphertext: every plaintext message older than the device, and everything that arrived while the app was closed whenever this device's KeyPackage had expired and was republished at startup. Nothing was logged, and the messages were still in the inbox.
+
+A device with an empty cursor now replays the whole inbox. The Receiver passes `isHistory = true` to the handler for that one poll, and the controller treats history differently in two ways, both in `service/controller.ts`:
+
+- **A history activity that fails is dropped at once, with no retry.** The 30-retry loop exists for a live message that arrives before its Welcome. An old message for a group this device was never in will not become readable by waiting, and a long inbox would otherwise schedule thirty timers per ciphertext.
+- **A history message raises no desktop notification.** It is still stored, and its group is still marked unread.
+
+The cost is one narrow case: a device whose cursor is still empty, whose first Welcome sits in the inbox *after* a message for that group. That message is dropped instead of retried. The inbox is read in order, so this needs the server to have stored the two out of order.
+
 ## Known lint debt (`npm run lint`)
 
 `tsc --noEmit` is clean and the async-correctness rules (`no-floating-promises`,

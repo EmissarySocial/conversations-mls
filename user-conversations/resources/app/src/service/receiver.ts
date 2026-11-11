@@ -20,7 +20,7 @@ export class Receiver implements IReceiver {
 
 	// constructor initializes the Receiver with the actor's ID and messages URL
 	constructor() {
-		this.#activityHandler = async (_activity: Activity) => { }
+		this.#activityHandler = async (_activity: Activity, _isHistory: boolean) => { }
 		this.#lastMessage = async (_messageId?: string) => { return "" }
 		this.#onSignout = () => { }
 		this.#polling = false
@@ -84,6 +84,9 @@ export class Receiver implements IReceiver {
 			let lastMessageId = await this.#lastMessage()
 			const collection = await loadCollectionAfter(this.#messagesUrl, lastMessageId)
 
+			// An empty cursor means this poll replays the inbox from the beginning
+			const isHistory = (lastMessageId == "")
+
 			// Process each activity sequentially
 			for await (const activity of collection.rangeActivities()) {
 
@@ -96,7 +99,7 @@ export class Receiver implements IReceiver {
 
 				try {
 					// Process the activity with the registered handler function
-					await this.#activityHandler(activity)
+					await this.#activityHandler(activity, isHistory)
 
 				} catch (error) {
 					console.error("Receiver.#poll: Unable to process incoming message:", activity.toJSON(), error)

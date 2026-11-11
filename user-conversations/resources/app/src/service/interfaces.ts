@@ -174,10 +174,9 @@ export interface IReceiver {
 	stop(): void
 }
 
-// IActivityHandler is a function that takes an MlsPrivateMessage and returns void.
-// The Receiver service will call the registered ActivityHandler when a new message
-// is received.
-export type IActivityHandler = (activity: Activity) => Promise<void>
+// IActivityHandler is called by the Receiver once for each activity it reads from the inbox.
+// isHistory is TRUE while the Receiver replays the inbox from the beginning (see AGENTS.md).
+export type IActivityHandler = (activity: Activity, isHistory: boolean) => Promise<void>
 
 
 // ILastMessageHandler is a function that gets or sets the last message ID.
